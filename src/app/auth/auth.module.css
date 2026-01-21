@@ -1,0 +1,170 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 64px - 120px);
+  padding: 24px;
+}
+
+.form {
+  width: 100%;
+  max-width: 400px;
+}
+
+.h1 {
+  margin: 0 0 24px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  color: #111;
+}
+
+.label {
+  display: block;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.input {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px 14px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.input:focus {
+  border-color: #1976d2;
+}
+
+.input::placeholder {
+  color: #999;
+}
+
+.pwdWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pwdWrap .input {
+  padding-right: 44px;
+}
+
+.eye {
+  position: absolute;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+}
+
+.error {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #c62828;
+}
+
+.helper {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.submit {
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: #1976d2;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.submit:hover:not(:disabled) {
+  background: #1565c0;
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.links {
+  margin-top: 16px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.links a {
+  color: #1976d2;
+  text-decoration: underline;
+}
+
+.links a:hover {
+  color: #0d47a1;
+}
+
+.verifyText {
+  margin-bottom: 24px;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #444;
+  text-align: center;
+}
+
+.resend {
+  margin-top: 16px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.resend button {
+  background: none;
+  border: none;
+  color: #1976d2;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.spinnerWrap {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #eee;
+  border-top-color: #1976d2;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

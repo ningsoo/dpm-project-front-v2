@@ -1,0 +1,104 @@
+.section {
+  padding: 48px 24px;
+  background: #fafafa;
+}
+
+.dark .section {
+  background: #111;
+}
+
+.title {
+  margin: 0 0 24px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  color: #111;
+}
+
+.dark .title {
+  color: #fff;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+  transform: scale(1.03);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.dark .card {
+  background: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.thumbWrap {
+  position: relative;
+  padding-top: 56.25%;
+  background: #eee;
+  overflow: hidden;
+}
+
+.dark .thumbWrap {
+  background: #333;
+}
+
+.thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.body {
+  padding: 12px;
+}
+
+.author {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.dark .author {
+  color: #999;
+}
+
+.cardTitle {
+  margin-top: 4px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #222;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dark .cardTitle {
+  color: #eee;
+}
+
+.likes {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+.dark .likes {
+  color: #aaa;
+}

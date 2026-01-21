@@ -1,0 +1,120 @@
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  padding: 0 24px;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.header.dark {
+  background: #1a1a1a;
+  border-bottom-color: #333;
+}
+
+.authHeader {
+  justify-content: center;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+
+.dark .logo {
+  color: #fff;
+}
+
+.nav {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.navLink {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  color: #444;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.navLink:hover {
+  background: #f5f5f5;
+  color: #111;
+}
+
+.dark .navLink {
+  color: #ccc;
+}
+
+.dark .navLink:hover {
+  background: #333;
+  color: #fff;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #555;
+  transition: background 0.2s, color 0.2s;
+}
+
+.iconBtn:hover {
+  background: #f0f0f0;
+  color: #111;
+}
+
+.dark .iconBtn {
+  color: #aaa;
+}
+
+.dark .iconBtn:hover {
+  background: #333;
+  color: #fff;
+}
+
+.badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 18px;
+  color: #fff;
+  text-align: center;
+  background: #e53935;
+  border-radius: 9px;
+}
+
+.msgWrapper {
+  position: relative;
+}
