@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { boardApi } from '@/api/boardApi';
 import type { BoardCategory } from '@/api/boardApi';
 import { ToastUtils } from '@/utils/toastUtils';
-import SpotlightCarousel from '@/components/home/SpotlightCarousel';
+import ShowcaseFeaturedSection from '@/components/home/ShowcaseFeaturedSection';
+import PlaylistsCarousel from '@/components/board/PlaylistsCarousel';
+import SpotlightBoardCarousel from '@/components/board/SpotlightBoardCarousel';
 import styles from './BoardList.module.css';
 
 interface Post {
@@ -69,9 +71,19 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
 
   return (
     <section className={styles.section}>
-      {GRID_CATS.includes(category) && (
+      {category === 'showcase' && (
         <div className={styles.carouselSection}>
-          <SpotlightCarousel />
+          <ShowcaseFeaturedSection />
+        </div>
+      )}
+      {category === 'playlists' && (
+        <div className={styles.carouselSection}>
+          <PlaylistsCarousel />
+        </div>
+      )}
+      {category === 'spotlight' && (
+        <div className={styles.carouselSection}>
+          <SpotlightBoardCarousel />
         </div>
       )}
 

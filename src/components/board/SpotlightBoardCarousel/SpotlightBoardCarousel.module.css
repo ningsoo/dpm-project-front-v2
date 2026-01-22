@@ -3,7 +3,7 @@
   background: #fafafa;
 }
 
-/* ✅ 핵심 */
+/* 핵심 */
 :global(.dark) .section {
   background: #111;
 }
@@ -16,7 +16,6 @@
   color: #111;
 }
 
-/* ✅ */
 :global(.dark) .title {
   color: #fff;
 }
@@ -52,7 +51,6 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-/* ✅ */
 :global(.dark) .card {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
@@ -67,7 +65,6 @@
   transform-origin: center;
 }
 
-/* ✅ */
 :global(.dark) .card.center {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
@@ -82,7 +79,6 @@
   align-items: flex-end;
 }
 
-/* ✅ */
 :global(.dark) .thumb {
   background: #333;
 }
