@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { useAuth } from '@/auth/AuthContext';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import styles from '@/app/auth/auth.module.css';
@@ -22,7 +24,8 @@ function validate(p: string): boolean {
 
 export default function UpdatePasswordPage() {
   const router = useRouter();
-  const user = useSelector((s: RootState) => s.auth.user);
+  const reduxUser = useSelector((s: RootState) => s.auth.user);
+  const { isLoggedIn, user: mockUser } = useAuth();
   const [newPassword, setNewPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showNew, setShowNew] = useState(false);
@@ -30,9 +33,24 @@ export default function UpdatePasswordPage() {
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  if (!user) {
-    router.push('/auth/login');
-    return null;
+  // 목로그인 상태면 mockUser 사용, 아니면 Redux user 사용
+  const user = reduxUser || (mockUser ? {
+    id: String(mockUser.id),
+    email: mockUser.email,
+    nickname: mockUser.nickname,
+    phone: undefined,
+    profileImage: undefined,
+    role: mockUser.role,
+    credits: undefined,
+  } : null);
+
+  if (!isLoggedIn) {
+    return (
+      <div className={styles.wrap}>
+        <p>로그인이 필요합니다.</p>
+        <Link href="/auth/login">로그인</Link>
+      </div>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
