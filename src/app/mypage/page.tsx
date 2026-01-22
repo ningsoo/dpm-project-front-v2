@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { CreditCard, Key, User } from 'lucide-react';
 import { RootState } from '@/store';
+import { useAuth } from '@/auth/AuthContext';
 import styles from './mypage.module.css';
 
 const TABS = [
@@ -19,14 +20,35 @@ const TABS = [
 ] as const;
 
 export default function MypagePage() {
-  const user = useSelector((s: RootState) => s.auth.user);
+  const reduxUser = useSelector((s: RootState) => s.auth.user);
+  const { isLoggedIn, user: mockUser } = useAuth();
   const [tab, setTab] = useState<string>('playlists');
 
-  if (!user) {
+  // 목로그인 상태면 mockUser 사용, 아니면 Redux user 사용
+  // MockUser를 UserInfo 형태로 변환
+  const user = reduxUser || (mockUser ? {
+    id: String(mockUser.id),
+    email: mockUser.email,
+    nickname: mockUser.nickname,
+    phone: undefined,
+    profileImage: undefined,
+    role: mockUser.role,
+    credits: undefined,
+  } : null);
+
+  if (!isLoggedIn) {
     return (
       <div className={styles.wrap}>
         <p>로그인이 필요합니다.</p>
         <Link href="/auth/login">로그인</Link>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className={styles.wrap}>
+        <p>사용자 정보를 불러올 수 없습니다.</p>
       </div>
     );
   }

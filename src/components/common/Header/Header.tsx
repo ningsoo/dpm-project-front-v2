@@ -9,6 +9,7 @@ import { toggleDarkMode } from '@/store/slices/uiSlice';
 import { logout as authLogout } from '@/store/slices/authSlice';
 import { authApi } from '@/api/authApi';
 import { ToastUtils } from '@/utils/toastUtils';
+import { MockAuthHeaderButtons } from '@/components/auth/MockAuthHeaderButtons';
 import styles from './Header.module.css';
 
 const CATEGORIES = [
@@ -69,6 +70,8 @@ export default function Header() {
         <button type="button" className={styles.iconBtn} onClick={handleDarkMode} aria-label="다크 모드">
           <Moon size={20} />
         </button>
+
+        <MockAuthHeaderButtons />
 
         {isAuthenticated ? (
           <>
