@@ -5,37 +5,38 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
 import type { BoardCategory } from '@/api/boardApi';
-import styles from './SpotlightCarousel.module.css';
+import styles from './PlaylistsCarousel.module.css';
 
 const VISIBLE = 3;
 const CENTER_INDEX = Math.floor(VISIBLE / 2);
 
-interface SpotlightPost {
+interface PlaylistPost {
   id: string;
   title: string;
   description?: string;
-  image?: string;
+  thumbnail?: string;
   category: string;
 }
 
-export default function SpotlightCarousel() {
+export default function PlaylistsCarousel() {
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
-  const [posts, setPosts] = useState<SpotlightPost[]>([]);
+  const [posts, setPosts] = useState<PlaylistPost[]>([]);
   const [center, setCenter] = useState(0);
 
-  const fetchSpotlights = useCallback(async () => {
+  const fetchPlaylists = useCallback(async () => {
     try {
-      const { data } = await boardApi.getBoards();
-      const list = (data?.data as { spotlights?: SpotlightPost[] })?.spotlights ?? [];
-      setPosts(Array.isArray(list) ? list : []);
+      const { data } = await boardApi.getBoardByCategory('playlists' as BoardCategory, {});
+      const d = data?.data as { posts?: PlaylistPost[] };
+      const list = Array.isArray(d?.posts) ? d.posts : [];
+      setPosts(list);
     } catch {
       setPosts([]);
     }
   }, []);
 
   useEffect(() => {
-    fetchSpotlights();
-  }, [fetchSpotlights]);
+    fetchPlaylists();
+  }, [fetchPlaylists]);
 
   // Auto-slide: every 4s move right (무한 루프)
   useEffect(() => {
@@ -58,10 +59,6 @@ export default function SpotlightCarousel() {
       const availableWidth = screenWidth - leftPadding;
       
       // 3장 카드가 한 번에 들어가도록 계산 (우측 여백 없음)
-      // 전체 너비 = 카드 너비 * 3 + 마진 * 2
-      // availableWidth = base * 3 + CARD_GAP * 2
-      // base = (availableWidth - CARD_GAP * 2) / 3
-      
       const baseWidth = Math.floor((availableWidth - CARD_GAP * 2) / 3);
       setCardWidths({ base: baseWidth });
     };
@@ -77,7 +74,7 @@ export default function SpotlightCarousel() {
       // 가운데 카드 클릭 시 게시글 페이지로 이동
       const p = posts[displayIndex];
       if (p) {
-        window.location.href = `/boards/${(p.category as BoardCategory) || 'spotlight'}/${p.id}`;
+        window.location.href = `/boards/playlists/${p.id}`;
       }
     } else {
       // 좌우 카드 클릭 시 가운데로 이동
@@ -85,17 +82,10 @@ export default function SpotlightCarousel() {
     }
   };
 
-  // 각 카드의 마진 계산 (겹치지 않게 양수 마진)
-  const getCardMargin = (index: number) => {
-    if (index === 0) return 0; // 1카드(좌측): 마진 없음
-    return CARD_GAP; // 나머지 카드들: 양수 마진
-  };
-
   // 각 카드의 z-index 계산
-  // 2카드(가운데)가 가장 위, 그 다음 1카드와 3카드
   const getCardZIndex = (index: number) => {
-    if (index === CENTER_INDEX) return 10; // 2카드(가운데)가 가장 위
-    return 1; // 1카드와 3카드
+    if (index === CENTER_INDEX) return 10; // 가운데 카드가 가장 위
+    return 1; // 나머지 카드들
   };
 
   // 현재 보여질 카드 인덱스 계산 (무한 루프)
@@ -157,7 +147,7 @@ export default function SpotlightCarousel() {
               >
                 <div
                   className={styles.thumb}
-                  style={post.image ? { backgroundImage: `url(${post.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+                  style={post.thumbnail ? { backgroundImage: `url(${post.thumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
                 >
                   <div className={styles.overlay}>
                     <div className={styles.cardTitle}>{post.title}</div>
