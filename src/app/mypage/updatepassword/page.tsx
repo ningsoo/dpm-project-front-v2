@@ -11,15 +11,26 @@ import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import styles from '@/app/auth/auth.module.css';
 
-const PWD_REQUIRE = '대문자, 숫자, 특수문자 포함 / 10자 이상';
+const PWD_REQUIRE = '대문자, 숫자, 특수문자 포함 10자 이상, 공백금지';
 
 function validate(p: string): boolean {
   return (
     p.length >= 10 &&
     /[A-Z]/.test(p) &&
     /[0-9]/.test(p) &&
-    /[!@#$%^&*(),.?":{}|<>]/.test(p)
+    /[!@#$%^&*(),.?":{}|<>]/.test(p) &&
+    !/\s/.test(p)
   );
+}
+
+function validatePassword(p: string): string[] {
+  const err: string[] = [];
+  if (/\s/.test(p)) err.push('공백은 사용할 수 없습니다');
+  if (p.length < 10) err.push('10자 이상');
+  if (!/[A-Z]/.test(p)) err.push('대문자 포함');
+  if (!/[0-9]/.test(p)) err.push('숫자 포함');
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(p)) err.push('특수문자 포함');
+  return err;
 }
 
 export default function UpdatePasswordPage() {
@@ -96,6 +107,13 @@ export default function UpdatePasswordPage() {
               {showNew ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
+          {newPassword && validatePassword(newPassword).length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
+              {validatePassword(newPassword).map((err, idx) => (
+                <span key={idx} className={styles.error}>{err}</span>
+              ))}
+            </div>
+          )}
         </label>
 
         <label className={styles.label}>
