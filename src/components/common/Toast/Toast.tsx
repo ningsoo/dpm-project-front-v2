@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import styles from './Toast.module.css';
 
 interface ToastItem {
@@ -18,31 +18,42 @@ export function addToast(message: string, type: ToastItem['type'] = 'info') {
 }
 
 export default function ToastRoot() {
-  const [items, setItems] = useState<ToastItem[]>([]);
+  const [item, setItem] = useState<ToastItem | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const onToast = (t: ToastItem) => {
-      setItems((prev) => [...prev, t]);
-      setTimeout(() => {
-        setItems((prev) => prev.filter((i) => i.id !== t.id));
+      // 기존 타이머가 있으면 취소
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      
+      // 기존 토스트를 새 것으로 덮어쓰기
+      setItem(t);
+      
+      // 3초 후 자동 제거
+      timeoutRef.current = setTimeout(() => {
+        setItem(null);
+        timeoutRef.current = null;
       }, 3000);
     };
     listeners.push(onToast);
     return () => {
       const i = listeners.indexOf(onToast);
       if (i >= 0) listeners.splice(i, 1);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, []);
 
-  if (items.length === 0) return null;
+  if (!item) return null;
 
   return (
     <div className={styles.container} role="alert">
-      {items.map((t) => (
-        <div key={t.id} className={`${styles.toast} ${styles[t.type]}`}>
-          {t.message}
-        </div>
-      ))}
+      <div key={item.id} className={`${styles.toast} ${styles[item.type]}`}>
+        {item.message}
+      </div>
     </div>
   );
 }

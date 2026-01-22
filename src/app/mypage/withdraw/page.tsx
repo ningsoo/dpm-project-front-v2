@@ -1,26 +1,51 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { useAuth } from '@/auth/AuthContext';
 import styles from '@/app/auth/auth.module.css';
 
-const TERMS = `
-회원 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.
-적립된 POP, 작성 글, 댓글, 플레이리스트 등이 모두 삭제됩니다.
-`;
+const TERMS = `동일한 이메일 주소로는 1달 이내에 재가입할 수 없습니다.
+재가입 제한을 위해 개인정보는 30일간 보관 후 파기됩니다.
+
+구매하신 POP에 대한 안내
+
+- 구매 시점으로 7일 이내
+    POP을 사용하지 않으셨다면 전액 환불
+    사용 내역이 있으시면 사용분 제외한 잔여 POP 환불
+
+- 구매 시점으로 7일 초과
+    환불 수수료를 공제하고 환불 (공제율 총 비용의 10%)`;
 
 export default function WithdrawPage() {
   const router = useRouter();
-  const user = useSelector((s: RootState) => s.auth.user);
+  const reduxUser = useSelector((s: RootState) => s.auth.user);
+  const { isLoggedIn, user: mockUser } = useAuth();
   const [checked, setChecked] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  if (!user) {
-    router.push('/auth/login');
-    return null;
+  // 목로그인 상태면 mockUser 사용, 아니면 Redux user 사용
+  const user = reduxUser || (mockUser ? {
+    id: String(mockUser.id),
+    email: mockUser.email,
+    nickname: mockUser.nickname,
+    phone: undefined,
+    profileImage: undefined,
+    role: mockUser.role,
+    credits: undefined,
+  } : null);
+
+  if (!isLoggedIn) {
+    return (
+      <div className={styles.wrap}>
+        <p>로그인이 필요합니다.</p>
+        <Link href="/auth/login">로그인</Link>
+      </div>
+    );
   }
 
   const handleWithdraw = () => {
@@ -45,28 +70,26 @@ export default function WithdrawPage() {
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.form}>
+      <div className={styles.form} style={{ maxWidth: '800px', width: '100%' }}>
         <h1 className={styles.h1}>회원 탈퇴</h1>
-        <pre
+        <div
           style={{
             marginBottom: 20,
-            padding: 16,
+            padding: 0,
             fontSize: '0.9rem',
             lineHeight: 1.6,
-            background: '#f5f5f5',
-            borderRadius: 8,
             whiteSpace: 'pre-wrap',
           }}
         >
           {TERMS}
-        </pre>
+        </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
           <input
             type="checkbox"
             checked={checked}
             onChange={(e) => setChecked(e.target.checked)}
           />
-          위 내용을 모두 확인했습니다.
+          위 내용을 모두 확인하였습니다
         </label>
         <button
           type="button"
@@ -108,7 +131,10 @@ export default function WithdrawPage() {
                 type="button"
                 className={styles.submit}
                 style={{ background: '#999' }}
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  router.push('/mypage');
+                }}
                 disabled={loading}
               >
                 취소

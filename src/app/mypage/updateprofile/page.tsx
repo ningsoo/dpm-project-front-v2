@@ -49,9 +49,12 @@ export default function UpdateProfilePage() {
     e.preventDefault();
     setLoading(true);
     try {
+      // 연락처: 숫자만 추출하여 010 포함 11자리로 변환
+      const phoneForServer = phone.replace(/\D/g, '');
+      
       await mypageApi.updateProfile({
         nickname,
-        phone: phone.replace(/-/g, ''),
+        phone: phoneForServer,
       });
       ToastUtils.success('Successfully updated');
       router.push('/mypage');

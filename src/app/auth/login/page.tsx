@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
@@ -18,6 +18,40 @@ export default function LoginPage() {
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const emailDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setEmail(value);
+    
+    // 기존 타이머가 있으면 취소
+    if (emailDebounceRef.current) {
+      clearTimeout(emailDebounceRef.current);
+    }
+    
+    // input을 지우면 에러 메시지 제거
+    if (!value) {
+      setErrors((prev) => ({ ...prev, email: '' }));
+      return;
+    }
+    
+    // 입력이 멈춘 후 500ms 지연 후 @ 검증
+    emailDebounceRef.current = setTimeout(() => {
+      if (value && !value.includes('@')) {
+        setErrors((prev) => ({ ...prev, email: '@가 포함되어야 합니다' }));
+      } else {
+        setErrors((prev) => ({ ...prev, email: '' }));
+      }
+    }, 500);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (emailDebounceRef.current) {
+        clearTimeout(emailDebounceRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +102,7 @@ export default function LoginPage() {
             type="email"
             placeholder="example@gmail.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={handleEmailChange}
             className={styles.input}
             disabled={loading}
           />
