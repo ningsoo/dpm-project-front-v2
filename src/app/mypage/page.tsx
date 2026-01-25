@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { CreditCard, Key, User, Plus, Search, Pencil, Heart, X, Check } from 'lucide-react';
@@ -37,6 +38,7 @@ function formatDate(date: Date): string {
 }
 
 export default function MypagePage() {
+  const router = useRouter();
   const reduxUser = useSelector((s: RootState) => s.auth.user);
   const { isLoggedIn, user: mockUser } = useAuth();
   const [tab, setTab] = useState<string>('playlists');
@@ -60,6 +62,10 @@ export default function MypagePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [receivedLikes, setReceivedLikes] = useState(0);
+  const [showCreditChargeModal, setShowCreditChargeModal] = useState(false);
+  const [creditAmount, setCreditAmount] = useState('');
+  const [creditError, setCreditError] = useState('');
+  const creditValidationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // 목로그인 상태면 mockUser 사용, 아니면 Redux user 사용
   // MockUser를 UserInfo 형태로 변환
@@ -219,6 +225,105 @@ export default function MypagePage() {
     setIsDragging(false);
   };
 
+  const validateCreditAmount = (value: string): string => {
+    if (!value) {
+      return '충전할 POP을 입력해 주세요';
+    }
+
+    const amount = parseInt(value, 10);
+    if (isNaN(amount) || amount < 1000) {
+      return '1000원 이상 입력해 주세요';
+    }
+
+    if (amount % 100 !== 0) {
+      return '100원 단위로 입력해 주세요 (예: 1100)';
+    }
+
+    return '';
+  };
+
+  const handleCreditAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    setCreditAmount(value);
+
+    // 기존 타이머가 있으면 취소
+    if (creditValidationTimerRef.current) {
+      clearTimeout(creditValidationTimerRef.current);
+    }
+
+    // 입력 중에는 에러 메시지를 즉시 제거하지 않고, 디바운스 후 검증
+    // 500ms 후에 검증 실행
+    creditValidationTimerRef.current = setTimeout(() => {
+      const error = validateCreditAmount(value);
+      setCreditError(error);
+    }, 500);
+  };
+
+  const handleCreditAmountClear = () => {
+    // 디바운스 타이머가 남아있다면 즉시 clearTimeout
+    if (creditValidationTimerRef.current) {
+      clearTimeout(creditValidationTimerRef.current);
+      creditValidationTimerRef.current = null;
+    }
+
+    setCreditAmount('');
+    setCreditError('충전할 POP을 입력해 주세요');
+  };
+
+  const handleQuickAmountAdd = (addAmount: number) => {
+    const currentAmount = creditAmount ? parseInt(creditAmount, 10) : 0;
+    const nextAmount = currentAmount + addAmount;
+    const nextAmountString = String(nextAmount);
+    
+    setCreditAmount(nextAmountString);
+
+    // 기존 타이머가 있으면 취소
+    if (creditValidationTimerRef.current) {
+      clearTimeout(creditValidationTimerRef.current);
+    }
+
+    // 버튼 클릭으로 값이 바뀐 뒤에도 500ms 디바운스 검증 흐름이 동일하게 적용
+    creditValidationTimerRef.current = setTimeout(() => {
+      const error = validateCreditAmount(nextAmountString);
+      setCreditError(error);
+    }, 500);
+  };
+
+  const handleCreditPurchase = () => {
+    // 최종 검증 1번 더 실행
+    const error = validateCreditAmount(creditAmount);
+    if (error) {
+      setCreditError(error);
+      return;
+    }
+
+    const amount = parseInt(creditAmount, 10);
+    setShowCreditChargeModal(false);
+    setCreditError('');
+    router.push(`/mypage/credits/checkout?amount=${amount}`);
+  };
+
+  // cleanup에서 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (creditValidationTimerRef.current) {
+        clearTimeout(creditValidationTimerRef.current);
+      }
+    };
+  }, []);
+
+  const closeModal = () => {
+    // 디바운스 타이머가 있다면 정리
+    if (creditValidationTimerRef.current) {
+      clearTimeout(creditValidationTimerRef.current);
+      creditValidationTimerRef.current = null;
+    }
+
+    setShowCreditChargeModal(false);
+    setCreditAmount('');
+    setCreditError('');
+  };
+
   return (
     <div className={styles.wrap}>
       <section className={styles.profile}>
@@ -271,7 +376,7 @@ export default function MypagePage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <h1 className={styles.nickname}>{user.nickname}</h1>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '1rem', color: '#666', marginLeft: 12 }}>
-              <Heart size={18} fill="#c62828" color="#c62828" />
+              <Heart size={18} />
               <span>{receivedLikes}</span>
             </div>
           </div>
@@ -280,9 +385,14 @@ export default function MypagePage() {
           <div className={styles.credits}>POP {user.credits ?? 0}</div>
         </div>
         <div className={styles.profileActions}>
-          <Link href="/mypage/credits" className={styles.iconLink} title="POP 충전">
+          <button
+            type="button"
+            className={styles.iconLink}
+            title="POP 충전"
+            onClick={() => setShowCreditChargeModal(true)}
+          >
             <CreditCard size={22} />
-          </Link>
+          </button>
           <Link href="/mypage/updatepassword" className={styles.iconLink} title="비밀번호 변경">
             <Key size={22} />
           </Link>
@@ -328,14 +438,14 @@ export default function MypagePage() {
                 등록
               </button>
             </div>
-            <div style={{ padding: 16, background: '#f5f5f5', borderRadius: 8, textAlign: 'center', color: '#666' }}>
+            <div style={{ textAlign: 'center', color: '#666', padding: 16 }}>
               내가 만든 플레이리스트가 표시됩니다.
             </div>
           </div>
         )}
         {tab === 'posts' && (
           <div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16, width: '33.33%' }}>
+            <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>
               <input
                 type="text"
                 placeholder="검색어 입력"
@@ -343,8 +453,8 @@ export default function MypagePage() {
                 onChange={(e) => setSearchQuery({ ...searchQuery, posts: e.target.value })}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch('posts')}
                 style={{
-                  flex: 1,
-                  padding: '8px 12px',
+                  width: '100%',
+                  padding: '8px 40px 8px 12px',
                   border: '1px solid #ddd',
                   borderRadius: 8,
                   fontSize: 14,
@@ -353,46 +463,46 @@ export default function MypagePage() {
               <button
                 type="button"
                 onClick={() => handleSearch('posts')}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#1976d2'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; }}
                 style={{
-                  padding: '8px 16px',
-                  background: '#1976d2',
-                  color: '#fff',
+                  position: 'absolute',
+                  right: 8,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
                   border: 'none',
-                  borderRadius: 8,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 4,
+                  justifyContent: 'center',
+                  padding: 4,
+                  color: '#666',
+                  transition: 'color 0.2s',
                 }}
               >
                 <Search size={18} />
               </button>
             </div>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '10%' }}>게시판종류</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '50%' }}>제목</th>
-                    <th style={{ padding: '12px', textAlign: 'right', fontSize: 14, fontWeight: 600, width: '12%' }}>날짜</th>
-                    <th style={{ padding: '12px', textAlign: 'center', fontSize: 14, fontWeight: 600, width: '8%' }}>조회</th>
-                    <th style={{ padding: '12px', textAlign: 'center', fontSize: 14, fontWeight: 600, width: '8%' }}>추천</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style={{ borderBottom: '1px solid #eee' }}>
-                    <td colSpan={5} style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                      게시글이 없습니다.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <div>
+                <div className={styles.tableGrid + ' ' + styles.postsGrid + ' ' + styles.tableHeader}>
+                  <div style={{ textAlign: 'left' }}>게시판 종류</div>
+                  <div style={{ textAlign: 'center' }}>제목</div>
+                  <div style={{ textAlign: 'center' }}>날짜</div>
+                  <div style={{ textAlign: 'center' }}>조회</div>
+                  <div style={{ textAlign: 'center' }}>추천</div>
+                </div>
+                <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+                  게시글이 없습니다.
+                </div>
+              </div>
             </div>
           </div>
         )}
         {tab === 'comments' && (
           <div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16, width: '33.33%' }}>
+            <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>
               <input
                 type="text"
                 placeholder="검색어 입력"
@@ -400,8 +510,8 @@ export default function MypagePage() {
                 onChange={(e) => setSearchQuery({ ...searchQuery, comments: e.target.value })}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch('comments')}
                 style={{
-                  flex: 1,
-                  padding: '8px 12px',
+                  width: '100%',
+                  padding: '8px 40px 8px 12px',
                   border: '1px solid #ddd',
                   borderRadius: 8,
                   fontSize: 14,
@@ -410,45 +520,45 @@ export default function MypagePage() {
               <button
                 type="button"
                 onClick={() => handleSearch('comments')}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#1976d2'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; }}
                 style={{
-                  padding: '8px 16px',
-                  background: '#1976d2',
-                  color: '#fff',
+                  position: 'absolute',
+                  right: 8,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
                   border: 'none',
-                  borderRadius: 8,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 4,
+                  justifyContent: 'center',
+                  padding: 4,
+                  color: '#666',
+                  transition: 'color 0.2s',
                 }}
               >
                 <Search size={18} />
               </button>
             </div>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '10%' }}>게시판 종류</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '35%' }}>댓글내용</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '35%' }}>원문 글 제목</th>
-                    <th style={{ padding: '12px', textAlign: 'right', fontSize: 14, fontWeight: 600, width: '12%' }}>작성일</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style={{ borderBottom: '1px solid #eee' }}>
-                    <td colSpan={4} style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                      댓글이 없습니다.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <div>
+                <div className={styles.tableGrid + ' ' + styles.commentsGrid + ' ' + styles.tableHeader}>
+                  <div style={{ textAlign: 'left' }}>게시판 종류</div>
+                  <div style={{ textAlign: 'center' }}>댓글내용</div>
+                  <div style={{ textAlign: 'center' }}>원문 글 제목</div>
+                  <div style={{ textAlign: 'center' }}>작성일</div>
+                </div>
+                <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+                  댓글이 없습니다.
+                </div>
+              </div>
             </div>
           </div>
         )}
         {tab === 'liked' && (
           <div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16, width: '33.33%' }}>
+            <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>
               <input
                 type="text"
                 placeholder="검색어 입력"
@@ -456,8 +566,8 @@ export default function MypagePage() {
                 onChange={(e) => setSearchQuery({ ...searchQuery, liked: e.target.value })}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch('liked')}
                 style={{
-                  flex: 1,
-                  padding: '8px 12px',
+                  width: '100%',
+                  padding: '8px 40px 8px 12px',
                   border: '1px solid #ddd',
                   borderRadius: 8,
                   fontSize: 14,
@@ -466,41 +576,41 @@ export default function MypagePage() {
               <button
                 type="button"
                 onClick={() => handleSearch('liked')}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#1976d2'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; }}
                 style={{
-                  padding: '8px 16px',
-                  background: '#1976d2',
-                  color: '#fff',
+                  position: 'absolute',
+                  right: 8,
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
                   border: 'none',
-                  borderRadius: 8,
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 4,
+                  justifyContent: 'center',
+                  padding: 4,
+                  color: '#666',
+                  transition: 'color 0.2s',
                 }}
               >
                 <Search size={18} />
               </button>
             </div>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '10%' }}>게시판 종류</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '40%' }}>제목</th>
-                    <th style={{ padding: '12px', textAlign: 'right', fontSize: 14, fontWeight: 600, width: '10%' }}>작성자</th>
-                    <th style={{ padding: '12px', textAlign: 'right', fontSize: 14, fontWeight: 600, width: '12%' }}>날짜</th>
-                    <th style={{ padding: '12px', textAlign: 'center', fontSize: 14, fontWeight: 600, width: '8%' }}>조회</th>
-                    <th style={{ padding: '12px', textAlign: 'center', fontSize: 14, fontWeight: 600, width: '8%' }}>추천</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style={{ borderBottom: '1px solid #eee' }}>
-                    <td colSpan={6} style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                      좋아요 한 게시글이 없습니다.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <div>
+                <div className={styles.tableGrid + ' ' + styles.likedGrid + ' ' + styles.tableHeader}>
+                  <div style={{ textAlign: 'left' }}>게시판 종류</div>
+                  <div style={{ textAlign: 'center' }}>제목</div>
+                  <div style={{ textAlign: 'center' }}>작성자</div>
+                  <div style={{ textAlign: 'center' }}>날짜</div>
+                  <div style={{ textAlign: 'center' }}>조회</div>
+                  <div style={{ textAlign: 'center' }}>추천</div>
+                </div>
+                <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+                  좋아요 한 게시글이 없습니다.
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -537,26 +647,20 @@ export default function MypagePage() {
               </button>
             </div>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-                <thead>
-                  <tr style={{ background: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '14.28%' }}>충전일시</th>
-                    <th style={{ padding: '12px', textAlign: 'right', fontSize: 14, fontWeight: 600, width: '14.28%' }}>충전수량</th>
-                    <th style={{ padding: '12px', textAlign: 'right', fontSize: 14, fontWeight: 600, width: '14.28%' }}>잔여수량</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '14.28%' }}>결제수단</th>
-                    <th style={{ padding: '12px', textAlign: 'right', fontSize: 14, fontWeight: 600, width: '14.28%' }}>결제금액</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '14.28%' }}>유효기간</th>
-                    <th style={{ padding: '12px', textAlign: 'center', fontSize: 14, fontWeight: 600, width: '14.28%' }}>구매취소</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style={{ borderBottom: '1px solid #eee' }}>
-                    <td colSpan={7} style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                      구매 내역이 없습니다.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <div>
+                <div className={styles.tableGrid + ' ' + styles.paymentGrid + ' ' + styles.tableHeader}>
+                  <div style={{ textAlign: 'left' }}>충전일시</div>
+                  <div style={{ textAlign: 'center' }}>충전수량</div>
+                  <div style={{ textAlign: 'center' }}>잔여수량</div>
+                  <div style={{ textAlign: 'center' }}>결제수단</div>
+                  <div style={{ textAlign: 'center' }}>결제금액</div>
+                  <div style={{ textAlign: 'center' }}>유효기간</div>
+                  <div style={{ textAlign: 'center' }}>구매취소</div>
+                </div>
+                <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+                  구매 내역이 없습니다.
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -576,6 +680,21 @@ export default function MypagePage() {
                 onChange={(e) => setDateRange({ ...dateRange, creditUsage: { ...dateRange.creditUsage, end: e.target.value } })}
                 style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14 }}
               />
+              <button
+                type="button"
+                onClick={() => handleDateRangeSearch('creditUsage')}
+                style={{
+                  padding: '8px 16px',
+                  background: '#1976d2',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: 14,
+                }}
+              >
+                조회
+              </button>
               <div style={{ display: 'flex', gap: 16, marginLeft: 'auto' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
                   <input
@@ -594,40 +713,19 @@ export default function MypagePage() {
                   <span style={{ fontSize: 14 }}>광고</span>
                 </label>
               </div>
-              <button
-                type="button"
-                onClick={() => handleDateRangeSearch('creditUsage')}
-                style={{
-                  padding: '8px 16px',
-                  background: '#1976d2',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: 14,
-                }}
-              >
-                조회
-              </button>
             </div>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-                <thead>
-                  <tr style={{ background: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '25%' }}>사용 일시</th>
-                    <th style={{ padding: '12px', textAlign: 'right', fontSize: 14, fontWeight: 600, width: '15%' }}>사용 수량</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '30%' }}>사용내역(게시글 id | 사용자 id)</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '20%' }}>사용상태</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style={{ borderBottom: '1px solid #eee' }}>
-                    <td colSpan={4} style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                      구매 내역이 없습니다.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <div>
+                <div className={styles.tableGrid + ' ' + styles.creditUsageGrid + ' ' + styles.tableHeader}>
+                  <div style={{ textAlign: 'left' }}>사용 일시</div>
+                  <div style={{ textAlign: 'center' }}>사용 수량</div>
+                  <div style={{ textAlign: 'center' }}>사용 내역</div>
+                  <div style={{ textAlign: 'center' }}>사용 상태</div>
+                </div>
+                <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+                  구매 내역이 없습니다.
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -664,23 +762,17 @@ export default function MypagePage() {
               </button>
             </div>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-                <thead>
-                  <tr style={{ background: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '25%' }}>정산일자</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '25%' }}>정산 요청일자</th>
-                    <th style={{ padding: '12px', textAlign: 'right', fontSize: 14, fontWeight: 600, width: '25%' }}>정산금액</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: '25%' }}>정산처리상태</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style={{ borderBottom: '1px solid #eee' }}>
-                    <td colSpan={4} style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                      정산 내역이 없습니다.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <div>
+                <div className={styles.tableGrid + ' ' + styles.settlementGrid + ' ' + styles.tableHeader}>
+                  <div style={{ textAlign: 'left' }}>정산 일자</div>
+                  <div style={{ textAlign: 'center' }}>정산 요청일자</div>
+                  <div style={{ textAlign: 'center' }}>정산금액</div>
+                  <div style={{ textAlign: 'right', paddingRight: '20px' }}>정산처리상태</div>
+                </div>
+                <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+                  정산 내역이 없습니다.
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -735,37 +827,31 @@ export default function MypagePage() {
               )}
             </div>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
-                <thead>
-                  <tr style={{ background: '#f5f5f5', borderBottom: '2px solid #ddd' }}>
-                    <th style={{ padding: '12px', textAlign: 'center', fontSize: 14, fontWeight: 600, width: 40 }}>
-                      <input
-                        type="checkbox"
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            // TODO: 모든 신고 ID 선택
-                            setSelectedReports([]);
-                          } else {
-                            setSelectedReports([]);
-                          }
-                        }}
-                      />
-                    </th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: 'calc((100% - 40px) / 5)' }}>신고일시</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: 'calc((100% - 40px) / 5)' }}>신고사유</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: 'calc((100% - 40px) / 5)' }}>상태</th>
-                    <th style={{ padding: '12px', textAlign: 'left', fontSize: 14, fontWeight: 600, width: 'calc((100% - 40px) / 5)' }}>글 바로가기</th>
-                    <th style={{ padding: '12px', textAlign: 'center', fontSize: 14, fontWeight: 600, width: 'calc((100% - 40px) / 5)' }}>신고 취소</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr style={{ borderBottom: '1px solid #eee' }}>
-                    <td colSpan={6} style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                      신고 내역이 없습니다.
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <div>
+                <div className={styles.tableGrid + ' ' + styles.reportsGrid + ' ' + styles.tableHeader}>
+                  <div style={{ textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          // TODO: 모든 신고 ID 선택
+                          setSelectedReports([]);
+                        } else {
+                          setSelectedReports([]);
+                        }
+                      }}
+                    />
+                  </div>
+                  <div style={{ textAlign: 'left' }}>신고일시</div>
+                  <div style={{ textAlign: 'center' }}>신고사유</div>
+                  <div style={{ textAlign: 'center' }}>상태</div>
+                  <div style={{ textAlign: 'center' }}>글 바로가기</div>
+                  <div style={{ textAlign: 'center' }}>신고 취소</div>
+                </div>
+                <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+                  신고 내역이 없습니다.
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -981,6 +1067,127 @@ export default function MypagePage() {
               >
                 <Check size={18} />
                 확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCreditChargeModal && (
+        <div
+          className={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          onClick={closeModal}
+        >
+          <div
+            className={styles.modalCard}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className={styles.closeBtn}
+              onClick={closeModal}
+              aria-label="닫기"
+            >
+              <X size={20} />
+            </button>
+            <h2 className={styles.modalTitle}>
+              POP 충전
+            </h2>
+
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.95rem', fontWeight: 500, color: '#333' }}>
+              충전할 POP
+            </label>
+            <div className={styles.inputRow}>
+              <input
+                type="text"
+                value={creditAmount}
+                onChange={handleCreditAmountChange}
+                placeholder="숫자만 입력"
+                className={styles.amountInput}
+              />
+              {creditAmount && (
+                <button
+                  type="button"
+                  onClick={handleCreditAmountClear}
+                  className={styles.clearButton}
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+            <div className={styles.quickAmountRow}>
+              <button
+                type="button"
+                className={styles.quickAmountBtn}
+                onClick={() => handleQuickAmountAdd(1000)}
+              >
+                +1,000
+              </button>
+              <button
+                type="button"
+                className={styles.quickAmountBtn}
+                onClick={() => handleQuickAmountAdd(5000)}
+              >
+                +5,000
+              </button>
+              <button
+                type="button"
+                className={styles.quickAmountBtn}
+                onClick={() => handleQuickAmountAdd(10000)}
+              >
+                +10,000
+              </button>
+              <button
+                type="button"
+                className={styles.quickAmountBtn}
+                onClick={() => handleQuickAmountAdd(50000)}
+              >
+                +50,000
+              </button>
+              <button
+                type="button"
+                className={styles.quickAmountBtn}
+                onClick={() => handleQuickAmountAdd(100000)}
+              >
+                +100,000
+              </button>
+            </div>
+            <div className={styles.errorSlot}>
+              {creditError ? <span className={styles.errorText}>{creditError}</span> : null}
+            </div>
+
+            <div className={styles.totalRow}>
+              <div>최종 결제금액</div>
+              <div>
+                {(() => {
+                  if (!creditAmount) return '0';
+                  const validationError = validateCreditAmount(creditAmount);
+                  if (validationError) return '0';
+                  const base = Number(creditAmount);
+                  const final = base + (base / 10);
+                  return final.toLocaleString('ko-KR');
+                })()}원
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCreditPurchase}
+              disabled={!creditAmount || !!creditError}
+              className={styles.primaryButton}
+            >
+              구매하기
+            </button>
+
+            <div className={styles.helperText}>
+              <span>결제 관련 안내를 확인하시려면 </span>
+              <button
+                type="button"
+                className={styles.helperLink}
+              >
+                안내보기
               </button>
             </div>
           </div>
