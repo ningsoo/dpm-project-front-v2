@@ -35,13 +35,21 @@ export default function LoginPage() {
       return;
     }
     
-    // 입력이 멈춘 후 500ms 지연 후 @ 검증
+    // 입력이 멈춘 후 500ms 지연 후 검증
     emailDebounceRef.current = setTimeout(() => {
-      if (value && !value.includes('@')) {
-        setErrors((prev) => ({ ...prev, email: '@가 포함되어야 합니다' }));
-      } else {
-        setErrors((prev) => ({ ...prev, email: '' }));
+      let errorMsg = '';
+      
+      // 1순위: 한글 포함 검사 (완성형 한글 + 자음/모음 전부 금지)
+      // 완성형 한글: \uAC00-\uD7A3, 한글 자음: \u1100-\u11FF, 한글 모음: \u1160-\u1175
+      if (/[\uAC00-\uD7A3\u1100-\u11FF\u1160-\u1175]/.test(value)) {
+        errorMsg = '이메일에 한글 사용 불가';
       }
+      // 2순위: @ 없거나 이메일 형식이 아님
+      else if (!value.includes('@') || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        errorMsg = '올바른 이메일 형식이 아닙니다';
+      }
+      
+      setErrors((prev) => ({ ...prev, email: errorMsg }));
     }, 500);
   };
 
@@ -93,20 +101,21 @@ export default function LoginPage() {
 
   return (
     <div className={styles.wrap}>
-      <form onSubmit={handleSubmit} className={styles.form}>
+      <form onSubmit={handleSubmit} className={styles.form} noValidate>
         <h1 className={styles.h1}>로그인</h1>
 
         <label className={styles.label}>
           이메일
           <input
-            type="email"
+            type="text"
+            inputMode="email"
             placeholder="example@gmail.com"
             value={email}
             onChange={handleEmailChange}
             className={styles.input}
             disabled={loading}
           />
-          {errors.email && <span className={styles.error}>{errors.email}</span>}
+          <span className={styles.error}>{errors.email || ''}</span>
         </label>
 
         <label className={styles.label}>
@@ -129,10 +138,10 @@ export default function LoginPage() {
               {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {errors.password && <span className={styles.error}>{errors.password}</span>}
+          <span className={styles.error}>{errors.password || ''}</span>
         </label>
 
-        <button type="submit" className={styles.submit} disabled={loading}>
+        <button type="submit" className={styles.submit} disabled={loading || !!errors.email}>
           {loading ? '로그인 중…' : '로그인'}
         </button>
 
