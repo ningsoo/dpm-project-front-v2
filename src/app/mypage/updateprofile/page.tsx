@@ -20,7 +20,6 @@ export default function UpdateProfilePage() {
   const [isComposing, setIsComposing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const nicknameDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // 기존 phone 값을 phonePart1, phonePart2로 분리
   useEffect(() => {
@@ -33,15 +32,6 @@ export default function UpdateProfilePage() {
     }
   }, [reduxUser?.phone]);
 
-  // 닉네임 debounce 타이머 정리
-  useEffect(() => {
-    return () => {
-      if (nicknameDebounceRef.current) {
-        clearTimeout(nicknameDebounceRef.current);
-      }
-    };
-  }, []);
-
   const user = reduxUser;
 
   if (!user) {
@@ -49,32 +39,9 @@ export default function UpdateProfilePage() {
     return null;
   }
 
-  // 닉네임 형식 검사 함수 (우선순위: 공백 > 특수문자 > 한글 자음/모음 단독)
-  const validateNicknameFormat = (value: string): string => {
-    if (!value) return '';
-    
-    // 1순위: 공백 체크
-    if (/\s/.test(value)) {
-      return '공백은 입력할 수 없습니다';
-    }
-    
-    // 2순위: 특수문자 체크 (언더스코어 제외)
-    if (/[^a-zA-Z0-9가-힣_]/.test(value)) {
-      return '특수문자는 입력할 수 없습니다';
-    }
-    
-    // 3순위: 한글 자음/모음 단독 체크 (완성형 한글이 아닌 경우)
-    // 호환 자모 범위: U+3130-U+318F (전체 한글 호환 자모 영역)
-    if (/[\u3130-\u318F]/.test(value)) {
-      return '한글은 완성형으로 입력해 주세요';
-    }
-    
-    return '';
-  };
-  
-  // 닉네임 형식 검사 통과 여부
-  const nicknameFormatOk = nickname.length > 0 && nickname.length <= 10 && !validateNicknameFormat(nickname);
-  const nicknameOk = nicknameFormatOk;
+  // 한글 조합 중이 아닐 때만 특수문자 체크
+  const nicknameHasSpecialChar = !isComposing && /[^a-zA-Z0-9가-힣_]/.test(nickname);
+  const nicknameOk = nickname.length > 0 && nickname.length <= 10 && !nicknameHasSpecialChar;
   const phoneOk = phonePart1.length === 4 && phonePart2.length === 4;
 
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,49 +49,32 @@ export default function UpdateProfilePage() {
     // 10자 넘으면 입력 막기
     if (value.length > 10) return;
     setNickname(value);
-    
-    // 기존 타이머가 있으면 취소
-    if (nicknameDebounceRef.current) {
-      clearTimeout(nicknameDebounceRef.current);
+    // 한글 조합 중이 아니고 특수문자가 없으면 에러 메시지 제거
+    if (!isComposing && !/[^a-zA-Z0-9가-힣_]/.test(value) && errors.nickname) {
+      setErrors((e) => ({ ...e, nickname: '' }));
     }
-    
-    // input을 지우면 에러 메시지 제거
-    if (!value) {
-      setErrors((prev) => ({ ...prev, nickname: '' }));
-      return;
-    }
-    
-    // 한글 조합 중이면 검사하지 않음 (조합이 끝나면 onCompositionEnd에서 검사)
-    if (isComposing) {
-      return;
-    }
-    
-    // 입력이 멈춘 후 500ms 지연 후 형식 검사
-    nicknameDebounceRef.current = setTimeout(() => {
-      const errorMsg = validateNicknameFormat(value);
-      setErrors((prev) => ({ ...prev, nickname: errorMsg }));
-    }, 500);
   };
 
   const handleNicknameCheck = useCallback(async () => {
-    if (!nicknameFormatOk) {
+    if (!nickname) {
+      setErrors((e) => ({ ...e, nickname: '닉네임을 입력해주세요' }));
       return;
     }
-    
+    if (nicknameHasSpecialChar) {
+      setErrors((e) => ({ ...e, nickname: '특수문자는 입력할 수 없습니다' }));
+      return;
+    }
     try {
       // TODO: 닉네임 중복 확인 API 호출
       // const { data } = await authApi.checkNickname(nickname);
       // const available = (data?.data as { available?: boolean })?.available;
-      // if (available === false) {
-      //   ToastUtils.error('중복된 닉네임입니다');
-      // } else {
-      //   ToastUtils.success('사용 가능합니다');
-      // }
-      ToastUtils.success('사용 가능합니다');
+      // setErrors((e) => ({ ...e, nickname: available === false ? '이미 사용 중인 닉네임입니다' : '' }));
+      ToastUtils.success('사용 가능한 닉네임입니다');
+      setErrors((e) => ({ ...e, nickname: '' }));
     } catch {
-      ToastUtils.error('중복된 닉네임입니다');
+      setErrors((e) => ({ ...e, nickname: '확인할 수 없습니다' }));
     }
-  }, [nickname, nicknameFormatOk]);
+  }, [nickname, nicknameHasSpecialChar]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,11 +104,11 @@ export default function UpdateProfilePage() {
 
         <label className={styles.label}>
           닉네임
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input
-            type="text"
+          <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
+            <input
+              type="text"
               placeholder="특수문자 제외, 10자 이내"
-            value={nickname}
+              value={nickname}
               onChange={handleNicknameChange}
               onCompositionStart={() => setIsComposing(true)}
               onCompositionEnd={(e) => {
@@ -166,34 +116,33 @@ export default function UpdateProfilePage() {
                 // 조합 종료 후 최종 값으로 다시 체크
                 handleNicknameChange(e as any);
               }}
-            className={styles.input}
-              style={{ flex: 1, height: '48px', boxSizing: 'border-box', marginTop: 0 }}
+              className={styles.input}
+              style={{ flex: 1 }}
             />
             <button
               type="button"
               onClick={handleNicknameCheck}
-              disabled={!nicknameFormatOk}
               style={{
                 padding: '0 16px',
-                background: nicknameFormatOk ? '#1976d2' : '#ccc',
+                background: '#1976d2',
                 color: '#fff',
                 border: 'none',
                 borderRadius: 8,
-                cursor: nicknameFormatOk ? 'pointer' : 'not-allowed',
+                cursor: 'pointer',
                 fontSize: 14,
                 whiteSpace: 'nowrap',
-                height: '48px',
-                boxSizing: 'border-box',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
+                height: 'auto',
               }}
             >
               중복확인
             </button>
           </div>
-          <span className={styles.error}>{errors.nickname || ''}</span>
+          {nicknameHasSpecialChar && (
+            <span className={styles.error}>특수문자는 입력할 수 없습니다</span>
+          )}
+          {errors.nickname && (
+            <span className={styles.error}>{errors.nickname}</span>
+          )}
         </label>
 
         <label className={styles.label}>
@@ -202,11 +151,10 @@ export default function UpdateProfilePage() {
             className={styles.input}
             style={{ 
               position: 'relative', 
-              display: 'flex',
-              alignItems: 'center',
-              padding: '12px 14px',
+              display: 'flex', 
+              alignItems: 'stretch',
+              padding: 0,
               marginTop: 6,
-              gap: '8px',
             }}
           >
             {/* 고정된 010 텍스트 */}
@@ -214,7 +162,7 @@ export default function UpdateProfilePage() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                padding: '0',
+                padding: '0 12px',
                 color: '#333',
                 pointerEvents: 'none',
                 fontSize: '1rem',
@@ -223,8 +171,6 @@ export default function UpdateProfilePage() {
                 whiteSpace: 'nowrap',
                 background: 'transparent',
                 border: 'none',
-                width: '32px',
-                flexShrink: 0,
               }}
             >
               010
@@ -234,7 +180,7 @@ export default function UpdateProfilePage() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
+                padding: '0 4px',
                 color: '#333',
                 pointerEvents: 'none',
                 fontSize: '1rem',
@@ -243,8 +189,6 @@ export default function UpdateProfilePage() {
                 whiteSpace: 'nowrap',
                 background: 'transparent',
                 border: 'none',
-                width: '8px',
-                flexShrink: 0,
               }}
             >
               -
@@ -294,14 +238,15 @@ export default function UpdateProfilePage() {
               style={{
                 width: '80px',
                 textAlign: 'left',
-                padding: '0',
+                padding: '12px 8px',
                 border: 'none',
+                borderLeft: 'none',
+                borderRight: 'none',
                 borderRadius: 0,
                 outline: 'none',
                 fontSize: '1rem',
                 fontFamily: 'inherit',
                 background: 'transparent',
-                flexShrink: 0,
               }}
               maxLength={4}
             />
@@ -310,7 +255,7 @@ export default function UpdateProfilePage() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
+                padding: '0 4px',
                 color: '#333',
                 pointerEvents: 'none',
                 fontSize: '1rem',
@@ -319,8 +264,6 @@ export default function UpdateProfilePage() {
                 whiteSpace: 'nowrap',
                 background: 'transparent',
                 border: 'none',
-                width: '8px',
-                flexShrink: 0,
               }}
             >
               -
@@ -365,14 +308,14 @@ export default function UpdateProfilePage() {
               style={{
                 width: '80px',
                 textAlign: 'left',
-                padding: '0',
+                padding: '12px 8px',
                 border: 'none',
+                borderLeft: 'none',
                 borderRadius: 0,
                 outline: 'none',
                 fontSize: '1rem',
                 fontFamily: 'inherit',
                 background: 'transparent',
-                flexShrink: 0,
               }}
               maxLength={4}
             />
@@ -384,13 +327,13 @@ export default function UpdateProfilePage() {
         </button>
 
         <div style={{ textAlign: 'right', marginTop: 8 }}>
-        <Link
-          href="/mypage/withdraw"
-            className={styles.withdrawLink}
-        >
-          회원 탈퇴
-        </Link>
-      </div>
+          <Link
+            href="/mypage/withdraw"
+            style={{ fontSize: '0.9rem', color: '#c62828', textDecoration: 'underline' }}
+          >
+            회원 탈퇴
+          </Link>
+        </div>
       </form>
     </div>
   );

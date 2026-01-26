@@ -9,6 +9,7 @@ import { toggleDarkMode } from '@/store/slices/uiSlice';
 import { logout as authLogout } from '@/store/slices/authSlice';
 import { authApi } from '@/api/authApi';
 import { ToastUtils } from '@/utils/toastUtils';
+import { tokenUtils } from '@/utils/tokenUtils';
 import styles from './Header.module.css';
 
 const CATEGORIES = [
@@ -34,10 +35,12 @@ export default function Header() {
     try {
       await authApi.logout();
       ToastUtils.success('Logged out');
-      dispatch(authLogout());
-      window.location.href = '/';
     } catch {
+      // 로그아웃 API 실패해도 클라이언트에서 토큰 제거
+    } finally {
+      // Redux 상태 초기화 및 토큰 제거
       dispatch(authLogout());
+      tokenUtils.clearTokens();
       window.location.href = '/';
     }
   };
