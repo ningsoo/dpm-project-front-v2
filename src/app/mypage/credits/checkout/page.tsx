@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useAuth } from '@/auth/AuthContext';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 import Link from 'next/link';
 import styles from './checkout.module.css';
 
@@ -10,7 +11,8 @@ type PaymentMethod = 'simple' | 'card' | 'transfer';
 
 function CheckoutContent() {
   const searchParams = useSearchParams();
-  const { isLoggedIn } = useAuth();
+  const router = useRouter();
+  const reduxUser = useSelector((s: RootState) => s.auth.user);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [agreed, setAgreed] = useState(false);
 
@@ -18,7 +20,7 @@ function CheckoutContent() {
   const amount = amountParam ? parseInt(amountParam, 10) : 0;
   const formattedAmount = amount.toLocaleString('ko-KR');
 
-  if (!isLoggedIn) {
+  if (!reduxUser) {
     return (
       <div className={styles.wrap}>
         <p>로그인이 필요합니다.</p>
