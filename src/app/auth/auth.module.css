@@ -75,6 +75,8 @@
   margin-top: 4px;
   font-size: 0.8rem;
   color: #c62828;
+  min-height: 18px;
+  line-height: 1.4;
 }
 
 .helper {
@@ -114,12 +116,14 @@
 }
 
 .links a {
-  color: #1976d2;
-  text-decoration: underline;
+  color: #333;
+  text-decoration: none;
+  transition: text-decoration 0.2s;
 }
 
 .links a:hover {
-  color: #0d47a1;
+  color: #333;
+  text-decoration: underline;
 }
 
 .verifyText {
@@ -136,11 +140,35 @@
   text-align: center;
 }
 
+.resend a {
+  color: #333;
+  text-decoration: none;
+  transition: text-decoration 0.2s;
+}
+
+.resend a:hover {
+  color: #333;
+  text-decoration: underline;
+}
+
 .resend button {
   background: none;
   border: none;
   color: #1976d2;
   cursor: pointer;
+  text-decoration: underline;
+}
+
+.withdrawLink {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+  text-decoration: none;
+  transition: text-decoration 0.2s;
+}
+
+.withdrawLink:hover {
+  color: #333;
   text-decoration: underline;
 }
 

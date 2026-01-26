@@ -21,14 +21,20 @@ const TERMS = `동일한 이메일 주소로는 1달 이내에 재가입할 수 
 
 export default function WithdrawPage() {
   const router = useRouter();
-  const user = useSelector((s: RootState) => s.auth.user);
+  const reduxUser = useSelector((s: RootState) => s.auth.user);
   const [checked, setChecked] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const user = reduxUser;
+
   if (!user) {
-    router.push('/auth/login');
-    return null;
+    return (
+      <div className={styles.wrap}>
+        <p>로그인이 필요합니다.</p>
+        <Link href="/auth/login">로그인</Link>
+      </div>
+    );
   }
 
   const handleWithdraw = () => {
@@ -53,7 +59,7 @@ export default function WithdrawPage() {
 
   return (
     <div className={styles.wrap}>
-      <div className={styles.form} style={{ maxWidth: '800px', width: '100%' }}>
+      <div className={styles.form}>
         <h1 className={styles.h1}>회원 탈퇴</h1>
         <div
           style={{
@@ -62,11 +68,12 @@ export default function WithdrawPage() {
             fontSize: '0.9rem',
             lineHeight: 1.6,
             whiteSpace: 'pre-wrap',
+            textAlign: 'left',
           }}
         >
           {TERMS}
         </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, justifyContent: 'center' }}>
           <input
             type="checkbox"
             checked={checked}

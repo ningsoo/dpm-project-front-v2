@@ -21,7 +21,10 @@ const CATEGORIES = [
 
 export default function Header() {
   const pathname = usePathname();
-  const variant = pathname?.startsWith('/auth') ? 'auth' : 'main';
+  const variant =
+    pathname?.startsWith('/auth') || pathname?.startsWith('/mypage/credits/checkout')
+      ? 'auth'
+      : 'main';
   const dispatch = useDispatch();
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);

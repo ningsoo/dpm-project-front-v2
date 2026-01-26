@@ -6,7 +6,8 @@ import { RootState } from '@/store';
 import styles from '../mypage.module.css';
 
 export default function CreditsPage() {
-  const user = useSelector((s: RootState) => s.auth.user);
+  const reduxUser = useSelector((s: RootState) => s.auth.user);
+  const user = reduxUser;
 
   if (!user) {
     return (
