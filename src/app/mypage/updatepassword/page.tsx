@@ -13,19 +13,8 @@ import styles from '@/app/auth/auth.module.css';
 
 const PWD_REQUIRE = '대문자, 숫자, 특수문자 포함 10자 이상, 공백금지';
 
-function validate(p: string): boolean {
-  return (
-    p.length >= 10 &&
-    /[A-Z]/.test(p) &&
-    /[0-9]/.test(p) &&
-    /[!@#$%^&*(),.?":{}|<>]/.test(p) &&
-    !/\s/.test(p)
-  );
-}
-
 function validatePassword(p: string): string[] {
   const err: string[] = [];
-  if (/\s/.test(p)) err.push('공백은 사용할 수 없습니다');
   if (p.length < 10) err.push('10자 이상');
   if (!/[A-Z]/.test(p)) err.push('대문자 포함');
   if (!/[0-9]/.test(p)) err.push('숫자 포함');
@@ -55,6 +44,11 @@ export default function UpdatePasswordPage() {
     credits: undefined,
   } : null);
 
+  const pwdErrors = newPassword ? validatePassword(newPassword) : [];
+  const pwdOk = pwdErrors.length === 0;
+  const confirmOk = newPassword && confirm && newPassword === confirm;
+  const confirmError = confirm && newPassword && newPassword !== confirm;
+
   if (!isLoggedIn) {
     return (
       <div className={styles.wrap}>
@@ -66,7 +60,7 @@ export default function UpdatePasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate(newPassword) || newPassword !== confirm) return;
+    if (!pwdOk || !confirmOk) return;
     setLoading(true);
     try {
       await mypageApi.updatePassword('', newPassword);
@@ -107,13 +101,17 @@ export default function UpdatePasswordPage() {
               {showNew ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {newPassword && validatePassword(newPassword).length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
-              {validatePassword(newPassword).map((err, idx) => (
-                <span key={idx} className={styles.error}>{err}</span>
-              ))}
-            </div>
-          )}
+          <div style={{ marginTop: 4, fontSize: '0.8rem', lineHeight: 1.5, minHeight: '18px' }}>
+            {newPassword && (
+              <>
+                {pwdErrors.length > 0 ? (
+                  <span style={{ color: '#c62828' }}>{pwdErrors.join(' / ')}</span>
+                ) : (
+                  <span style={{ color: '#4caf50' }}>✓ 모든 조건을 만족합니다</span>
+                )}
+              </>
+            )}
+          </div>
         </label>
 
         <label className={styles.label}>
@@ -135,15 +133,15 @@ export default function UpdatePasswordPage() {
               {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {confirm && newPassword !== confirm && (
-            <span className={styles.error}>비밀번호가 일치하지 않습니다</span>
-          )}
+          <span className={styles.error}>
+            {confirmError ? '비밀번호가 일치하지 않습니다' : ''}
+          </span>
         </label>
 
         <button
           type="submit"
           className={styles.submit}
-          disabled={!validate(newPassword) || newPassword !== confirm || loading}
+          disabled={!pwdOk || !confirmOk || loading}
         >
           {loading ? '변경 중…' : '변경'}
         </button>
