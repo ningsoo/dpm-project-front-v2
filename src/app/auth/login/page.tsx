@@ -8,6 +8,7 @@ import { useDispatch } from 'react-redux';
 import { authApi } from '@/api/authApi';
 import { setUser } from '@/store/slices/authSlice';
 import { ToastUtils } from '@/utils/toastUtils';
+import { tokenUtils } from '@/utils/tokenUtils';
 import styles from '../auth.module.css';
 
 export default function LoginPage() {
@@ -74,10 +75,25 @@ export default function LoginPage() {
     setErrors({});
     try {
       const { data } = await authApi.login({ email, password });
-      const user = (data?.data as { user?: { id: string; email: string; nickname: string } })?.user;
-      if (user) {
-        dispatch(setUser({ id: user.id, email: user.email, nickname: user.nickname }));
+      const responseData = data?.data as {
+        user?: { id: string; email: string; nickname: string };
+        accessToken?: string;
+      };
+
+      // Access Token 저장 (Refresh Token은 서버 DB에만 저장되므로 클라이언트에서 저장하지 않음)
+      if (responseData?.accessToken) {
+        tokenUtils.setAccessToken(responseData.accessToken);
       }
+
+      // 사용자 정보 저장
+      if (responseData?.user) {
+        dispatch(setUser({
+          id: responseData.user.id,
+          email: responseData.user.email,
+          nickname: responseData.user.nickname,
+        }));
+      }
+
       router.push('/');
     } catch (err: unknown) {
       const res = err as { response?: { data?: { message?: string; code?: string } } };

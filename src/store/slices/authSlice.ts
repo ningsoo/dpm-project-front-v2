@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { tokenUtils } from '@/utils/tokenUtils';
 
 export interface UserInfo {
   id: string;
@@ -37,6 +38,8 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
       state.tokenStatus = 'idle';
+      // 토큰 제거
+      tokenUtils.clearTokens();
     },
   },
 });

@@ -38,7 +38,7 @@ export const authApi = {
     fetchClient.post<ApiResponse<unknown>>('/auth/verification', { token }),
 
   refresh: () =>
-    fetchClient.post<ApiResponse<unknown>>('/auth/refresh'),
+    fetchClient.post<ApiResponse<{ accessToken?: string }>>('/auth/refresh', {}),
 
   findPassword: (email: string) =>
     fetchClient.patch<ApiResponse<unknown>>('/auth/findpassword', { email }),
