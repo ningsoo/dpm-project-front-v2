@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { useAuth } from '@/auth/AuthContext';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import styles from '@/app/auth/auth.module.css';
@@ -13,10 +12,9 @@ import styles from '@/app/auth/auth.module.css';
 export default function UpdateProfilePage() {
   const router = useRouter();
   const reduxUser = useSelector((s: RootState) => s.auth.user);
-  const { isLoggedIn, user: mockUser } = useAuth();
   const phonePart1Ref = useRef<HTMLInputElement>(null);
   const phonePart2Ref = useRef<HTMLInputElement>(null);
-  const [nickname, setNickname] = useState(reduxUser?.nickname || mockUser?.nickname || '');
+  const [nickname, setNickname] = useState(reduxUser?.nickname || '');
   const [phonePart1, setPhonePart1] = useState('');
   const [phonePart2, setPhonePart2] = useState('');
   const [isComposing, setIsComposing] = useState(false);
@@ -44,16 +42,12 @@ export default function UpdateProfilePage() {
     };
   }, []);
 
-  // 목로그인 상태면 mockUser 사용, 아니면 Redux user 사용
-  const user = reduxUser || (mockUser ? {
-    id: String(mockUser.id),
-    email: mockUser.email,
-    nickname: mockUser.nickname,
-    phone: undefined,
-    profileImage: undefined,
-    role: mockUser.role,
-    credits: undefined,
-  } : null);
+  const user = reduxUser;
+
+  if (!user) {
+    router.push('/auth/login');
+    return null;
+  }
 
   // 닉네임 형식 검사 함수 (우선순위: 공백 > 특수문자 > 한글 자음/모음 단독)
   const validateNicknameFormat = (value: string): string => {
@@ -82,15 +76,6 @@ export default function UpdateProfilePage() {
   const nicknameFormatOk = nickname.length > 0 && nickname.length <= 10 && !validateNicknameFormat(nickname);
   const nicknameOk = nicknameFormatOk;
   const phoneOk = phonePart1.length === 4 && phonePart2.length === 4;
-
-  if (!isLoggedIn) {
-    return (
-      <div className={styles.wrap}>
-        <p>로그인이 필요합니다.</p>
-        <Link href="/auth/login">로그인</Link>
-      </div>
-    );
-  }
 
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
