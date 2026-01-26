@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { boardApi } from '@/api/boardApi';
 import type { BoardCategory } from '@/api/boardApi';
 import { ToastUtils } from '@/utils/toastUtils';
-import ShowcaseFeaturedSection from '@/components/home/ShowcaseFeaturedSection';
-import PlaylistsCarousel from '@/components/board/PlaylistsCarousel';
-import SpotlightBoardCarousel from '@/components/board/SpotlightBoardCarousel';
+import ShowcaseFeaturedSection from '@/components/board/ShowcaseFeaturedSection';
+import CommonBoardCarousel from '@/components/board/CommonBoardCarousel';
 import styles from './BoardList.module.css';
 
 interface Post {
@@ -30,12 +30,14 @@ interface BoardListProps {
 const GRID_CATS = ['showcase', 'playlists', 'spotlight'];
 
 export default function BoardList({ category, viewMode }: BoardListProps) {
+  const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchType, setSearchType] = useState<'title' | 'nickname'>('title');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [hoveredPostId, setHoveredPostId] = useState<string | null>(null);
 
   const fetchList = useCallback(async (reset = false) => {
     const p = reset ? 1 : page;
@@ -76,14 +78,9 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
           <ShowcaseFeaturedSection />
         </div>
       )}
-      {category === 'playlists' && (
+      {(category === 'playlists' || category === 'spotlight') && (
         <div className={styles.carouselSection}>
-          <PlaylistsCarousel />
-        </div>
-      )}
-      {category === 'spotlight' && (
-        <div className={styles.carouselSection}>
-          <SpotlightBoardCarousel />
+          <CommonBoardCarousel category={category as BoardCategory} />
         </div>
       )}
 
@@ -110,7 +107,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
           </button>
         </div>
         <Link href={`/boards/${safeCat}/new`} className={styles.writeBtn}>
-          글쓰기
+          글작성
         </Link>
       </div>
 
@@ -118,28 +115,87 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
         <div className={styles.loading}>로딩 중…</div>
       ) : viewMode === 'grid' ? (
         <div className={styles.grid}>
-          {posts.map((p, i) => (
-            <Link key={p.id} href={`/boards/${safeCat}/${p.id}`} className={styles.card}>
-              <div className={styles.thumbWrap}>
-                <img
-                  src={
-                    p.thumbnail ||
-                    (p.youtubeUrl
-                      ? `https://img.youtube.com/vi/${extractYtId(p.youtubeUrl)}/mqdefault.jpg`
-                      : '/placeholder-playlist.png')
+          {posts.map((p, i) => {
+            const ytId = extractYtId(p.youtubeUrl);
+            const isHovered = hoveredPostId === p.id;
+            const isShowcase = category === 'showcase';
+            const showVideo = isShowcase && isHovered && ytId;
+
+            const handleCardClick = () => {
+              router.push(`/boards/${safeCat}/${p.id}`);
+            };
+
+            return (
+              <div
+                key={p.id}
+                className={styles.card}
+                onMouseEnter={() => setHoveredPostId(p.id)}
+                onMouseLeave={() => setHoveredPostId(null)}
+                onClick={handleCardClick}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleCardClick();
                   }
-                  alt=""
-                  className={styles.thumb}
-                />
-              </div>
-              <div className={styles.cardBody}>
-                <div className={styles.cardTitle}>{p.title}</div>
-                <div className={styles.meta}>
-                  {p.authorNickname || '—'} · ♥{p.likeCount ?? 0}
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                <div className={styles.thumbWrap}>
+                  {showVideo ? (
+                    <>
+                      <iframe
+                        className={styles.thumb}
+                        src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytId}&modestbranding=1&rel=0`}
+                        allow="autoplay; encrypted-media"
+                        allowFullScreen
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          border: 'none',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                      {/* 클릭 가능한 투명 레이어 */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          zIndex: 1,
+                          cursor: 'pointer',
+                        }}
+                        onClick={handleCardClick}
+                      />
+                    </>
+                  ) : (
+                    <img
+                      src={
+                        p.thumbnail ||
+                        (ytId
+                          ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`
+                          : '/placeholder-playlist.png')
+                      }
+                      alt=""
+                      className={styles.thumb}
+                    />
+                  )}
+                </div>
+                <div className={styles.cardBody}>
+                  <div className={styles.cardTitle}>{p.title}</div>
+                  <div className={styles.meta}>
+                    {p.authorNickname || '—'} · ♥{p.likeCount ?? 0}
+                  </div>
                 </div>
               </div>
-            </Link>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className={styles.tableWrap}>

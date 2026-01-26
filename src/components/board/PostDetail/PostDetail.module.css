@@ -211,23 +211,22 @@
 .commentHead {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 
 .commentAuthor {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #333;
+  margin-right: auto;
 }
 
 .commentDate {
-  font-size: 0.8rem;
+  font-size: 0.6rem;
   color: #888;
+  white-space: nowrap;
 }
 
 .commentBody {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: #444;
 }
 
@@ -258,4 +257,142 @@
   padding: 48px;
   text-align: center;
   color: #666;
+}
+
+.menuWrapper {
+  position: relative;
+}
+
+.iconBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.iconBtn:disabled:hover {
+  background: none;
+  color: #666;
+}
+
+.menuDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  min-width: 120px;
+  overflow: hidden;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 0.9rem;
+  color: #333;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.menuItem:hover {
+  background: #f5f5f5;
+}
+
+.menuItem:first-child {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.menuItem:last-child {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modalContent {
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+}
+
+.modalMessage {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  color: #333;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modalButton {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modalButtonCancel {
+  background: #999;
+}
+
+.modalButtonCancel:hover {
+  background: #777;
+}
+
+.modalButtonConfirm {
+  background: #1976d2;
+}
+
+.modalButtonConfirm:hover {
+  background: #1565c0;
+}
+
+.modalButtonDelete {
+  background: #c62828;
+}
+
+.modalButtonDelete:hover {
+  background: #b71c1c;
+}
+
+.reportTextarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.reportTextarea:focus {
+  outline: none;
+  border-color: #1976d2;
 }

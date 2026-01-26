@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { CreditCard, Key, User, Plus, Search, Pencil, Heart, X, Check } from 'lucide-react';
 import { RootState } from '@/store';
-import { useAuth } from '@/auth/AuthContext';
 import styles from './mypage.module.css';
 
 const TABS = [
@@ -37,8 +36,7 @@ function formatDate(date: Date): string {
 }
 
 export default function MypagePage() {
-  const reduxUser = useSelector((s: RootState) => s.auth.user);
-  const { isLoggedIn, user: mockUser } = useAuth();
+  const user = useSelector((s: RootState) => s.auth.user);
   const [tab, setTab] = useState<string>('playlists');
   const [searchQuery, setSearchQuery] = useState({ posts: '', comments: '', liked: '' });
   const [dateRange, setDateRange] = useState({
@@ -61,21 +59,9 @@ export default function MypagePage() {
   const imageRef = useRef<HTMLImageElement>(null);
   const [receivedLikes, setReceivedLikes] = useState(0);
 
-  // 목로그인 상태면 mockUser 사용, 아니면 Redux user 사용
-  // MockUser를 UserInfo 형태로 변환
-  const user = reduxUser || (mockUser ? {
-    id: String(mockUser.id),
-    email: mockUser.email,
-    nickname: mockUser.nickname,
-    phone: undefined,
-    profileImage: undefined,
-    role: mockUser.role,
-    credits: undefined,
-  } : null);
-
   const [profileImage, setProfileImage] = useState<string | null>(user?.profileImage || null);
 
-  if (!isLoggedIn) {
+  if (!user) {
     return (
       <div className={styles.wrap}>
         <p>로그인이 필요합니다.</p>

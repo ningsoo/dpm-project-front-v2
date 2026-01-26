@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { useAuth } from '@/auth/AuthContext';
 import styles from '@/app/auth/auth.module.css';
 
 const TERMS = `동일한 이메일 주소로는 1달 이내에 재가입할 수 없습니다.
@@ -22,30 +21,14 @@ const TERMS = `동일한 이메일 주소로는 1달 이내에 재가입할 수 
 
 export default function WithdrawPage() {
   const router = useRouter();
-  const reduxUser = useSelector((s: RootState) => s.auth.user);
-  const { isLoggedIn, user: mockUser } = useAuth();
+  const user = useSelector((s: RootState) => s.auth.user);
   const [checked, setChecked] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // 목로그인 상태면 mockUser 사용, 아니면 Redux user 사용
-  const user = reduxUser || (mockUser ? {
-    id: String(mockUser.id),
-    email: mockUser.email,
-    nickname: mockUser.nickname,
-    phone: undefined,
-    profileImage: undefined,
-    role: mockUser.role,
-    credits: undefined,
-  } : null);
-
-  if (!isLoggedIn) {
-    return (
-      <div className={styles.wrap}>
-        <p>로그인이 필요합니다.</p>
-        <Link href="/auth/login">로그인</Link>
-      </div>
-    );
+  if (!user) {
+    router.push('/auth/login');
+    return null;
   }
 
   const handleWithdraw = () => {

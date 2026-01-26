@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
@@ -18,8 +18,10 @@ interface ShowcasePost {
 }
 
 export default function TopShowcase() {
+  const router = useRouter();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const [posts, setPosts] = useState<ShowcasePost[]>([]);
+  const [hoveredPostId, setHoveredPostId] = useState<string | null>(null);
 
   useEffect(() => {
     boardApi
@@ -37,26 +39,80 @@ export default function TopShowcase() {
     <section className={`${styles.section} ${darkMode ? 'dark' : ''}`}>
       <h2 className={styles.title}>TOP Showcase</h2>
       <div className={styles.grid}>
-        {posts.map((p) => (
-          <Link
-            key={p.id}
-            href={`/boards/showcase/${p.id}`}
-            className={styles.card}
-          >
-            <div className={styles.thumbWrap}>
-              <img
-                src={p.thumbnail || `https://img.youtube.com/vi/${extractYoutubeId(p.youtubeUrl)}/mqdefault.jpg`}
-                alt=""
-                className={styles.thumb}
-              />
+        {posts.map((p) => {
+          const ytId = extractYoutubeId(p.youtubeUrl);
+          const isHovered = hoveredPostId === p.id;
+          const showVideo = isHovered && ytId;
+
+          const handleCardClick = () => {
+            router.push(`/boards/showcase/${p.id}`);
+          };
+
+          return (
+            <div
+              key={p.id}
+              className={styles.card}
+              onMouseEnter={() => setHoveredPostId(p.id)}
+              onMouseLeave={() => setHoveredPostId(null)}
+              onClick={handleCardClick}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleCardClick();
+                }
+              }}
+              style={{ cursor: 'pointer' }}
+            >
+              <div className={styles.thumbWrap}>
+                {showVideo ? (
+                  <>
+                    <iframe
+                      className={styles.thumb}
+                      src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytId}&modestbranding=1&rel=0`}
+                      allow="autoplay; encrypted-media"
+                      allowFullScreen
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        border: 'none',
+                        pointerEvents: 'none',
+                      }}
+                    />
+                    {/* 클릭 가능한 투명 레이어 */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        zIndex: 1,
+                        cursor: 'pointer',
+                      }}
+                      onClick={handleCardClick}
+                    />
+                  </>
+                ) : (
+                  <img
+                    src={p.thumbnail || (ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : '/placeholder-playlist.png')}
+                    alt=""
+                    className={styles.thumb}
+                  />
+                )}
+              </div>
+              <div className={styles.body}>
+                <div className={styles.author}>{p.authorNickname || '—'}</div>
+                <div className={styles.cardTitle}>{p.title}</div>
+                <div className={styles.likes}>♥ {p.likeCount ?? 0}</div>
+              </div>
             </div>
-            <div className={styles.body}>
-              <div className={styles.author}>{p.authorNickname || '—'}</div>
-              <div className={styles.cardTitle}>{p.title}</div>
-              <div className={styles.likes}>♥ {p.likeCount ?? 0}</div>
-            </div>
-          </Link>
-        ))}
+          );
+        })}
       </div>
     </section>
   );

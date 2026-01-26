@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Heart, MessageCircle, Eye, MoreVertical } from 'lucide-react';
@@ -31,6 +31,7 @@ interface Post {
 
 interface Comment {
   id: string;
+  authorId?: string;
   authorNickname: string;
   content: string;
   createdAt: string;
@@ -73,6 +74,16 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   const [commentText, setCommentText] = useState('');
   const [loading, setLoading] = useState(true);
   const [commentOpen, setCommentOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [commentMenuOpen, setCommentMenuOpen] = useState<string | null>(null);
+  const [showCommentDeleteModal, setShowCommentDeleteModal] = useState<string | null>(null);
+  const [showCommentReportModal, setShowCommentReportModal] = useState<string | null>(null);
+  const [commentReportReason, setCommentReportReason] = useState('');
+  const menuRef = useRef<HTMLDivElement>(null);
+  const commentMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const safeCat = (['showcase', 'playlists', 'spotlight', 'community', 'reviews'].includes(category)
     ? category
@@ -89,6 +100,34 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
       .catch(() => ToastUtils.error('글을 불러올 수 없습니다'))
       .finally(() => setLoading(false));
   }, [safeCat, boardId]);
+
+  // 외부 클릭 시 메뉴 닫기
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+      // 댓글 메뉴 닫기
+      if (commentMenuOpen) {
+        const clickedInside = Object.values(commentMenuRefs.current).some(
+          (ref) => ref && ref.contains(event.target as Node)
+        );
+        if (!clickedInside) {
+          setCommentMenuOpen(null);
+        }
+      }
+    };
+
+    if (menuOpen || commentMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuOpen, commentMenuOpen]);
 
   const handleLike = () => {
     if (!user) return;
@@ -108,6 +147,102 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
         setComments(d?.comments || []);
       });
     }).catch(() => ToastUtils.error('댓글 등록 실패'));
+  };
+
+  const handleMenuClick = () => {
+    if (!user) return; // 비로그인 사용자는 동작하지 않음
+    setMenuOpen((prev) => !prev);
+  };
+
+  const handleEdit = () => {
+    setMenuOpen(false);
+    router.push(`/boards/${category}/${boardId}/edit`);
+  };
+
+  const handleDeleteClick = () => {
+    setMenuOpen(false);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    boardApi.deletePost(safeCat, boardId)
+      .then(() => {
+        ToastUtils.success('글이 삭제되었습니다.');
+        router.push(`/boards/${category}`);
+      })
+      .catch(() => {
+        ToastUtils.error('글 삭제에 실패했습니다.');
+      })
+      .finally(() => {
+        setShowDeleteModal(false);
+      });
+  };
+
+  const handleReportClick = () => {
+    setMenuOpen(false);
+    setShowReportModal(true);
+  };
+
+  const handleReportSubmit = () => {
+    if (!reportReason.trim()) {
+      ToastUtils.error('신고 사유를 입력해주세요.');
+      return;
+    }
+    boardApi.reportPost(safeCat, boardId, reportReason.trim())
+      .then(() => {
+        ToastUtils.success('신고가 접수되었습니다.');
+        setShowReportModal(false);
+        setReportReason('');
+      })
+      .catch(() => {
+        ToastUtils.error('신고 접수에 실패했습니다.');
+      });
+  };
+
+  // 댓글 메뉴 핸들러
+  const handleCommentMenuClick = (commentId: string) => {
+    if (!user) return;
+    setCommentMenuOpen((prev) => (prev === commentId ? null : commentId));
+  };
+
+  const handleCommentDeleteClick = (commentId: string) => {
+    setCommentMenuOpen(null);
+    setShowCommentDeleteModal(commentId);
+  };
+
+  const handleCommentDeleteConfirm = () => {
+    if (!showCommentDeleteModal) return;
+    boardApi.deleteComment(safeCat, boardId, showCommentDeleteModal)
+      .then(() => {
+        ToastUtils.success('댓글이 삭제되었습니다.');
+        setComments((prev) => prev.filter((c) => c.id !== showCommentDeleteModal));
+        setShowCommentDeleteModal(null);
+      })
+      .catch(() => {
+        ToastUtils.error('댓글 삭제에 실패했습니다.');
+        setShowCommentDeleteModal(null);
+      });
+  };
+
+  const handleCommentReportClick = (commentId: string) => {
+    setCommentMenuOpen(null);
+    setShowCommentReportModal(commentId);
+  };
+
+  const handleCommentReportSubmit = () => {
+    if (!showCommentReportModal || !commentReportReason.trim()) {
+      ToastUtils.error('신고 사유를 입력해주세요.');
+      return;
+    }
+    boardApi.reportComment(safeCat, boardId, showCommentReportModal, commentReportReason.trim())
+      .then(() => {
+        ToastUtils.success('신고가 접수되었습니다.');
+        setShowCommentReportModal(null);
+        setCommentReportReason('');
+      })
+      .catch(() => {
+        ToastUtils.error('신고 접수에 실패했습니다.');
+      });
   };
 
   if (loading) return <div className={styles.loading}>로딩 중…</div>;
@@ -132,10 +267,35 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
           <span className={styles.iconBtn} style={{ cursor: 'default' }}>
             {formatDateTime(post.createdAt)}
           </span>
-          <button type="button" className={styles.iconBtn} title="메뉴">
-            <MoreVertical size={18} />
-            {/* Dropdown: Edit/Delete (author), Report (others) */}
-          </button>
+          <div className={styles.menuWrapper} ref={menuRef}>
+            <button
+              type="button"
+              className={styles.iconBtn}
+              title="메뉴"
+              onClick={handleMenuClick}
+              disabled={!user}
+            >
+              <MoreVertical size={18} />
+            </button>
+            {menuOpen && user && (
+              <div className={styles.menuDropdown}>
+                {isAuthor ? (
+                  <>
+                    <button type="button" className={styles.menuItem} onClick={handleEdit}>
+                      수정
+                    </button>
+                    <button type="button" className={styles.menuItem} onClick={handleDeleteClick}>
+                      삭제
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" className={styles.menuItem} onClick={handleReportClick}>
+                    신고
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -206,41 +366,250 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
         {commentOpen && (
           <>
-            {user && (
-              <div className={styles.commentForm}>
-                <input
-                  type="text"
-                  placeholder="댓글 (1~50자)"
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  className={styles.commentInput}
-                  maxLength={50}
-                />
-                <button
-                  type="button"
-                  className={styles.commentSubmit}
-                  onClick={handleCommentSubmit}
-                  disabled={!commentText.trim()}
-                >
-                  등록
-                </button>
-              </div>
-            )}
+            <div className={styles.commentForm}>
+              <input
+                type="text"
+                placeholder={
+                  user
+                    ? '댓글 (1~50자)'
+                    : '로그인 후 댓글을 작성할 수 있습니다.'
+                }
+                value={commentText}
+                onChange={(e) => {
+                  if (!user) return;
+                  setCommentText(e.target.value);
+                }}
+                onFocus={() => {
+                  if (!user) {
+                    router.push('/auth/login');
+                  }
+                }}
+                className={styles.commentInput}
+                maxLength={50}
+                readOnly={!user}
+              />
 
-            {comments.map((c) => (
-              <div key={c.id} className={styles.commentItem}>
-                <div className={styles.commentHead}>
-                  <span className={styles.commentAuthor}>{c.authorNickname}</span>
-                  <span className={styles.commentDate}>{formatDateTime(c.createdAt)}</span>
-                  <button type="button" className={styles.menuBtn}>⋯</button>
+              <button
+                type="button"
+                className={styles.commentSubmit}
+                onClick={handleCommentSubmit}
+                disabled={!user || !commentText.trim()}
+              >
+                등록
+              </button>
+            </div>
+
+            {/* ✅ 댓글 리스트 */}
+            {comments.map((c) => {
+              const isCommentAuthor = user?.id === c.authorId;
+              return (
+                <div key={c.id} className={styles.commentItem}>
+                  <div className={styles.commentHead}>
+                    <span className={styles.commentAuthor}>
+                      {c.authorNickname}
+                    </span>
+                    <span className={styles.commentDate}>
+                      {formatDateTime(c.createdAt)}
+                    </span>
+                    <div
+                      className={styles.menuWrapper}
+                      ref={(el) => {
+                        if (el) {
+                          commentMenuRefs.current[c.id] = el;
+                        } else {
+                          delete commentMenuRefs.current[c.id];
+                        }
+                      }}
+                    >
+                      <button
+                        type="button"
+                        className={styles.iconBtn}
+                        title="메뉴"
+                        onClick={() => handleCommentMenuClick(c.id)}
+                        disabled={!user}
+                        style={{ padding: '2px 6px' }}
+                      >
+                        <MoreVertical size={16} />
+                      </button>
+                      {commentMenuOpen === c.id && user && (
+                        <div className={styles.menuDropdown}>
+                          {isCommentAuthor ? (
+                            <>
+                              <button
+                                type="button"
+                                className={styles.menuItem}
+                                onClick={() => {
+                                  // TODO: 댓글 수정 기능 구현
+                                  setCommentMenuOpen(null);
+                                  ToastUtils.info('댓글 수정 기능은 준비 중입니다.');
+                                }}
+                              >
+                                수정
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.menuItem}
+                                onClick={() => handleCommentDeleteClick(c.id)}
+                              >
+                                삭제
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              className={styles.menuItem}
+                              onClick={() => handleCommentReportClick(c.id)}
+                            >
+                              신고
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className={styles.commentBody}>{c.content}</div>
+
+                  <button
+                    type="button"
+                    className={styles.replyBtn}
+                    disabled={!user}
+                    onClick={() => {
+                      if (!user) router.push('/auth/login');
+                    }}
+                  >
+                    답글
+                  </button>
                 </div>
-                <div className={styles.commentBody}>{c.content}</div>
-                <button type="button" className={styles.replyBtn}>답글</button>
-              </div>
-            ))}
+              );
+            })}
           </>
         )}
       </section>
+
+      {/* 삭제 확인 모달 */}
+      {showDeleteModal && (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true">
+          <div className={styles.modalContent}>
+            <p className={styles.modalMessage}>정말 삭제 하시겠습니까?</p>
+            <div className={styles.modalButtons}>
+              <button
+                type="button"
+                className={`${styles.modalButton} ${styles.modalButtonCancel}`}
+                onClick={() => setShowDeleteModal(false)}
+              >
+                아니요
+              </button>
+              <button
+                type="button"
+                className={`${styles.modalButton} ${styles.modalButtonDelete}`}
+                onClick={handleDeleteConfirm}
+              >
+                예
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 신고 모달 */}
+      {showReportModal && (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true">
+          <div className={styles.modalContent}>
+            <p className={styles.modalMessage} style={{ marginBottom: '12px' }}>
+              신고 사유를 입력해주세요.
+            </p>
+            <textarea
+              className={styles.reportTextarea}
+              placeholder="신고 사유를 입력하세요"
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              maxLength={200}
+            />
+            <div className={styles.modalButtons}>
+              <button
+                type="button"
+                className={`${styles.modalButton} ${styles.modalButtonCancel}`}
+                onClick={() => {
+                  setShowReportModal(false);
+                  setReportReason('');
+                }}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className={`${styles.modalButton} ${styles.modalButtonConfirm}`}
+                onClick={handleReportSubmit}
+              >
+                신고
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 댓글 삭제 확인 모달 */}
+      {showCommentDeleteModal && (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true">
+          <div className={styles.modalContent}>
+            <p className={styles.modalMessage}>정말 삭제 하시겠습니까?</p>
+            <div className={styles.modalButtons}>
+              <button
+                type="button"
+                className={`${styles.modalButton} ${styles.modalButtonCancel}`}
+                onClick={() => setShowCommentDeleteModal(null)}
+              >
+                아니요
+              </button>
+              <button
+                type="button"
+                className={`${styles.modalButton} ${styles.modalButtonDelete}`}
+                onClick={handleCommentDeleteConfirm}
+              >
+                예
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 댓글 신고 모달 */}
+      {showCommentReportModal && (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true">
+          <div className={styles.modalContent}>
+            <p className={styles.modalMessage} style={{ marginBottom: '12px' }}>
+              신고 사유를 입력해주세요.
+            </p>
+            <textarea
+              className={styles.reportTextarea}
+              placeholder="신고 사유를 입력하세요"
+              value={commentReportReason}
+              onChange={(e) => setCommentReportReason(e.target.value)}
+              maxLength={200}
+            />
+            <div className={styles.modalButtons}>
+              <button
+                type="button"
+                className={`${styles.modalButton} ${styles.modalButtonCancel}`}
+                onClick={() => {
+                  setShowCommentReportModal(null);
+                  setCommentReportReason('');
+                }}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className={`${styles.modalButton} ${styles.modalButtonConfirm}`}
+                onClick={handleCommentReportSubmit}
+              >
+                신고
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   );
 }

@@ -3,26 +3,12 @@
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
 import { RootState } from '@/store';
-import { useAuth } from '@/auth/AuthContext';
 import styles from '../mypage.module.css';
 
 export default function CreditsPage() {
-  const reduxUser = useSelector((s: RootState) => s.auth.user);
-  const { isLoggedIn, user: mockUser } = useAuth();
+  const user = useSelector((s: RootState) => s.auth.user);
 
-  // 목로그인 상태면 mockUser 사용, 아니면 Redux user 사용
-  // MockUser를 UserInfo 형태로 변환
-  const user = reduxUser || (mockUser ? {
-    id: String(mockUser.id),
-    email: mockUser.email,
-    nickname: mockUser.nickname,
-    phone: undefined,
-    profileImage: undefined,
-    role: mockUser.role,
-    credits: undefined,
-  } : null);
-
-  if (!isLoggedIn) {
+  if (!user) {
     return (
       <div className={styles.wrap}>
         <p>로그인이 필요합니다.</p>
