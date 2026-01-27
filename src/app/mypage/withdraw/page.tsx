@@ -21,14 +21,29 @@ const TERMS = `동일한 이메일 주소로는 1달 이내에 재가입할 수 
 
 export default function WithdrawPage() {
   const router = useRouter();
-  const reduxUser = useSelector((s: RootState) => s.auth.user);
+  const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
+  const initialized = useSelector((s: RootState) => s.auth.initialized);
   const [checked, setChecked] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const user = reduxUser;
+  useEffect(() => {
+    if (!initialized) return;
+    
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+    }
+  }, [initialized, isAuthenticated, router]);
 
-  if (!user) {
+  if (!initialized) {
+    return (
+      <div className={styles.wrap}>
+        <p>로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
     return (
       <div className={styles.wrap}>
         <p>로그인이 필요합니다.</p>

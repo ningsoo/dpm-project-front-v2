@@ -20,6 +20,7 @@ interface Post {
   likeCount?: number;
   viewCount?: number;
   isLiked?: boolean;
+  isAuthor?: boolean; // 현재 로그인한 사용자가 작성자인지 여부
   createdAt?: string;
   youtubeUrl?: string;
   playlistThumbnail?: string;
@@ -36,6 +37,7 @@ interface Comment {
   content: string;
   createdAt: string;
   likeCount?: number;
+  isAuthor?: boolean; // 현재 로그인한 사용자가 작성자인지 여부
   replies?: Comment[];
 }
 
@@ -68,7 +70,7 @@ interface PostDetailProps {
 
 export default function PostDetail({ category, boardId }: PostDetailProps) {
   const router = useRouter();
-  const user = useSelector((s: RootState) => s.auth.user);
+  const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState('');
@@ -130,14 +132,14 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   }, [menuOpen, commentMenuOpen]);
 
   const handleLike = () => {
-    if (!user) return;
+    if (!isAuthenticated) return;
     boardApi.likePost(safeCat, boardId).then(() => {
       setPost((p) => (p ? { ...p, likeCount: (p.likeCount ?? 0) + 1, isLiked: true } : null));
     }).catch(() => ToastUtils.error('실패'));
   };
 
   const handleCommentSubmit = () => {
-    if (!user || !commentText.trim() || commentText.length > 50) return;
+    if (!isAuthenticated || !commentText.trim() || commentText.length > 50) return;
     boardApi.createComment(safeCat, boardId, commentText).then(() => {
       setCommentText('');
       setCommentOpen(true);
@@ -150,7 +152,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   };
 
   const handleMenuClick = () => {
-    if (!user) return; // 비로그인 사용자는 동작하지 않음
+    if (!isAuthenticated) return; // 비로그인 사용자는 동작하지 않음
     setMenuOpen((prev) => !prev);
   };
 
@@ -201,7 +203,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
   // 댓글 메뉴 핸들러
   const handleCommentMenuClick = (commentId: string) => {
-    if (!user) return;
+    if (!isAuthenticated) return;
     setCommentMenuOpen((prev) => (prev === commentId ? null : commentId));
   };
 
@@ -249,14 +251,14 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   if (!post) return <div className={styles.loading}>글이 없습니다.</div>;
 
   const ytId = extractYoutubeId(post.youtubeUrl);
-  const isAuthor = user?.id === post.authorId;
+  const isAuthor = post.isAuthor ?? false;
 
   return (
     <article className={styles.wrap}>
       <div className={styles.titleRow}>
         <h1 className={styles.title}>{post.title}</h1>
         <div className={styles.actions}>
-          <button type="button" className={styles.iconBtn} onClick={handleLike} disabled={!user}>
+          <button type="button" className={styles.iconBtn} onClick={handleLike} disabled={!isAuthenticated}>
             <Heart size={18} fill={post.isLiked ? 'currentColor' : 'none'} />
             {post.likeCount ?? 0}
           </button>
@@ -273,11 +275,11 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
               className={styles.iconBtn}
               title="메뉴"
               onClick={handleMenuClick}
-              disabled={!user}
+              disabled={!isAuthenticated}
             >
               <MoreVertical size={18} />
             </button>
-            {menuOpen && user && (
+            {menuOpen && isAuthenticated && (
               <div className={styles.menuDropdown}>
                 {isAuthor ? (
                   <>
@@ -301,7 +303,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
       <div className={styles.authorRow}>
         <span className={styles.author}>{post.authorNickname || '—'}</span>
-        {user && !isAuthor && (
+        {isAuthenticated && !isAuthor && (
           <button type="button" className={styles.donateBtn}>
             POP 기부
           </button>
@@ -370,30 +372,30 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
               <input
                 type="text"
                 placeholder={
-                  user
+                  isAuthenticated
                     ? '댓글 (1~50자)'
                     : '로그인 후 댓글을 작성할 수 있습니다.'
                 }
                 value={commentText}
                 onChange={(e) => {
-                  if (!user) return;
+                  if (!isAuthenticated) return;
                   setCommentText(e.target.value);
                 }}
                 onFocus={() => {
-                  if (!user) {
+                  if (!isAuthenticated) {
                     router.push('/auth/login');
                   }
                 }}
                 className={styles.commentInput}
                 maxLength={50}
-                readOnly={!user}
+                readOnly={!isAuthenticated}
               />
 
               <button
                 type="button"
                 className={styles.commentSubmit}
                 onClick={handleCommentSubmit}
-                disabled={!user || !commentText.trim()}
+                disabled={!isAuthenticated || !commentText.trim()}
               >
                 등록
               </button>
@@ -401,7 +403,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
             {/* ✅ 댓글 리스트 */}
             {comments.map((c) => {
-              const isCommentAuthor = user?.id === c.authorId;
+              const isCommentAuthor = c.isAuthor ?? false;
               return (
                 <div key={c.id} className={styles.commentItem}>
                   <div className={styles.commentHead}>
@@ -426,12 +428,12 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
                         className={styles.iconBtn}
                         title="메뉴"
                         onClick={() => handleCommentMenuClick(c.id)}
-                        disabled={!user}
+                        disabled={!isAuthenticated}
                         style={{ padding: '2px 6px' }}
                       >
                         <MoreVertical size={16} />
                       </button>
-                      {commentMenuOpen === c.id && user && (
+                      {commentMenuOpen === c.id && isAuthenticated && (
                         <div className={styles.menuDropdown}>
                           {isCommentAuthor ? (
                             <>
@@ -473,9 +475,9 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
                   <button
                     type="button"
                     className={styles.replyBtn}
-                    disabled={!user}
+                    disabled={!isAuthenticated}
                     onClick={() => {
-                      if (!user) router.push('/auth/login');
+                      if (!isAuthenticated) router.push('/auth/login');
                     }}
                   >
                     답글

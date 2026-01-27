@@ -1,4 +1,11 @@
 
+/**
+ * JWT 토큰 관리 유틸리티
+ * 
+ * - Access Token: localStorage에 저장하여 관리합니다.
+ * - Refresh Token: HttpOnly Cookie로 관리되며 프론트엔드 JavaScript에서는 접근하지 않습니다.
+ */
+
 const ACCESS_TOKEN_KEY = 'accessToken';
 
 export const tokenUtils = {

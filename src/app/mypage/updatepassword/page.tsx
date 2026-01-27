@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { useSelector } from 'react-redux';
@@ -22,7 +22,8 @@ function validatePassword(p: string): string[] {
 
 export default function UpdatePasswordPage() {
   const router = useRouter();
-  const reduxUser = useSelector((s: RootState) => s.auth.user);
+  const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
+  const initialized = useSelector((s: RootState) => s.auth.initialized);
   const [newPassword, setNewPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showNew, setShowNew] = useState(false);
@@ -30,15 +31,28 @@ export default function UpdatePasswordPage() {
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  const user = reduxUser;
-
   const pwdErrors = newPassword ? validatePassword(newPassword) : [];
   const pwdOk = pwdErrors.length === 0;
   const confirmOk = newPassword && confirm && newPassword === confirm;
   const confirmError = confirm && newPassword && newPassword !== confirm;
 
-  if (!user) {
-    router.push('/auth/login');
+  useEffect(() => {
+    if (!initialized) return;
+    
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+    }
+  }, [initialized, isAuthenticated, router]);
+
+  if (!initialized) {
+    return (
+      <div className={styles.wrap}>
+        <p>로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
     return null;
   }
 

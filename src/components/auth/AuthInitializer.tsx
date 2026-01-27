@@ -3,10 +3,10 @@
 import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store';
-import { initializeAuth } from '@/store/slices/authSlice';
+import { checkAuth, setInitialized } from '@/store/slices/authSlice';
 
 /**
- * 앱 초기화 시 인증 상태를 확인하고 Redux에 동기화하는 컴포넌트
+ * 앱 초기화 시 accessToken 존재 여부를 확인하고 Redux에 동기화하는 컴포넌트
  * Providers 내부에서 한 번만 실행되어야 함
  */
 export default function AuthInitializer() {
@@ -21,8 +21,9 @@ export default function AuthInitializer() {
     }
 
     hasInitialized.current = true;
-    // 앱 시작 시 토큰 확인 및 사용자 정보 로드
-    dispatch(initializeAuth());
+    // 앱 시작 시 accessToken 존재 여부 확인
+    dispatch(checkAuth());
+    dispatch(setInitialized());
   }, [dispatch, initialized]);
 
   return null;
