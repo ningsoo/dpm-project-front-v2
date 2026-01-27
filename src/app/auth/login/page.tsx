@@ -5,15 +5,16 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store';
 import { authApi } from '@/api/authApi';
-import { setUser } from '@/store/slices/authSlice';
+import { initializeAuth, setUser, type UserInfo } from '@/store/slices/authSlice';
 import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
 import styles from '../auth.module.css';
 
 export default function LoginPage() {
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
@@ -75,23 +76,65 @@ export default function LoginPage() {
     setErrors({});
     try {
       const { data } = await authApi.login({ email, password });
-      const responseData = data?.data as {
-        user?: { id: string; email: string; nickname: string };
+      
+      // API 응답 구조 확인: data.data 또는 data 직접 접근
+      const responseData = (data?.data || data) as {
+        user?: { id: string; email: string; nickname: string; phone?: string; profileImage?: string; credits?: number };
         accessToken?: string;
+        token?: string;
       };
 
-      // Access Token 저장 (Refresh Token은 서버 DB에만 저장되므로 클라이언트에서 저장하지 않음)
-      if (responseData?.accessToken) {
-        tokenUtils.setAccessToken(responseData.accessToken);
+      // Access Token 추출 (다양한 필드명 지원)
+      const accessToken = responseData?.accessToken || responseData?.token;
+      
+      if (!accessToken || typeof accessToken !== 'string') {
+        console.error('로그인 응답 데이터:', data);
+        ToastUtils.error('토큰을 받지 못했습니다. 응답 구조를 확인해주세요.');
+        return;
       }
 
-      // 사용자 정보 저장
+      // Access Token 저장 (Refresh Token은 서버 DB에만 저장되므로 클라이언트에서 저장하지 않음)
+      try {
+        tokenUtils.setAccessToken(accessToken);
+        
+        // 토큰 저장 확인
+        const savedToken = tokenUtils.getAccessToken();
+        if (!savedToken || savedToken !== accessToken) {
+          console.error('토큰 저장 실패:', { 
+            accessToken: accessToken.substring(0, 20) + '...', 
+            savedToken: savedToken?.substring(0, 20) + '...',
+            localStorageAvailable: typeof window !== 'undefined' && typeof localStorage !== 'undefined'
+          });
+          ToastUtils.error('토큰 저장에 실패했습니다.');
+          return;
+        }
+      } catch (error) {
+        console.error('토큰 저장 중 오류:', error);
+        ToastUtils.error('토큰 저장 중 오류가 발생했습니다.');
+        return;
+      }
+
+      // 응답에 사용자 정보가 있으면 먼저 저장 (UI 즉시 업데이트)
       if (responseData?.user) {
-        dispatch(setUser({
+        const userInfo: UserInfo = {
           id: responseData.user.id,
           email: responseData.user.email,
           nickname: responseData.user.nickname,
-        }));
+          phone: responseData.user.phone,
+          profileImage: responseData.user.profileImage,
+          credits: responseData.user.credits,
+        };
+        dispatch(setUser(userInfo));
+      }
+
+      // 사용자 정보를 완전히 로드하기 위해 initializeAuth 호출
+      // 이렇게 하면 mypage API를 통해 전체 사용자 정보를 가져옴
+      // 실패해도 토큰은 유지되므로 안전하게 진행
+      try {
+        await dispatch(initializeAuth());
+      } catch (error) {
+        // initializeAuth 실패해도 토큰은 저장되어 있으므로 계속 진행
+        console.warn('initializeAuth 실패 (토큰은 유지):', error);
       }
 
       router.push('/');
