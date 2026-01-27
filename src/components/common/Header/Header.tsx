@@ -4,12 +4,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { Moon, Mail, User, LogIn, LogOut } from 'lucide-react';
-import { RootState } from '@/store';
+import { RootState, AppDispatch } from '@/store';
 import { toggleDarkMode } from '@/store/slices/uiSlice';
 import { logout as authLogout } from '@/store/slices/authSlice';
 import { authApi } from '@/api/authApi';
 import { ToastUtils } from '@/utils/toastUtils';
-import { tokenUtils } from '@/utils/tokenUtils';
 import styles from './Header.module.css';
 
 const CATEGORIES = [
@@ -26,7 +25,7 @@ export default function Header() {
     pathname?.startsWith('/auth') || pathname?.startsWith('/mypage/credits/checkout')
       ? 'auth'
       : 'main';
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const unreadCount = useSelector((s: RootState) => s.ui.unreadMessageCount);
@@ -38,9 +37,8 @@ export default function Header() {
     } catch {
       // 로그아웃 API 실패해도 클라이언트에서 토큰 제거
     } finally {
-      // Redux 상태 초기화 및 토큰 제거
+      // Redux 상태 초기화 및 토큰 제거 (logout 액션에서 토큰 제거 처리)
       dispatch(authLogout());
-      tokenUtils.clearTokens();
       window.location.href = '/';
     }
   };

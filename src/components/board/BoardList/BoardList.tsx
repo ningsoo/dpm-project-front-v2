@@ -71,6 +71,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
     ? category
     : 'showcase';
 
+  
   return (
     <section className={styles.section}>
       {category === 'showcase' && (
@@ -110,6 +111,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
           글작성
         </Link>
       </div>
+
 
       {loading && posts.length === 0 ? (
         <div className={styles.loading}>로딩 중…</div>

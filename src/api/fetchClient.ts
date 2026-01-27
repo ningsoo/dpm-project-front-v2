@@ -1,7 +1,9 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { tokenUtils } from '@/utils/tokenUtils';
+import { store } from '@/store';
+import { clearAuth } from '@/store/slices/authSlice';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://192.168.200.88:8080/api';
 
 export const fetchClient = axios.create({
   baseURL: API_BASE,
@@ -55,6 +57,8 @@ fetchClient.interceptors.response.use(
       } catch {
         // Refresh Token 만료 또는 서버 오류 → Access Token 제거 및 로그아웃 처리
         tokenUtils.clearTokens();
+        // Redux 상태도 업데이트
+        store.dispatch(clearAuth());
         if (typeof window !== 'undefined') {
           window.location.href = '/';
         }
