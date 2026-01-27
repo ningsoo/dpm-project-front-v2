@@ -9,33 +9,79 @@ import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import styles from '@/app/auth/auth.module.css';
 
+interface UserInfo {
+  id: string;
+  email: string;
+  nickname: string;
+  phone?: string;
+  profileImage?: string;
+}
+
 export default function UpdateProfilePage() {
   const router = useRouter();
-  const reduxUser = useSelector((s: RootState) => s.auth.user);
+  const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
+  const initialized = useSelector((s: RootState) => s.auth.initialized);
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [loading, setLoading] = useState(true);
   const phonePart1Ref = useRef<HTMLInputElement>(null);
   const phonePart2Ref = useRef<HTMLInputElement>(null);
-  const [nickname, setNickname] = useState(reduxUser?.nickname || '');
+  const [nickname, setNickname] = useState('');
   const [phonePart1, setPhonePart1] = useState('');
   const [phonePart2, setPhonePart2] = useState('');
   const [isComposing, setIsComposing] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // 기존 phone 값을 phonePart1, phonePart2로 분리
+  // 초기화 완료 후 사용자 정보 로드
   useEffect(() => {
-    if (reduxUser?.phone) {
-      const phoneDigits = reduxUser.phone.replace(/\D/g, '');
-      if (phoneDigits.length === 11 && phoneDigits.startsWith('010')) {
-        setPhonePart1(phoneDigits.slice(3, 7));
-        setPhonePart2(phoneDigits.slice(7));
-      }
+    if (!initialized) return;
+    
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
     }
-  }, [reduxUser?.phone]);
 
-  const user = reduxUser;
+    // 사용자 정보 가져오기
+    mypageApi.getMypage()
+      .then(({ data }) => {
+        const userData = data?.data as UserInfo | undefined;
+        if (userData) {
+          setUser(userData);
+          setNickname(userData.nickname || '');
+          // 기존 phone 값을 phonePart1, phonePart2로 분리
+          if (userData.phone) {
+            const phoneDigits = userData.phone.replace(/\D/g, '');
+            if (phoneDigits.length === 11 && phoneDigits.startsWith('010')) {
+              setPhonePart1(phoneDigits.slice(3, 7));
+              setPhonePart2(phoneDigits.slice(7));
+            }
+          }
+        } else {
+          ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
+          router.push('/auth/login');
+        }
+      })
+      .catch((error) => {
+        if (error?.response?.status === 401) {
+          router.push('/auth/login');
+        } else {
+          ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [initialized, isAuthenticated, router]);
+
+  if (!initialized || loading) {
+    return (
+      <div className={styles.wrap}>
+        <p>로딩 중...</p>
+      </div>
+    );
+  }
 
   if (!user) {
-    router.push('/auth/login');
     return null;
   }
 
@@ -79,7 +125,7 @@ export default function UpdateProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nicknameOk || !phoneOk) return;
-    setLoading(true);
+    setSubmitting(true);
     try {
       // 연락처: 숫자만 추출하여 010 포함 11자리로 변환
       const phoneForServer = `010${phonePart1}${phonePart2}`;
@@ -93,7 +139,7 @@ export default function UpdateProfilePage() {
     } catch {
       ToastUtils.error('수정에 실패했습니다.');
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -322,8 +368,8 @@ export default function UpdateProfilePage() {
           </div>
         </label>
 
-        <button type="submit" className={styles.submit} disabled={loading || !nicknameOk || !phoneOk}>
-          {loading ? '저장 중…' : '저장'}
+        <button type="submit" className={styles.submit} disabled={submitting || !nicknameOk || !phoneOk}>
+          {submitting ? '저장 중…' : '저장'}
         </button>
 
         <div style={{ textAlign: 'right', marginTop: 8 }}>

@@ -7,7 +7,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store';
 import { authApi } from '@/api/authApi';
-import { initializeAuth, setUser, type UserInfo } from '@/store/slices/authSlice';
+import { checkAuth } from '@/store/slices/authSlice';
 import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
 import styles from '../auth.module.css';
@@ -93,7 +93,7 @@ export default function LoginPage() {
         return;
       }
 
-      // Access Token 저장 (Refresh Token은 서버 DB에만 저장되므로 클라이언트에서 저장하지 않음)
+      // Access Token 저장 (Refresh Token은 HttpOnly 쿠키로 관리되어 프론트에서 저장/접근하지 않음)
       try {
         tokenUtils.setAccessToken(accessToken);
         
@@ -114,28 +114,8 @@ export default function LoginPage() {
         return;
       }
 
-      // 응답에 사용자 정보가 있으면 먼저 저장 (UI 즉시 업데이트)
-      if (responseData?.user) {
-        const userInfo: UserInfo = {
-          id: responseData.user.id,
-          email: responseData.user.email,
-          nickname: responseData.user.nickname,
-          phone: responseData.user.phone,
-          profileImage: responseData.user.profileImage,
-          credits: responseData.user.credits,
-        };
-        dispatch(setUser(userInfo));
-      }
-
-      // 사용자 정보를 완전히 로드하기 위해 initializeAuth 호출
-      // 이렇게 하면 mypage API를 통해 전체 사용자 정보를 가져옴
-      // 실패해도 토큰은 유지되므로 안전하게 진행
-      try {
-        await dispatch(initializeAuth());
-      } catch (error) {
-        // initializeAuth 실패해도 토큰은 저장되어 있으므로 계속 진행
-        console.warn('initializeAuth 실패 (토큰은 유지):', error);
-      }
+      // Redux에 인증 상태 업데이트
+      dispatch(checkAuth());
 
       router.push('/');
     } catch (err: unknown) {

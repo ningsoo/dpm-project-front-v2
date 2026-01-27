@@ -6,7 +6,18 @@ import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { CreditCard, Key, User, Plus, Search, Pencil, Heart, X, Check } from 'lucide-react';
 import { RootState } from '@/store';
+import { mypageApi } from '@/api/mypageApi';
+import { ToastUtils } from '@/utils/toastUtils';
 import styles from './mypage.module.css';
+
+interface UserInfo {
+  id: string;
+  email: string;
+  nickname: string;
+  phone?: string;
+  profileImage?: string;
+  credits?: number;
+}
 
 const TABS = [
   { id: 'playlists', label: '플레이리스트' },
@@ -38,7 +49,10 @@ function formatDate(date: Date): string {
 
 export default function MypagePage() {
   const router = useRouter();
-  const reduxUser = useSelector((s: RootState) => s.auth.user);
+  const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
+  const initialized = useSelector((s: RootState) => s.auth.initialized);
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<string>('playlists');
   const [searchQuery, setSearchQuery] = useState({ posts: '', comments: '', liked: '' });
   const [dateRange, setDateRange] = useState({
@@ -65,9 +79,48 @@ export default function MypagePage() {
   const [creditError, setCreditError] = useState('');
   const creditValidationTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const user = reduxUser;
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
-  const [profileImage, setProfileImage] = useState<string | null>(user?.profileImage || null);
+  // 초기화 완료 후 사용자 정보 로드
+  useEffect(() => {
+    if (!initialized) return;
+    
+    if (!isAuthenticated) {
+      router.push('/auth/login');
+      return;
+    }
+
+    // 사용자 정보 가져오기
+    mypageApi.getMypage()
+      .then(({ data }) => {
+        const userData = data?.data as UserInfo | undefined;
+        if (userData) {
+          setUser(userData);
+          setProfileImage(userData.profileImage || null);
+        } else {
+          ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
+          router.push('/auth/login');
+        }
+      })
+      .catch((error) => {
+        if (error?.response?.status === 401) {
+          router.push('/auth/login');
+        } else {
+          ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [initialized, isAuthenticated, router]);
+
+  if (!initialized || loading) {
+    return (
+      <div className={styles.wrap}>
+        <p>로딩 중...</p>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
