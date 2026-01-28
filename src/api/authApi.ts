@@ -4,7 +4,7 @@ export interface SignupBody {
   email: string;
   password: string;
   nickname: string;
-  phone: string;
+  phoneNumber: string;
 }
 
 export interface LoginBody {

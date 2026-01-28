@@ -183,7 +183,7 @@ export default function SignupPage() {
         email,
         password,
         nickname,
-        phone: phoneForServer,
+        phoneNumber: phoneForServer,
       });
       await authApi.sendVerification(email);
       router.push(`/auth/verification?email=${encodeURIComponent(email)}`);
