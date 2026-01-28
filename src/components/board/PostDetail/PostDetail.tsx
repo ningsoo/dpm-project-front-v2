@@ -8,37 +8,17 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
 import { ToastUtils } from '@/utils/toastUtils';
-import type { BoardCategory } from '@/api/boardApi';
+import type { BoardCategory, BoardDetail, CommentItem } from '@/api/boardApi';
 import styles from './PostDetail.module.css';
 
-interface Post {
-  id: string;
-  title: string;
-  content: string;
-  authorId: string;
-  authorNickname?: string;
-  likeCount?: number;
-  viewCount?: number;
-  isLiked?: boolean;
+interface Post extends BoardDetail {
+  id?: string; // UI에서 사용
   isAuthor?: boolean; // 현재 로그인한 사용자가 작성자인지 여부
-  createdAt?: string;
-  youtubeUrl?: string;
-  playlistThumbnail?: string;
-  playlistTitle?: string;
-  playlistUrl?: string;
-  photos?: string[];
-  files?: { name: string; url: string }[];
 }
 
-interface Comment {
-  id: string;
-  authorId?: string;
-  authorNickname: string;
-  content: string;
-  createdAt: string;
-  likeCount?: number;
+interface Comment extends CommentItem {
+  id?: string; // UI에서 사용
   isAuthor?: boolean; // 현재 로그인한 사용자가 작성자인지 여부
-  replies?: Comment[];
 }
 
 function extractYoutubeId(url?: string): string {
@@ -92,16 +72,20 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
     : 'showcase') as BoardCategory;
 
   useEffect(() => {
-    boardApi
-      .getPost(safeCat, boardId)
-      .then(({ data }) => {
-        const d = data?.data as Post & { comments?: Comment[] };
-        setPost(d || null);
-        setComments(d?.comments || []);
+    // Swagger 명세: GET /api/boards/{boardId}
+    Promise.all([
+      boardApi.getPost(boardId),
+      boardApi.getComments(boardId),
+    ])
+      .then(([postResponse, commentsResponse]) => {
+        const postData = postResponse.data as BoardDetail;
+        const commentsData = Array.isArray(commentsResponse.data) ? commentsResponse.data : [];
+        setPost({ ...postData, id: boardId } || null);
+        setComments(commentsData.map((c, i) => ({ ...c, id: String(i) })));
       })
       .catch(() => ToastUtils.error('글을 불러올 수 없습니다'))
       .finally(() => setLoading(false));
-  }, [safeCat, boardId]);
+  }, [boardId]);
 
   // 외부 클릭 시 메뉴 닫기
   useEffect(() => {
@@ -133,20 +117,23 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
   const handleLike = () => {
     if (!isAuthenticated) return;
-    boardApi.likePost(safeCat, boardId).then(() => {
-      setPost((p) => (p ? { ...p, likeCount: (p.likeCount ?? 0) + 1, isLiked: true } : null));
-    }).catch(() => ToastUtils.error('실패'));
+    // Swagger 명세에 like API가 없으므로 제거 (필요시 별도 구현)
+    ToastUtils.error('좋아요 기능은 준비 중입니다.');
   };
 
   const handleCommentSubmit = () => {
     if (!isAuthenticated || !commentText.trim() || commentText.length > 50) return;
-    boardApi.createComment(safeCat, boardId, commentText).then(() => {
+    // Swagger 명세: POST /api/boards/{boardId}/comments
+    boardApi.createComment(boardId, { content: commentText }).then(({ data }) => {
       setCommentText('');
       setCommentOpen(true);
-      // Refetch or append optimistically
-      boardApi.getPost(safeCat, boardId).then(({ data }) => {
-        const d = data?.data as { comments?: Comment[] };
-        setComments(d?.comments || []);
+      // 새 댓글 추가
+      const newComment = data as CommentItem;
+      setComments((prev) => [...prev, { ...newComment, id: String(prev.length) }]);
+      // 또는 전체 댓글 다시 조회
+      boardApi.getComments(boardId).then(({ data: commentsData }) => {
+        const comments = Array.isArray(commentsData) ? commentsData : [];
+        setComments(comments.map((c, i) => ({ ...c, id: String(i) })));
       });
     }).catch(() => ToastUtils.error('댓글 등록 실패'));
   };
@@ -167,7 +154,8 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   };
 
   const handleDeleteConfirm = () => {
-    boardApi.deletePost(safeCat, boardId)
+    // Swagger 명세: DELETE /api/boards/{boardId}
+    boardApi.deletePost(boardId)
       .then(() => {
         ToastUtils.success('글이 삭제되었습니다.');
         router.push(`/boards/${category}`);
@@ -190,15 +178,10 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
       ToastUtils.error('신고 사유를 입력해주세요.');
       return;
     }
-    boardApi.reportPost(safeCat, boardId, reportReason.trim())
-      .then(() => {
-        ToastUtils.success('신고가 접수되었습니다.');
-        setShowReportModal(false);
-        setReportReason('');
-      })
-      .catch(() => {
-        ToastUtils.error('신고 접수에 실패했습니다.');
-      });
+    // Swagger 명세에 report API가 없으므로 제거 (필요시 별도 구현)
+    ToastUtils.error('신고 기능은 준비 중입니다.');
+    setShowReportModal(false);
+    setReportReason('');
   };
 
   // 댓글 메뉴 핸들러
@@ -214,7 +197,8 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
   const handleCommentDeleteConfirm = () => {
     if (!showCommentDeleteModal) return;
-    boardApi.deleteComment(safeCat, boardId, showCommentDeleteModal)
+    // Swagger 명세: DELETE /api/boards/{boardId}/comments/{commentId}
+    boardApi.deleteComment(boardId, showCommentDeleteModal)
       .then(() => {
         ToastUtils.success('댓글이 삭제되었습니다.');
         setComments((prev) => prev.filter((c) => c.id !== showCommentDeleteModal));
@@ -236,7 +220,10 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
       ToastUtils.error('신고 사유를 입력해주세요.');
       return;
     }
-    boardApi.reportComment(safeCat, boardId, showCommentReportModal, commentReportReason.trim())
+    // Swagger 명세에 report API가 없으므로 제거 (필요시 별도 구현)
+    ToastUtils.error('신고 기능은 준비 중입니다.');
+    setShowCommentReportModal(null);
+    setCommentReportReason('');
       .then(() => {
         ToastUtils.success('신고가 접수되었습니다.');
         setShowCommentReportModal(null);
@@ -250,7 +237,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   if (loading) return <div className={styles.loading}>로딩 중…</div>;
   if (!post) return <div className={styles.loading}>글이 없습니다.</div>;
 
-  const ytId = extractYoutubeId(post.youtubeUrl);
+  const ytId = extractYoutubeId(post.fileUrl);
   const isAuthor = post.isAuthor ?? false;
 
   return (
@@ -260,14 +247,14 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
         <div className={styles.actions}>
           <button type="button" className={styles.iconBtn} onClick={handleLike} disabled={!isAuthenticated}>
             <Heart size={18} fill={post.isLiked ? 'currentColor' : 'none'} />
-            {post.likeCount ?? 0}
+            {post.likes ?? 0}
           </button>
           <span className={styles.iconBtn}>
             <Eye size={18} />
-            {post.viewCount ?? 0}
+            {post.views ?? 0}
           </span>
           <span className={styles.iconBtn} style={{ cursor: 'default' }}>
-            {formatDateTime(post.createdAt)}
+            {formatDateTime(post.createdDateTime)}
           </span>
           <div className={styles.menuWrapper} ref={menuRef}>
             <button
@@ -302,7 +289,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
       </div>
 
       <div className={styles.authorRow}>
-        <span className={styles.author}>{post.authorNickname || '—'}</span>
+        <span className={styles.author}>{post.nickname || '—'}</span>
         {isAuthenticated && !isAuthor && (
           <button type="button" className={styles.donateBtn}>
             POP 기부
@@ -408,10 +395,10 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
                 <div key={c.id} className={styles.commentItem}>
                   <div className={styles.commentHead}>
                     <span className={styles.commentAuthor}>
-                      {c.authorNickname}
+                      {c.nickname}
                     </span>
                     <span className={styles.commentDate}>
-                      {formatDateTime(c.createdAt)}
+                      {formatDateTime(c.createdDateTime)}
                     </span>
                     <div
                       className={styles.menuWrapper}

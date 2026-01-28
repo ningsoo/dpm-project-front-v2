@@ -4,17 +4,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
-import type { BoardCategory } from '@/api/boardApi';
+import type { BoardCategory, BoardListItem } from '@/api/boardApi';
 import styles from './SpotlightCarousel.module.css';
 
 const VISIBLE = 3;
 const CENTER_INDEX = Math.floor(VISIBLE / 2);
 
-interface SpotlightPost {
-  id: string;
-  title: string;
-  description?: string;
-  image?: string;
+interface SpotlightPost extends BoardListItem {
+  id?: string; // UI에서 사용
+  description?: string; // content를 description으로 사용
+  image?: string; // fileUrl을 image로 사용
   category: string;
 }
 
@@ -25,9 +24,16 @@ export default function SpotlightCarousel() {
 
   const fetchSpotlights = useCallback(async () => {
     try {
-      const { data } = await boardApi.getBoards();
-      const list = (data?.data as { spotlights?: SpotlightPost[] })?.spotlights ?? [];
-      setPosts(Array.isArray(list) ? list : []);
+      // Swagger 명세: GET /api/boards/SPOTLIGHT
+      const { data } = await boardApi.getBoardByCategory('SPOTLIGHT');
+      const list = Array.isArray(data) ? data : [];
+      setPosts(list.map((p, i) => ({
+        ...p,
+        id: String(i),
+        description: p.content,
+        image: p.fileUrl,
+        category: 'spotlight',
+      })));
     } catch {
       setPosts([]);
     }

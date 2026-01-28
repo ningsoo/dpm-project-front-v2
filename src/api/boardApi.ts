@@ -1,144 +1,103 @@
 import { fetchClient } from './fetchClient';
 import type { ApiResponse } from './authApi';
-import type { BoardCategory } from './boardTypes';
-import { mockBoardData } from './mockBoardData';
+import type {
+  BoardCategory,
+  BoardListItem,
+  BoardDetail,
+  CommentItem,
+  CreateBoardRequest,
+  UpdateBoardRequest,
+  CreateCommentRequest,
+} from './boardTypes';
 
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
-
-function wrapMock<T>(data: ApiResponse<T>) {
-  return Promise.resolve({ data }) as Promise<{ data: ApiResponse<T> }>;
-}
-
-async function withMock<T>(real: () => Promise<T>, fallback: () => Promise<T> | T) {
-  if (USE_MOCK) return Promise.resolve(fallback());
-  try {
-    return await real();
-  } catch (error) {
-    console.warn('[boardApi] falling back to mock data', error);
-    return Promise.resolve(fallback());
-  }
-}
-
+/**
+ * Swagger 명세 기반 Board API
+ * 모든 API는 /api/boards 경로를 사용합니다.
+ */
 export const boardApi = {
-  getBoards: () =>
-    withMock(
-      () => fetchClient.get<ApiResponse<{ spotlights: unknown[] }>>('/boards'),
-      () => wrapMock(mockBoardData.getBoards())
-    ),
+  /**
+   * 게시글 목록 조회
+   * GET /api/boards/{categoryType}
+   * 
+   * @param categoryType - SHOWCASE, PLAYLISTS, COMMUNITY, SPOTLIGHT, REVIEWS
+   * @returns BoardListItem[]
+   */
+  getBoardByCategory: (categoryType: BoardCategory) =>
+    fetchClient.get<BoardListItem[]>(`/boards/${categoryType}`),
 
-  getBoardByCategory: (category: BoardCategory, params?: { page?: number; search?: string }) =>
-    withMock(
-      () => fetchClient.get<ApiResponse<{ posts: unknown[]; total: number }>>(`/boards/${category}`, { params }),
-      () => wrapMock(mockBoardData.getBoardByCategory(category, params))
-    ),
+  /**
+   * 게시글 작성 (로그인 필요)
+   * POST /api/boards/{categoryType}
+   * 
+   * @param categoryType - SHOWCASE, PLAYLISTS, COMMUNITY, SPOTLIGHT, REVIEWS
+   * @param body - { title: string, content: string, category: string }
+   * @returns ApiResponse<string>
+   */
+  createPost: (categoryType: BoardCategory, body: CreateBoardRequest) =>
+    fetchClient.post<ApiResponse<string>>(`/boards/${categoryType}`, body),
 
-  createPost: (category: BoardCategory, body: Record<string, unknown>) =>
-    withMock(
-      () => fetchClient.post<ApiResponse<{ boardId: string }>>(`/boards/${category}`, body),
-      () => wrapMock(mockBoardData.createPost(category, body))
-    ),
+  /**
+   * 게시글 상세 조회
+   * GET /api/boards/{boardId}
+   * 
+   * @param boardId - 게시글 ID
+   * @returns BoardDetail
+   */
+  getPost: (boardId: string) =>
+    fetchClient.get<BoardDetail>(`/boards/${boardId}`),
 
-  getPost: (category: BoardCategory, boardId: string) =>
-    withMock(
-      () => fetchClient.get<ApiResponse<unknown>>(`/boards/${category}/${boardId}`),
-      () => wrapMock(mockBoardData.getPost(category, boardId))
-    ),
+  /**
+   * 게시글 삭제 (작성자 본인)
+   * DELETE /api/boards/{boardId}
+   * 
+   * @param boardId - 게시글 ID
+   * @returns ApiResponse<string>
+   */
+  deletePost: (boardId: string) =>
+    fetchClient.delete<ApiResponse<string>>(`/boards/${boardId}`),
 
-  updatePost: (category: BoardCategory, boardId: string, body: Record<string, unknown>) =>
-    withMock(
-      () => fetchClient.patch<ApiResponse<unknown>>(`/boards/${category}/${boardId}`, body),
-      () => wrapMock(mockBoardData.updatePost(category, boardId, body))
-    ),
+  /**
+   * 게시글 수정 (작성자 본인)
+   * PATCH /api/boards/{boardId}
+   * 
+   * @param boardId - 게시글 ID
+   * @param body - { title: string, content: string, fileUrl: string }
+   * @returns ApiResponse<string>
+   */
+  updatePost: (boardId: string, body: UpdateBoardRequest) =>
+    fetchClient.patch<ApiResponse<string>>(`/boards/${boardId}`, body),
 
-  deletePost: (category: BoardCategory, boardId: string) =>
-    withMock(
-      () => fetchClient.delete<ApiResponse<unknown>>(`/boards/${category}/${boardId}`),
-      () => wrapMock(mockBoardData.deletePost(category, boardId))
-    ),
+  /**
+   * 댓글 전체 조회
+   * GET /api/boards/{boardId}/comments
+   * 
+   * @param boardId - 게시글 ID
+   * @returns CommentItem[]
+   */
+  getComments: (boardId: string) =>
+    fetchClient.get<CommentItem[]>(`/boards/${boardId}/comments`),
 
-  pinPost: (category: BoardCategory, boardId: string) =>
-    withMock(
-      () => fetchClient.post<ApiResponse<unknown>>(`/boards/${category}/${boardId}/pin`),
-      () => wrapMock(mockBoardData.pinPost())
-    ),
+  /**
+   * 댓글 등록 (로그인 필요)
+   * POST /api/boards/{boardId}/comments
+   * 
+   * @param boardId - 게시글 ID
+   * @param body - { content: string }
+   * @returns CommentItem
+   */
+  createComment: (boardId: string, body: CreateCommentRequest) =>
+    fetchClient.post<CommentItem>(`/boards/${boardId}/comments`, body),
 
-  likePost: (category: BoardCategory, boardId: string) =>
-    withMock(
-      () => fetchClient.post<ApiResponse<unknown>>(`/boards/${category}/${boardId}/like`),
-      () => wrapMock(mockBoardData.likePost(category, boardId))
-    ),
-
-  reportPost: (category: BoardCategory, boardId: string, reason: string) =>
-    withMock(
-      () => fetchClient.post<ApiResponse<unknown>>(`/boards/${category}/${boardId}/report`, { reason }),
-      () => wrapMock(mockBoardData.reportPost())
-    ),
-
-  // Comments
-  createComment: (category: BoardCategory, boardId: string, content: string) =>
-    withMock(
-      () => fetchClient.post<ApiResponse<unknown>>(`/boards/${category}/${boardId}/comments`, { content }),
-      () => wrapMock(mockBoardData.createComment(category, boardId, content))
-    ),
-
-  updateComment: (category: BoardCategory, boardId: string, commentId: string, content: string) =>
-    withMock(
-      () => fetchClient.patch<ApiResponse<unknown>>(`/boards/${category}/${boardId}/comments/${commentId}`, { content }),
-      () => wrapMock(mockBoardData.updateComment(category, boardId, commentId, content))
-    ),
-
-  deleteComment: (category: BoardCategory, boardId: string, commentId: string) =>
-    withMock(
-      () => fetchClient.delete<ApiResponse<unknown>>(`/boards/${category}/${boardId}/comments/${commentId}`),
-      () => wrapMock(mockBoardData.deleteComment(category, boardId, commentId))
-    ),
-
-  likeComment: (category: BoardCategory, boardId: string, commentId: string) =>
-    withMock(
-      () => fetchClient.post<ApiResponse<unknown>>(`/boards/${category}/${boardId}/comments/${commentId}/like`),
-      () => wrapMock(mockBoardData.likeComment(category, boardId, commentId))
-    ),
-
-  reportComment: (category: BoardCategory, boardId: string, commentId: string, reason: string) =>
-    withMock(
-      () => fetchClient.post<ApiResponse<unknown>>(`/boards/${category}/${boardId}/comments/${commentId}/report`, { reason }),
-      () => wrapMock(mockBoardData.reportComment())
-    ),
-
-  createReply: (category: BoardCategory, boardId: string, commentId: string, replyId: string, content: string) =>
-    withMock(
-      () =>
-        fetchClient.post<ApiResponse<unknown>>(
-          `/boards/${category}/${boardId}/comments/${commentId}/${replyId}`,
-          { content }
-        ),
-      () => wrapMock(mockBoardData.createReply(category, boardId, commentId, replyId, content))
-    ),
-
-  deleteReply: (category: BoardCategory, boardId: string, commentId: string, replyId: string) =>
-    withMock(
-      () =>
-        fetchClient.delete<ApiResponse<unknown>>(
-          `/boards/${category}/${boardId}/comments/${commentId}/${replyId}`
-        ),
-      () => wrapMock(mockBoardData.deleteReply(category, boardId, commentId, replyId))
-    ),
-
-  reportReply: (
-    category: BoardCategory,
-    boardId: string,
-    commentId: string,
-    replyId: string,
-    reason: string
-  ) =>
-    withMock(
-      () =>
-        fetchClient.post<ApiResponse<unknown>>(
-          `/boards/${category}/${boardId}/comments/${commentId}/${replyId}/report`,
-          { reason }
-        ),
-      () => wrapMock(mockBoardData.reportReply())
-    ),
+  /**
+   * 댓글 삭제 (작성자 본인)
+   * DELETE /api/boards/{boardId}/comments/{commentId}
+   * 
+   * @param boardId - 게시글 ID
+   * @param commentId - 댓글 ID
+   * @returns ApiResponse<string>
+   */
+  deleteComment: (boardId: string, commentId: string) =>
+    fetchClient.delete<ApiResponse<string>>(`/boards/${boardId}/comments/${commentId}`),
 };
 
-export type { BoardCategory };
+export type { BoardCategory, BoardListItem, BoardDetail, CommentItem };
