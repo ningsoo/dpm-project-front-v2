@@ -8,6 +8,15 @@ import type { BoardCategory } from '@/api/boardApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import styles from './CreatePost.module.css';
 
+// 소문자 category를 대문자 BoardCategory로 변환
+function toBoardCategory(category: string): BoardCategory {
+  const upper = category.toUpperCase();
+  if (['SHOWCASE', 'PLAYLISTS', 'SPOTLIGHT', 'COMMUNITY', 'REVIEWS'].includes(upper)) {
+    return upper as BoardCategory;
+  }
+  return 'SHOWCASE';
+}
+
 interface CreatePostProps {
   category: string;
 }
@@ -25,35 +34,32 @@ export default function CreatePost({ category }: CreatePostProps) {
 
   const titleOk = title.length >= 3 && title.length <= 15;
   const contentOk = content.length >= 5 && content.length <= 300;
-  const youtubeOk = !youtubeUrl || /^https:\/\/www\.youtube\.com\//.test(youtubeUrl);
-  const photosOk = category !== 'spotlight' || (photos.length >= 1 && photos.length <= 5);
-  const filesOk = !['community', 'reviews'].includes(category) || files.length <= 3;
-
-  const buildBody = (): Record<string, unknown> => {
-    const base: Record<string, unknown> = { title, content };
-    if (category === 'showcase' && youtubeUrl) base.youtubeUrl = youtubeUrl;
-    if (category === 'playlists' && playlistId) base.playlistId = playlistId;
-    // TODO: spotlight photos, community/reviews files — 전송 시 FormData 또는 별도 업로드 API 사용
-    return base;
-  };
+  // fileUrl 관련 필수 검증 제거 - 선택사항으로 변경
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!titleOk || !contentOk || (category === 'showcase' && !youtubeOk) || !photosOk || !filesOk) {
+    // title과 content만 필수, 나머지는 선택사항
+    if (!titleOk || !contentOk) {
       setErrors({
         title: !titleOk ? '3~15자' : '',
         content: !contentOk ? '5~300자' : '',
-        youtube: category === 'showcase' && !youtubeOk ? 'https://www.youtube.com/ 로 시작' : '',
       });
       return;
     }
     setLoading(true);
     setErrors({});
     try {
-      const body = buildBody();
-      const { data } = await boardApi.createPost(safeCat as BoardCategory, body);
-      const id = (data?.data as { boardId?: string })?.boardId;
-      router.push(id ? `/boards/${category}/${id}` : `/boards/${category}`);
+      const categoryType = toBoardCategory(category);
+      // Swagger 명세: POST /api/boards/{categoryType}
+      // body: { title: string, content: string, category: string }
+      const { data } = await boardApi.createPost(categoryType, {
+        title,
+        content,
+        category: categoryType,
+      });
+      // 응답: ApiResponse<string> - data에 boardId가 문자열로 반환될 것으로 예상
+      const boardId = typeof data?.data === 'string' ? data.data : '';
+      router.push(boardId ? `/boards/${category}/${boardId}` : `/boards/${category}`);
     } catch {
       ToastUtils.error('글 등록에 실패했습니다.');
     } finally {
@@ -127,7 +133,6 @@ export default function CreatePost({ category }: CreatePostProps) {
                 <img src={URL.createObjectURL(photos[0])} alt="미리보기" />
               </div>
             )}
-            {!photosOk && <span className={styles.error}>1~5장 필요</span>}
           </label>
         )}
 
@@ -163,7 +168,7 @@ export default function CreatePost({ category }: CreatePostProps) {
           <button
             type="submit"
             className={`${styles.btn} ${styles.submit}`}
-            disabled={!titleOk || !contentOk || !photosOk || !filesOk || loading}
+            disabled={!titleOk || !contentOk || loading}
           >
             {loading ? '등록 중…' : '등록'}
           </button>
