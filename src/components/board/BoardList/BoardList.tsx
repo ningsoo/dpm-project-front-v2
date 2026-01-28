@@ -5,22 +5,16 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { boardApi } from '@/api/boardApi';
 import type { BoardCategory } from '@/api/boardApi';
+import type { BoardListItem } from '@/api/boardTypes';
 import { ToastUtils } from '@/utils/toastUtils';
 import ShowcaseFeaturedSection from '@/components/board/ShowcaseFeaturedSection';
 import CommonBoardCarousel from '@/components/board/CommonBoardCarousel';
 import styles from './BoardList.module.css';
 
-interface Post {
-  id: string;
-  title: string;
-  authorNickname?: string;
-  likeCount?: number;
-  viewCount?: number;
-  createdAt?: string;
-  thumbnail?: string;
-  youtubeUrl?: string;
-  number?: number;
-}
+type Post = BoardListItem & {
+  id?: string; // 응답에는 없지만 UI에서 사용
+  number?: number; // UI에서 사용
+};
 
 interface BoardListProps {
   category: string;
@@ -29,43 +23,59 @@ interface BoardListProps {
 
 const GRID_CATS = ['showcase', 'playlists', 'spotlight'];
 
+// 소문자 category를 대문자 BoardCategory로 변환
+function toBoardCategory(category: string): BoardCategory {
+  const upper = category.toUpperCase();
+  if (['SHOWCASE', 'PLAYLISTS', 'SPOTLIGHT', 'COMMUNITY', 'REVIEWS'].includes(upper)) {
+    return upper as BoardCategory;
+  }
+  return 'SHOWCASE';
+}
+
 export default function BoardList({ category, viewMode }: BoardListProps) {
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchType, setSearchType] = useState<'title' | 'nickname'>('title');
   const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
   const [hoveredPostId, setHoveredPostId] = useState<string | null>(null);
 
-  const fetchList = useCallback(async (reset = false) => {
-    const p = reset ? 1 : page;
+  const categoryType = toBoardCategory(category);
+
+  const fetchList = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await boardApi.getBoardByCategory(category as BoardCategory, {
-        page: p,
-        search: search || undefined,
-      });
-      const d = data?.data as { posts?: Post[]; total?: number };
-      const list = Array.isArray(d?.posts) ? d.posts : [];
-      setPosts((prev) => (reset ? list : [...prev, ...list]));
-      setHasMore(list.length >= 20);
-      if (reset) setPage(2);
-      else setPage((x) => x + 1);
+      // Swagger 명세: GET /api/boards/{categoryType} - 배열 반환
+      const { data } = await boardApi.getBoardByCategory(categoryType);
+      const list = Array.isArray(data) ? data : [];
+      
+      // 검색 필터링 (프론트엔드에서 처리, 백엔드에 search 파라미터가 없음)
+      let filtered = list;
+      if (search) {
+        const kw = search.toLowerCase();
+        filtered = list.filter((p) => {
+          if (searchType === 'title') {
+            return p.title.toLowerCase().includes(kw);
+          } else {
+            return p.nickname.toLowerCase().includes(kw);
+          }
+        });
+      }
+      
+      setPosts(filtered.map((p, i) => ({ ...p, id: String(i), number: list.length - i })));
     } catch {
       ToastUtils.error('게시글을 불러올 수 없습니다');
-      setPosts((prev) => (reset ? [] : prev));
+      setPosts([]);
     } finally {
       setLoading(false);
     }
-  }, [category, page, search]);
+  }, [categoryType, search, searchType]);
 
   useEffect(() => {
-    fetchList(true);
-  }, [category, search]);
+    fetchList();
+  }, [fetchList]);
 
-  const onSearch = () => fetchList(true);
+  const onSearch = () => fetchList();
 
   const safeCat = ['showcase', 'playlists', 'spotlight', 'community', 'reviews'].includes(category)
     ? category
@@ -118,20 +128,20 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
       ) : viewMode === 'grid' ? (
         <div className={styles.grid}>
           {posts.map((p, i) => {
-            const ytId = extractYtId(p.youtubeUrl);
+            const ytId = extractYtId(p.fileUrl);
             const isHovered = hoveredPostId === p.id;
             const isShowcase = category === 'showcase';
             const showVideo = isShowcase && isHovered && ytId;
 
             const handleCardClick = () => {
-              router.push(`/boards/${safeCat}/${p.id}`);
+              router.push(`/boards/${safeCat}/${p.id || ''}`);
             };
 
             return (
               <div
                 key={p.id}
                 className={styles.card}
-                onMouseEnter={() => setHoveredPostId(p.id)}
+                onMouseEnter={() => setHoveredPostId(p.id || null)}
                 onMouseLeave={() => setHoveredPostId(null)}
                 onClick={handleCardClick}
                 role="button"
@@ -179,7 +189,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                   ) : (
                     <img
                       src={
-                        p.thumbnail ||
+                        p.fileUrl ||
                         (ytId
                           ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`
                           : '/placeholder-playlist.png')
@@ -192,7 +202,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                 <div className={styles.cardBody}>
                   <div className={styles.cardTitle}>{p.title}</div>
                   <div className={styles.meta}>
-                    {p.authorNickname || '—'} · ♥{p.likeCount ?? 0}
+                    {p.nickname || '—'} · ♥{p.likes ?? 0}
                   </div>
                 </div>
               </div>
@@ -217,12 +227,12 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                 <tr key={p.id}>
                   <td>{p.number ?? p.id}</td>
                   <td>
-                    <Link href={`/boards/${safeCat}/${p.id}`}>{p.title}</Link>
+                    <Link href={`/boards/${safeCat}/${p.id || ''}`}>{p.title}</Link>
                   </td>
-                  <td>{p.authorNickname || '—'}</td>
-                  <td>{p.likeCount ?? 0}</td>
-                  <td>{p.viewCount ?? 0}</td>
-                  <td>{formatDate(p.createdAt)}</td>
+                  <td>{p.nickname || '—'}</td>
+                  <td>{p.likes ?? 0}</td>
+                  <td>{p.views ?? 0}</td>
+                  <td>{formatDate(p.createdDateTime)}</td>
                 </tr>
               ))}
             </tbody>
@@ -234,18 +244,6 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
         <div className={styles.empty}>등록된 게시글이 없습니다.</div>
       )}
 
-      {viewMode === 'list' && hasMore && posts.length > 0 && (
-        <div style={{ textAlign: 'center', padding: 16 }}>
-          <button
-            type="button"
-            className={styles.searchBtn}
-            onClick={() => fetchList(false)}
-            disabled={loading}
-          >
-            {loading ? '로딩…' : '더 보기'}
-          </button>
-        </div>
-      )}
     </section>
   );
 }

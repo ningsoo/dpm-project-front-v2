@@ -31,10 +31,15 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
 
   const fetchPosts = useCallback(async () => {
     try {
-      const { data } = await boardApi.getBoardByCategory(category, {});
-      const d = data?.data as { posts?: BoardPost[] };
-      const list = Array.isArray(d?.posts) ? d.posts : [];
-      setPosts(list);
+      const { data } = await boardApi.getBoardByCategory(category);
+      const list = Array.isArray(data) ? data : [];
+      setPosts(list.map((p, i) => ({
+        ...p,
+        id: String(i),
+        description: p.content,
+        thumbnail: p.fileUrl,
+        image: p.fileUrl,
+      })));
     } catch {
       setPosts([]);
     }

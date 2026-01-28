@@ -5,15 +5,11 @@ import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
-import type { BoardCategory } from '@/api/boardApi';
+import type { BoardListItem } from '@/api/boardTypes';
 import styles from './TopPlaylists.module.css';
 
-interface PlaylistPost {
-  id: string;
-  title: string;
-  authorNickname?: string;
-  likeCount?: number;
-  thumbnail?: string;
+interface PlaylistPost extends BoardListItem {
+  id?: string; // UI에서 사용
 }
 
 export default function TopPlaylists() {
@@ -22,10 +18,10 @@ export default function TopPlaylists() {
 
   useEffect(() => {
     boardApi
-      .getBoardByCategory('playlists' as BoardCategory, {})
+      .getBoardByCategory('PLAYLISTS')
       .then(({ data }) => {
-        const d = data?.data as { posts?: PlaylistPost[] };
-        setPosts(Array.isArray(d?.posts) ? d.posts.slice(0, 8) : []);
+        const list = Array.isArray(data) ? data : [];
+        setPosts(list.slice(0, 8).map((p, i) => ({ ...p, id: String(i) })));
       })
       .catch(() => setPosts([]));
   }, []);
@@ -39,12 +35,12 @@ export default function TopPlaylists() {
         {posts.map((p) => (
           <Link key={p.id} href={`/boards/playlists/${p.id}`} className={styles.card}>
             <div className={styles.thumbWrap}>
-              <img src={p.thumbnail || '/placeholder-playlist.png'} alt="" className={styles.thumb} />
+              <img src={p.fileUrl || '/placeholder-playlist.png'} alt="" className={styles.thumb} />
             </div>
             <div className={styles.body}>
-              <div className={styles.author}>{p.authorNickname || '—'}</div>
+              <div className={styles.author}>{p.nickname || '—'}</div>
               <div className={styles.cardTitle}>{p.title}</div>
-              <div className={styles.likes}>♥ {p.likeCount ?? 0}</div>
+              <div className={styles.likes}>♥ {p.likes ?? 0}</div>
             </div>
           </Link>
         ))}

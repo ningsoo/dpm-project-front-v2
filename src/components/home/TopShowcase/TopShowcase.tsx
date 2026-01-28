@@ -5,16 +5,11 @@ import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
-import type { BoardCategory } from '@/api/boardApi';
+import type { BoardCategory, BoardListItem } from '@/api/boardApi';
 import styles from './TopShowcase.module.css';
 
-interface ShowcasePost {
-  id: string;
-  title: string;
-  authorNickname?: string;
-  likeCount?: number;
-  thumbnail?: string;
-  youtubeUrl?: string;
+interface ShowcasePost extends BoardListItem {
+  id?: string; // UI에서 사용
 }
 
 export default function TopShowcase() {
@@ -25,10 +20,10 @@ export default function TopShowcase() {
 
   useEffect(() => {
     boardApi
-      .getBoardByCategory('showcase' as BoardCategory, {})
+      .getBoardByCategory('SHOWCASE')
       .then(({ data }) => {
-        const d = data?.data as { posts?: ShowcasePost[] };
-        setPosts(Array.isArray(d?.posts) ? d.posts.slice(0, 8) : []);
+        const list = Array.isArray(data) ? data : [];
+        setPosts(list.slice(0, 8).map((p, i) => ({ ...p, id: String(i) })));
       })
       .catch(() => setPosts([]));
   }, []);
@@ -40,7 +35,7 @@ export default function TopShowcase() {
       <h2 className={styles.title}>TOP Showcase</h2>
       <div className={styles.grid}>
         {posts.map((p) => {
-          const ytId = extractYoutubeId(p.youtubeUrl);
+          const ytId = extractYoutubeId(p.fileUrl);
           const isHovered = hoveredPostId === p.id;
           const showVideo = isHovered && ytId;
 
@@ -99,7 +94,7 @@ export default function TopShowcase() {
                   </>
                 ) : (
                   <img
-                    src={p.thumbnail || (ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : '/placeholder-playlist.png')}
+                    src={p.fileUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : '/placeholder-playlist.png')}
                     alt=""
                     className={styles.thumb}
                   />
