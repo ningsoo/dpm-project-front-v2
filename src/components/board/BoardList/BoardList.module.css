@@ -19,7 +19,7 @@
 }
 
 .filter {
-  padding: 10px 14px;
+  padding: 10px 4px;
   font-size: 0.9rem;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -50,7 +50,7 @@
   font-size: 0.9rem;
   font-weight: 500;
   color: #fff;
-  background: #2e7d32;
+  background: #1976d2;
   border: none;
   border-radius: 8px;
   cursor: pointer;

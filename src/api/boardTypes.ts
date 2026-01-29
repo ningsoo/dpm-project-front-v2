@@ -2,13 +2,14 @@ export type BoardCategory = 'SHOWCASE' | 'PLAYLISTS' | 'SPOTLIGHT' | 'COMMUNITY'
 
 // Swagger 명세 기반 타입 정의
 export interface BoardListItem {
+  boardId: number;
   title: string;
-  content: string;
+  content: string | null;
   nickname: string;
   views: number;
   likes: number;
-  createdDateTime: string; // ISO DateTime
-  fileUrl: string;
+  createdDateTime: number[]; // [year, month, day, hour, minute, second]
+  fileUrl: string | null;
 }
 
 export interface BoardDetail extends BoardListItem {

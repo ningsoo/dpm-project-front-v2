@@ -120,7 +120,7 @@ export default function ShowcaseFeaturedSection() {
                 onMouseEnter={() => onEnter(i)}
                 onMouseLeave={() => onLeave(i)}
                 onClick={() =>
-                  (window.location.href = `/boards/showcase/${post.id}`)
+                  (window.location.href = `/boards/${post.id}`)
                 }
               >
                 <div className={styles.mediaContainer}>

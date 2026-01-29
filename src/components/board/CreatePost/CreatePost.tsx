@@ -49,9 +49,8 @@ export default function CreatePost({ category }: CreatePostProps) {
     setLoading(true);
     setErrors({});
     try {
+      // 백엔드 API는 대문자 카테고리(SHOWCASE 등) 사용. URL/body 모두 동일 값 전달.
       const categoryType = toBoardCategory(category);
-      // Swagger 명세: POST /api/boards/{categoryType}
-      // body: { title: string, content: string, category: string }
       const { data } = await boardApi.createPost(categoryType, {
         title,
         content,
@@ -59,7 +58,7 @@ export default function CreatePost({ category }: CreatePostProps) {
       });
       // 응답: ApiResponse<string> - data에 boardId가 문자열로 반환될 것으로 예상
       const boardId = typeof data?.data === 'string' ? data.data : '';
-      router.push(boardId ? `/boards/${category}/${boardId}` : `/boards/${category}`);
+      router.push(boardId ? `/boards/${boardId}` : `/boards/category/${category}`);
     } catch {
       ToastUtils.error('글 등록에 실패했습니다.');
     } finally {

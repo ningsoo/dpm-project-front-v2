@@ -8,17 +8,49 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
 import { ToastUtils } from '@/utils/toastUtils';
-import type { BoardCategory, BoardDetail, CommentItem } from '@/api/boardApi';
+import { formatCreatedDateTimeFull } from '@/utils/createdDateTime';
+import type { BoardCategory, BoardDetail } from '@/api/boardApi';
 import styles from './PostDetail.module.css';
 
-interface Post extends BoardDetail {
-  id?: string; // UI에서 사용
-  isAuthor?: boolean; // 현재 로그인한 사용자가 작성자인지 여부
+/** API 응답 댓글 형태 (commentId 없음) */
+interface CommentFromApi {
+  nickname: string;
+  content: string;
+  createdDateTime: number[];
 }
 
-interface Comment extends CommentItem {
-  id?: string; // UI에서 사용
-  isAuthor?: boolean; // 현재 로그인한 사용자가 작성자인지 여부
+/** 프론트 전용 id를 부여한 댓글 타입 (추후 백엔드 commentId 내려주면 id 필드만 교체 가능) */
+interface Comment {
+  id: string;
+  nickname: string;
+  content: string;
+  createdDateTime: number[];
+  isAuthor?: boolean;
+}
+
+/** nickname + createdDateTime 조합으로 항상 동일한 id 생성 (index 사용 금지) */
+function getCommentId(nickname: string, createdDateTime: number[] | unknown): string {
+  const arr = Array.isArray(createdDateTime) ? createdDateTime : [];
+  return `${nickname}-${arr.join('-')}`;
+}
+
+function transformComments(apiData: CommentFromApi[]): Comment[] {
+  return apiData.map((c) => ({
+    id: getCommentId(c.nickname, c.createdDateTime),
+    nickname: c.nickname,
+    content: c.content,
+    createdDateTime: c.createdDateTime,
+  }));
+}
+
+interface Post extends BoardDetail {
+  id?: string;
+  isAuthor?: boolean;
+  isLiked?: boolean;
+  playlistThumbnail?: string;
+  playlistUrl?: string;
+  photos?: string[];
+  files?: { url: string; name: string }[];
 }
 
 function extractYoutubeId(url?: string): string {
@@ -27,21 +59,6 @@ function extractYoutubeId(url?: string): string {
   return m ? m[1] : '';
 }
 
-function formatDateTime(s?: string): string {
-  if (!s) return '—';
-  try {
-    const d = new Date(s);
-    return d.toLocaleString('ko-KR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return s;
-  }
-}
 
 interface PostDetailProps {
   category: string;
@@ -71,21 +88,37 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
     ? category
     : 'showcase') as BoardCategory;
 
-  useEffect(() => {
-    // Swagger 명세: GET /api/boards/{boardId}
-    Promise.all([
-      boardApi.getPost(boardId),
-      boardApi.getComments(boardId),
-    ])
-      .then(([postResponse, commentsResponse]) => {
-        const postData = postResponse.data as BoardDetail;
-        const commentsData = Array.isArray(commentsResponse.data) ? commentsResponse.data : [];
-        setPost({ ...postData, id: boardId } || null);
-        setComments(commentsData.map((c, i) => ({ ...c, id: String(i) })));
-      })
-      .catch(() => ToastUtils.error('글을 불러올 수 없습니다'))
-      .finally(() => setLoading(false));
-  }, [boardId]);
+    // 게시글 상세 조회 (댓글과 분리)
+    useEffect(() => {
+      if (!boardId) return;
+      setLoading(true);
+      boardApi
+        .getPost(boardId)
+        .then(({ data }) => {
+          const postData = data?.data as BoardDetail | undefined;
+          if (postData) setPost({ ...postData });
+        })
+        .catch((err) => {
+          console.error('게시글 조회 실패', err);
+          ToastUtils.error('글을 불러올 수 없습니다');
+        })
+        .finally(() => setLoading(false));
+    }, [boardId]);
+
+    // 댓글 조회 (실패 시 게시글에는 영향 없음)
+    useEffect(() => {
+      if (!boardId) return;
+      boardApi
+        .getComments(boardId)
+        .then(({ data }) => {
+          const raw = Array.isArray(data?.data) ? (data.data as unknown as CommentFromApi[]) : [];
+          setComments(transformComments(raw));
+        })
+        .catch((err) => {
+          setComments([]);
+          console.warn('댓글 조회 실패', err);
+        });
+    }, [boardId]);
 
   // 외부 클릭 시 메뉴 닫기
   useEffect(() => {
@@ -123,19 +156,19 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
   const handleCommentSubmit = () => {
     if (!isAuthenticated || !commentText.trim() || commentText.length > 50) return;
-    // Swagger 명세: POST /api/boards/{boardId}/comments
-    boardApi.createComment(boardId, { content: commentText }).then(({ data }) => {
-      setCommentText('');
-      setCommentOpen(true);
-      // 새 댓글 추가
-      const newComment = data as CommentItem;
-      setComments((prev) => [...prev, { ...newComment, id: String(prev.length) }]);
-      // 또는 전체 댓글 다시 조회
-      boardApi.getComments(boardId).then(({ data: commentsData }) => {
-        const comments = Array.isArray(commentsData) ? commentsData : [];
-        setComments(comments.map((c, i) => ({ ...c, id: String(i) })));
-      });
-    }).catch(() => ToastUtils.error('댓글 등록 실패'));
+    const content = commentText.trim();
+    boardApi
+      .createComment(boardId, { content })
+      .then(() => {
+        setCommentText('');
+        setCommentOpen(true);
+        return boardApi.getComments(boardId);
+      })
+      .then(({ data }) => {
+        const raw = Array.isArray(data?.data) ? (data.data as unknown as CommentFromApi[]) : [];
+        setComments(transformComments(raw));
+      })
+      .catch(() => ToastUtils.error('댓글 등록 실패'));
   };
 
   const handleMenuClick = () => {
@@ -145,7 +178,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
   const handleEdit = () => {
     setMenuOpen(false);
-    router.push(`/boards/${category}/${boardId}/edit`);
+    router.push(`/boards/${boardId}/edit`);
   };
 
   const handleDeleteClick = () => {
@@ -154,11 +187,10 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   };
 
   const handleDeleteConfirm = () => {
-    // Swagger 명세: DELETE /api/boards/{boardId}
     boardApi.deletePost(boardId)
       .then(() => {
         ToastUtils.success('글이 삭제되었습니다.');
-        router.push(`/boards/${category}`);
+        router.push(`/boards/category/${category}`);
       })
       .catch(() => {
         ToastUtils.error('글 삭제에 실패했습니다.');
@@ -197,12 +229,17 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
   const handleCommentDeleteConfirm = () => {
     if (!showCommentDeleteModal) return;
-    // Swagger 명세: DELETE /api/boards/{boardId}/comments/{commentId}
-    boardApi.deleteComment(boardId, showCommentDeleteModal)
+    const commentIdToDelete = showCommentDeleteModal;
+    boardApi
+      .deleteComment(boardId, commentIdToDelete)
       .then(() => {
         ToastUtils.success('댓글이 삭제되었습니다.');
-        setComments((prev) => prev.filter((c) => c.id !== showCommentDeleteModal));
         setShowCommentDeleteModal(null);
+        return boardApi.getComments(boardId);
+      })
+      .then(({ data }) => {
+        const raw = Array.isArray(data?.data) ? (data.data as unknown as CommentFromApi[]) : [];
+        setComments(transformComments(raw));
       })
       .catch(() => {
         ToastUtils.error('댓글 삭제에 실패했습니다.');
@@ -214,30 +251,21 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
     setCommentMenuOpen(null);
     setShowCommentReportModal(commentId);
   };
-
   const handleCommentReportSubmit = () => {
     if (!showCommentReportModal || !commentReportReason.trim()) {
       ToastUtils.error('신고 사유를 입력해주세요.');
       return;
     }
-    // Swagger 명세에 report API가 없으므로 제거 (필요시 별도 구현)
+
     ToastUtils.error('신고 기능은 준비 중입니다.');
     setShowCommentReportModal(null);
     setCommentReportReason('');
-      .then(() => {
-        ToastUtils.success('신고가 접수되었습니다.');
-        setShowCommentReportModal(null);
-        setCommentReportReason('');
-      })
-      .catch(() => {
-        ToastUtils.error('신고 접수에 실패했습니다.');
-      });
   };
 
   if (loading) return <div className={styles.loading}>로딩 중…</div>;
   if (!post) return <div className={styles.loading}>글이 없습니다.</div>;
 
-  const ytId = extractYoutubeId(post.fileUrl);
+  const ytId = extractYoutubeId(post.fileUrl ?? undefined);
   const isAuthor = post.isAuthor ?? false;
 
   return (
@@ -254,7 +282,9 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
             {post.views ?? 0}
           </span>
           <span className={styles.iconBtn} style={{ cursor: 'default' }}>
-            {formatDateTime(post.createdDateTime)}
+            {formatCreatedDateTimeFull(
+              Array.isArray(post.createdDateTime) ? post.createdDateTime : (undefined as number[] | undefined)
+            )}
           </span>
           <div className={styles.menuWrapper} ref={menuRef}>
             <button
@@ -322,7 +352,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
         {category === 'spotlight' && post.photos && post.photos.length > 0 && (
           <div className={styles.photoList}>
-            {post.photos.map((url, i) => (
+            {post.photos.map((url: string, i: number) => (
               <img key={i} src={url} alt="" />
             ))}
           </div>
@@ -330,7 +360,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
         {['community', 'reviews'].includes(category) && post.files && post.files.length > 0 && (
           <div className={styles.fileList}>
-            {post.files.map((f, i) => (
+            {post.files.map((f: { url: string; name: string }, i: number) => (
               <div key={i} className={styles.fileItem}>
                 <a href={f.url} download>{f.name}</a>
               </div>
@@ -388,7 +418,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
               </button>
             </div>
 
-            {/* ✅ 댓글 리스트 */}
+            {/* 댓글 리스트 (프론트 전용 id 사용) */}
             {comments.map((c) => {
               const isCommentAuthor = c.isAuthor ?? false;
               return (
@@ -398,7 +428,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
                       {c.nickname}
                     </span>
                     <span className={styles.commentDate}>
-                      {formatDateTime(c.createdDateTime)}
+                      {formatCreatedDateTimeFull(c.createdDateTime)}
                     </span>
                     <div
                       className={styles.menuWrapper}
@@ -428,7 +458,6 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
                                 type="button"
                                 className={styles.menuItem}
                                 onClick={() => {
-                                  // TODO: 댓글 수정 기능 구현
                                   setCommentMenuOpen(null);
                                   ToastUtils.info('댓글 수정 기능은 준비 중입니다.');
                                 }}

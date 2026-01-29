@@ -82,7 +82,7 @@ export default function Carousel({ category, variant = 'spotlight', autoSlideInt
       // 가운데 카드 클릭 시 게시글 페이지로 이동
       const p = posts[displayIndex];
       if (p) {
-        window.location.href = `/boards/${category}/${p.id}`;
+        window.location.href = `/boards/${p.id}`;
       }
     } else {
       // 좌우 카드 클릭 시 가운데로 이동

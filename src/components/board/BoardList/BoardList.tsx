@@ -7,21 +7,15 @@ import { boardApi } from '@/api/boardApi';
 import type { BoardCategory } from '@/api/boardApi';
 import type { BoardListItem } from '@/api/boardTypes';
 import { ToastUtils } from '@/utils/toastUtils';
+import { formatCreatedDateTime } from '@/utils/createdDateTime';
 import ShowcaseFeaturedSection from '@/components/board/ShowcaseFeaturedSection';
 import CommonBoardCarousel from '@/components/board/CommonBoardCarousel';
 import styles from './BoardList.module.css';
-
-type Post = BoardListItem & {
-  id?: string; // 응답에는 없지만 UI에서 사용
-  number?: number; // UI에서 사용
-};
 
 interface BoardListProps {
   category: string;
   viewMode: 'grid' | 'list';
 }
-
-const GRID_CATS = ['showcase', 'playlists', 'spotlight'];
 
 // 소문자 category를 대문자 BoardCategory로 변환
 function toBoardCategory(category: string): BoardCategory {
@@ -34,11 +28,11 @@ function toBoardCategory(category: string): BoardCategory {
 
 export default function BoardList({ category, viewMode }: BoardListProps) {
   const router = useRouter();
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<BoardListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchType, setSearchType] = useState<'title' | 'nickname'>('title');
   const [search, setSearch] = useState('');
-  const [hoveredPostId, setHoveredPostId] = useState<string | null>(null);
+  const [hoveredBoardId, setHoveredBoardId] = useState<number | null>(null);
 
   const categoryType = toBoardCategory(category);
 
@@ -47,22 +41,22 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
     try {
       // Swagger 명세: GET /api/boards/{categoryType} - 배열 반환
       const { data } = await boardApi.getBoardByCategory(categoryType);
-      const list = Array.isArray(data) ? data : [];
+      const list = Array.isArray(data?.data) ? data.data : [];
       
-      // 검색 필터링 (프론트엔드에서 처리, 백엔드에 search 파라미터가 없음)
+
       let filtered = list;
-      if (search) {
-        const kw = search.toLowerCase();
+      const kw = search.trim();
+      if (kw) {
         filtered = list.filter((p) => {
           if (searchType === 'title') {
-            return p.title.toLowerCase().includes(kw);
+            return (p.title ?? '').includes(kw);
           } else {
-            return p.nickname.toLowerCase().includes(kw);
+            return (p.nickname ?? '').includes(kw);
           }
         });
       }
-      
-      setPosts(filtered.map((p, i) => ({ ...p, id: String(i), number: list.length - i })));
+
+      setPosts(filtered);
     } catch {
       ToastUtils.error('게시글을 불러올 수 없습니다');
       setPosts([]);
@@ -91,7 +85,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
       )}
       {(category === 'playlists' || category === 'spotlight') && (
         <div className={styles.carouselSection}>
-          <CommonBoardCarousel category={category as BoardCategory} />
+          <CommonBoardCarousel category={categoryType} />
         </div>
       )}
 
@@ -117,7 +111,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
             검색
           </button>
         </div>
-        <Link href={`/boards/${safeCat}/new`} className={styles.writeBtn}>
+        <Link href={`/boards/category/${safeCat}/new`} className={styles.writeBtn}>
           글작성
         </Link>
       </div>
@@ -127,22 +121,22 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
         <div className={styles.loading}>로딩 중…</div>
       ) : viewMode === 'grid' ? (
         <div className={styles.grid}>
-          {posts.map((p, i) => {
-            const ytId = extractYtId(p.fileUrl);
-            const isHovered = hoveredPostId === p.id;
+          {posts.map((p) => {
+            const ytId = extractYtId(p.fileUrl ?? undefined);
+            const isHovered = hoveredBoardId === p.boardId;
             const isShowcase = category === 'showcase';
             const showVideo = isShowcase && isHovered && ytId;
 
             const handleCardClick = () => {
-              router.push(`/boards/${safeCat}/${p.id || ''}`);
+              router.push(`/boards/${p.boardId}`);
             };
 
             return (
               <div
-                key={p.id}
+                key={p.boardId}
                 className={styles.card}
-                onMouseEnter={() => setHoveredPostId(p.id || null)}
-                onMouseLeave={() => setHoveredPostId(null)}
+                onMouseEnter={() => setHoveredBoardId(p.boardId)}
+                onMouseLeave={() => setHoveredBoardId(null)}
                 onClick={handleCardClick}
                 role="button"
                 tabIndex={0}
@@ -172,26 +166,13 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                           pointerEvents: 'none',
                         }}
                       />
-                      {/* 클릭 가능한 투명 레이어 */}
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: '100%',
-                          zIndex: 1,
-                          cursor: 'pointer',
-                        }}
-                        onClick={handleCardClick}
-                      />
                     </>
                   ) : (
                     <img
                       src={
                         p.fileUrl ||
                         (ytId
-                          ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`
+                          ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
                           : '/placeholder-playlist.png')
                       }
                       alt=""
@@ -202,7 +183,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                 <div className={styles.cardBody}>
                   <div className={styles.cardTitle}>{p.title}</div>
                   <div className={styles.meta}>
-                    {p.nickname || '—'} · ♥{p.likes ?? 0}
+                    {p.nickname || '—'} · ♥{p.likes ?? 0} · views {p.views ?? 0}
                   </div>
                 </div>
               </div>
@@ -214,7 +195,6 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
           <table className={styles.table}>
             <thead>
               <tr>
-                <th>번호</th>
                 <th>제목</th>
                 <th>작성자</th>
                 <th>좋아요</th>
@@ -224,15 +204,18 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
             </thead>
             <tbody>
               {posts.map((p) => (
-                <tr key={p.id}>
-                  <td>{p.number ?? p.id}</td>
+                <tr 
+                  key={p.boardId}
+                  onClick={() => router.push(`/boards/${p.boardId}`)}
+                  style={{ cursor: 'pointer' }}
+                >
                   <td>
-                    <Link href={`/boards/${safeCat}/${p.id || ''}`}>{p.title}</Link>
+                    <Link href={`/boards/${p.boardId}`}>{p.title}</Link>
                   </td>
                   <td>{p.nickname || '—'}</td>
                   <td>{p.likes ?? 0}</td>
                   <td>{p.views ?? 0}</td>
-                  <td>{formatDate(p.createdDateTime)}</td>
+                  <td>{formatCreatedDateTime(p.createdDateTime)}</td>
                 </tr>
               ))}
             </tbody>
@@ -254,12 +237,4 @@ function extractYtId(url?: string): string {
   return m ? m[1] : '';
 }
 
-function formatDate(s?: string): string {
-  if (!s) return '—';
-  try {
-    const d = new Date(s);
-    return d.toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
-  } catch {
-    return s;
-  }
-}
+// 날짜 포맷은 formatCreatedDateTime 사용

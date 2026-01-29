@@ -5,7 +5,7 @@ import CreatePost from '@/components/board/CreatePost';
 
 export default function NewPostPage() {
   const params = useParams();
-  const category = (params?.category as string) || 'showcase';
+  const category = (params?.category as string) || 'SHOWCASE';
 
   return <CreatePost category={category} />;
 }
