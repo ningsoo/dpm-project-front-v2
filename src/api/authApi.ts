@@ -4,7 +4,7 @@ export interface SignupBody {
   email: string;
   password: string;
   nickname: string;
-  phone: string;
+  phoneNumber: string;
 }
 
 export interface LoginBody {
@@ -20,7 +20,7 @@ export interface ApiResponse<T> {
 
 export const authApi = {
   signup: (body: SignupBody) =>
-    fetchClient.post<ApiResponse<unknown>>('/auth/signup', body),
+    fetchClient.post<ApiResponse<unknown>>('/auth/signup', body, { timeout: 30000 }),
 
   login: (body: LoginBody) =>
     fetchClient.post<ApiResponse<unknown>>('/auth/login', body),
@@ -31,8 +31,14 @@ export const authApi = {
   checkEmail: (email: string) =>
     fetchClient.get<ApiResponse<{ available: boolean }>>('/auth/email', { params: { email } }),
 
+  checkNickname: (nickname: string) =>
+    fetchClient.get<ApiResponse<{ available: boolean }>>('/auth/nickname', { params: { nickname } }),
+
   sendVerification: (email: string) =>
-    fetchClient.post<ApiResponse<unknown>>('/auth/verification', { email }),
+    fetchClient.post<ApiResponse<unknown>>('/auth/verification', { email }, { timeout: 30000 }),
+
+  verifyStatus: (email: string) =>
+    fetchClient.get<ApiResponse<unknown>>('/auth/verify/status', { params: { email }, timeout: 30000 }),
 
   confirmVerification: (token: string) =>
     fetchClient.post<ApiResponse<unknown>>('/auth/verification', { token }),
