@@ -48,7 +48,7 @@ fetchClient.interceptors.response.use(
   async (err: AxiosError) => {
     const original = err.config as typeof err.config & { _retry?: boolean };
 
-    // 1. /api/auth/refresh 요청이면 refresh 시도하지 않고 그대로 reject (무한루프 방지)
+    // 1. /auth/refresh 요청이면 refresh 시도하지 않고 그대로 reject (무한루프 방지)
     if (original.url?.includes('/auth/refresh')) {
       return Promise.reject(err);
     }
@@ -69,7 +69,7 @@ fetchClient.interceptors.response.use(
             // Refresh Token은 HttpOnly Cookie로 자동 전송됨 (withCredentials: true)
             // Swagger 명세에 따라 request body에 refreshToken 포함
             // httpOnly cookie이므로 프론트엔드에서 읽을 수 없지만, 명시적으로 body에 포함
-            const response = await refreshClient.post<{ accessToken: string }>('/api/auth/refresh', {
+            const response = await refreshClient.post<{ accessToken: string }>('/auth/refresh', {
               refreshToken: '', // httpOnly cookie에서 백엔드가 읽지만, 명시적으로 body에 포함
             });
 

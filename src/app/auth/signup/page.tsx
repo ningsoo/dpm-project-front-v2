@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
+import axios from 'axios';
 import { authApi } from '@/api/authApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import styles from '../auth.module.css';
@@ -23,6 +24,8 @@ function validatePassword(p: string): string[] {
   if (!/[A-Z]/.test(p)) err.push('대문자 포함');
   if (!/[0-9]/.test(p)) err.push('숫자 포함');
   if (!/[!@#$%^&*(),.?":{}|<>]/.test(p)) err.push('특수문자 포함');
+  // 한글 검증 추가
+  if (/[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(p)) err.push('한글 금지');
   return err;
 }
 
@@ -41,8 +44,13 @@ export default function SignupPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [emailVerified, setEmailVerified] = useState(false); // 이메일 중복확인 통과 상태
+  const [nicknameVerified, setNicknameVerified] = useState(false); // 닉네임 중복확인 통과 상태
+  const [checkingEmail, setCheckingEmail] = useState(false); // 이메일 중복확인 진행 중
+  const [checkingNickname, setCheckingNickname] = useState(false); // 닉네임 중복확인 진행 중
   const emailDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const nicknameDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const emailCheckSequenceRef = useRef(0); // 이메일 중복확인 시퀀스 ID
 
   const pwdErrors = password ? validatePassword(password) : [];
   const pwdOk = pwdErrors.length === 0;
@@ -81,6 +89,9 @@ export default function SignupPage() {
     const value = e.target.value;
     setEmail(value);
     
+    // 이메일 값이 바뀌면 중복확인 통과 상태 초기화
+    setEmailVerified(false);
+    
     // 기존 타이머가 있으면 취소
     if (emailDebounceRef.current) {
       clearTimeout(emailDebounceRef.current);
@@ -93,7 +104,7 @@ export default function SignupPage() {
     }
     
     // 입력이 멈춘 후 500ms 지연 후 검증
-    emailDebounceRef.current = setTimeout(() => {
+    emailDebounceRef.current = setTimeout(async () => {
       let errorMsg = '';
       
       // 1순위: 한글 포함 검사 (완성형 한글 + 자음/모음 전부 금지)
@@ -107,6 +118,38 @@ export default function SignupPage() {
       }
       
       setErrors((prev) => ({ ...prev, email: errorMsg }));
+      
+      // 이메일 형식이 올바르고 에러가 없을 때만 중복확인 API 호출
+      if (!errorMsg && !checkingEmail) {
+        setCheckingEmail(true);
+        const currentSequence = ++emailCheckSequenceRef.current;
+        
+        try {
+          const { data } = await authApi.checkEmail(value);
+          const available = data?.data?.available;
+          
+          // 최신 요청인지 확인
+          if (currentSequence === emailCheckSequenceRef.current) {
+            if (available === false) {
+              setErrors((prev) => ({ ...prev, email: '이미 사용 중인 이메일입니다' }));
+              setEmailVerified(false);
+            } else {
+              setEmailVerified(true);
+            }
+          }
+        } catch (error) {
+          // 최신 요청인지 확인
+          if (currentSequence === emailCheckSequenceRef.current) {
+            // 중복확인 실패해도 에러는 표시하지 않음 (제출은 막지 않음)
+            setEmailVerified(false);
+          }
+        } finally {
+          // 최신 요청인지 확인
+          if (currentSequence === emailCheckSequenceRef.current) {
+            setCheckingEmail(false);
+          }
+        }
+      }
     }, 500);
   };
 
@@ -126,6 +169,9 @@ export default function SignupPage() {
     // 10자 넘으면 입력 막기
     if (value.length > 10) return;
     setNickname(value);
+    
+    // 닉네임 값이 바뀌면 중복확인 통과 상태 초기화
+    setNicknameVerified(false);
     
     // 기존 타이머가 있으면 취소
     if (nicknameDebounceRef.current) {
@@ -151,28 +197,40 @@ export default function SignupPage() {
   };
 
   const handleNicknameCheck = useCallback(async () => {
-    if (!nicknameFormatOk) {
+    if (!nicknameFormatOk || checkingNickname) {
       return;
     }
     
+    setCheckingNickname(true);
     try {
-      // TODO: 닉네임 중복 확인 API 호출
-      // const { data } = await authApi.checkNickname(nickname);
-      // const available = (data?.data as { available?: boolean })?.available;
-      // if (available === false) {
-      //   ToastUtils.error('중복된 닉네임입니다');
-      // } else {
-      //   ToastUtils.success('사용 가능합니다');
-      // }
-      ToastUtils.success('사용 가능합니다');
+      const { data } = await authApi.checkNickname(nickname);
+      const available = data?.data?.available;
+      if (available === false) {
+        ToastUtils.error('중복된 닉네임입니다');
+        setNicknameVerified(false);
+      } else {
+        ToastUtils.success('사용 가능합니다');
+        setNicknameVerified(true);
+      }
     } catch {
       ToastUtils.error('중복된 닉네임입니다');
+      setNicknameVerified(false);
+    } finally {
+      setCheckingNickname(false);
     }
-  }, [nickname, nicknameFormatOk]);
+  }, [nickname, nicknameFormatOk, checkingNickname]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pwdOk || !confirmOk || !nicknameOk || !phoneOk || errors.email) return;
+    
+    // loading 중 submit 재진입 방지
+    if (loading) return;
+    
+    // submit 조건 검사
+    if (!pwdOk || !confirmOk || !nicknameOk || !phoneOk || errors.email || errors.nickname || !emailVerified || !nicknameVerified) {
+      return;
+    }
+    
     setLoading(true);
     setErrors({});
     try {
@@ -185,9 +243,23 @@ export default function SignupPage() {
         nickname,
         phoneNumber: phoneForServer,
       });
-      await authApi.sendVerification(email);
+      
+      // signup 성공 시 바로 verification 페이지로 이동
       router.push(`/auth/verification?email=${encodeURIComponent(email)}`);
     } catch (err: unknown) {
+      // timeout 케이스 처리
+      if (axios.isAxiosError(err)) {
+        const isTimeout = err.code === 'ECONNABORTED' || err.message?.toLowerCase().includes('timeout');
+        
+        if (isTimeout) {
+          // timeout이면 안내 토스트를 띄우고 verification으로 이동
+          ToastUtils.error('요청 시간이 초과되었습니다. 회원가입은 완료되었을 수 있습니다. 이메일을 확인해주세요.');
+          router.push(`/auth/verification?email=${encodeURIComponent(email)}`);
+          return;
+        }
+      }
+      
+      // timeout이 아닌 에러 처리
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       ToastUtils.error(msg || '회원가입에 실패했습니다');
     } finally {
@@ -220,7 +292,11 @@ export default function SignupPage() {
               type={showPwd ? 'text' : 'password'}
               placeholder={PWD_REQUIRE}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                // 공백 자동 제거
+                const normalizedValue = e.target.value.replace(/\s/g, '');
+                setPassword(normalizedValue);
+              }}
               className={styles.input}
             />
             <button
@@ -499,7 +575,7 @@ export default function SignupPage() {
         <button
           type="submit"
           className={styles.submit}
-          disabled={!pwdOk || !confirmOk || !nicknameOk || !phoneOk || !!errors.email || loading}
+          disabled={!pwdOk || !confirmOk || !nicknameOk || !phoneOk || !!errors.email || !!errors.nickname || !emailVerified || !nicknameVerified || loading}
         >
           {loading ? '처리 중…' : '가입하기'}
         </button>
