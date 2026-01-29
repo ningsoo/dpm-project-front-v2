@@ -1,39 +1,27 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
-import type { BoardCategory, BoardListItem } from '@/api/boardApi';
+import type { BoardListItem } from '@/api/boardTypes';
 import styles from './SpotlightCarousel.module.css';
 
 const VISIBLE = 3;
 const CENTER_INDEX = Math.floor(VISIBLE / 2);
 
-interface SpotlightPost extends BoardListItem {
-  id?: string; // UI에서 사용
-  description?: string; // content를 description으로 사용
-  image?: string; // fileUrl을 image로 사용
-  category: string;
-}
-
 export default function SpotlightCarousel() {
+  const router = useRouter();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
-  const [posts, setPosts] = useState<SpotlightPost[]>([]);
+  const [posts, setPosts] = useState<BoardListItem[]>([]);
   const [center, setCenter] = useState(0);
 
   const fetchSpotlights = useCallback(async () => {
     try {
-      // Swagger 명세: GET /api/boards/SPOTLIGHT
       const { data } = await boardApi.getBoardByCategory('SPOTLIGHT');
-      const list = Array.isArray(data) ? data : [];
-      setPosts(list.map((p, i) => ({
-        ...p,
-        id: String(i),
-        description: p.content,
-        image: p.fileUrl,
-        category: 'spotlight',
-      })));
+      const list = Array.isArray(data?.data) ? data.data : [];
+      setPosts(list);
     } catch {
       setPosts([]);
     }
@@ -43,31 +31,23 @@ export default function SpotlightCarousel() {
     fetchSpotlights();
   }, [fetchSpotlights]);
 
-  // Auto-slide: every 4s move right (무한 루프)
   useEffect(() => {
     if (posts.length === 0) return;
     const t = setInterval(() => {
-      setCenter((c) => (c + 1) % 10);
+      setCenter((c) => (c + 1) % Math.min(posts.length, 10));
     }, 4000);
     return () => clearInterval(t);
   }, [posts.length]);
 
-  // 화면 너비 기반 카드 크기 계산 (3장, 모든 카드 동일 크기)
   const [cardWidths, setCardWidths] = useState({ base: 300 });
   const [hoveredCenter, setHoveredCenter] = useState(false);
-  const CARD_GAP = 20; // 카드 간 마진
+  const CARD_GAP = 20;
 
   useEffect(() => {
     const calculateCardWidths = () => {
       const screenWidth = window.innerWidth;
-      const leftPadding = 24; // 좌측만 24px
+      const leftPadding = 24;
       const availableWidth = screenWidth - leftPadding;
-      
-      // 3장 카드가 한 번에 들어가도록 계산 (우측 여백 없음)
-      // 전체 너비 = 카드 너비 * 3 + 마진 * 2
-      // availableWidth = base * 3 + CARD_GAP * 2
-      // base = (availableWidth - CARD_GAP * 2) / 3
-      
       const baseWidth = Math.floor((availableWidth - CARD_GAP * 2) / 3);
       setCardWidths({ base: baseWidth });
     };
@@ -78,40 +58,31 @@ export default function SpotlightCarousel() {
   }, []);
 
   const onCardClick = (index: number) => {
-    const displayIndex = (center + index - CENTER_INDEX + 10) % 10;
+    const len = Math.min(posts.length, 10);
+    if (len === 0) return;
     if (index === CENTER_INDEX) {
-      // 가운데 카드 클릭 시 게시글 페이지로 이동
-      const p = posts[displayIndex];
-      if (p) {
-        window.location.href = `/boards/${(p.category as BoardCategory) || 'spotlight'}/${p.id}`;
-      }
+      window.location.href = '/boards/category/spotlight';
     } else {
-      // 좌우 카드 클릭 시 가운데로 이동
-      setCenter((c) => (c + (index - CENTER_INDEX) + 10) % 10);
+      setCenter((c) => {
+        const next = c + (index - CENTER_INDEX);
+        return (next + len) % len;
+      });
     }
   };
 
-  // 각 카드의 마진 계산 (겹치지 않게 양수 마진)
-  const getCardMargin = (index: number) => {
-    if (index === 0) return 0; // 1카드(좌측): 마진 없음
-    return CARD_GAP; // 나머지 카드들: 양수 마진
-  };
-
-  // 각 카드의 z-index 계산
-  // 2카드(가운데)가 가장 위, 그 다음 1카드와 3카드
   const getCardZIndex = (index: number) => {
-    if (index === CENTER_INDEX) return 10; // 2카드(가운데)가 가장 위
-    return 1; // 1카드와 3카드
+    if (index === CENTER_INDEX) return 10;
+    return 1;
   };
 
-  // 현재 보여질 카드 인덱스 계산 (무한 루프)
-  const getDisplayIndex = (offset: number) => {
-    return (center + offset + 10) % 10;
-  };
-
-  // 10개의 카드만 사용
   const displayPosts = posts.slice(0, 10);
-  
+
+  const getDisplayIndex = (offset: number) => {
+    const len = displayPosts.length;
+    if (len === 0) return 0;
+    return (center + offset + len) % len;
+  };
+
   if (posts.length === 0 || displayPosts.length === 0) return null;
 
   return (
@@ -125,31 +96,27 @@ export default function SpotlightCarousel() {
 
             const isCenter = i === CENTER_INDEX;
             const cardWidth = cardWidths.base;
-            const expandedWidth = cardWidths.base * 1.5; // 호버 시 1.5배 확장
-            const expansionOffset = hoveredCenter && isCenter 
-              ? (expandedWidth - cardWidth) / 2  // 좌우로 균등하게 확장하기 위한 오프셋
-              : 0;
+            const expandedWidth = cardWidths.base * 1.5;
+            const expansionOffset =
+              hoveredCenter && isCenter ? (expandedWidth - cardWidth) / 2 : 0;
 
-            // 좌우 카드의 절대 위치 계산
             const leftCardPosition = 0;
             const centerCardPosition = cardWidth + CARD_GAP;
             const rightCardPosition = (cardWidth + CARD_GAP) * 2;
 
             let cardLeft = 0;
-            if (i === 0) {
-              cardLeft = leftCardPosition;
-            } else if (i === CENTER_INDEX) {
-              cardLeft = centerCardPosition - expansionOffset;
-            } else {
-              cardLeft = rightCardPosition;
-            }
+            if (i === 0) cardLeft = leftCardPosition;
+            else if (i === CENTER_INDEX) cardLeft = centerCardPosition - expansionOffset;
+            else cardLeft = rightCardPosition;
 
             return (
               <div
-                key={`${post.id}-${i}-${center}`}
+                key={`${post.boardId}-${displayIndex}-${i}`}
                 role="button"
                 tabIndex={0}
-                className={`${styles.card} ${isCenter ? styles.center : ''} ${hoveredCenter && isCenter ? styles.expanded : ''}`}
+                className={`${styles.card} ${isCenter ? styles.center : ''} ${
+                  hoveredCenter && isCenter ? styles.expanded : ''
+                }`}
                 style={{
                   width: hoveredCenter && isCenter ? `${expandedWidth}px` : `${cardWidth}px`,
                   left: `${cardLeft}px`,
@@ -163,11 +130,19 @@ export default function SpotlightCarousel() {
               >
                 <div
                   className={styles.thumb}
-                  style={post.image ? { backgroundImage: `url(${post.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+                  style={
+                    post.fileUrl
+                      ? {
+                          backgroundImage: `url(${post.fileUrl})`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                        }
+                      : {}
+                  }
                 >
                   <div className={styles.overlay}>
                     <div className={styles.cardTitle}>{post.title}</div>
-                    <div className={styles.desc}>{post.description || ''}</div>
+                    <div className={styles.desc}>{post.content || ''}</div>
                   </div>
                 </div>
               </div>

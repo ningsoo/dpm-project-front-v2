@@ -5,25 +5,21 @@ import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
-import type { BoardCategory, BoardListItem } from '@/api/boardApi';
+import type { BoardListItem } from '@/api/boardTypes';
 import styles from './TopShowcase.module.css';
-
-interface ShowcasePost extends BoardListItem {
-  id?: string; // UI에서 사용
-}
 
 export default function TopShowcase() {
   const router = useRouter();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
-  const [posts, setPosts] = useState<ShowcasePost[]>([]);
-  const [hoveredPostId, setHoveredPostId] = useState<string | null>(null);
+  const [posts, setPosts] = useState<BoardListItem[]>([]);
+  const [hoveredBoardId, setHoveredBoardId] = useState<number | null>(null);
 
   useEffect(() => {
     boardApi
       .getBoardByCategory('SHOWCASE')
       .then(({ data }) => {
-        const list = Array.isArray(data) ? data : [];
-        setPosts(list.slice(0, 8).map((p, i) => ({ ...p, id: String(i) })));
+        const list = Array.isArray(data?.data) ? data.data : [];
+        setPosts(list.slice(0, 8));
       })
       .catch(() => setPosts([]));
   }, []);
@@ -35,20 +31,20 @@ export default function TopShowcase() {
       <h2 className={styles.title}>TOP Showcase</h2>
       <div className={styles.grid}>
         {posts.map((p) => {
-          const ytId = extractYoutubeId(p.fileUrl);
-          const isHovered = hoveredPostId === p.id;
+          const ytId = extractYoutubeId(p.fileUrl ?? undefined);
+          const isHovered = hoveredBoardId === p.boardId;
           const showVideo = isHovered && ytId;
 
           const handleCardClick = () => {
-            router.push(`/boards/showcase/${p.id}`);
+            router.push(`/boards/${p.boardId}`);
           };
 
           return (
             <div
-              key={p.id}
+              key={p.boardId}
               className={styles.card}
-              onMouseEnter={() => setHoveredPostId(p.id)}
-              onMouseLeave={() => setHoveredPostId(null)}
+              onMouseEnter={() => setHoveredBoardId(p.boardId)}
+              onMouseLeave={() => setHoveredBoardId(null)}
               onClick={handleCardClick}
               role="button"
               tabIndex={0}
@@ -78,19 +74,6 @@ export default function TopShowcase() {
                         pointerEvents: 'none',
                       }}
                     />
-                    {/* 클릭 가능한 투명 레이어 */}
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        zIndex: 1,
-                        cursor: 'pointer',
-                      }}
-                      onClick={handleCardClick}
-                    />
                   </>
                 ) : (
                   <img
@@ -101,9 +84,10 @@ export default function TopShowcase() {
                 )}
               </div>
               <div className={styles.body}>
-                <div className={styles.author}>{p.authorNickname || '—'}</div>
                 <div className={styles.cardTitle}>{p.title}</div>
-                <div className={styles.likes}>♥ {p.likeCount ?? 0}</div>
+                <div className={styles.author}>{p.nickname || '—'}</div>
+                <div className={styles.likes}>♥ {p.likes ?? 0}</div>
+                <div className={styles.likes}>♥ {p.views ?? 0}</div>
               </div>
             </div>
           );

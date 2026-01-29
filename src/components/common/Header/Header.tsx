@@ -63,7 +63,7 @@ export default function Header() {
 
       <nav className={styles.nav}>
         {CATEGORIES.map((c) => (
-          <Link key={c.slug} href={`/boards/${c.slug}`} className={styles.navLink}>
+          <Link key={c.slug} href={`/boards/category/${c.slug}`} className={styles.navLink}>
             {c.label}
           </Link>
         ))}
