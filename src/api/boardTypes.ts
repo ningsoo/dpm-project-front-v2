@@ -2,6 +2,7 @@ export type BoardCategory = 'SHOWCASE' | 'PLAYLISTS' | 'SPOTLIGHT' | 'COMMUNITY'
 
 // Swagger 명세 기반 타입 정의
 export interface BoardListItem {
+  userId: number;
   boardId: number;
   title: string;
   content: string | null;
@@ -17,9 +18,11 @@ export interface BoardDetail extends BoardListItem {
 }
 
 export interface CommentItem {
+  commentId?: number | string;
+  userId?: number;
   nickname: string;
   content: string;
-  createdDateTime: string; // ISO DateTime
+  createdDateTime: number[] | string; // API: number[] (LocalDateTime)
 }
 
 export interface CreateBoardRequest {

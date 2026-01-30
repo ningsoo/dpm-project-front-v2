@@ -8,35 +8,41 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
 import { ToastUtils } from '@/utils/toastUtils';
+import { tokenUtils } from '@/utils/tokenUtils';
 import { formatCreatedDateTimeFull } from '@/utils/createdDateTime';
 import type { BoardCategory, BoardDetail } from '@/api/boardApi';
 import styles from './PostDetail.module.css';
 
-/** API 응답 댓글 형태 (commentId 없음) */
+/** API 응답 댓글 형태 (commentId, userId 포함) */
 interface CommentFromApi {
+  commentId?: number | string;
+  userId?: number;
   nickname: string;
   content: string;
   createdDateTime: number[];
 }
 
-/** 프론트 전용 id를 부여한 댓글 타입 (추후 백엔드 commentId 내려주면 id 필드만 교체 가능) */
+/** 댓글 타입 (commentId로 삭제 API 호출, userId로 권한 판별) */
 interface Comment {
   id: string;
+  commentId: string | undefined;
+  userId: number | undefined;
   nickname: string;
   content: string;
   createdDateTime: number[];
-  isAuthor?: boolean;
 }
 
-/** nickname + createdDateTime 조합으로 항상 동일한 id 생성 (index 사용 금지) */
-function getCommentId(nickname: string, createdDateTime: number[] | unknown): string {
+/** commentId 없을 때 fallback key 생성 */
+function getCommentFallbackId(nickname: string, createdDateTime: number[] | unknown): string {
   const arr = Array.isArray(createdDateTime) ? createdDateTime : [];
   return `${nickname}-${arr.join('-')}`;
 }
 
 function transformComments(apiData: CommentFromApi[]): Comment[] {
   return apiData.map((c) => ({
-    id: getCommentId(c.nickname, c.createdDateTime),
+    id: c.commentId != null ? String(c.commentId) : getCommentFallbackId(c.nickname, c.createdDateTime),
+    commentId: c.commentId != null ? String(c.commentId) : undefined,
+    userId: c.userId,
     nickname: c.nickname,
     content: c.content,
     createdDateTime: c.createdDateTime,
@@ -45,7 +51,6 @@ function transformComments(apiData: CommentFromApi[]): Comment[] {
 
 interface Post extends BoardDetail {
   id?: string;
-  isAuthor?: boolean;
   isLiked?: boolean;
   playlistThumbnail?: string;
   playlistUrl?: string;
@@ -87,6 +92,9 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   const safeCat = (['showcase', 'playlists', 'spotlight', 'community', 'reviews'].includes(category)
     ? category
     : 'showcase') as BoardCategory;
+
+  /** 현재 로그인 사용자 ID (JWT payload). 권한 판별용 */
+  const currentUserId = typeof window !== 'undefined' ? tokenUtils.getUserIdFromToken() : null;
 
     // 게시글 상세 조회 (댓글과 분리)
     useEffect(() => {
@@ -222,16 +230,15 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
     setCommentMenuOpen((prev) => (prev === commentId ? null : commentId));
   };
 
-  const handleCommentDeleteClick = (commentId: string) => {
+  const handleCommentDeleteClick = (apiCommentId: string) => {
     setCommentMenuOpen(null);
-    setShowCommentDeleteModal(commentId);
+    setShowCommentDeleteModal(apiCommentId);
   };
 
   const handleCommentDeleteConfirm = () => {
     if (!showCommentDeleteModal) return;
-    const commentIdToDelete = showCommentDeleteModal;
     boardApi
-      .deleteComment(boardId, commentIdToDelete)
+      .deleteComment(boardId, showCommentDeleteModal)
       .then(() => {
         ToastUtils.success('댓글이 삭제되었습니다.');
         setShowCommentDeleteModal(null);
@@ -266,7 +273,9 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   if (!post) return <div className={styles.loading}>글이 없습니다.</div>;
 
   const ytId = extractYoutubeId(post.fileUrl ?? undefined);
-  const isAuthor = post.isAuthor ?? false;
+  /** 보드 작성자와 현재 로그인 사용자가 동일할 때만 수정/삭제 노출 */
+  const isAuthor =
+    post.userId != null && currentUserId != null && String(post.userId) === String(currentUserId);
 
   return (
     <article className={styles.wrap}>
@@ -418,9 +427,11 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
               </button>
             </div>
 
-            {/* 댓글 리스트 (프론트 전용 id 사용) */}
+            {/* 댓글 리스트 (commentId로 삭제 API, userId로 권한 판별) */}
             {comments.map((c) => {
-              const isCommentAuthor = c.isAuthor ?? false;
+              const isCommentAuthor =
+                c.userId != null && currentUserId != null && String(c.userId) === String(currentUserId);
+              const apiCommentId = c.commentId ?? c.id;
               return (
                 <div key={c.id} className={styles.commentItem}>
                   <div className={styles.commentHead}>
@@ -467,7 +478,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
                               <button
                                 type="button"
                                 className={styles.menuItem}
-                                onClick={() => handleCommentDeleteClick(c.id)}
+                                onClick={() => handleCommentDeleteClick(apiCommentId)}
                               >
                                 삭제
                               </button>

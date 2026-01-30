@@ -57,4 +57,26 @@ export const tokenUtils = {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(ACCESS_TOKEN_KEY);
   },
+
+  /**
+   * JWT payload에서 userId 추출 (권한 판별용).
+   * payload에 userId 또는 sub( subject )가 있을 때 사용.
+   */
+  getUserIdFromToken: (): string | null => {
+    if (typeof window === 'undefined') return null;
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (!token || typeof token !== 'string') return null;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const json = atob(base64);
+      const payload = JSON.parse(json) as Record<string, unknown>;
+      const userId = payload.userId ?? payload.sub;
+      if (userId === undefined || userId === null) return null;
+      return String(userId);
+    } catch {
+      return null;
+    }
+  },
 };

@@ -49,14 +49,12 @@ export default function CreatePost({ category }: CreatePostProps) {
     setLoading(true);
     setErrors({});
     try {
-      // 백엔드 API는 대문자 카테고리(SHOWCASE 등) 사용. URL/body 모두 동일 값 전달.
       const categoryType = toBoardCategory(category);
       const { data } = await boardApi.createPost(categoryType, {
         title,
         content,
         category: categoryType,
       });
-      // 응답: ApiResponse<string> - data에 boardId가 문자열로 반환될 것으로 예상
       const boardId = typeof data?.data === 'string' ? data.data : '';
       router.push(boardId ? `/boards/${boardId}` : `/boards/category/${category}`);
     } catch {
@@ -126,7 +124,7 @@ export default function CreatePost({ category }: CreatePostProps) {
           <label className={styles.label}>
             사진 (1~5장, 첫 사진이 카드에 사용됩니다)
             <input type="file" accept="image/*" multiple onChange={handlePhotos} />
-            <span className={styles.helper}>첫 사진이 카드에 노출됩니다 (1~5장)</span>
+            <span className={styles.helper}>첫 사진이 메인화면에 사용됩니다 (1~5장)</span>
             {photos.length > 0 && (
               <div className={styles.thumbPreview}>
                 <img src={URL.createObjectURL(photos[0])} alt="미리보기" />
