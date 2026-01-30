@@ -40,7 +40,7 @@ export const boardApi = {
 
   /** 4. 게시글 수정 - PUT /api/boards/[boardId] */
   updatePost: (boardId: string, body: UpdateBoardRequest) =>
-    fetchClient.put<ApiResponse<string>>(
+    fetchClient.patch<ApiResponse<string>>(
       `/boards/${boardId}`,
       body
     ),
