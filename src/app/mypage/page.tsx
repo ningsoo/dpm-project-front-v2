@@ -114,6 +114,15 @@ export default function MypagePage() {
       });
   }, [initialized, isAuthenticated, router]);
 
+  // unmount 시 크레딧 검증 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (creditValidationTimerRef.current) {
+        clearTimeout(creditValidationTimerRef.current);
+      }
+    };
+  }, []);
+
   if (!initialized || loading) {
     return (
       <div className={styles.wrap}>
@@ -332,17 +341,8 @@ export default function MypagePage() {
     const amount = parseInt(creditAmount, 10);
     setShowCreditChargeModal(false);
     setCreditError('');
-    router.push(`/mypage/credits/checkout?amount=${amount}`);
+    router.push(`/mypage/credit?amount=${amount}`);
   };
-
-  // cleanup에서 타이머 정리
-  useEffect(() => {
-    return () => {
-      if (creditValidationTimerRef.current) {
-        clearTimeout(creditValidationTimerRef.current);
-      }
-    };
-  }, []);
 
   const closeModal = () => {
     // 디바운스 타이머가 있다면 정리

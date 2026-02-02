@@ -41,6 +41,7 @@ function VerificationContent() {
   const [canResend, setCanResend] = useState(true);
   const lastResendTimeRef = useRef<number | null>(null);
   const resendCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const autoRedirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 재전송 가능 여부 체크
   const checkResendAvailability = () => {
@@ -89,6 +90,16 @@ function VerificationContent() {
     };
   }, [email]);
 
+  // unmount 시 자동 이동 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (autoRedirectTimerRef.current) {
+        clearTimeout(autoRedirectTimerRef.current);
+        autoRedirectTimerRef.current = null;
+      }
+    };
+  }, []);
+
   const handleComplete = async () => {
     if (!email) {
       ToastUtils.error('이메일 정보가 없습니다.');
@@ -100,15 +111,23 @@ function VerificationContent() {
     setCheckingComplete(true);
     try {
       const { data } = await authApi.verifyStatus(email);
-      
-      // success가 true이고 data가 'ACTIVE'이면 인증 완료
-      if (data?.success === true && data?.data === 'ACTIVE') {
+
+      // response.data.message 기준으로 ACTIVE / PENDING 판정
+      if (data?.success === true && data?.message === 'ACTIVE') {
+        if (autoRedirectTimerRef.current) {
+          clearTimeout(autoRedirectTimerRef.current);
+          autoRedirectTimerRef.current = null;
+        }
         setShowModal(true);
-      } else if (data?.success === true && data?.data === 'PENDING') {
-        // PENDING일 때 두 줄 토스트
+        // 모달이 열린 시점에 3~5초 후 자동 이동 (중복 방지: 시작 전 clearTimeout 처리됨)
+        autoRedirectTimerRef.current = setTimeout(() => {
+          autoRedirectTimerRef.current = null;
+          setShowModal(false);
+          router.push('/auth/login');
+        }, 4000);
+      } else if (data?.success === true && data?.message === 'PENDING') {
         ToastUtils.error('이메일 인증을 먼저 진행하신 후 가입완료 버튼을 눌러주세요.\n인증은 5분 이내에 이루어져야 합니다.');
       } else {
-        // 그 외의 경우: 서버 message가 있으면 그대로, 없으면 기본 실패 토스트
         const message = data?.message || '인증 확인에 실패했습니다.';
         ToastUtils.error(message);
       }
@@ -121,6 +140,10 @@ function VerificationContent() {
   };
 
   const handleModalConfirm = () => {
+    if (autoRedirectTimerRef.current) {
+      clearTimeout(autoRedirectTimerRef.current);
+      autoRedirectTimerRef.current = null;
+    }
     setShowModal(false);
     router.push('/auth/login');
   };

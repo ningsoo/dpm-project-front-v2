@@ -73,33 +73,8 @@ export default function UpdateProfilePage() {
       });
   }, [initialized, isAuthenticated, router]);
 
-  if (!initialized || loading) {
-    return (
-      <div className={styles.wrap}>
-        <p>로딩 중...</p>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  // 한글 조합 중이 아닐 때만 특수문자 체크
+  // 한글 조합 중이 아닐 때만 특수문자 체크 (훅 순서 유지를 위해 early return 이전에 선언)
   const nicknameHasSpecialChar = !isComposing && /[^a-zA-Z0-9가-힣_]/.test(nickname);
-  const nicknameOk = nickname.length > 0 && nickname.length <= 10 && !nicknameHasSpecialChar;
-  const phoneOk = phonePart1.length === 4 && phonePart2.length === 4;
-
-  const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // 10자 넘으면 입력 막기
-    if (value.length > 10) return;
-    setNickname(value);
-    // 한글 조합 중이 아니고 특수문자가 없으면 에러 메시지 제거
-    if (!isComposing && !/[^a-zA-Z0-9가-힣_]/.test(value) && errors.nickname) {
-      setErrors((e) => ({ ...e, nickname: '' }));
-    }
-  };
 
   const handleNicknameCheck = useCallback(async () => {
     if (!nickname) {
@@ -121,6 +96,32 @@ export default function UpdateProfilePage() {
       setErrors((e) => ({ ...e, nickname: '확인할 수 없습니다' }));
     }
   }, [nickname, nicknameHasSpecialChar]);
+
+  if (!initialized || loading) {
+    return (
+      <div className={styles.wrap}>
+        <p>로딩 중...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  const nicknameOk = nickname.length > 0 && nickname.length <= 10 && !nicknameHasSpecialChar;
+  const phoneOk = phonePart1.length === 4 && phonePart2.length === 4;
+
+  const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // 10자 넘으면 입력 막기
+    if (value.length > 10) return;
+    setNickname(value);
+    // 한글 조합 중이 아니고 특수문자가 없으면 에러 메시지 제거
+    if (!isComposing && !/[^a-zA-Z0-9가-힣_]/.test(value) && errors.nickname) {
+      setErrors((e) => ({ ...e, nickname: '' }));
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
