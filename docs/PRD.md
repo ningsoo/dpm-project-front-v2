@@ -120,10 +120,10 @@ SOUNDOCK is a platform where users can share their creative works (YouTube links
 
 ### Currency & Donations
 
-- `POST /api/mypage/credits/charge/request` - Request credit purchase
-- `POST /api/mypage/credits/charge/confirm` - Credit purchase callback
-- `POST /api/mypage/credits/charge/cancel/request` - Request purchase cancellation
-- `POST /api/mypage/credits/charge/cancel/confirm` - Purchase cancellation callback
+- `POST /api/mypage/credit/charge/request` - Request credit purchase
+- `POST /api/mypage/credit/charge/confirm` - Credit purchase callback
+- `POST /api/mypage/credit/charge/cancel/request` - Request purchase cancellation
+- `POST /api/mypage/credit/charge/cancel/confirm` - Purchase cancellation callback
 - `POST /api/users/{userId}/donations` - Donate to user
 - `DELETE /api/users/{userId}/donations/{donationId}` - Cancel donation
 - `GET /api/mypage/balance` - Get credit balance (charged/used/remaining)

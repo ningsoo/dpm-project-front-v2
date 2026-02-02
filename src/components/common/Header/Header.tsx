@@ -22,7 +22,7 @@ const CATEGORIES = [
 export default function Header() {
   const pathname = usePathname();
   const variant =
-    pathname?.startsWith('/auth') || pathname?.startsWith('/mypage/credits/checkout')
+    pathname?.startsWith('/auth') || pathname?.startsWith('/mypage/credit')
       ? 'auth'
       : 'main';
   const dispatch = useDispatch<AppDispatch>();

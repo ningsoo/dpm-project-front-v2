@@ -4,22 +4,22 @@ import type { ApiResponse } from './authApi';
 export const creditApi = {
   chargeRequest: (amount: number, payMethod: string) =>
     fetchClient.post<ApiResponse<{ orderId: string; redirectUrl?: string }>>(
-      '/mypage/credits/charge/request',
+      '/mypage/credit/charge/request',
       { amount, payMethod }
     ),
 
   chargeConfirm: (orderId: string, paymentKey: string, amount: number) =>
-    fetchClient.post<ApiResponse<unknown>>('/mypage/credits/charge/confirm', {
+    fetchClient.post<ApiResponse<unknown>>('/mypage/credit/charge/confirm', {
       orderId,
       paymentKey,
       amount,
     }),
 
   chargeCancelRequest: (orderId: string) =>
-    fetchClient.post<ApiResponse<unknown>>('/mypage/credits/charge/cancel/request', { orderId }),
+    fetchClient.post<ApiResponse<unknown>>('/mypage/credit/charge/cancel/request', { orderId }),
 
   chargeCancelConfirm: (orderId: string, cancelReason: string) =>
-    fetchClient.post<ApiResponse<unknown>>('/mypage/credits/charge/cancel/confirm', {
+    fetchClient.post<ApiResponse<unknown>>('/mypage/credit/charge/cancel/confirm', {
       orderId,
       cancelReason,
     }),
