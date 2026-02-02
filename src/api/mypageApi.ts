@@ -3,7 +3,7 @@ import type { ApiResponse } from './authApi';
 
 export const mypageApi = {
   getMypage: () =>
-    fetchClient.get<ApiResponse<unknown>>('/mypage'),
+    fetchClient.get<ApiResponse<unknown>>('/mypage/me'),
 
   getPlaylist: (userId: string) =>
     fetchClient.get<ApiResponse<unknown>>(`/mypage/playlist/${userId}`),
