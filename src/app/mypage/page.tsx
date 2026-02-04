@@ -3,11 +3,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useSelector } from 'react-redux';
-import { CircleDollarSign, CreditCard, Key, User, Plus, Search, Pencil, Heart, X, Check } from 'lucide-react';
-import { RootState } from '@/store';
+import { useSelector, useDispatch } from 'react-redux';
+import { CircleDollarSign, CreditCard, Key, User, Plus, Search, Pencil, Heart, X, Check, Unplug } from 'lucide-react';
+import { AppDispatch, RootState } from '@/store';
+import { authApi } from '@/api/authApi';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
+import { tokenUtils } from '@/utils/tokenUtils';
+import { clearAuth } from '@/store/slices/authSlice';
 import { PasswordVerifyModal } from './PasswordVerifyModal';
 import { SettlementSection } from './components/SettlementSection';
 import styles from './mypage.module.css';
@@ -57,8 +60,12 @@ function formatPhone11(phoneNumber: string | undefined): string {
   return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
 }
 
+const PWLS_WITHDRAWAL_GUIDE =
+  '패스워드리스 해지가 완료되었습니다.';
+
 export default function MypagePage() {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const initialized = useSelector((s: RootState) => s.auth.initialized);
   const [user, setUser] = useState<UserInfo | null>(null);
@@ -90,6 +97,8 @@ export default function MypagePage() {
   const creditValidationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [showPasswordVerifyModal, setShowPasswordVerifyModal] = useState(false);
   const [passwordVerifyTarget, setPasswordVerifyTarget] = useState<string | null>(null);
+  const [showPwlsWithdrawalModal, setShowPwlsWithdrawalModal] = useState(false);
+  const [pwlsWithdrawalLoading, setPwlsWithdrawalLoading] = useState(false);
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
@@ -177,6 +186,29 @@ export default function MypagePage() {
     console.log('Cancelling reports:', selectedReports);
     setSelectedReports([]);
     setShowReportCancelModal(false);
+  };
+
+  const handlePwlsWithdrawalConfirm = async () => {
+    setPwlsWithdrawalLoading(true);
+    try {
+      await authApi.postPasswordlessWithdrawal();
+      try {
+        await authApi.logout();
+      } catch {
+        // 서버 로그아웃 실패해도 로컬 정리 진행
+      }
+      tokenUtils.clearTokens();
+      dispatch(clearAuth());
+      ToastUtils.success(PWLS_WITHDRAWAL_GUIDE);
+      setShowPwlsWithdrawalModal(false);
+      setPwlsWithdrawalLoading(false);
+      router.push('/');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '패스워드리스 해지에 실패했습니다.';
+      ToastUtils.error(message);
+      setShowPwlsWithdrawalModal(false);
+      setPwlsWithdrawalLoading(false);
+    }
   };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -466,6 +498,15 @@ export default function MypagePage() {
             }}
           >
             <User size={22} />
+          </button>
+          <button
+            type="button"
+            className={styles.iconLink}
+            title="패스워드리스 해지"
+            disabled={pwlsWithdrawalLoading}
+            onClick={() => setShowPwlsWithdrawalModal(true)}
+          >
+            <Unplug size={22} />
           </button>
         </div>
       </section>
@@ -941,6 +982,44 @@ export default function MypagePage() {
                 }}
               >
                 예
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPwlsWithdrawalModal && (
+        <div
+          className={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pwls-withdrawal-modal-title"
+        >
+          <div className={styles.modalCard}>
+            <h3 id="pwls-withdrawal-modal-title" className={styles.modalTitle}>
+              패스워드리스 해지
+            </h3>
+            <p className={styles.pwlsWithdrawalConfirmText}>
+              해지 후 로그아웃 처리 됩니다.
+              <br />
+              해지하시겠습니까?
+            </p>
+            <div className={styles.settlementConfirmActions}>
+              <button
+                type="button"
+                className={styles.settlementConfirmCancelBtn}
+                disabled={pwlsWithdrawalLoading}
+                onClick={() => setShowPwlsWithdrawalModal(false)}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className={styles.settlementConfirmBtn}
+                disabled={pwlsWithdrawalLoading}
+                onClick={handlePwlsWithdrawalConfirm}
+              >
+                {pwlsWithdrawalLoading ? '처리 중…' : '확인'}
               </button>
             </div>
           </div>
