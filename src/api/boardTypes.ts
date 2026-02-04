@@ -9,6 +9,8 @@ export interface BoardListItem {
   nickname: string;
   views: number;
   likes: number;
+  /** 댓글 수 (목록/상세 API 응답) */
+  countComment?: number;
   createdDateTime: number[]; // [year, month, day, hour, minute, second]
   fileUrl: string | null;
 }

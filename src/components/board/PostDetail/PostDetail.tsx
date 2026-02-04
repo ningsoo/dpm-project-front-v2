@@ -10,6 +10,7 @@ import { boardApi } from '@/api/boardApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
 import { formatCreatedDateTimeFull } from '@/utils/createdDateTime';
+import { formatViews, formatCommentCount } from '@/utils/displayFormatters';
 import type { BoardDetail } from '@/api/boardApi';
 import styles from './PostDetail.module.css';
 
@@ -378,7 +379,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
           <span className={styles.iconBtn}>
             <Eye size={18} />
-            {post.views ?? 0}
+            {formatViews(post.views)}
           </span>
 
           <span className={styles.iconBtn} style={{ cursor: 'default' }}>
@@ -491,7 +492,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
             onClick={() => setCommentOpen((o) => !o)}
           >
             <MessageCircle size={18} />
-            댓글 {comments.length}
+            댓글 {formatCommentCount(post.countComment ?? comments.length)}
           </button>
         </h2>
 
