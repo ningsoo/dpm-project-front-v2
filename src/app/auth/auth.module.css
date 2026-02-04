@@ -79,6 +79,63 @@
   line-height: 1.4;
 }
 
+.emailVerificationInfo {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #f57f17;
+  background-color: #fffde7;
+  border-radius: 4px;
+}
+
+.actionBtn {
+  min-width: 100px;
+  width: 100px;
+  height: 48px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.emailVerifyBtn {
+  width: 100px;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 14px;
+  line-height: 1;
+  color: #fff;
+  outline: none;
+  box-shadow: none;
+  transform: none;
+}
+
+.emailVerifyBtn:focus,
+.emailVerifyBtn:focus-visible,
+.emailVerifyBtn:active,
+.emailVerifyBtn:disabled {
+  outline: none;
+  box-shadow: none;
+  transform: none;
+}
+
 .helper {
   display: block;
   margin-top: 4px;
@@ -170,6 +227,19 @@
 .withdrawLink:hover {
   color: #333;
   text-decoration: underline;
+}
+
+.withdrawLinkNoUnderline {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.withdrawLinkNoUnderline:hover {
+  color: #333;
+  text-decoration: none;
 }
 
 .spinnerWrap {

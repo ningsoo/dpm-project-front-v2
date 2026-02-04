@@ -11,6 +11,12 @@ import styles from '../auth.module.css';
 
 const PWD_REQUIRE = '대문자, 숫자, 특수문자 포함 10자 이상, 공백금지';
 
+function formatCountdown(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
 function formatPhone(v: string): string {
   const n = v.replace(/\D/g, '').slice(0, 8);
   if (n.length === 0) return '';
@@ -35,8 +41,10 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [nickname, setNickname] = useState('');
+  const phonePart0Ref = useRef<HTMLInputElement>(null);
   const phonePart1Ref = useRef<HTMLInputElement>(null);
   const phonePart2Ref = useRef<HTMLInputElement>(null);
+  const [phonePart0, setPhonePart0] = useState('');
   const [phonePart1, setPhonePart1] = useState('');
   const [phonePart2, setPhonePart2] = useState('');
   const [isComposing, setIsComposing] = useState(false);
@@ -44,13 +52,27 @@ export default function SignupPage() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [emailVerified, setEmailVerified] = useState(false); // 이메일 중복확인 통과 상태
-  const [nicknameVerified, setNicknameVerified] = useState(false); // 닉네임 중복확인 통과 상태
-  const [checkingEmail, setCheckingEmail] = useState(false); // 이메일 중복확인 진행 중
-  const [checkingNickname, setCheckingNickname] = useState(false); // 닉네임 중복확인 진행 중
+  const [emailHangulError, setEmailHangulError] = useState('');
+  const [emailFormatError, setEmailFormatError] = useState('');
+  const [emailAvailable, setEmailAvailable] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false); // 이메일 인증 완료 여부 (verifyStatus ACTIVE)
+  const [nicknameVerified, setNicknameVerified] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [checkingNickname, setCheckingNickname] = useState(false);
+  const [emailVerificationPending, setEmailVerificationPending] = useState(false);
+  const [emailVerificationTimeoutMessage, setEmailVerificationTimeoutMessage] = useState('');
+  const [emailVerificationInfoMessage, setEmailVerificationInfoMessage] = useState('');
+  const [remainingSec, setRemainingSec] = useState(0);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const emailDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const emailCheckShortRef = useRef<NodeJS.Timeout | null>(null);
   const nicknameDebounceRef = useRef<NodeJS.Timeout | null>(null);
-  const emailCheckSequenceRef = useRef(0); // 이메일 중복확인 시퀀스 ID
+  const emailCheckSequenceRef = useRef(0);
+  const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const successModalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const verificationEmailRef = useRef<string | null>(null);
+  const emailHangulErrorRef = useRef('');
 
   const pwdErrors = password ? validatePassword(password) : [];
   const pwdOk = pwdErrors.length === 0;
@@ -83,74 +105,220 @@ export default function SignupPage() {
   // 닉네임 형식 검사 통과 여부
   const nicknameFormatOk = nickname.length > 0 && nickname.length <= 10 && !validateNicknameFormat(nickname);
   const nicknameOk = nicknameFormatOk;
-  const phoneOk = phonePart1.length === 4 && phonePart2.length === 4;
+  // 앞자리 010~019 허용, 중간·끝 각 4자리
+  const phoneOk = /^01[0-9]$/.test(phonePart0) && phonePart1.length === 4 && phonePart2.length === 4;
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const raw = e.target.value;
+    const value = raw.replace(/[\uAC00-\uD7A3\u1100-\u11FF\u1160-\u11FF\u3130-\u318F]/g, '');
     setEmail(value);
-    
-    // 이메일 값이 바뀌면 중복확인 통과 상태 초기화
+
+    // 한글 감지: raw(원본) 기준. raw에 한글이 포함되면 즉시 에러, 없으면 즉시 제거
+    const hasHangul = /[\uAC00-\uD7A3\u1100-\u11FF\u1160-\u11FF\u3130-\u318F]/.test(raw);
+    const hangulError = hasHangul ? '한글은 입력할 수 없습니다' : '';
+    setEmailHangulError(hangulError);
+    emailHangulErrorRef.current = hangulError;
+
+    // 타이핑 시 형식 에러 즉시 제거
+    setEmailFormatError('');
+
+    // 서버/중복 에러는 값 변경 시 제거(재입력 허용)
+    setErrors((prev) => ({ ...prev, email: '' }));
+
+    // 이메일 변경 시 폴링·카운트다운 중단 및 인증 관련 상태 초기화
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
     setEmailVerified(false);
-    
-    // 기존 타이머가 있으면 취소
+    setEmailVerificationPending(false);
+    setEmailVerificationTimeoutMessage('');
+    setEmailVerificationInfoMessage('');
+    setRemainingSec(0);
+    setEmailAvailable(false);
+
     if (emailDebounceRef.current) {
       clearTimeout(emailDebounceRef.current);
     }
-    
-    // input을 지우면 에러 메시지 제거
+    if (emailCheckShortRef.current) {
+      clearTimeout(emailCheckShortRef.current);
+      emailCheckShortRef.current = null;
+    }
     if (!value) {
-      setErrors((prev) => ({ ...prev, email: '' }));
+      setEmailFormatError('');
       return;
     }
-    
-    // 입력이 멈춘 후 500ms 지연 후 검증
-    emailDebounceRef.current = setTimeout(async () => {
-      let errorMsg = '';
-      
-      // 1순위: 한글 포함 검사 (완성형 한글 + 자음/모음 전부 금지)
-      // 완성형 한글: \uAC00-\uD7A3, 한글 자음: \u1100-\u11FF, 한글 모음: \u1160-\u1175
-      if (/[\uAC00-\uD7A3\u1100-\u11FF\u1160-\u1175]/.test(value)) {
-        errorMsg = '이메일에 한글 사용 불가';
-      }
-      // 2순위: @ 없거나 이메일 형식이 아님
-      else if (!value.includes('@') || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        errorMsg = '올바른 이메일 형식이 아닙니다';
-      }
-      
-      setErrors((prev) => ({ ...prev, email: errorMsg }));
-      
-      // 이메일 형식이 올바르고 에러가 없을 때만 중복확인 API 호출
-      if (!errorMsg && !checkingEmail) {
+
+    const formatValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    if (!formatValid) {
+      setEmailAvailable(false);
+    } else {
+      emailCheckShortRef.current = setTimeout(async () => {
+        emailCheckShortRef.current = null;
+        if (emailHangulErrorRef.current || checkingEmail) {
+          setEmailAvailable(false);
+          return;
+        }
         setCheckingEmail(true);
         const currentSequence = ++emailCheckSequenceRef.current;
-        
+        const valueToCheck = value;
         try {
-          const { data } = await authApi.checkEmail(value);
+          const { data } = await authApi.checkEmail(valueToCheck);
           const available = data?.data?.available;
-          
-          // 최신 요청인지 확인
+          const message = data?.data?.message;
           if (currentSequence === emailCheckSequenceRef.current) {
             if (available === false) {
-              setErrors((prev) => ({ ...prev, email: '이미 사용 중인 이메일입니다' }));
-              setEmailVerified(false);
+              setErrors((prev) => ({
+                ...prev,
+                email: message != null && message !== '' ? message : '이미 사용 중인 이메일입니다',
+              }));
+              setEmailAvailable(false);
             } else {
-              setEmailVerified(true);
+              setErrors((prev) => ({ ...prev, email: '' }));
+              setEmailAvailable(true);
             }
           }
-        } catch (error) {
-          // 최신 요청인지 확인
+        } catch {
           if (currentSequence === emailCheckSequenceRef.current) {
-            // 중복확인 실패해도 에러는 표시하지 않음 (제출은 막지 않음)
-            setEmailVerified(false);
+            setEmailAvailable(false);
           }
         } finally {
-          // 최신 요청인지 확인
           if (currentSequence === emailCheckSequenceRef.current) {
             setCheckingEmail(false);
           }
         }
+      }, 150);
+    }
+
+    emailDebounceRef.current = setTimeout(() => {
+      const formatValidLong = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+      if (!value.includes('@') || !formatValidLong) {
+        if (!formatValidLong && value.includes('@')) {
+          setEmailFormatError('올바른 이메일 형식이 아닙니다');
+        } else {
+          setEmailFormatError('');
+        }
+        setEmailAvailable(false);
+        return;
       }
-    }, 500);
+      setEmailFormatError('');
+    }, 1200);
+  };
+
+  const stopVerificationTimers = useCallback(() => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+  }, []);
+
+  const applyVerifiedSuccess = useCallback(() => {
+    stopVerificationTimers();
+    setEmailVerified(true);
+    setEmailVerificationPending(false);
+    setEmailVerificationTimeoutMessage('');
+    setEmailVerificationInfoMessage('');
+    setRemainingSec(0);
+  }, [stopVerificationTimers]);
+
+  const applyExpired = useCallback(() => {
+    stopVerificationTimers();
+    setEmailVerified(false);
+    setEmailVerificationPending(false);
+    setEmailVerificationTimeoutMessage('인증 시간이 만료되었습니다. 다시 인증해 주세요.');
+    setRemainingSec(0);
+  }, [stopVerificationTimers]);
+
+  const startVerifyStatusPolling = useCallback((emailToPoll: string) => {
+    if (!emailToPoll) return;
+
+    const check = async () => {
+      try {
+        const { data } = await authApi.verifyStatus(emailToPoll);
+        const body = data?.data as { verified?: boolean; expired?: boolean; email?: string } | undefined;
+        const verified = !!body?.verified;
+        const expired = !!body?.expired;
+
+        if (verified) {
+          applyVerifiedSuccess();
+          return;
+        }
+        if (expired) {
+          applyExpired();
+          return;
+        }
+      } catch {
+        // 폴링 중 에러는 무시
+      }
+    };
+
+    check();
+    pollingIntervalRef.current = setInterval(check, 4000);
+  }, [applyVerifiedSuccess, applyExpired]);
+
+  const handleVerifyEmail = async () => {
+    if (!email) {
+      setErrors((prev) => ({ ...prev, email: '이메일을 입력하세요' }));
+      return;
+    }
+    const formatOk = email.includes('@') && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!formatOk || errors.email || emailHangulError || emailFormatError) {
+      return;
+    }
+    setEmailVerificationPending(true);
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    try {
+      await authApi.sendVerification(email);
+      setEmailVerificationInfoMessage('인증 이메일이 발송되었습니다. 메일함을 확인 해 주세요.');
+      setEmailVerified(false);
+      setEmailVerificationTimeoutMessage('');
+      setRemainingSec(300);
+      verificationEmailRef.current = email;
+
+      startVerifyStatusPolling(email);
+
+      countdownIntervalRef.current = setInterval(() => {
+        setRemainingSec((prev) => {
+          if (prev <= 1) {
+            if (countdownIntervalRef.current) {
+              clearInterval(countdownIntervalRef.current);
+              countdownIntervalRef.current = null;
+            }
+            const emailToCheck = verificationEmailRef.current;
+            if (emailToCheck) {
+              authApi.verifyStatus(emailToCheck).then(({ data }) => {
+                const body = data?.data as { verified?: boolean; expired?: boolean; email?: string } | undefined;
+                const verified = !!body?.verified;
+                if (verified) applyVerifiedSuccess();
+                else applyExpired();
+              }).catch(() => applyExpired());
+            } else {
+              applyExpired();
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch {
+      setEmailVerificationPending(false);
+      setErrors((prev) => ({ ...prev, email: '인증 메일 발송에 실패했습니다' }));
+    }
   };
 
   useEffect(() => {
@@ -158,8 +326,23 @@ export default function SignupPage() {
       if (emailDebounceRef.current) {
         clearTimeout(emailDebounceRef.current);
       }
+      if (emailCheckShortRef.current) {
+        clearTimeout(emailCheckShortRef.current);
+      }
       if (nicknameDebounceRef.current) {
         clearTimeout(nicknameDebounceRef.current);
+      }
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+      if (successModalTimerRef.current) {
+        clearTimeout(successModalTimerRef.current);
+        successModalTimerRef.current = null;
       }
     };
   }, []);
@@ -234,37 +417,43 @@ export default function SignupPage() {
     setLoading(true);
     setErrors({});
     try {
-      // 연락처: 숫자만 추출하여 010 포함 11자리로 변환
-      const phoneForServer = `010${phonePart1}${phonePart2}`;
-      
+      const phoneForServer = `${phonePart0}${phonePart1}${phonePart2}`;
       await authApi.signup({
         email,
         password,
         nickname,
         phoneNumber: phoneForServer,
       });
-      
-      // signup 성공 시 바로 verification 페이지로 이동
-      router.push(`/auth/verification?email=${encodeURIComponent(email)}`);
+      setShowSuccessModal(true);
+      if (successModalTimerRef.current) {
+        clearTimeout(successModalTimerRef.current);
+      }
+      successModalTimerRef.current = setTimeout(() => {
+        successModalTimerRef.current = null;
+        router.push('/auth/login');
+      }, 4000);
     } catch (err: unknown) {
-      // timeout 케이스 처리
       if (axios.isAxiosError(err)) {
         const isTimeout = err.code === 'ECONNABORTED' || err.message?.toLowerCase().includes('timeout');
-        
         if (isTimeout) {
-          // timeout이면 안내 토스트를 띄우고 verification으로 이동
-          ToastUtils.error('요청 시간이 초과되었습니다. 회원가입은 완료되었을 수 있습니다. 이메일을 확인해주세요.');
-          router.push(`/auth/verification?email=${encodeURIComponent(email)}`);
+          ToastUtils.error('요청 시간이 초과되었습니다. 다시 시도해주세요.');
           return;
         }
       }
-      
-      // timeout이 아닌 에러 처리
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       ToastUtils.error(msg || '회원가입에 실패했습니다');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSuccessModalConfirm = () => {
+    if (successModalTimerRef.current) {
+      clearTimeout(successModalTimerRef.current);
+      successModalTimerRef.current = null;
+    }
+    setShowSuccessModal(false);
+    router.push('/auth/login');
   };
 
   return (
@@ -274,15 +463,36 @@ export default function SignupPage() {
 
         <label className={styles.label}>
           이메일
-          <input
-            type="text"
-            inputMode="email"
-            placeholder="example@gmail.com"
-            value={email}
-            onChange={handleEmailChange}
-            className={styles.input}
-          />
-          <span className={styles.error}>{errors.email || ''}</span>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
+            <input
+              type="text"
+              inputMode="email"
+              placeholder="example@gmail.com"
+              value={email}
+              onChange={handleEmailChange}
+              className={styles.input}
+              style={{ flex: 1, height: '48px', boxSizing: 'border-box', marginTop: 0 }}
+            />
+            <button
+              type="button"
+              onClick={handleVerifyEmail}
+              disabled={!emailAvailable || emailVerified || emailVerificationPending || !!errors.email || !!emailHangulError || !!emailFormatError || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)}
+              className={styles.emailVerifyBtn}
+              style={{
+                backgroundColor: emailVerified ? '#4caf50' : emailVerificationPending ? '#999' : (emailAvailable && !errors.email && !emailHangulError && !emailFormatError && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? '#1976d2' : '#ccc'),
+                cursor: emailVerified || emailVerificationPending ? 'not-allowed' : (emailAvailable && !errors.email && !emailHangulError && !emailFormatError && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'pointer' : 'not-allowed'),
+              }}
+            >
+              {emailVerified ? '인증완료' : emailVerificationPending ? formatCountdown(remainingSec) : '인증하기'}
+            </button>
+          </div>
+          <div style={{ minHeight: 20, marginTop: 4, fontSize: '0.9rem', lineHeight: 1.4 }}>
+            {errors.email ? <span className={styles.error}>{errors.email}</span> : null}
+            {!errors.email && emailHangulError ? <span className={styles.error}>{emailHangulError}</span> : null}
+            {!errors.email && !emailHangulError && emailFormatError ? <span className={styles.error}>{emailFormatError}</span> : null}
+            {!errors.email && !emailHangulError && !emailFormatError && emailVerificationTimeoutMessage ? <span style={{ color: '#c62828' }}>{emailVerificationTimeoutMessage}</span> : null}
+            {!errors.email && !emailHangulError && !emailFormatError && !emailVerificationTimeoutMessage && emailVerificationInfoMessage && !emailVerified ? <span className={styles.emailVerificationInfo}>{emailVerificationInfoMessage}</span> : null}
+          </div>
         </label>
 
         <label className={styles.label}>
@@ -304,6 +514,7 @@ export default function SignupPage() {
               className={styles.eye}
               onClick={() => setShowPwd((s) => !s)}
               aria-label={showPwd ? '비밀번호 숨기기' : '비밀번호 보기'}
+              tabIndex={-1}
             >
               {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -336,6 +547,7 @@ export default function SignupPage() {
               className={styles.eye}
               onClick={() => setShowConfirm((s) => !s)}
               aria-label={showConfirm ? '비밀번호 숨기기' : '비밀번호 보기'}
+              tabIndex={-1}
             >
               {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -366,21 +578,10 @@ export default function SignupPage() {
               type="button"
               onClick={handleNicknameCheck}
               disabled={!nicknameFormatOk}
+              className={styles.actionBtn}
               style={{
-                padding: '0 16px',
                 background: nicknameFormatOk ? '#1976d2' : '#ccc',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 8,
                 cursor: nicknameFormatOk ? 'pointer' : 'not-allowed',
-                fontSize: 14,
-                whiteSpace: 'nowrap',
-                height: '48px',
-                boxSizing: 'border-box',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
               }}
             >
               중복확인
@@ -391,58 +592,55 @@ export default function SignupPage() {
 
         <label className={styles.label}>
           연락처
-          <div 
+          <div
             className={styles.input}
-            style={{ 
-              position: 'relative', 
+            style={{
               display: 'flex',
               alignItems: 'center',
-              padding: '12px 14px',
+              justifyContent: 'flex-start',
               marginTop: 6,
-              gap: '8px',
+              gap: '4px',
+              padding: '12px 14px',
             }}
           >
-            {/* 고정된 010 텍스트 */}
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '0',
-                color: '#333',
-                pointerEvents: 'none',
-                fontSize: '1rem',
-                lineHeight: '1.5',
-                fontFamily: 'inherit',
-                whiteSpace: 'nowrap',
-                background: 'transparent',
-                border: 'none',
-                width: '32px',
-                flexShrink: 0,
+            <input
+              ref={phonePart0Ref}
+              type="tel"
+              placeholder="010"
+              value={phonePart0}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '').slice(0, 3);
+                setPhonePart0(value);
+                if (value.length === 3) phonePart1Ref.current?.focus();
               }}
-            >
-              010
-            </span>
-            {/* 고정된 - 텍스트 */}
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#333',
-                pointerEvents: 'none',
-                fontSize: '1rem',
-                lineHeight: '1.5',
-                fontFamily: 'inherit',
-                whiteSpace: 'nowrap',
-                background: 'transparent',
-                border: 'none',
-                width: '8px',
-                flexShrink: 0,
+              onPaste={(e) => {
+                e.preventDefault();
+                const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 11);
+                if (digits.length >= 11) {
+                  setPhonePart0(digits.slice(0, 3));
+                  setPhonePart1(digits.slice(3, 7));
+                  setPhonePart2(digits.slice(7, 11));
+                  phonePart2Ref.current?.focus();
+                } else if (digits.length > 7) {
+                  setPhonePart0(digits.slice(0, 3));
+                  setPhonePart1(digits.slice(3, 7));
+                  setPhonePart2(digits.slice(7));
+                  phonePart2Ref.current?.focus();
+                } else if (digits.length > 3) {
+                  setPhonePart0(digits.slice(0, 3));
+                  setPhonePart1(digits.slice(3));
+                  phonePart1Ref.current?.focus();
+                } else if (digits.length > 0) {
+                  setPhonePart0(digits.slice(0, 3));
+                }
               }}
-            >
-              -
-            </span>
-            {/* 첫 번째 4자리 입력 */}
+              onKeyDown={(e) => {
+                if (e.key === 'Backspace' && phonePart0.length === 0) e.preventDefault();
+              }}
+              style={{ width: '50px', minWidth: '50px', textAlign: 'center', padding: '0 4px', border: 'none', outline: 'none', fontSize: '1rem', fontFamily: 'inherit', background: 'transparent' }}
+              maxLength={3}
+            />
+            <span style={{ width: '8px', flexShrink: 0, textAlign: 'center', color: '#333', fontSize: '1rem' }}>-</span>
             <input
               ref={phonePart1Ref}
               type="tel"
@@ -451,74 +649,39 @@ export default function SignupPage() {
               onChange={(e) => {
                 const value = e.target.value.replace(/\D/g, '').slice(0, 4);
                 setPhonePart1(value);
-                // 4자리 입력되면 다음 input으로 포커스 이동
-                if (value.length === 4) {
-                  phonePart2Ref.current?.focus();
-                }
+                if (value.length === 4) phonePart2Ref.current?.focus();
               }}
               onPaste={(e) => {
                 e.preventDefault();
-                const pasted = e.clipboardData.getData('text');
-                const digits = pasted.replace(/\D/g, '');
-                // 010으로 시작하는 11자리 숫자 처리
-                if (digits.length >= 11 && digits.startsWith('010')) {
+                const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 11);
+                if (digits.length >= 11) {
+                  setPhonePart0(digits.slice(0, 3));
                   setPhonePart1(digits.slice(3, 7));
                   setPhonePart2(digits.slice(7, 11));
                   phonePart2Ref.current?.focus();
-                } else if (digits.length >= 8) {
-                  // 8자리 이상이면 앞 4자리, 뒤 4자리로 분배
+                } else if (digits.length >= 7) {
+                  setPhonePart0(digits.slice(0, 3));
+                  setPhonePart1(digits.slice(3, 7));
+                  setPhonePart2(digits.slice(7));
+                  phonePart2Ref.current?.focus();
+                } else if (digits.length > 3) {
                   setPhonePart1(digits.slice(0, 4));
                   setPhonePart2(digits.slice(4, 8));
-                  phonePart2Ref.current?.focus();
-                } else if (digits.length > 0) {
-                  // 8자리 미만이면 첫 번째 칸에만 입력
+                  if (digits.length >= 8) phonePart2Ref.current?.focus();
+                } else {
                   setPhonePart1(digits.slice(0, 4));
-                  if (digits.length > 4) {
-                    setPhonePart2(digits.slice(4, 8));
-                    phonePart2Ref.current?.focus();
-                  }
                 }
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Backspace' && phonePart1.length === 0) {
                   e.preventDefault();
+                  phonePart0Ref.current?.focus();
                 }
               }}
-              style={{
-                width: '80px',
-                textAlign: 'left',
-                padding: '0',
-                border: 'none',
-                borderRadius: 0,
-                outline: 'none',
-                fontSize: '1rem',
-                fontFamily: 'inherit',
-                background: 'transparent',
-                flexShrink: 0,
-              }}
+              style={{ width: '60px', minWidth: '60px', textAlign: 'center', padding: '0 4px', border: 'none', outline: 'none', fontSize: '1rem', fontFamily: 'inherit', background: 'transparent' }}
               maxLength={4}
             />
-            {/* 고정된 - 텍스트 */}
-            <span
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#333',
-                pointerEvents: 'none',
-                fontSize: '1rem',
-                lineHeight: '1.5',
-                fontFamily: 'inherit',
-                whiteSpace: 'nowrap',
-                background: 'transparent',
-                border: 'none',
-                width: '8px',
-                flexShrink: 0,
-              }}
-            >
-              -
-            </span>
-            {/* 두 번째 4자리 입력 */}
+            <span style={{ width: '8px', flexShrink: 0, textAlign: 'center', color: '#333', fontSize: '1rem' }}>-</span>
             <input
               ref={phonePart2Ref}
               type="tel"
@@ -530,23 +693,20 @@ export default function SignupPage() {
               }}
               onPaste={(e) => {
                 e.preventDefault();
-                const pasted = e.clipboardData.getData('text');
-                const digits = pasted.replace(/\D/g, '');
-                // 010으로 시작하는 11자리 숫자 처리
-                if (digits.length >= 11 && digits.startsWith('010')) {
+                const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 11);
+                if (digits.length >= 11) {
+                  setPhonePart0(digits.slice(0, 3));
                   setPhonePart1(digits.slice(3, 7));
                   setPhonePart2(digits.slice(7, 11));
-                } else if (digits.length >= 8) {
-                  // 8자리 이상이면 앞 4자리, 뒤 4자리로 분배
-                  setPhonePart1(digits.slice(0, 4));
-                  setPhonePart2(digits.slice(4, 8));
-                } else if (digits.length > 4) {
-                  // 4자리 초과면 앞 4자리는 첫 번째 칸, 나머지는 두 번째 칸
+                } else if (digits.length >= 7) {
+                  setPhonePart0(digits.slice(0, 3));
+                  setPhonePart1(digits.slice(3, 7));
+                  setPhonePart2(digits.slice(7));
+                } else if (digits.length > 3) {
                   setPhonePart1(digits.slice(0, 4));
                   setPhonePart2(digits.slice(4, 8));
                 } else {
-                  // 4자리 이하면 두 번째 칸에만 입력
-                  setPhonePart2(digits);
+                  setPhonePart2(digits.slice(0, 4));
                 }
               }}
               onKeyDown={(e) => {
@@ -555,18 +715,7 @@ export default function SignupPage() {
                   phonePart1Ref.current?.focus();
                 }
               }}
-              style={{
-                width: '80px',
-                textAlign: 'left',
-                padding: '0',
-                border: 'none',
-                borderRadius: 0,
-                outline: 'none',
-                fontSize: '1rem',
-                fontFamily: 'inherit',
-                background: 'transparent',
-                flexShrink: 0,
-              }}
+              style={{ width: '60px', minWidth: '60px', textAlign: 'center', padding: '0 4px', border: 'none', outline: 'none', fontSize: '1rem', fontFamily: 'inherit', background: 'transparent' }}
               maxLength={4}
             />
           </div>
@@ -580,6 +729,29 @@ export default function SignupPage() {
           {loading ? '처리 중…' : '가입하기'}
         </button>
       </form>
+
+      {showSuccessModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.5)',
+          }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div style={{ padding: 24, background: '#fff', borderRadius: 12, maxWidth: 360, textAlign: 'center' }}>
+            <p style={{ margin: '0 0 16px' }}>가입이 완료되었습니다.</p>
+            <button type="button" className={styles.submit} onClick={handleSuccessModalConfirm}>
+              확인
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

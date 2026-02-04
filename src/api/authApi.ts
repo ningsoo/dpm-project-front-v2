@@ -28,8 +28,13 @@ export const authApi = {
   logout: () =>
     fetchClient.post<ApiResponse<unknown>>('/auth/logout'),
 
+  withdraw: () =>
+    fetchClient.delete<ApiResponse<unknown>>('/mypage/me'),
+
   checkEmail: (email: string) =>
-    fetchClient.get<ApiResponse<{ available: boolean }>>('/auth/email', { params: { email } }),
+    fetchClient.get<ApiResponse<{ available: boolean; message?: string | null }>>('/auth/email', {
+      params: { email },
+    }),
 
   checkNickname: (nickname: string) =>
     fetchClient.get<ApiResponse<{ available: boolean }>>('/auth/nickname', { params: { nickname } }),
@@ -38,7 +43,10 @@ export const authApi = {
     fetchClient.post<ApiResponse<unknown>>('/auth/verification', { email }, { timeout: 30000 }),
 
   verifyStatus: (email: string) =>
-    fetchClient.get<ApiResponse<unknown>>('/auth/verify/status', { params: { email }, timeout: 30000 }),
+    fetchClient.get<ApiResponse<{ verified: boolean; expired: boolean; email: string }>>(
+      '/auth/verify/status',
+      { params: { email }, timeout: 30000 }
+    ),
 
   confirmVerification: (token: string) =>
     fetchClient.post<ApiResponse<unknown>>('/auth/verification', { token }),

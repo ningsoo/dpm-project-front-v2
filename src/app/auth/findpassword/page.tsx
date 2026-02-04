@@ -5,18 +5,10 @@ import Link from 'next/link';
 import { Eye, EyeOff } from 'lucide-react';
 import { authApi } from '@/api/authApi';
 import { ToastUtils } from '@/utils/toastUtils';
+import { sanitizeEmailInput, validateEmailForUX, normalizePasswordInput, validatePasswordBySignupRule } from '@/utils/authValidation';
 import styles from '../auth.module.css';
 
 const PWD_REQUIRE = '대문자, 숫자, 특수문자 포함 10자 이상, 공백금지';
-
-function validatePassword(p: string): string[] {
-  const err: string[] = [];
-  if (p.length < 10) err.push('10자 이상');
-  if (!/[A-Z]/.test(p)) err.push('대문자 포함');
-  if (!/[0-9]/.test(p)) err.push('숫자 포함');
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(p)) err.push('특수문자 포함');
-  return err;
-}
 
 export default function FindPasswordPage() {
   const [email, setEmail] = useState('');
@@ -29,44 +21,35 @@ export default function FindPasswordPage() {
   const [showModal, setShowModal] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [emailHangulError, setEmailHangulError] = useState('');
+  const [emailFormatError, setEmailFormatError] = useState('');
   const emailDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  const pwdErrors = newPassword ? validatePassword(newPassword) : [];
+  const pwdErrors = newPassword ? validatePasswordBySignupRule(newPassword) : [];
   const pwdOk = pwdErrors.length === 0;
   const confirmOk = newPassword && confirmPassword && newPassword === confirmPassword;
   const confirmError = confirmPassword && newPassword && newPassword !== confirmPassword;
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const raw = e.target.value;
+    const { value, hadKorean } = sanitizeEmailInput(raw);
     setEmail(value);
-    
-    // 기존 타이머가 있으면 취소
+    setEmailHangulError(hadKorean ? '한글은 입력할 수 없습니다' : '');
+    setEmailFormatError('');
+
     if (emailDebounceRef.current) {
       clearTimeout(emailDebounceRef.current);
     }
-    
-    // input을 지우면 에러 메시지 제거
     if (!value) {
       setErrors((prev) => ({ ...prev, email: '' }));
       return;
     }
-    
-    // 입력이 멈춘 후 500ms 지연 후 검증
+
     emailDebounceRef.current = setTimeout(() => {
-      let errorMsg = '';
-      
-      // 1순위: 한글 포함 검사 (완성형 한글 + 자음/모음 전부 금지)
-      // 완성형 한글: \uAC00-\uD7A3, 한글 자음: \u1100-\u11FF, 한글 모음: \u1160-\u1175
-      if (/[\uAC00-\uD7A3\u1100-\u11FF\u1160-\u1175]/.test(value)) {
-        errorMsg = '이메일에 한글 사용 불가';
-      }
-      // 2순위: @ 없거나 이메일 형식이 아님
-      else if (!value.includes('@') || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        errorMsg = '올바른 이메일 형식이 아닙니다';
-      }
-      
-      setErrors((prev) => ({ ...prev, email: errorMsg }));
-    }, 500);
+      const { error } = validateEmailForUX(value);
+      setEmailFormatError(error);
+      setErrors((prev) => ({ ...prev, email: '' }));
+    }, 1200);
   };
 
   useEffect(() => {
@@ -78,7 +61,7 @@ export default function FindPasswordPage() {
   }, []);
 
   const handleSendEmail = async () => {
-    if (!email || errors.email) return;
+    if (!email || emailHangulError || emailFormatError || errors.email) return;
     setLoading(true);
     try {
       await authApi.findPassword(email);
@@ -96,7 +79,7 @@ export default function FindPasswordPage() {
   };
 
   const handleResendEmail = async () => {
-    if (!email || errors.email) return;
+    if (!email || emailHangulError || emailFormatError || errors.email) return;
     setLoading(true);
     try {
       await authApi.findPassword(email);
@@ -140,7 +123,7 @@ export default function FindPasswordPage() {
             className={styles.input}
             disabled={loading}
           />
-          <span className={styles.error}>{errors.email || ''}</span>
+          <span className={styles.error}>{emailHangulError || emailFormatError || errors.email || ''}</span>
         </label>
 
         {/* 2. 비밀번호 재설정 메일 보내기 버튼 */}
@@ -148,7 +131,7 @@ export default function FindPasswordPage() {
           type="button"
           className={styles.submit}
           onClick={handleSendEmail}
-          disabled={loading || !!errors.email || !email}
+          disabled={loading || !!emailHangulError || !!emailFormatError || !!errors.email || !email}
         >
           {loading ? '전송 중…' : '비밀번호 재설정 메일 전송'}
         </button>
@@ -164,7 +147,7 @@ export default function FindPasswordPage() {
               type={showPwd ? 'text' : 'password'}
               placeholder={PWD_REQUIRE}
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              onChange={(e) => setNewPassword(normalizePasswordInput(e.target.value))}
               className={styles.input}
               disabled={loading}
             />
@@ -173,6 +156,7 @@ export default function FindPasswordPage() {
               className={styles.eye}
               onClick={() => setShowPwd((s) => !s)}
               aria-label={showPwd ? '비밀번호 숨기기' : '비밀번호 보기'}
+              tabIndex={-1}
             >
               {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -198,7 +182,7 @@ export default function FindPasswordPage() {
               type={showConfirm ? 'text' : 'password'}
               placeholder="비밀번호 확인"
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              onChange={(e) => setConfirmPassword(normalizePasswordInput(e.target.value))}
               className={styles.input}
               disabled={loading}
             />
@@ -207,6 +191,7 @@ export default function FindPasswordPage() {
               className={styles.eye}
               onClick={() => setShowConfirm((s) => !s)}
               aria-label={showConfirm ? '비밀번호 숨기기' : '비밀번호 보기'}
+              tabIndex={-1}
             >
               {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
