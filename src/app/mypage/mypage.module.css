@@ -82,6 +82,18 @@
   color: #111;
 }
 
+.iconLink:focus,
+.iconLink:focus-visible,
+.iconLink:active {
+  outline: none;
+  box-shadow: none;
+}
+
+.iconLinkActive {
+  border-color: #1976d2;
+  color: #1976d2;
+}
+
 .tabs {
   display: flex;
   flex-wrap: wrap;
@@ -183,6 +195,42 @@
 /* 정산 내역 */
 .settlementGrid {
   grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) minmax(140px, 1fr) minmax(150px, 1.2fr);
+}
+
+.settlementSectionTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.settlementSectionTitle {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #111;
+}
+
+.settlementSummaryBlock {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.settlementSummaryRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.settlementTotalAmount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1976d2;
 }
 
 /* 신고 내역 */

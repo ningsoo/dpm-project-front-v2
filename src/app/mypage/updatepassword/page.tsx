@@ -7,18 +7,12 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
+import { normalizePasswordInput, validatePasswordBySignupRule } from '@/utils/authValidation';
 import styles from '@/app/auth/auth.module.css';
 
 const PWD_REQUIRE = '대문자, 숫자, 특수문자 포함 10자 이상, 공백금지';
 
-function validatePassword(p: string): string[] {
-  const err: string[] = [];
-  if (p.length < 10) err.push('10자 이상');
-  if (!/[A-Z]/.test(p)) err.push('대문자 포함');
-  if (!/[0-9]/.test(p)) err.push('숫자 포함');
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(p)) err.push('특수문자 포함');
-  return err;
-}
+const SAME_PASSWORD_MESSAGE = '현재 비밀번호와 동일한 비밀번호로 변경할 수 없습니다.';
 
 export default function UpdatePasswordPage() {
   const router = useRouter();
@@ -29,19 +23,16 @@ export default function UpdatePasswordPage() {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const pwdErrors = newPassword ? validatePassword(newPassword) : [];
+  const pwdErrors = newPassword ? validatePasswordBySignupRule(newPassword) : [];
   const pwdOk = pwdErrors.length === 0;
   const confirmOk = newPassword && confirm && newPassword === confirm;
   const confirmError = confirm && newPassword && newPassword !== confirm;
 
   useEffect(() => {
     if (!initialized) return;
-    
-    if (!isAuthenticated) {
-      router.push('/auth/login');
-    }
+    if (!isAuthenticated) router.push('/auth/login');
   }, [initialized, isAuthenticated, router]);
 
   if (!initialized) {
@@ -61,18 +52,19 @@ export default function UpdatePasswordPage() {
     if (!pwdOk || !confirmOk) return;
     setLoading(true);
     try {
-      await mypageApi.updatePassword('', newPassword);
-      setShowSuccess(true);
-    } catch {
-      ToastUtils.error('변경에 실패했습니다.');
+      await mypageApi.updatePassword(newPassword);
+      setShowSuccessModal(true);
+    } catch (err: unknown) {
+      const res = (err as { response?: { data?: { message?: string } } })?.response?.data;
+      const message = typeof res?.message === 'string' ? res.message : '';
+      if (message === SAME_PASSWORD_MESSAGE) {
+        ToastUtils.error(message);
+      } else {
+        ToastUtils.error(message || '변경에 실패했습니다.');
+      }
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSuccessClose = () => {
-    setShowSuccess(false);
-    router.push('/auth/login');
   };
 
   return (
@@ -87,7 +79,7 @@ export default function UpdatePasswordPage() {
               type={showNew ? 'text' : 'password'}
               placeholder={PWD_REQUIRE}
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              onChange={(e) => setNewPassword(normalizePasswordInput(e.target.value))}
               className={styles.input}
             />
             <button
@@ -95,6 +87,7 @@ export default function UpdatePasswordPage() {
               className={styles.eye}
               onClick={() => setShowNew((s) => !s)}
               aria-label={showNew ? '숨기기' : '보기'}
+              tabIndex={-1}
             >
               {showNew ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -119,7 +112,7 @@ export default function UpdatePasswordPage() {
               type={showConfirm ? 'text' : 'password'}
               placeholder="비밀번호 확인"
               value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
+              onChange={(e) => setConfirm(normalizePasswordInput(e.target.value))}
               className={styles.input}
             />
             <button
@@ -127,6 +120,7 @@ export default function UpdatePasswordPage() {
               className={styles.eye}
               onClick={() => setShowConfirm((s) => !s)}
               aria-label={showConfirm ? '숨기기' : '보기'}
+              tabIndex={-1}
             >
               {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -141,11 +135,11 @@ export default function UpdatePasswordPage() {
           className={styles.submit}
           disabled={!pwdOk || !confirmOk || loading}
         >
-          {loading ? '변경 중…' : '변경'}
+          {loading ? '변경 중…' : '변경하기'}
         </button>
       </form>
 
-      {showSuccess && (
+      {showSuccessModal && (
         <div
           style={{
             position: 'fixed',
@@ -168,8 +162,15 @@ export default function UpdatePasswordPage() {
               textAlign: 'center',
             }}
           >
-            <p style={{ margin: '0 0 16px' }}>비밀번호가 변경되었습니다. 다시 로그인해 주세요.</p>
-            <button type="button" className={styles.submit} onClick={handleSuccessClose}>
+            <p style={{ margin: '0 0 16px' }}>정상적으로 수정되었습니다.</p>
+            <button
+              type="button"
+              className={styles.submit}
+              onClick={() => {
+                setShowSuccessModal(false);
+                router.push('/mypage');
+              }}
+            >
               확인
             </button>
           </div>
