@@ -10,6 +10,7 @@ import { authApi } from '@/api/authApi';
 import { checkAuth } from '@/store/slices/authSlice';
 import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
+import { sanitizeEmailInput, validateEmailForUX, normalizePasswordInput, validatePasswordBySignupRule } from '@/utils/authValidation';
 import styles from '../auth.module.css';
 
 export default function LoginPage() {
@@ -20,39 +21,30 @@ export default function LoginPage() {
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [emailHangulError, setEmailHangulError] = useState('');
+  const [emailFormatError, setEmailFormatError] = useState('');
   const emailDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+    const raw = e.target.value;
+    const { value, hadKorean } = sanitizeEmailInput(raw);
     setEmail(value);
-    
-    // 기존 타이머가 있으면 취소
+    setEmailHangulError(hadKorean ? '한글은 입력할 수 없습니다' : '');
+    setEmailFormatError('');
+
     if (emailDebounceRef.current) {
       clearTimeout(emailDebounceRef.current);
     }
-    
-    // input을 지우면 에러 메시지 제거
     if (!value) {
       setErrors((prev) => ({ ...prev, email: '' }));
       return;
     }
-    
-    // 입력이 멈춘 후 500ms 지연 후 검증
+
     emailDebounceRef.current = setTimeout(() => {
-      let errorMsg = '';
-      
-      // 1순위: 한글 포함 검사 (완성형 한글 + 자음/모음 전부 금지)
-      // 완성형 한글: \uAC00-\uD7A3, 한글 자음: \u1100-\u11FF, 한글 모음: \u1160-\u1175
-      if (/[\uAC00-\uD7A3\u1100-\u11FF\u1160-\u1175]/.test(value)) {
-        errorMsg = '이메일에 한글 사용 불가';
-      }
-      // 2순위: @ 없거나 이메일 형식이 아님
-      else if (!value.includes('@') || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        errorMsg = '올바른 이메일 형식이 아닙니다';
-      }
-      
-      setErrors((prev) => ({ ...prev, email: errorMsg }));
-    }, 500);
+      const { error, canProceed } = validateEmailForUX(value);
+      setEmailFormatError(error);
+      setErrors((prev) => ({ ...prev, email: '' }));
+    }, 1200);
   };
 
   useEffect(() => {
@@ -68,6 +60,8 @@ export default function LoginPage() {
     const next: Record<string, string> = {};
     if (!email) next.email = '이메일을 입력하세요';
     if (!password) next.password = '비밀번호를 입력하세요';
+    const pwdErr = validatePasswordBySignupRule(password);
+    if (pwdErr.length > 0) next.password = pwdErr.join(' / ');
     if (Object.keys(next).length) {
       setErrors(next);
       return;
@@ -154,7 +148,7 @@ export default function LoginPage() {
             className={styles.input}
             disabled={loading}
           />
-          <span className={styles.error}>{errors.email || ''}</span>
+          <span className={styles.error}>{emailHangulError || emailFormatError || errors.email || ''}</span>
         </label>
 
         <label className={styles.label}>
@@ -164,7 +158,7 @@ export default function LoginPage() {
               type={showPwd ? 'text' : 'password'}
               placeholder="비밀번호 입력"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => setPassword(normalizePasswordInput(e.target.value))}
               className={styles.input}
               disabled={loading}
             />
@@ -173,6 +167,7 @@ export default function LoginPage() {
               className={styles.eye}
               onClick={() => setShowPwd((s) => !s)}
               aria-label={showPwd ? '비밀번호 숨기기' : '비밀번호 보기'}
+              tabIndex={-1}
             >
               {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -180,12 +175,14 @@ export default function LoginPage() {
           <span className={styles.error}>{errors.password || ''}</span>
         </label>
 
-        <button type="submit" className={styles.submit} disabled={loading || !!errors.email}>
+        <button type="submit" className={styles.submit} disabled={loading || !!emailHangulError || !!emailFormatError || !!errors.email}>
           {loading ? '로그인 중…' : '로그인'}
         </button>
 
         <div className={styles.links}>
           <Link href="/auth/signup">회원가입</Link>
+          <span style={{ margin: '0 8px' }}>|</span>
+          <Link href="/auth/findemail">이메일 찾기</Link>
           <span style={{ margin: '0 8px' }}>|</span>
           <Link href="/auth/findpassword">비밀번호 찾기</Link>
         </div>
