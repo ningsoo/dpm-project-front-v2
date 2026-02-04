@@ -16,7 +16,7 @@ interface UserInfo {
   id: string;
   email: string;
   nickname: string;
-  phone?: string;
+  phoneNumber: string;
   profileImage?: string;
   credits?: number;
 }
@@ -49,10 +49,11 @@ function formatDate(date: Date): string {
 }
 
 /** 11자리 연락처를 3-4-4 형식(예: 010-1234-5678)으로 변환해 프로필 렌더링용으로 반환 */
-function formatPhone11(phone: string | undefined): string {
-  if (phone == null || phone === '') return '';
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length !== 11) return phone;
+function formatPhone11(phoneNumber: string | undefined): string {
+  console.log('phoneNumber', phoneNumber);
+  if (phoneNumber == null || phoneNumber === '') return '';
+  const digits = phoneNumber.replace(/\D/g, '');
+  if (digits.length !== 11) return phoneNumber;
   return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
 }
 
@@ -424,7 +425,7 @@ export default function MypagePage() {
             </div>
           </div>
           <div className={styles.email}>{user.email}</div>
-          <div className={styles.phone}>{formatPhone11(user.phone) || '—'}</div>
+          <div className={styles.phone}>{formatPhone11(user.phoneNumber) || '—'}</div>
           <div className={styles.credits}>POP {user.credits ?? 0}</div>
         </div>
         <div className={styles.profileActions}>
