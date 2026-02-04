@@ -9,7 +9,8 @@ import { boardApi } from '@/api/boardApi';
 import type { BoardCategory } from '@/api/boardApi';
 import type { BoardListItem } from '@/api/boardTypes';
 import { ToastUtils } from '@/utils/toastUtils';
-import { formatCreatedDateTime } from '@/utils/createdDateTime';
+import { formatCreatedDateTime, toDate } from '@/utils/createdDateTime';
+import { formatViews, formatCommentCount } from '@/utils/displayFormatters';
 import ShowcaseFeaturedSection from '@/components/board/ShowcaseFeaturedSection';
 import CommonBoardCarousel from '@/components/board/CommonBoardCarousel';
 import styles from './BoardList.module.css';
@@ -17,6 +18,11 @@ import styles from './BoardList.module.css';
 interface BoardListProps {
   category: string;
   viewMode: 'grid' | 'list';
+}
+
+// displayNumber 추가된 타입
+interface BoardListItemWithDisplay extends BoardListItem {
+  displayNumber?: number;
 }
 
 // 소문자 category를 대문자 BoardCategory로 변환
@@ -32,8 +38,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
   const router = useRouter();
   const pathname = usePathname();
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
-
-  const [posts, setPosts] = useState<BoardListItem[]>([]);
+  const [posts, setPosts] = useState<BoardListItemWithDisplay[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchType, setSearchType] = useState<'title' | 'nickname'>('title');
   const [search, setSearch] = useState('');
@@ -41,13 +46,16 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
 
   const categoryType = toBoardCategory(category);
+  
+  // community, reviews 카테고리인지 확인
+  const shouldShowNumbers = category === 'community' || category === 'reviews';
 
   const fetchList = useCallback(async () => {
     setLoading(true);
     try {
       const { data } = await boardApi.getBoardByCategory(categoryType);
       const list = Array.isArray(data?.data) ? data.data : [];
-
+      
       let filtered = list;
       const kw = search.trim();
       if (kw) {
@@ -60,14 +68,33 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
         });
       }
 
-      setPosts(filtered);
+      // community, reviews 카테고리일 때만 정렬 및 번호 부여
+      if (shouldShowNumbers) {
+        // createdDateTime 기준 최신순 정렬
+        const sorted = [...filtered].sort((a, b) => {
+          const dateA = toDate(a.createdDateTime)?.getTime() ?? 0;
+          const dateB = toDate(b.createdDateTime)?.getTime() ?? 0;
+          return dateB - dateA; // 내림차순 (최신순)
+        });
+
+        // 화면용 번호 부여 (1부터 시작)
+        const withDisplayNumber = sorted.map((item, index) => ({
+          ...item,
+          displayNumber: index + 1,
+        }));
+
+        setPosts(withDisplayNumber);
+      } else {
+        // showcase, playlists, spotlight는 번호 없이 그대로
+        setPosts(filtered);
+      }
     } catch {
       ToastUtils.error('게시글을 불러올 수 없습니다');
       setPosts([]);
     } finally {
       setLoading(false);
     }
-  }, [categoryType, search, searchType]);
+  }, [categoryType, search, searchType, shouldShowNumbers]);
 
   useEffect(() => {
     fetchList();
@@ -92,8 +119,6 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
     router.push(`/auth/login?redirect=${encodeURIComponent(pathname ?? '')}`);
   };
 
-
-
   return (
     <section className={styles.section}>
       {category === 'showcase' && (
@@ -101,7 +126,6 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
           <ShowcaseFeaturedSection />
         </div>
       )}
-
       {(category === 'playlists' || category === 'spotlight') && (
         <div className={styles.carouselSection}>
           <CommonBoardCarousel category={categoryType} />
@@ -118,7 +142,6 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
             <option value="title">제목</option>
             <option value="nickname">닉네임</option>
           </select>
-
           <input
             type="text"
             className={styles.input}
@@ -127,12 +150,10 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onSearch()}
           />
-
           <button type="button" className={styles.searchBtn} onClick={onSearch}>
             검색
           </button>
         </div>
-
         <button
           type="button"
           className={styles.writeBtn}
@@ -203,11 +224,20 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                     />
                   )}
                 </div>
-
                 <div className={styles.cardBody}>
-                  <div className={styles.cardTitle}>{p.title}</div>
+                  <div className={styles.cardTitle}>
+                    {/* community, reviews 카테고리일 때만 번호 표시 */}
+                    {shouldShowNumbers && p.displayNumber && (
+                      <span style={{ marginRight: '8px', fontWeight: 'bold' }}>
+                        {p.displayNumber}.
+                      </span>
+                    )}
+                    {p.title}
+                  </div>
                   <div className={styles.meta}>
-                    {p.nickname || '—'} · ♥{p.likes ?? 0} · views {p.views ?? 0}
+                    {p.nickname || '—'} · ♥{p.likes ?? 0}
+                    {shouldShowNumbers && ` · 댓글 ${formatCommentCount(p.countComment)}`}
+                    {` · views ${formatViews(p.views)}`}
                   </div>
                 </div>
               </div>
@@ -219,9 +249,12 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
           <table className={styles.table}>
             <thead>
               <tr>
+                {/* community, reviews 카테고리일 때만 번호 컬럼 표시 */}
+                {shouldShowNumbers && <th>번호</th>}
                 <th>제목</th>
                 <th>작성자</th>
                 <th>좋아요</th>
+                {shouldShowNumbers && <th>댓글</th>}
                 <th>조회</th>
                 <th>날짜</th>
               </tr>
@@ -233,12 +266,15 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                   onClick={() => router.push(`/boards/${p.boardId}`)}
                   style={{ cursor: 'pointer' }}
                 >
+                  {/* community, reviews 카테고리일 때만 번호 표시 */}
+                  {shouldShowNumbers && <td>{p.displayNumber}</td>}
                   <td>
                     <Link href={`/boards/${p.boardId}`}>{p.title}</Link>
                   </td>
                   <td>{p.nickname || '—'}</td>
                   <td>{p.likes ?? 0}</td>
-                  <td>{p.views ?? 0}</td>
+                  {shouldShowNumbers && <td>{formatCommentCount(p.countComment)}</td>}
+                  <td>{formatViews(p.views)}</td>
                   <td>{formatCreatedDateTime(p.createdDateTime)}</td>
                 </tr>
               ))}

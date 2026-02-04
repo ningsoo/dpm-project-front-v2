@@ -6,6 +6,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
 import type { BoardListItem } from '@/api/boardTypes';
+import { formatViews } from '@/utils/displayFormatters';
 import styles from './TopPlaylists.module.css';
 
 export default function TopPlaylists() {
@@ -37,7 +38,7 @@ export default function TopPlaylists() {
               <div className={styles.cardTitle}>{p.title}</div>
               <div className={styles.author}>{p.nickname || '—'}</div>
               <div className={styles.likes}>♥ {p.likes ?? 0}</div>
-              <div className={styles.likes}>♥ {p.views ?? 0}</div>
+              <div className={styles.likes}>♥ {formatViews(p.views)}</div>
             </div>
           </Link>
         ))}

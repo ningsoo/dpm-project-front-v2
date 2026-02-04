@@ -122,11 +122,63 @@
   font-size: 0.9rem;
 }
 
+/* ===== 테이블 공통 ===== */
 .table th,
 .table td {
-  padding: 12px 14px;
-  text-align: left;
+  padding: 12px;
   border-bottom: 1px solid #eee;
+  vertical-align: middle;
+}
+
+/* ===== 번호 ===== */
+.table th:first-child,
+.table td:first-child {
+  width: 100px;
+  text-align: center;
+}
+
+/* ===== 제목 (그대로 왼쪽) ===== */
+.table th:nth-child(2),
+.table td:nth-child(2) {
+  width: 300px;
+  text-align: center;
+}
+
+/* ===== 작성자 (컬럼 정중앙) ===== */
+.table th:nth-child(3),
+.table td:nth-child(3) {
+  width: 120px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* ===== 좋아요 (컬럼 정중앙) ===== */
+.table th:nth-child(4),
+.table td:nth-child(4) {
+  width: 100px;
+  text-align: center;
+}
+
+/* ===== 조회 (컬럼 정중앙) ===== */
+.table th:nth-child(5),
+.table td:nth-child(5) {
+  width: 100px;
+  text-align: center;
+}
+
+/* ===== 날짜 (컬럼 정중앙) ===== */
+.table th:nth-child(6),
+.table td:nth-child(6) {
+  width: 140px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.table th:nth-child(7),
+.table td:nth-child(7) {
+  width: 140px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .table th {
@@ -222,6 +274,7 @@
 .modalButtonConfirm:hover {
   background: #1565c0;
 }
+
 .categoryHeader {
   margin-bottom: 24px;
   padding: 0 16px;
