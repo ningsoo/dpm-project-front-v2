@@ -54,6 +54,9 @@ export const authApi = {
   refresh: () =>
     fetchClient.post<ApiResponse<{ accessToken?: string }>>('/auth/refresh', {}),
 
+  findEmail: (email: string) =>
+    fetchClient.post<ApiResponse<null>>('/auth/find-email', { email }, { timeout: 30000 }),
+
   findPassword: (email: string) =>
     fetchClient.patch<ApiResponse<unknown>>('/auth/findpassword', { email }),
 
