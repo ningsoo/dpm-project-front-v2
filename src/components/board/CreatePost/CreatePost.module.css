@@ -54,9 +54,11 @@
 }
 
 .btnGroup {
+  padding: 8px 12px;
   display: flex;
   gap: 12px;
   margin-top: 24px;
+  justify-content: flex-end;
 }
 
 .btn {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store';
@@ -15,6 +15,7 @@ import styles from '../auth.module.css';
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const dispatch = useDispatch<AppDispatch>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -111,7 +112,14 @@ export default function LoginPage() {
       // Redux에 인증 상태 업데이트
       dispatch(checkAuth());
 
-      router.push('/');
+      // 이전 페이지(redirect)로 이동, 없으면 홈으로
+      const redirect = searchParams.get('redirect');
+      const isSafeRedirect =
+        redirect &&
+        typeof redirect === 'string' &&
+        redirect.startsWith('/') &&
+        !redirect.startsWith('//');
+      router.push(isSafeRedirect ? redirect : '/');
     } catch (err: unknown) {
       const res = err as { response?: { data?: { message?: string; code?: string } } };
       const msg = res?.response?.data?.message;
