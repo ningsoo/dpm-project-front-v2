@@ -4,10 +4,12 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
-import { CreditCard, Key, User, Plus, Search, Pencil, Heart, X, Check } from 'lucide-react';
+import { CircleDollarSign, CreditCard, Key, User, Plus, Search, Pencil, Heart, X, Check } from 'lucide-react';
 import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
+import { PasswordVerifyModal } from './PasswordVerifyModal';
+import { SettlementSection } from './components/SettlementSection';
 import styles from './mypage.module.css';
 
 interface UserInfo {
@@ -26,7 +28,6 @@ const TABS = [
   { id: 'liked', label: '좋아요 한 게시글' },
   { id: 'payment', label: '결제 내역' },
   { id: 'creditUsage', label: '크레딧 사용 내역' },
-  { id: 'settlement', label: '정산 내역' },
   { id: 'reports', label: '신고 내역' },
 ] as const;
 
@@ -45,6 +46,14 @@ function formatDate(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}.${month}.${day}`;
+}
+
+/** 11자리 연락처를 3-4-4 형식(예: 010-1234-5678)으로 변환해 프로필 렌더링용으로 반환 */
+function formatPhone11(phone: string | undefined): string {
+  if (phone == null || phone === '') return '';
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length !== 11) return phone;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
 }
 
 export default function MypagePage() {
@@ -78,6 +87,8 @@ export default function MypagePage() {
   const [creditAmount, setCreditAmount] = useState('');
   const [creditError, setCreditError] = useState('');
   const creditValidationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [showPasswordVerifyModal, setShowPasswordVerifyModal] = useState(false);
+  const [passwordVerifyTarget, setPasswordVerifyTarget] = useState<string | null>(null);
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
@@ -413,10 +424,18 @@ export default function MypagePage() {
             </div>
           </div>
           <div className={styles.email}>{user.email}</div>
-          <div className={styles.phone}>{user.phone || '—'}</div>
+          <div className={styles.phone}>{formatPhone11(user.phone) || '—'}</div>
           <div className={styles.credits}>POP {user.credits ?? 0}</div>
         </div>
         <div className={styles.profileActions}>
+          <button
+            type="button"
+            className={tab === 'settlement' ? `${styles.iconLink} ${styles.iconLinkActive}` : styles.iconLink}
+            title="정산"
+            onClick={() => setTab('settlement')}
+          >
+            <CircleDollarSign size={22} />
+          </button>
           <button
             type="button"
             className={styles.iconLink}
@@ -425,12 +444,28 @@ export default function MypagePage() {
           >
             <CreditCard size={22} />
           </button>
-          <Link href="/mypage/updatepassword" className={styles.iconLink} title="비밀번호 변경">
+          <button
+            type="button"
+            className={styles.iconLink}
+            title="비밀번호 변경"
+            onClick={() => {
+              setPasswordVerifyTarget('/mypage/updatepassword');
+              setShowPasswordVerifyModal(true);
+            }}
+          >
             <Key size={22} />
-          </Link>
-          <Link href="/mypage/updateprofile" className={styles.iconLink} title="프로필 수정">
+          </button>
+          <button
+            type="button"
+            className={styles.iconLink}
+            title="정보수정"
+            onClick={() => {
+              setPasswordVerifyTarget('/mypage/updateprofile');
+              setShowPasswordVerifyModal(true);
+            }}
+          >
             <User size={22} />
-          </Link>
+          </button>
         </div>
       </section>
 
@@ -762,51 +797,13 @@ export default function MypagePage() {
           </div>
         )}
         {tab === 'settlement' && (
-          <div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
-              <input
-                type="date"
-                value={dateRange.settlement.start}
-                onChange={(e) => setDateRange({ ...dateRange, settlement: { ...dateRange.settlement, start: e.target.value } })}
-                style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14 }}
-              />
-              <span>~</span>
-              <input
-                type="date"
-                value={dateRange.settlement.end}
-                onChange={(e) => setDateRange({ ...dateRange, settlement: { ...dateRange.settlement, end: e.target.value } })}
-                style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14 }}
-              />
-              <button
-                type="button"
-                onClick={() => handleDateRangeSearch('settlement')}
-                style={{
-                  padding: '8px 16px',
-                  background: '#1976d2',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: 14,
-                }}
-              >
-                조회
-              </button>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <div>
-                <div className={styles.tableGrid + ' ' + styles.settlementGrid + ' ' + styles.tableHeader}>
-                  <div style={{ textAlign: 'left' }}>정산 일자</div>
-                  <div style={{ textAlign: 'center' }}>정산 요청일자</div>
-                  <div style={{ textAlign: 'center' }}>정산금액</div>
-                  <div style={{ textAlign: 'right', paddingRight: '20px' }}>정산처리상태</div>
-                </div>
-                <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                  정산 내역이 없습니다.
-                </div>
-              </div>
-            </div>
-          </div>
+          <SettlementSection
+            settlementStart={dateRange.settlement.start}
+            settlementEnd={dateRange.settlement.end}
+            onChangeStart={(value) => setDateRange({ ...dateRange, settlement: { ...dateRange.settlement, start: value } })}
+            onChangeEnd={(value) => setDateRange({ ...dateRange, settlement: { ...dateRange.settlement, end: value } })}
+            onSearch={() => handleDateRangeSearch('settlement')}
+          />
         )}
         {tab === 'reports' && (
           <div>
@@ -1103,6 +1100,22 @@ export default function MypagePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showPasswordVerifyModal && passwordVerifyTarget && (
+        <PasswordVerifyModal
+          isOpen={showPasswordVerifyModal}
+          onClose={() => {
+            setShowPasswordVerifyModal(false);
+            setPasswordVerifyTarget(null);
+          }}
+          targetPath={passwordVerifyTarget}
+          onSuccess={(path) => {
+            router.push(path);
+            setShowPasswordVerifyModal(false);
+            setPasswordVerifyTarget(null);
+          }}
+        />
       )}
 
       {showCreditChargeModal && (

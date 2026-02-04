@@ -3,8 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '@/store';
+import { logout } from '@/store/slices/authSlice';
+import { authApi } from '@/api/authApi';
+import { ToastUtils } from '@/utils/toastUtils';
 import styles from '@/app/auth/auth.module.css';
 
 const TERMS = `동일한 이메일 주소로는 1달 이내에 재가입할 수 없습니다.
@@ -21,6 +24,7 @@ const TERMS = `동일한 이메일 주소로는 1달 이내에 재가입할 수 
 
 export default function WithdrawPage() {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const initialized = useSelector((s: RootState) => s.auth.initialized);
   const [checked, setChecked] = useState(false);
@@ -60,15 +64,15 @@ export default function WithdrawPage() {
   const handleConfirm = async () => {
     setLoading(true);
     try {
-      // API: e.g. DELETE /api/auth/withdraw or PATCH /api/mypage/withdraw
-      // await authApi.withdraw();
-      // dispatch(logout());
+      await authApi.withdraw();
+      authApi.logout().catch(() => {});
+      dispatch(logout());
+      setShowModal(false);
       router.push('/');
     } catch {
-      // ToastUtils.error('탈퇴 처리에 실패했습니다.');
+      ToastUtils.error('탈퇴 처리에 실패했습니다.');
     } finally {
       setLoading(false);
-      setShowModal(false);
     }
   };
 

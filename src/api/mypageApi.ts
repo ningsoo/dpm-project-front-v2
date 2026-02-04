@@ -38,14 +38,17 @@ export const mypageApi = {
   deleteReports: (reportIds: string[]) =>
     fetchClient.delete<ApiResponse<unknown>>('/mypage/reports', { data: { reportIds } }),
 
-  updatePassword: (currentPassword: string, newPassword: string) =>
-    fetchClient.post<ApiResponse<unknown>>('/mypage/updatepassword', {
-      currentPassword: currentPassword || undefined,
-      newPassword,
+  verifyPassword: (password: string) =>
+    fetchClient.post<ApiResponse<unknown>>('/mypage/password/verify', {
+      password: password || undefined,
+      currentPassword: password || undefined,
     }),
 
-  updateProfile: (body: { nickname?: string; phone?: string; profileImage?: string }) =>
-    fetchClient.patch<ApiResponse<unknown>>('/mypage/updateprofile', body),
+  updatePassword: (password: string) =>
+    fetchClient.patch<ApiResponse<unknown>>('/mypage/mepasswd', { password }),
+
+  updateProfile: (body: { nickname?: string; phoneNumber?: string }) =>
+    fetchClient.patch<ApiResponse<unknown>>('/mypage/me', body),
 
   getMessages: (params?: { page?: number }) =>
     fetchClient.get<ApiResponse<unknown>>('/mypage/messages', { params }),
