@@ -164,3 +164,85 @@
 .carouselSection {
   margin-bottom: 32px;
 }
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modalContent {
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+}
+
+.modalMessage {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  color: #333;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modalButton {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modalButtonCancel {
+  background: #999;
+}
+
+.modalButtonCancel:hover {
+  background: #777;
+}
+
+.modalButtonConfirm {
+  background: #1976d2;
+}
+
+.modalButtonConfirm:hover {
+  background: #1565c0;
+}
+.categoryHeader {
+  margin-bottom: 24px;
+  padding: 0 16px;
+}
+
+.categoryTitle {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  cursor: pointer;
+  display: inline-block;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.categoryTitle:hover {
+  color: #0066ff;
+  transform: translateY(-1px);
+}
+
+.categoryTitle:active {
+  transform: translateY(0);
+  opacity: 0.8;
+}

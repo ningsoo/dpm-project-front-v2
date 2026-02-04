@@ -14,7 +14,22 @@ export interface BoardListItem {
 }
 
 export interface BoardDetail extends BoardListItem {
-  // 상세 조회 시 동일한 구조
+  /** 상세 조회 시 서버에서 내려주는 좋아요 여부 */
+  isliked?: boolean;
+}
+
+/** 게시글 좋아요 API 응답 data 필드 */
+export interface BoardLikeResponse {
+  userId?: number | null;
+  boardId?: number | null;
+  title?: string | null;
+  content?: string | null;
+  nickname?: string | null;
+  views?: number;
+  likes?: number;
+  createdDateTime?: number[] | null;
+  fileUrl?: string | null;
+  isliked: boolean;
 }
 
 export interface CommentItem {

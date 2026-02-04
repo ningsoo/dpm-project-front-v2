@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
 import type { BoardCategory } from '@/api/boardApi';
 import type { BoardListItem } from '@/api/boardTypes';
@@ -28,21 +30,23 @@ function toBoardCategory(category: string): BoardCategory {
 
 export default function BoardList({ category, viewMode }: BoardListProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
+
   const [posts, setPosts] = useState<BoardListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchType, setSearchType] = useState<'title' | 'nickname'>('title');
   const [search, setSearch] = useState('');
   const [hoveredBoardId, setHoveredBoardId] = useState<number | null>(null);
+  const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
 
   const categoryType = toBoardCategory(category);
 
   const fetchList = useCallback(async () => {
     setLoading(true);
     try {
-      // Swagger 명세: GET /api/boards/{categoryType} - 배열 반환
       const { data } = await boardApi.getBoardByCategory(categoryType);
       const list = Array.isArray(data?.data) ? data.data : [];
-      
 
       let filtered = list;
       const kw = search.trim();
@@ -75,7 +79,21 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
     ? category
     : 'showcase';
 
-  
+  const handleWriteClick = () => {
+    if (!isAuthenticated) {
+      setShowLoginRequiredModal(true);
+      return;
+    }
+    router.push(`/boards/category/${safeCat}/new`);
+  };
+
+  const handleGoToLogin = () => {
+    setShowLoginRequiredModal(false);
+    router.push(`/auth/login?redirect=${encodeURIComponent(pathname ?? '')}`);
+  };
+
+
+
   return (
     <section className={styles.section}>
       {category === 'showcase' && (
@@ -83,6 +101,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
           <ShowcaseFeaturedSection />
         </div>
       )}
+
       {(category === 'playlists' || category === 'spotlight') && (
         <div className={styles.carouselSection}>
           <CommonBoardCarousel category={categoryType} />
@@ -99,6 +118,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
             <option value="title">제목</option>
             <option value="nickname">닉네임</option>
           </select>
+
           <input
             type="text"
             className={styles.input}
@@ -107,15 +127,20 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onSearch()}
           />
+
           <button type="button" className={styles.searchBtn} onClick={onSearch}>
             검색
           </button>
         </div>
-        <Link href={`/boards/category/${safeCat}/new`} className={styles.writeBtn}>
-          글작성
-        </Link>
-      </div>
 
+        <button
+          type="button"
+          className={styles.writeBtn}
+          onClick={handleWriteClick}
+        >
+          글작성
+        </button>
+      </div>
 
       {loading && posts.length === 0 ? (
         <div className={styles.loading}>로딩 중…</div>
@@ -150,23 +175,21 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
               >
                 <div className={styles.thumbWrap}>
                   {showVideo ? (
-                    <>
-                      <iframe
-                        className={styles.thumb}
-                        src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytId}&modestbranding=1&rel=0`}
-                        allow="autoplay; encrypted-media"
-                        allowFullScreen
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: '100%',
-                          border: 'none',
-                          pointerEvents: 'none',
-                        }}
-                      />
-                    </>
+                    <iframe
+                      className={styles.thumb}
+                      src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytId}`}
+                      allow="autoplay; encrypted-media"
+                      allowFullScreen
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        border: 'none',
+                        pointerEvents: 'none',
+                      }}
+                    />
                   ) : (
                     <img
                       src={
@@ -180,6 +203,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                     />
                   )}
                 </div>
+
                 <div className={styles.cardBody}>
                   <div className={styles.cardTitle}>{p.title}</div>
                   <div className={styles.meta}>
@@ -204,7 +228,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
             </thead>
             <tbody>
               {posts.map((p) => (
-                <tr 
+                <tr
                   key={p.boardId}
                   onClick={() => router.push(`/boards/${p.boardId}`)}
                   style={{ cursor: 'pointer' }}
@@ -227,6 +251,29 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
         <div className={styles.empty}>등록된 게시글이 없습니다.</div>
       )}
 
+      {showLoginRequiredModal && (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true">
+          <div className={styles.modalContent}>
+            <p className={styles.modalMessage}>로그인 페이지로 이동하시겠습니까?</p>
+            <div className={styles.modalButtons}>
+              <button
+                type="button"
+                className={`${styles.modalButton} ${styles.modalButtonConfirm}`}
+                onClick={handleGoToLogin}
+              >
+                예
+              </button>
+              <button
+                type="button"
+                className={`${styles.modalButton} ${styles.modalButtonCancel}`}
+                onClick={() => setShowLoginRequiredModal(false)}
+              >
+                아니요
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -236,5 +283,3 @@ function extractYtId(url?: string): string {
   const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/);
   return m ? m[1] : '';
 }
-
-// 날짜 포맷은 formatCreatedDateTime 사용

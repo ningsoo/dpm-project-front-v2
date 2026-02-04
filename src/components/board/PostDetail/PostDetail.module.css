@@ -17,7 +17,7 @@
 .title {
   flex: 1;
   font-size: 1.35rem;
-  font-weight: 700;
+  font-weight: 500;
   color: #111;
 }
 
@@ -45,6 +45,14 @@
   color: #111;
 }
 
+.likeBtnLiked {
+  color: #c62828;
+}
+
+.likeBtnLiked:hover {
+  color: #b71c1c;
+}
+
 .authorRow {
   display: flex;
   align-items: center;
@@ -54,7 +62,7 @@
 
 .author {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 500;
   color: #333;
   cursor: pointer;
 }
@@ -230,6 +238,30 @@
   color: #444;
 }
 
+.commentFooter {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.commentLikeBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: #666;
+  cursor: pointer;
+}
+
+.commentLikeBtn:hover {
+  background: #f0f0f0;
+  color: #c62828;
+}
+
 .replyBtn {
   margin-top: 8px;
   padding: 4px 0;
@@ -395,4 +427,22 @@
 .reportTextarea:focus {
   outline: none;
   border-color: #1976d2;
+}
+
+.categoryRow {
+  margin-bottom: 8px;
+}
+
+.categoryLink {
+  display: inline-block;
+  font-size: 25px;
+  font-weight: 600;
+  color: #000000;
+  text-decoration: none;
+  transition: color 0.8s;
+}
+
+.categoryLink:hover {
+  color: #111827;
+  text-decoration: underline;
 }

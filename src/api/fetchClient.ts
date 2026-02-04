@@ -66,6 +66,18 @@ fetchClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+/** 댓글 목록 GET 요청이 404(댓글 없음)일 때 에러 대신 빈 배열로 성공 처리 → 콘솔 404 방지 */
+function isGetComments404(err: AxiosError): boolean {
+  const status = err.response?.status;
+  const url = err.config?.url ?? '';
+  const method = err.config?.method?.toLowerCase();
+  return (
+    status === 404 &&
+    method === 'get' &&
+    /\/boards\/[^/]+\/comments$/.test(url)
+  );
+}
+
 // ─── Response: 401 시 refresh 1회 → 토큰 저장 → 원래 요청 1회 재시도 ───
 fetchClient.interceptors.response.use(
   (res) => res,
@@ -73,6 +85,17 @@ fetchClient.interceptors.response.use(
     const config = err.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     if (!config) return Promise.reject(err);
+
+    // 댓글 목록 GET 404 → 댓글 없음으로 간주, 성공 응답으로 변환 (콘솔 404 방지)
+    if (err.response && isGetComments404(err)) {
+      return Promise.resolve({
+        data: { data: [] },
+        status: 200,
+        statusText: 'OK',
+        headers: err.response.headers,
+        config,
+      });
+    }
 
     // refresh 요청 자체가 실패한 경우 → refresh 재시도 금지
     if (config.url?.includes('/auth/refresh')) {

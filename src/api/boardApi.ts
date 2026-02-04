@@ -4,6 +4,7 @@ import type {
   BoardCategory,
   BoardListItem,
   BoardDetail,
+  BoardLikeResponse,
   CommentItem,
   CreateBoardRequest,
   UpdateBoardRequest,
@@ -78,11 +79,21 @@ export const boardApi = {
     fetchClient.delete<ApiResponse<string>>(
       `/boards/${boardId}/comments/${commentId}`
     ),
+
+  /**
+   * 게시글 좋아요
+   * POST /api/boards/{boardId}/like
+   */
+  likePost: (boardId: string) =>
+    fetchClient.post<ApiResponse<BoardLikeResponse>>(
+      `/boards/${boardId}/like`
+    ),
 };
 
 export type {
   BoardCategory,
   BoardListItem,
   BoardDetail,
+  BoardLikeResponse,
   CommentItem,
 };

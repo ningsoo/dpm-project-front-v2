@@ -78,9 +78,14 @@ export default function CreatePost({ category }: CreatePostProps) {
     ? category
     : 'showcase';
 
+    const formattedCategory =
+    safeCat.charAt(0).toUpperCase() + safeCat.slice(1);
+    
+
+    
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.h1}>새 글 쓰기 · {safeCat}</h1>
+      <h1 className={styles.h1}>{formattedCategory}</h1>
 
       <form onSubmit={handleSubmit}>
         <label className={styles.label}>
@@ -159,7 +164,7 @@ export default function CreatePost({ category }: CreatePostProps) {
         </label>
 
         <div className={styles.btnGroup}>
-          <Link href={`/boards/${safeCat}`} className={`${styles.btn} ${styles.cancel}`}>
+          <Link href={`/boards/category/${safeCat}`} className={`${styles.btn} ${styles.cancel}`}>
             취소
           </Link>
           <button
