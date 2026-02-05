@@ -14,7 +14,7 @@ interface UserInfo {
   id: string;
   email: string;
   nickname: string;
-  phone?: string;
+  phoneNumber: string;
   profileImage?: string;
 }
 
@@ -64,8 +64,8 @@ export default function UpdateProfilePage() {
           const nick = userData.nickname || '';
           setNickname(nick);
           setInitialNickname(nick);
-          if (userData.phone) {
-            const phoneDigits = userData.phone.replace(/\D/g, '');
+          if (userData.phoneNumber) {
+            const phoneDigits = userData.phoneNumber.replace(/\D/g, '');
             if (phoneDigits.length === 11) {
               setInitialPhone(phoneDigits);
               setPhonePlaceholder0(phoneDigits.slice(0, 3));
