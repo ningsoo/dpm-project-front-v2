@@ -4,12 +4,14 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
-import { CircleDollarSign, CreditCard, Key, User, Plus, Search, Pencil, Heart, X, Check } from 'lucide-react';
+import { CircleDollarSign, CreditCard, Key, User, Plus, Search, Pencil, Heart, X, Check, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import { PasswordVerifyModal } from './PasswordVerifyModal';
 import { SettlementSection } from './components/SettlementSection';
+import { YouTubePlaylistModal } from './YouTubePlaylistModal';
+import { PlaylistDetailModal } from './PlaylistDetailModal';
 import styles from './mypage.module.css';
 
 interface UserInfo {
@@ -19,6 +21,14 @@ interface UserInfo {
   phoneNumber: string;
   profileImage?: string;
   credits?: number;
+}
+
+interface PlaylistItem {
+  playlistId: number;
+  youtubeListId: string;
+  title: string;
+  thumbnailUrl: string;
+  itemCount: number;
 }
 
 const TABS = [
@@ -90,6 +100,13 @@ export default function MypagePage() {
   const creditValidationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [showPasswordVerifyModal, setShowPasswordVerifyModal] = useState(false);
   const [passwordVerifyTarget, setPasswordVerifyTarget] = useState<string | null>(null);
+  const [showYouTubePlaylistModal, setShowYouTubePlaylistModal] = useState(false);
+  const [playlists, setPlaylists] = useState<PlaylistItem[]>([]);
+  const [playlistsLoading, setPlaylistsLoading] = useState(false);
+  const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistItem | null>(null);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<PlaylistItem | null>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
@@ -134,6 +151,57 @@ export default function MypagePage() {
       }
     };
   }, []);
+
+  // 플레이리스트 탭 활성화 시 데이터 로드
+  useEffect(() => {
+    if (tab === 'playlists' && isAuthenticated) {
+      fetchPlaylists();
+    }
+  }, [tab, isAuthenticated]);
+
+  const fetchPlaylists = async () => {
+    setPlaylistsLoading(true);
+    try {
+      const response = await mypageApi.getMyPlaylists();
+      const playlistArray = response.data?.data;
+
+      if (Array.isArray(playlistArray)) {
+        setPlaylists(playlistArray);
+      } else {
+        setPlaylists([]);
+      }
+    } catch (error) {
+      console.error('플레이리스트 로드 실패:', error);
+      ToastUtils.error('플레이리스트를 불러올 수 없습니다.');
+      setPlaylists([]);
+    } finally {
+      setPlaylistsLoading(false);
+    }
+  };
+
+  const scrollCarousel = (direction: 'left' | 'right') => {
+    if (!carouselRef.current) return;
+    const scrollAmount = 340; // Card width (320px) + gap (20px)
+    const newScrollLeft = carouselRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+    carouselRef.current.scrollTo({
+      left: newScrollLeft,
+      behavior: 'smooth',
+    });
+  };
+
+  const handleDeletePlaylist = async () => {
+    if (!playlistToDelete) return;
+
+    try {
+      await mypageApi.deleteYouTubePlaylist(playlistToDelete.playlistId);
+      ToastUtils.success('플레이리스트가 목록에서 삭제되었습니다.');
+      setPlaylistToDelete(null);
+      fetchPlaylists();
+    } catch (error) {
+      console.error('플레이리스트 삭제 실패:', error);
+      ToastUtils.error('플레이리스트 삭제에 실패했습니다.');
+    }
+  };
 
   if (!initialized || loading) {
     return (
@@ -486,29 +554,342 @@ export default function MypagePage() {
       <div className={styles.content}>
         {tab === 'playlists' && (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-              <button
-                type="button"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '6px 12px',
-                  background: '#1976d2',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: 14,
-                }}
-              >
-                <Plus size={16} />
-                등록
-              </button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowYouTubePlaylistModal(true)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    padding: '8px 16px',
+                    background: '#1976d2',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    fontSize: 14,
+                    fontWeight: 500,
+                  }}
+                >
+                  <Plus size={18} />
+                  등록
+                </button>
+                {playlists.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsDeleteMode(!isDeleteMode);
+                      if (isDeleteMode) {
+                        setPlaylistToDelete(null);
+                      }
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '8px 16px',
+                      background: isDeleteMode ? '#c62828' : '#666',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      fontSize: 14,
+                      fontWeight: 500,
+                      transition: 'background 0.2s',
+                    }}
+                  >
+                    <Trash2 size={18} />
+                    {isDeleteMode ? '완료' : '관리'}
+                  </button>
+                )}
+              </div>
+              {playlists.length > 1 && (
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => scrollCarousel('left')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 36,
+                      height: 36,
+                      background: '#fff',
+                      border: '1px solid #ddd',
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#f5f5f5';
+                      e.currentTarget.style.borderColor = '#999';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#fff';
+                      e.currentTarget.style.borderColor = '#ddd';
+                    }}
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => scrollCarousel('right')}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 36,
+                      height: 36,
+                      background: '#fff',
+                      border: '1px solid #ddd',
+                      borderRadius: '50%',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#f5f5f5';
+                      e.currentTarget.style.borderColor = '#999';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#fff';
+                      e.currentTarget.style.borderColor = '#ddd';
+                    }}
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              )}
             </div>
-            <div style={{ textAlign: 'center', color: '#666', padding: 16 }}>
-              내가 만든 플레이리스트가 표시됩니다.
-            </div>
+            {playlistsLoading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 60 }}>
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    border: '4px solid #f0f0f0',
+                    borderTop: '4px solid #1976d2',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                  }}
+                />
+                <style>{`
+                  @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                `}</style>
+              </div>
+            ) : playlists.length === 0 ? (
+              <div style={{ textAlign: 'center', color: '#666', padding: 60 }}>
+                등록된 플레이리스트가 없습니다.
+              </div>
+            ) : (
+              <>
+                <style>{`
+                  .playlist-carousel::-webkit-scrollbar {
+                    height: 8px;
+                  }
+                  .playlist-carousel::-webkit-scrollbar-track {
+                    background: #f0f0f0;
+                    border-radius: 4px;
+                  }
+                  .playlist-carousel::-webkit-scrollbar-thumb {
+                    background: #ccc;
+                    border-radius: 4px;
+                  }
+                  .playlist-carousel::-webkit-scrollbar-thumb:hover {
+                    background: #999;
+                  }
+                  .playlist-thumbnail-stack {
+                    position: relative;
+                  }
+                  .playlist-thumbnail-stack::before,
+                  .playlist-thumbnail-stack::after {
+                    content: '';
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    background: #fff;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                  }
+                  .playlist-thumbnail-stack::before {
+                    top: -6px;
+                    left: -4px;
+                    transform: rotate(-2deg);
+                    z-index: -2;
+                  }
+                  .playlist-thumbnail-stack::after {
+                    top: -3px;
+                    left: -2px;
+                    transform: rotate(-1deg);
+                    z-index: -1;
+                  }
+                `}</style>
+                <div
+                  ref={carouselRef}
+                  style={{
+                    display: 'flex',
+                    overflowX: 'auto',
+                    gap: 20,
+                    padding: '4px 4px 12px',
+                    scrollSnapType: 'x mandatory',
+                  }}
+                  className="playlist-carousel"
+                >
+                {playlists.map((playlist) => (
+                  <div
+                    key={playlist.youtubeListId}
+                    style={{
+                      position: 'relative',
+                      background: 'white',
+                      borderRadius: 12,
+                      overflow: 'visible',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                      cursor: isDeleteMode ? 'default' : 'pointer',
+                      minWidth: '320px',
+                      maxWidth: '320px',
+                      flexShrink: 0,
+                      scrollSnapAlign: 'start',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isDeleteMode) {
+                        e.currentTarget.style.transform = 'translateY(-4px)';
+                        e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isDeleteMode) {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                      }
+                    }}
+                    onClick={() => {
+                      if (!isDeleteMode) {
+                        setSelectedPlaylist(playlist);
+                      }
+                    }}
+                  >
+                    {isDeleteMode && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPlaylistToDelete(playlist);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: -8,
+                          right: -8,
+                          width: 32,
+                          height: 32,
+                          borderRadius: '50%',
+                          background: '#c62828',
+                          border: '2px solid #fff',
+                          color: '#fff',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          zIndex: 10,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#b71c1c';
+                          e.currentTarget.style.transform = 'scale(1.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#c62828';
+                          e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                      >
+                        <X size={18} strokeWidth={3} />
+                      </button>
+                    )}
+                    <div
+                      className="playlist-thumbnail-stack"
+                      style={{
+                        borderRadius: 12,
+                        overflow: 'hidden',
+                        position: 'relative',
+                      }}
+                    >
+                      <div
+                        style={{
+                          position: 'relative',
+                          width: '100%',
+                          paddingBottom: '56.25%',
+                          background: '#000',
+                          overflow: 'hidden',
+                          borderRadius: 8,
+                        }}
+                      >
+                      <img
+                        src={playlist.thumbnailUrl || ''}
+                        alt={playlist.title}
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                        }}
+                      />
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          background: 'rgba(0,0,0,0.1)',
+                          transition: 'background 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isDeleteMode) {
+                            e.currentTarget.style.background = 'rgba(0,0,0,0.3)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isDeleteMode) {
+                            e.currentTarget.style.background = 'rgba(0,0,0,0.1)';
+                          }
+                        }}
+                      />
+                    </div>
+                    <div style={{ padding: 16, minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div
+                        style={{
+                          fontSize: 16,
+                          fontWeight: 600,
+                          color: '#333',
+                          marginBottom: 8,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          lineHeight: 1.4,
+                          minHeight: '2.8em',
+                        }}
+                      >
+                        {playlist.title}
+                      </div>
+                      <div style={{ fontSize: 14, color: '#666', marginTop: 'auto' }}>
+                        {playlist.itemCount}곡
+                      </div>
+                    </div>
+                    </div>
+                  </div>
+                ))}
+                </div>
+              </>
+            )}
           </div>
         )}
         {tab === 'posts' && (
@@ -1234,6 +1615,111 @@ export default function MypagePage() {
                 className={styles.helperLink}
               >
                 안내보기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <YouTubePlaylistModal
+        isOpen={showYouTubePlaylistModal}
+        onClose={() => setShowYouTubePlaylistModal(false)}
+        onSuccess={() => {
+          fetchPlaylists();
+        }}
+      />
+
+      {selectedPlaylist && (
+        <PlaylistDetailModal
+          isOpen={!!selectedPlaylist}
+          onClose={() => setSelectedPlaylist(null)}
+          playlistId={selectedPlaylist.playlistId}
+          playlistTitle={selectedPlaylist.title}
+        />
+      )}
+
+      {playlistToDelete && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.5)',
+          }}
+          onClick={() => setPlaylistToDelete(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            style={{
+              padding: 32,
+              background: '#fff',
+              borderRadius: 12,
+              maxWidth: 400,
+              width: '90%',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 16px', fontSize: 20, fontWeight: 600, color: '#333', textAlign: 'center' }}>
+              플레이리스트 삭제
+            </h3>
+            <p style={{ margin: '0 0 24px', fontSize: 15, color: '#666', lineHeight: 1.6, textAlign: 'center' }}>
+              <strong>{playlistToDelete.title}</strong>
+              <br />
+              정말로 삭제하시겠습니까?
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={handleDeletePlaylist}
+                style={{
+                  padding: '10px 24px',
+                  background: '#c62828',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: 15,
+                  fontWeight: 500,
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#b71c1c';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#c62828';
+                }}
+              >
+                삭제
+              </button>
+              <button
+                type="button"
+                onClick={() => setPlaylistToDelete(null)}
+                style={{
+                  padding: '10px 24px',
+                  background: '#fff',
+                  color: '#666',
+                  border: '1px solid #ddd',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  fontSize: 15,
+                  fontWeight: 500,
+                  transition: 'all 0.2s',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#f5f5f5';
+                  e.currentTarget.style.borderColor = '#999';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#fff';
+                  e.currentTarget.style.borderColor = '#ddd';
+                }}
+              >
+                취소
               </button>
             </div>
           </div>
