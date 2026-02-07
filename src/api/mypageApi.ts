@@ -61,4 +61,20 @@ export const mypageApi = {
 
   deleteMessage: (messageId: string) =>
     fetchClient.delete<ApiResponse<unknown>>(`/mypage/messages/${messageId}`),
+
+  // YouTube Playlist APIs
+  getYouTubePlaylists: () =>
+    fetchClient.get<ApiResponse<unknown>>('/mypage/playlist/youtube'),
+
+  registerYouTubePlaylist: (body: { youtubeListId: string; title: string; thumbnailUrl: string; itemCount: number }) =>
+    fetchClient.post<ApiResponse<unknown>>('/mypage/playlist', body),
+
+  getMyPlaylists: () =>
+    fetchClient.get<ApiResponse<unknown>>('/mypage/playlist/me'),
+
+  deleteYouTubePlaylist: (playlistId: number) =>
+    fetchClient.delete<ApiResponse<unknown>>(`/mypage/playlist/${playlistId}`),
+
+  getPlaylistTracks: (playlistId: number) =>
+    fetchClient.get<ApiResponse<unknown>>(`/mypage/playlist/${playlistId}/items`),
 };
