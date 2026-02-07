@@ -32,6 +32,22 @@ export const mypageApi = {
   getSettlementHistory: (params?: { start?: string; end?: string }) =>
     fetchClient.get<ApiResponse<unknown>>('/mypage/settlement', { params }),
 
+  /** 내 정산 신청 내역 조회 - GET /mypage/settlements/history */
+  getSettlementsHistory: (params?: { start?: string; end?: string }) =>
+    fetchClient.get<ApiResponse<unknown>>('/mypage/settlements/history', { params }),
+
+  /** 정산 계좌 정보 등록 - POST /mypage/settlements */
+  registerSettlementAccount: (body: {
+    email: string;
+    username: string;
+    phoneNumber: string;
+    accountNumber: string;
+  }) => fetchClient.post<ApiResponse<unknown>>('/mypage/settlements', body),
+
+  /** 정산 신청하기 - POST /mypage/settlements/request */
+  requestSettlement: () =>
+    fetchClient.post<ApiResponse<unknown>>('/mypage/settlements/request'),
+
   getReports: (params?: { start?: string; end?: string }) =>
     fetchClient.get<ApiResponse<unknown>>('/mypage/reports', { params }),
 

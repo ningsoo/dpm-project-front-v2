@@ -31,14 +31,14 @@ export default function ShowcaseFeaturedSection() {
 
   useEffect(() => {
     boardApi
-      .getBoardByCategory('showcase' as BoardCategory, {})
+      .getBoardByCategory('SHOWCASE')
       .then(({ data }) => {
         const d = data?.data as { posts?: ShowcasePost[] };
         const all = Array.isArray(d?.posts) ? d.posts : [];
         setPosts(all.slice(0, TOTAL));
       })
       .catch(() => setPosts([]));
-  }, []);
+    }, []);
 
   const extractYoutubeId = (url?: string) => {
     if (!url) return '';

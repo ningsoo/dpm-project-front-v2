@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
-import { CircleDollarSign, CreditCard, Key, User, Search, Pencil, Heart, X, Check } from 'lucide-react';
+import { CreditCard, Key, User, Plus, Search, Pencil, Heart, X, Check } from 'lucide-react';
 import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
@@ -28,27 +28,9 @@ const TABS = [
   { id: 'posts', label: '내 게시글' },
   { id: 'comments', label: '내 댓글' },
   { id: 'liked', label: '좋아요 한 게시글' },
-  { id: 'payment', label: '결제 내역' },
-  { id: 'creditUsage', label: '크레딧 사용 내역' },
   { id: 'reports', label: '신고 내역' },
+  { id: 'settlement', label: '정산' },
 ] as const;
-
-function formatDateTime(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-  return `${year}.${month}.${day} ${hours}:${minutes}:${seconds}`;
-}
-
-function formatDate(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}.${month}.${day}`;
-}
 
 /** 11자리 연락처를 3-4-4 형식(예: 010-1234-5678)으로 변환해 프로필 렌더링용으로 반환 */
 function formatPhone11(phoneNumber: string | undefined): string {
@@ -68,12 +50,9 @@ export default function MypagePage() {
   const [tab, setTab] = useState<string>('playlists');
   const [searchQuery, setSearchQuery] = useState({ posts: '', comments: '', liked: '' });
   const [dateRange, setDateRange] = useState({
-    payment: { start: '', end: '' },
-    creditUsage: { start: '', end: '' },
     settlement: { start: '', end: '' },
     reports: { start: '', end: '' },
   });
-  const [creditFilters, setCreditFilters] = useState({ donation: false, advertisement: false });
   const [selectedReports, setSelectedReports] = useState<number[]>([]);
   const [showReportCancelModal, setShowReportCancelModal] = useState(false);
   const [showPencilIcon, setShowPencilIcon] = useState(false);
@@ -163,7 +142,7 @@ export default function MypagePage() {
     }
   };
 
-  const handleDateRangeSearch = (type: 'payment' | 'creditUsage' | 'settlement' | 'reports') => {
+  const handleDateRangeSearch = (type: 'settlement' | 'reports') => {
     const range = dateRange[type];
     if (range.start && range.end) {
       // TODO: 실제 API 호출
@@ -435,14 +414,6 @@ export default function MypagePage() {
         <div className={styles.profileActions}>
           <button
             type="button"
-            className={tab === 'settlement' ? `${styles.iconLink} ${styles.iconLinkActive}` : styles.iconLink}
-            title="정산"
-            onClick={() => setTab('settlement')}
-          >
-            <CircleDollarSign size={22} />
-          </button>
-          <button
-            type="button"
             className={styles.iconLink}
             title="POP 충전"
             onClick={() => setShowCreditChargeModal(true)}
@@ -662,130 +633,6 @@ export default function MypagePage() {
             </div>
           </div>
         )}
-        {tab === 'payment' && (
-          <div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
-              <input
-                type="date"
-                value={dateRange.payment.start}
-                onChange={(e) => setDateRange({ ...dateRange, payment: { ...dateRange.payment, start: e.target.value } })}
-                style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14 }}
-              />
-              <span>~</span>
-              <input
-                type="date"
-                value={dateRange.payment.end}
-                onChange={(e) => setDateRange({ ...dateRange, payment: { ...dateRange.payment, end: e.target.value } })}
-                style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14 }}
-              />
-              <button
-                type="button"
-                onClick={() => handleDateRangeSearch('payment')}
-                style={{
-                  padding: '8px 16px',
-                  background: '#1976d2',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: 14,
-                }}
-              >
-                조회
-              </button>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <div>
-                <div className={styles.tableGrid + ' ' + styles.paymentGrid + ' ' + styles.tableHeader}>
-                  <div style={{ textAlign: 'left' }}>충전일시</div>
-                  <div style={{ textAlign: 'center' }}>충전수량</div>
-                  <div style={{ textAlign: 'center' }}>잔여수량</div>
-                  <div style={{ textAlign: 'center' }}>결제수단</div>
-                  <div style={{ textAlign: 'center' }}>결제금액</div>
-                  <div style={{ textAlign: 'center' }}>유효기간</div>
-                  <div style={{ textAlign: 'center' }}>구매취소</div>
-                </div>
-                <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                  구매 내역이 없습니다.
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        {tab === 'creditUsage' && (
-          <div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-              <input
-                type="date"
-                value={dateRange.creditUsage.start}
-                onChange={(e) => setDateRange({ ...dateRange, creditUsage: { ...dateRange.creditUsage, start: e.target.value } })}
-                style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14 }}
-              />
-              <span>~</span>
-              <input
-                type="date"
-                value={dateRange.creditUsage.end}
-                onChange={(e) => setDateRange({ ...dateRange, creditUsage: { ...dateRange.creditUsage, end: e.target.value } })}
-                style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14 }}
-              />
-              <button
-                type="button"
-                onClick={() => handleDateRangeSearch('creditUsage')}
-                style={{
-                  padding: '8px 16px',
-                  background: '#1976d2',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: 14,
-                }}
-              >
-                조회
-              </button>
-              <div style={{ display: 'flex', gap: 16, marginLeft: 'auto' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={creditFilters.donation}
-                    onChange={(e) => setCreditFilters({ ...creditFilters, donation: e.target.checked })}
-                  />
-                  <span style={{ fontSize: 14 }}>후원</span>
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={creditFilters.advertisement}
-                    onChange={(e) => setCreditFilters({ ...creditFilters, advertisement: e.target.checked })}
-                  />
-                  <span style={{ fontSize: 14 }}>광고</span>
-                </label>
-              </div>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <div>
-                <div className={styles.tableGrid + ' ' + styles.creditUsageGrid + ' ' + styles.tableHeader}>
-                  <div style={{ textAlign: 'left' }}>사용 일시</div>
-                  <div style={{ textAlign: 'center' }}>사용 수량</div>
-                  <div style={{ textAlign: 'center' }}>사용 내역</div>
-                  <div style={{ textAlign: 'center' }}>사용 상태</div>
-                </div>
-                <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                  구매 내역이 없습니다.
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        {tab === 'settlement' && (
-          <SettlementSection
-            settlementStart={dateRange.settlement.start}
-            settlementEnd={dateRange.settlement.end}
-            onChangeStart={(value) => setDateRange({ ...dateRange, settlement: { ...dateRange.settlement, start: value } })}
-            onChangeEnd={(value) => setDateRange({ ...dateRange, settlement: { ...dateRange.settlement, end: value } })}
-            onSearch={() => handleDateRangeSearch('settlement')}
-          />
-        )}
         {tab === 'reports' && (
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
@@ -864,6 +711,9 @@ export default function MypagePage() {
               </div>
             </div>
           </div>
+        )}
+        {tab === 'settlement' && (
+          <SettlementSection user={user} />
         )}
       </div>
 
