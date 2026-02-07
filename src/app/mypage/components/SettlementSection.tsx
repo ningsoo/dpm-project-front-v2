@@ -1,9 +1,16 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import styles from '../mypage.module.css';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
+import {
+  sanitizeEmailInput,
+  validateEmailForSubmit,
+  validateEmailForUX,
+  validateNicknameFormatBySignupRule,
+  validatePhoneFromDigitsStrict,
+} from '@/utils/authValidation';
 
 export interface SettlementUser {
   id: string;
@@ -87,17 +94,24 @@ export function SettlementSection({ user }: SettlementSectionProps) {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyRange, setHistoryRange] = useState({ start: '', end: '' });
   const [accountForm, setAccountForm] = useState({
-    userId: user.id ?? '',
-    username: user.nickname ?? '',
-    phoneNumber: user.phoneNumber?.replace(/\D/g, '') ?? '',
+    email: '',
+    username: '',
+    phoneNumber: '',
     accountNumber: '',
   });
   const [registerErrors, setRegisterErrors] = useState<{
-    userId?: string;
+    email?: string;
     username?: string;
     phoneNumber?: string;
     accountNumber?: string;
   }>({});
+  const [emailHangulError, setEmailHangulError] = useState('');
+  const [emailFormatError, setEmailFormatError] = useState('');
+  const emailDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [phoneTouched, setPhoneTouched] = useState(false);
+  const [phoneErrorUx, setPhoneErrorUx] = useState('');
+  const [registerSubmitAttempted, setRegisterSubmitAttempted] = useState(false);
+  const phoneDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [accountSubmitting, setAccountSubmitting] = useState(false);
   const [requestSubmitting, setRequestSubmitting] = useState(false);
   const [showRequestConfirm, setShowRequestConfirm] = useState(false);
@@ -141,14 +155,40 @@ export function SettlementSection({ user }: SettlementSectionProps) {
     if (subTab === 'history') fetchHistory();
   }, [subTab, fetchHistory]);
 
+  const phoneDigits = (accountForm.phoneNumber ?? '').replace(/\D/g, '').slice(0, 11);
+  const phoneComplete = phoneDigits.length === 11;
+
   useEffect(() => {
-    setAccountForm((prev) => ({
-      ...prev,
-      userId: user.id ?? prev.userId,
-      username: user.nickname ?? prev.username,
-      phoneNumber: user.phoneNumber?.replace(/\D/g, '') ?? prev.phoneNumber,
-    }));
-  }, [user.id, user.nickname, user.phoneNumber]);
+    if (phoneDebounceRef.current) {
+      clearTimeout(phoneDebounceRef.current);
+      phoneDebounceRef.current = null;
+    }
+    if (phoneComplete) {
+      phoneDebounceRef.current = setTimeout(() => {
+        phoneDebounceRef.current = null;
+        const result = validatePhoneFromDigitsStrict(phoneDigits);
+        setPhoneErrorUx(result.ok ? '' : result.error);
+      }, 600);
+    } else {
+      setPhoneErrorUx('');
+    }
+    return () => {
+      if (phoneDebounceRef.current) {
+        clearTimeout(phoneDebounceRef.current);
+      }
+    };
+  }, [phoneDigits, phoneComplete]);
+
+  useEffect(() => {
+    return () => {
+      if (phoneDebounceRef.current) {
+        clearTimeout(phoneDebounceRef.current);
+      }
+      if (emailDebounceRef.current) {
+        clearTimeout(emailDebounceRef.current);
+      }
+    };
+  }, []);
 
   const historyTotalAmount = historyList.reduce(
     (sum, item) =>
@@ -156,25 +196,54 @@ export function SettlementSection({ user }: SettlementSectionProps) {
     0
   );
 
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    const { value, hadKorean } = sanitizeEmailInput(raw);
+    setAccountForm((prev) => ({ ...prev, email: value }));
+    setEmailHangulError(hadKorean ? '한글은 입력할 수 없습니다' : '');
+    setEmailFormatError('');
+    setRegisterErrors((prev) => ({ ...prev, email: undefined }));
+    if (emailDebounceRef.current) {
+      clearTimeout(emailDebounceRef.current);
+      emailDebounceRef.current = null;
+    }
+    if (!value) return;
+    emailDebounceRef.current = setTimeout(() => {
+      emailDebounceRef.current = null;
+      const { error } = validateEmailForUX(value);
+      setEmailFormatError(error);
+    }, 1200);
+  };
+
   const handleRegisterAccount = (e: React.FormEvent) => {
     e.preventDefault();
+    setRegisterSubmitAttempted(true);
+
     const errors: typeof registerErrors = {};
-    const rawUserId = (accountForm.userId ?? '').trim() || user.id;
-    const userIdNum = rawUserId ? parseInt(String(rawUserId), 10) : NaN;
-    if (!rawUserId || Number.isNaN(userIdNum)) {
-      errors.userId = '사용자 ID를 입력하세요.';
+    const rawEmail = (accountForm.email ?? '').trim();
+    const emailResult = validateEmailForSubmit(accountForm.email ?? '');
+    if (!emailResult.ok) {
+      errors.email = emailResult.error;
     }
-    if (!accountForm.username?.trim()) {
-      errors.username = '예금주명을 입력하세요.';
+    const usernameTrimmed = accountForm.username?.trim() ?? '';
+    if (!usernameTrimmed) {
+      errors.username = '닉네임을 입력하세요';
+    } else {
+      const nicknameErr = validateNicknameFormatBySignupRule(usernameTrimmed);
+      if (nicknameErr) errors.username = nicknameErr;
     }
-    const phoneDigits = (accountForm.phoneNumber ?? '').replace(/\D/g, '');
-    if (!phoneDigits) {
-      errors.phoneNumber = '연락처를 입력하세요.';
-    } else if (phoneDigits.length < 10 || phoneDigits.length > 11) {
-      errors.phoneNumber = '연락처는 10~11자리로 입력하세요.';
+    const phoneDigitsSubmit = (accountForm.phoneNumber ?? '').replace(/\D/g, '').slice(0, 11);
+    if (phoneDigitsSubmit.length < 11) {
+      errors.phoneNumber = phoneDigitsSubmit.length === 0 ? '연락처를 입력하세요' : '연락처를 올바르게 입력해 주세요';
+    } else {
+      const phoneResult = validatePhoneFromDigitsStrict(phoneDigitsSubmit);
+      if (!phoneResult.ok && phoneResult.error) {
+        errors.phoneNumber = phoneResult.error;
+      }
     }
-    if (!accountForm.accountNumber?.trim()) {
-      errors.accountNumber = '계좌번호를 입력하세요.';
+    const accountTrimmed = (accountForm.accountNumber ?? '').trim();
+    if (!accountTrimmed) {
+      errors.accountNumber = '계좌번호를 입력하세요';
     }
     setRegisterErrors(errors);
     if (Object.keys(errors).length > 0) return;
@@ -182,10 +251,10 @@ export function SettlementSection({ user }: SettlementSectionProps) {
     setAccountSubmitting(true);
     mypageApi
       .registerSettlementAccount({
-        userId: userIdNum,
-        username: accountForm.username!.trim(),
-        phoneNumber: phoneDigits,
-        accountNumber: accountForm.accountNumber!.trim(),
+        email: rawEmail,
+        username: usernameTrimmed,
+        phoneNumber: phoneDigitsSubmit,
+        accountNumber: accountTrimmed,
       })
       .then((res) => {
         const body = res.data as { success?: boolean; message?: string };
@@ -322,80 +391,89 @@ export function SettlementSection({ user }: SettlementSectionProps) {
             <h3 className={styles.settlementHistoryTitle}>정산 정보 등록</h3>
             <form onSubmit={handleRegisterAccount} className={styles.settlementForm}>
               <div className={styles.settlementField}>
-                <label htmlFor="settlement-userId">userId</label>
+                <label htmlFor="settlement-email">이메일</label>
                 <input
-                  id="settlement-userId"
-                  type="text"
-                  inputMode="numeric"
-                  value={accountForm.userId}
-                  onChange={(e) => {
-                    setAccountForm({ ...accountForm, userId: e.target.value });
-                    if (registerErrors.userId) setRegisterErrors((err) => ({ ...err, userId: undefined }));
-                  }}
-                  readOnly={!!user.id}
+                  id="settlement-email"
+                  type="email"
+                  value={accountForm.email}
+                  onChange={handleEmailChange}
                   className={styles.settlementInput}
-                  placeholder="사용자 ID"
-                  aria-invalid={!!registerErrors.userId}
+                  aria-invalid={!!(registerErrors.email || emailHangulError || emailFormatError)}
                 />
-                {registerErrors.userId && (
-                  <span className={styles.error}>{registerErrors.userId}</span>
-                )}
+                <div className={styles.errorSlot}>
+                  {registerErrors.email ? (
+                    <span className={styles.errorText}>{registerErrors.email}</span>
+                  ) : emailHangulError ? (
+                    <span className={styles.errorText}>{emailHangulError}</span>
+                  ) : emailFormatError ? (
+                    <span className={styles.errorText}>{emailFormatError}</span>
+                  ) : null}
+                </div>
               </div>
               <div className={styles.settlementField}>
-                <label htmlFor="settlement-username">username</label>
+                <label htmlFor="settlement-username">닉네임</label>
                 <input
                   id="settlement-username"
                   type="text"
                   value={accountForm.username}
                   onChange={(e) => {
-                    setAccountForm({ ...accountForm, username: e.target.value });
-                    if (registerErrors.username) setRegisterErrors((err) => ({ ...err, username: undefined }));
+                    const v = e.target.value;
+                    if (v.length > 10) return;
+                    setAccountForm((prev) => ({ ...prev, username: v }));
+                    setRegisterErrors((err) => ({ ...err, username: undefined }));
                   }}
                   className={styles.settlementInput}
-                  placeholder="예금주명"
                   aria-invalid={!!registerErrors.username}
                 />
-                {registerErrors.username && (
-                  <span className={styles.error}>{registerErrors.username}</span>
-                )}
+                <div className={styles.errorSlot}>
+                  {registerErrors.username && (
+                    <span className={styles.errorText}>{registerErrors.username}</span>
+                  )}
+                </div>
               </div>
               <div className={styles.settlementField}>
-                <label htmlFor="settlement-phone">phoneNumber</label>
+                <label htmlFor="settlement-phone">연락처</label>
                 <input
                   id="settlement-phone"
                   type="tel"
                   inputMode="numeric"
                   value={accountForm.phoneNumber}
                   onChange={(e) => {
-                    const v = e.target.value.replace(/\D/g, '').slice(0, 11);
-                    setAccountForm({ ...accountForm, phoneNumber: v });
-                    if (registerErrors.phoneNumber) setRegisterErrors((err) => ({ ...err, phoneNumber: undefined }));
+                    setPhoneTouched(true);
+                    const digits = e.target.value.replace(/\D/g, '').slice(0, 11);
+                    setAccountForm((prev) => ({ ...prev, phoneNumber: digits }));
                   }}
                   className={styles.settlementInput}
-                  placeholder="숫자 10~11자리"
-                  aria-invalid={!!registerErrors.phoneNumber}
+                  aria-invalid={!!(registerErrors.phoneNumber || phoneErrorUx)}
                 />
-                {registerErrors.phoneNumber && (
-                  <span className={styles.error}>{registerErrors.phoneNumber}</span>
-                )}
+                <div className={styles.errorSlot}>
+                  {registerErrors.phoneNumber ? (
+                    <span className={styles.errorText}>{registerErrors.phoneNumber}</span>
+                  ) : phoneTouched && phoneComplete && phoneErrorUx ? (
+                    <span className={styles.errorText}>{phoneErrorUx}</span>
+                  ) : null}
+                </div>
               </div>
               <div className={styles.settlementField}>
-                <label htmlFor="settlement-account">accountNumber</label>
+                <label htmlFor="settlement-account">계좌번호</label>
                 <input
                   id="settlement-account"
                   type="text"
+                  inputMode="numeric"
                   value={accountForm.accountNumber}
                   onChange={(e) => {
-                    setAccountForm({ ...accountForm, accountNumber: e.target.value });
-                    if (registerErrors.accountNumber) setRegisterErrors((err) => ({ ...err, accountNumber: undefined }));
+                    const digits = e.target.value.replace(/\D/g, '');
+                    setAccountForm((prev) => ({ ...prev, accountNumber: digits }));
+                    setRegisterErrors((err) => ({ ...err, accountNumber: undefined }));
                   }}
                   className={styles.settlementInput}
-                  placeholder="계좌번호"
                   aria-invalid={!!registerErrors.accountNumber}
                 />
-                {registerErrors.accountNumber && (
-                  <span className={styles.error}>{registerErrors.accountNumber}</span>
-                )}
+                <div className={styles.errorSlot}>
+                  {registerErrors.accountNumber && (
+                    <span className={styles.errorText}>{registerErrors.accountNumber}</span>
+                  )}
+                </div>
               </div>
               <button type="submit" className={styles.submitBtn} disabled={accountSubmitting}>
                 {accountSubmitting ? '등록 중…' : '등록'}

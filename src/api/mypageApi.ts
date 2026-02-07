@@ -38,7 +38,7 @@ export const mypageApi = {
 
   /** 정산 계좌 정보 등록 - POST /mypage/settlements */
   registerSettlementAccount: (body: {
-    userId: number;
+    email: string;
     username: string;
     phoneNumber: string;
     accountNumber: string;
