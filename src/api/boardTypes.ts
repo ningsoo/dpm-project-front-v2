@@ -17,7 +17,7 @@ export interface BoardListItem {
 
 export interface BoardDetail extends BoardListItem {
   /** 상세 조회 시 서버에서 내려주는 좋아요 여부 */
-  isliked?: boolean;
+  liked?: boolean;
 }
 
 /** 게시글 좋아요 API 응답 data 필드 */
@@ -31,15 +31,30 @@ export interface BoardLikeResponse {
   likes?: number;
   createdDateTime?: number[] | null;
   fileUrl?: string | null;
-  isliked: boolean;
+  liked: boolean;
 }
 
 export interface CommentItem {
   commentId?: number | string;
   userId?: number;
   nickname: string;
+  likeCount: number;
+  toggledLike: boolean;
   content: string;
   createdDateTime: number[] | string; // API: number[] (LocalDateTime)
+}
+
+/** 댓글 좋아요 API 응답 data 필드 */
+export interface CommentLikeResponse {
+  commentId?: number;
+  userId?: number;
+  nickname?: string;
+  content?: string;
+  likeCount: number;
+  toggledLike: boolean;
+  countComment?: number;
+  createdDatetime?: string;
+  updatedDatetime?: string;
 }
 
 export interface CreateBoardRequest {
