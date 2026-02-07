@@ -3,7 +3,7 @@ import { tokenUtils } from '@/utils/tokenUtils';
 import { store } from '@/store';
 import { clearAuth } from '@/store/slices/authSlice';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://192.168.200.88/api';
 
 /**
  * 메인 API 클라이언트 (Authorization 헤더 + 401 시 refresh 후 재시도)
