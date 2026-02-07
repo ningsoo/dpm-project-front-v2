@@ -3,54 +3,17 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Heart, MessageCircle, Eye, MoreVertical } from 'lucide-react';
+import { Heart, Eye, MoreVertical } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
 import { formatCreatedDateTimeFull } from '@/utils/createdDateTime';
-import { formatViews, formatCommentCount } from '@/utils/displayFormatters';
+import { formatViews } from '@/utils/displayFormatters';
 import type { BoardDetail } from '@/api/boardApi';
+import CommentSection from './CommentSection';
 import styles from './PostDetail.module.css';
-
-/** API 응답 댓글 형태 */
-interface CommentFromApi {
-  commentId?: number | string;
-  userId?: number;
-  nickname: string;
-  content: string;
-  createdDateTime: number[];
-}
-
-/** 화면용 댓글 타입 */
-interface Comment {
-  id: string;
-  commentId: string | undefined;
-  userId: number | undefined;
-  nickname: string;
-  content: string;
-  createdDateTime: number[];
-}
-
-/** commentId 없을 때 fallback key 생성 */
-function getCommentFallbackId(nickname: string, createdDateTime: number[] | unknown): string {
-  const arr = Array.isArray(createdDateTime) ? createdDateTime : [];
-  return `${nickname}-${arr.join('-')}`;
-}
-
-function transformComments(apiData: CommentFromApi[]): Comment[] {
-  return apiData.map((c) => ({
-    id: c.commentId != null
-      ? String(c.commentId)
-      : getCommentFallbackId(c.nickname, c.createdDateTime),
-    commentId: c.commentId != null ? String(c.commentId) : undefined,
-    userId: c.userId,
-    nickname: c.nickname,
-    content: c.content,
-    createdDateTime: c.createdDateTime,
-  }));
-}
 
 interface Post extends BoardDetail {
   id?: string;
@@ -98,26 +61,15 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
 
   const [post, setPost] = useState<Post | null>(null);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [commentText, setCommentText] = useState('');
   const [loading, setLoading] = useState(true);
-
-  const [commentOpen, setCommentOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
-
-  const [commentMenuOpen, setCommentMenuOpen] = useState<string | null>(null);
-  const [showCommentDeleteModal, setShowCommentDeleteModal] = useState<string | null>(null);
-  const [showCommentReportModal, setShowCommentReportModal] = useState<string | null>(null);
-  const [commentReportReason, setCommentReportReason] = useState('');
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
-  const [commentLikeCounts, setCommentLikeCounts] = useState<Record<string, number>>({});
   const [likeLoading, setLikeLoading] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
-  const commentMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const currentUserId =
     typeof window !== 'undefined' ? tokenUtils.getUserIdFromToken() : null;
@@ -143,75 +95,16 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
       .finally(() => setLoading(false));
   }, [boardId]);
 
-  // ===== 댓글 조회 =====
-  useEffect(() => {
-    if (!boardId) return;
-
-    boardApi
-      .getComments(boardId)
-      .catch((err: { response?: { status?: number } }) => {
-        if (err?.response?.status === 404) {
-          return { data: { data: [] } };
-        }
-        return Promise.reject(err);
-      })
-      .then(({ data }) => {
-        const raw = Array.isArray(data?.data)
-          ? (data.data as unknown as CommentFromApi[])
-          : [];
-        setComments(transformComments(raw));
-      })
-      .catch(() => {
-        setComments([]);
-      });
-  }, [boardId]);
-
-  // 외부 클릭 시 메뉴 닫기
   useEffect(() => {
     if (typeof window === 'undefined') return;
-
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
       }
-
-      if (commentMenuOpen) {
-        const clickedInside = Object.values(commentMenuRefs.current).some(
-          (ref) => ref && ref.contains(event.target as Node)
-        );
-        if (!clickedInside) {
-          setCommentMenuOpen(null);
-        }
-      }
     };
-
-    if (menuOpen || commentMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [menuOpen, commentMenuOpen]);
-
-  const handleCommentSubmit = () => {
-    if (!isAuthenticated || !commentText.trim() || commentText.length > 50) return;
-
-    boardApi
-      .createComment(boardId, { content: commentText.trim() })
-      .then(() => {
-        setCommentText('');
-        setCommentOpen(true);
-        return boardApi.getComments(boardId);
-      })
-      .then(({ data }) => {
-        const raw = Array.isArray(data?.data)
-          ? (data.data as unknown as CommentFromApi[])
-          : [];
-        setComments(transformComments(raw));
-      })
-      .catch(() => ToastUtils.error('댓글 등록 실패'));
-  };
+    if (menuOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [menuOpen]);
 
   const handleDeleteConfirm = () => {
     boardApi
@@ -234,45 +127,6 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
     setReportReason('');
   };
 
-  const handleCommentDeleteConfirm = () => {
-    if (!showCommentDeleteModal) return;
-    const deletedCommentId = showCommentDeleteModal;
-    const wasLastComment = comments.length === 1;
-    boardApi
-      .deleteComment(boardId, deletedCommentId)
-      .then(() => {
-        ToastUtils.success('댓글이 삭제되었습니다.');
-        setComments((prev) =>
-          prev.filter((c) => (c.commentId ?? c.id) !== deletedCommentId)
-        );
-        if (wasLastComment) return Promise.resolve(null);
-        return boardApi.getComments(boardId);
-      })
-      .then((res) => {
-        if (res === null) return;
-        const raw = Array.isArray(res?.data?.data)
-          ? (res.data.data as unknown as CommentFromApi[])
-          : [];
-        setComments(transformComments(raw));
-      })
-      .catch((err: { response?: { status?: number } }) => {
-        if (err?.response?.status === 404) {
-          setComments([]);
-        } else {
-          ToastUtils.error('댓글 삭제에 실패했습니다.');
-        }
-      })
-      .finally(() => setShowCommentDeleteModal(null));
-  };
-
-  const handleCommentReportSubmit = () => {
-    // TODO: 댓글 신고 API 연동 시 사용
-    ToastUtils.info('신고 기능은 준비 중입니다.');
-    setShowCommentReportModal(null);
-    setCommentReportReason('');
-  };
-
-  /** 로그인 필요 모달에서 "예" 클릭 → 로그인 페이지로 이동 (이전 페이지 redirect 파라미터 포함) */
   const handleGoToLogin = () => {
     setShowLoginRequiredModal(false);
     router.push(`/auth/login?redirect=${encodeURIComponent(pathname ?? '')}`);
@@ -288,13 +142,13 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
     boardApi
       .likePost(boardId)
       .then(({ data }) => {
-        if (data?.data && typeof data.data.isliked === 'boolean') {
+        if (data?.data && typeof data.data.liked === 'boolean') {
           const res = data.data;
           setPost((prev) =>
             prev
               ? {
                   ...prev,
-                  isliked: res.isliked,
+                  isliked: res.liked,
                   likes:
                     typeof res.likes === 'number' ? res.likes : prev.likes ?? 0,
                 }
@@ -308,18 +162,6 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
       .finally(() => setLikeLoading(false));
   };
 
-  const handleCommentLikeClick = (commentId: string) => {
-    if (!isAuthenticated) {
-      setShowLoginRequiredModal(true);
-      return;
-    }
-    setCommentLikeCounts((prev) => ({
-      ...prev,
-      [commentId]: (prev[commentId] ?? 0) + 1,
-    }));
-    ToastUtils.success('좋아요');
-  };
-
   const handlePostReportClick = () => {
     setMenuOpen(false);
     if (!isAuthenticated) {
@@ -327,15 +169,6 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
       return;
     }
     setShowReportModal(true);
-  };
-
-  const handleCommentReportClick = (cId: string) => {
-    setCommentMenuOpen(null);
-    if (!isAuthenticated) {
-      setShowLoginRequiredModal(true);
-      return;
-    }
-    setShowCommentReportModal(cId);
   };
 
   if (loading) return <div className={styles.loading}>로딩 중…</div>;
@@ -369,11 +202,11 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
         <div className={styles.actions}>
           <button
             type="button"
-            className={`${styles.iconBtn} ${post.isliked === true ? styles.likeBtnLiked : ''}`}
+            className={`${styles.iconBtn} ${post.liked === true ? styles.likeBtnLiked : ''}`}
             onClick={handlePostLikeClick}
             disabled={likeLoading}
           >
-            <Heart size={18} fill={post.isliked === true ? 'currentColor' : 'none'} />
+            <Heart size={18} fill={post.liked === true ? 'currentColor' : 'none'} />
             {post.likes ?? 0}
           </button>
 
@@ -483,141 +316,11 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
         <div className={styles.text}>{post.content}</div>
       </div>
 
-      {/* ===== 댓글 영역 (기존 유지) ===== */}
-      <section className={styles.commentSection}>
-        <h2 className={styles.commentTitle}>
-          <button
-            type="button"
-            className={styles.iconBtn}
-            onClick={() => setCommentOpen((o) => !o)}
-          >
-            <MessageCircle size={18} />
-            댓글 {formatCommentCount(post.countComment ?? comments.length)}
-          </button>
-        </h2>
-
-        {commentOpen && (
-          <>
-            <div className={styles.commentForm}>
-              <input
-                type="text"
-                placeholder={
-                  isAuthenticated
-                    ? '댓글 (1~50자)'
-                    : '로그인 후 댓글을 작성할 수 있습니다.'
-                }
-                value={commentText}
-                onChange={(e) => {
-                  if (!isAuthenticated) return;
-                  setCommentText(e.target.value);
-                }}
-                onFocus={() => {
-                  if (!isAuthenticated) setShowLoginRequiredModal(true);
-                }}
-                className={styles.commentInput}
-                maxLength={50}
-                readOnly={!isAuthenticated}
-              />
-
-              <button
-                type="button"
-                className={styles.commentSubmit}
-                onClick={handleCommentSubmit}
-                disabled={!isAuthenticated || !commentText.trim()}
-              >
-                등록
-              </button>
-            </div>
-
-            {comments.map((c) => {
-              const isCommentAuthor =
-                c.userId != null &&
-                currentUserId != null &&
-                String(c.userId) === String(currentUserId);
-
-              const apiCommentId = c.commentId ?? c.id;
-
-              return (
-                <div key={c.id} className={styles.commentItem}>
-                  <div className={styles.commentHead}>
-                    <span className={styles.commentAuthor}>{c.nickname}</span>
-                    <span className={styles.commentDate}>
-                      {formatCreatedDateTimeFull(c.createdDateTime)}
-                    </span>
-
-                    <div
-                      className={styles.menuWrapper}
-                      ref={(el) => {
-                        if (el) commentMenuRefs.current[c.id] = el;
-                        else delete commentMenuRefs.current[c.id];
-                      }}
-                    >
-                      <button
-                        type="button"
-                        className={styles.iconBtn}
-                        onClick={() =>
-                          setCommentMenuOpen(
-                            commentMenuOpen === c.id ? null : c.id
-                          )
-                        }
-                        style={{ padding: '2px 6px' }}
-                      >
-                        <MoreVertical size={16} />
-                      </button>
-
-                      {commentMenuOpen === c.id && (
-                        <div className={styles.menuDropdown}>
-                          {isCommentAuthor ? (
-                            <>
-                              <button
-                                className={styles.menuItem}
-                                onClick={() =>
-                                  ToastUtils.info(
-                                    '댓글 수정 기능은 준비 중입니다.'
-                                  )
-                                }
-                              >
-                                수정
-                              </button>
-                              <button
-                                className={styles.menuItem}
-                                onClick={() =>
-                                  setShowCommentDeleteModal(apiCommentId)
-                                }
-                              >
-                                삭제
-                              </button>
-                            </>
-                          ) : (
-                            <button
-                              className={styles.menuItem}
-                              onClick={() => handleCommentReportClick(c.id)}
-                            >
-                              신고
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className={styles.commentBody}>{c.content}</div>
-                  <div className={styles.commentFooter}>
-                    <button
-                      type="button"
-                      className={styles.commentLikeBtn}
-                      onClick={() => handleCommentLikeClick(c.id)}
-                    >
-                      <Heart size={14} />
-                      <span>{commentLikeCounts[c.id] ?? 0}</span>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </>
-        )}
-      </section>
+      <CommentSection
+        boardId={boardId}
+        isAuthenticated={isAuthenticated}
+        onLoginRequired={() => setShowLoginRequiredModal(true)}
+      />
 
       {showLoginRequiredModal && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true">
@@ -697,68 +400,6 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
                 type="button"
                 className={`${styles.modalButton} ${styles.modalButtonConfirm}`}
                 onClick={handleReportSubmit}
-              >
-                신고
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 댓글 삭제 확인 모달 */}
-      {showCommentDeleteModal && (
-        <div className={styles.modalOverlay} role="dialog" aria-modal="true">
-          <div className={styles.modalContent}>
-            <p className={styles.modalMessage}>정말 삭제 하시겠습니까?</p>
-            <div className={styles.modalButtons}>
-              <button
-                type="button"
-                className={`${styles.modalButton} ${styles.modalButtonCancel}`}
-                onClick={() => setShowCommentDeleteModal(null)}
-              >
-                아니요
-              </button>
-              <button
-                type="button"
-                className={`${styles.modalButton} ${styles.modalButtonDelete}`}
-                onClick={handleCommentDeleteConfirm}
-              >
-                예
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 댓글 신고 모달 */}
-      {showCommentReportModal && (
-        <div className={styles.modalOverlay} role="dialog" aria-modal="true">
-          <div className={styles.modalContent}>
-            <p className={styles.modalMessage} style={{ marginBottom: '12px' }}>
-              신고 사유를 입력해주세요.
-            </p>
-            <textarea
-              className={styles.reportTextarea}
-              placeholder="신고 사유를 입력하세요"
-              value={commentReportReason}
-              onChange={(e) => setCommentReportReason(e.target.value)}
-              maxLength={200}
-            />
-            <div className={styles.modalButtons}>
-              <button
-                type="button"
-                className={`${styles.modalButton} ${styles.modalButtonCancel}`}
-                onClick={() => {
-                  setShowCommentReportModal(null);
-                  setCommentReportReason('');
-                }}
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                className={`${styles.modalButton} ${styles.modalButtonConfirm}`}
-                onClick={handleCommentReportSubmit}
               >
                 신고
               </button>
