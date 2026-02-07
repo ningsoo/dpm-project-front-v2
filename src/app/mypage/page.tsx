@@ -10,6 +10,7 @@ import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import { PasswordVerifyModal } from './PasswordVerifyModal';
 import { SettlementSection } from './components/SettlementSection';
+import { MyPageYouTubeSection } from './components/MyPageYouTubeSection';
 import styles from './mypage.module.css';
 
 interface UserInfo {
@@ -19,6 +20,7 @@ interface UserInfo {
   phoneNumber: string;
   profileImage?: string;
   credits?: number;
+  youtubeConnected?: boolean;
 }
 
 const TABS = [
@@ -69,7 +71,6 @@ export default function MypagePage() {
   const creditValidationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [showPasswordVerifyModal, setShowPasswordVerifyModal] = useState(false);
   const [passwordVerifyTarget, setPasswordVerifyTarget] = useState<string | null>(null);
-
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
   // 초기화 완료 후 사용자 정보 로드
@@ -84,7 +85,10 @@ export default function MypagePage() {
     // 사용자 정보 가져오기
     mypageApi.getMypage()
       .then(({ data }) => {
+        console.log('[MyPage] getMyInfo raw response:', data);
+        console.log('[MyPage] data.data:', data?.data);
         const userData = data?.data as UserInfo | undefined;
+        console.log('[MyPage] youtubeConnected:', userData?.youtubeConnected);
         if (userData) {
           setUser(userData);
           setProfileImage(userData.profileImage || null);
@@ -456,31 +460,7 @@ export default function MypagePage() {
 
       <div className={styles.content}>
         {tab === 'playlists' && (
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-              <button
-                type="button"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '6px 12px',
-                  background: '#1976d2',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: 14,
-                }}
-              >
-                <Plus size={16} />
-                등록
-              </button>
-            </div>
-            <div style={{ textAlign: 'center', color: '#666', padding: 16 }}>
-              내가 만든 플레이리스트가 표시됩니다.
-            </div>
-          </div>
+          <MyPageYouTubeSection user={user} isAuthenticated={isAuthenticated} />
         )}
         {tab === 'posts' && (
           <div>
@@ -1089,6 +1069,7 @@ export default function MypagePage() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

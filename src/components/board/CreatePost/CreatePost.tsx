@@ -32,8 +32,8 @@ export default function CreatePost({ category }: CreatePostProps) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const titleOk = title.length >= 3 && title.length <= 15;
-  const contentOk = content.length >= 5 && content.length <= 300;
+  const titleOk = title.length >= 1 && title.length <= 40;
+  const contentOk = content.length >= 1 && content.length <= 600;
   // fileUrl 관련 필수 검증 제거 - 선택사항으로 변경
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,8 +41,8 @@ export default function CreatePost({ category }: CreatePostProps) {
     // title과 content만 필수, 나머지는 선택사항
     if (!titleOk || !contentOk) {
       setErrors({
-        title: !titleOk ? '3~15자' : '',
-        content: !contentOk ? '5~300자' : '',
+        title: !titleOk ? '1~40자' : '',
+        content: !contentOk ? '1~600자' : '',
       });
       return;
     }
@@ -89,7 +89,7 @@ export default function CreatePost({ category }: CreatePostProps) {
 
       <form onSubmit={handleSubmit}>
         <label className={styles.label}>
-          제목 (3~15자)
+          제목 (1~40자)
           <input
             type="text"
             placeholder="제목을 입력하세요"
@@ -153,7 +153,7 @@ export default function CreatePost({ category }: CreatePostProps) {
         )}
 
         <label className={styles.label}>
-          내용 (5~300자)
+          내용 (1~600자)
           <textarea
             placeholder="내용을 입력하세요"
             value={content}

@@ -6,6 +6,7 @@ import type {
   BoardDetail,
   BoardLikeResponse,
   CommentItem,
+  CommentLikeResponse,
   CreateBoardRequest,
   UpdateBoardRequest,
   CreateCommentRequest,
@@ -88,6 +89,15 @@ export const boardApi = {
     fetchClient.post<ApiResponse<BoardLikeResponse>>(
       `/boards/${boardId}/like`
     ),
+
+  /**
+   * 댓글 좋아요
+   * POST /api/boards/{boardId}/comments/{commentId}/like
+   */
+  likeComment: (boardId: string, commentId: string) =>
+    fetchClient.post<ApiResponse<CommentLikeResponse>>(
+      `/boards/${boardId}/comments/${commentId}/like`
+    ),
 };
 
 export type {
@@ -96,4 +106,5 @@ export type {
   BoardDetail,
   BoardLikeResponse,
   CommentItem,
+  CommentLikeResponse,
 };
