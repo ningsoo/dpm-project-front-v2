@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { CircleDollarSign, CreditCard, Key, User, Plus, Search, Pencil, Heart, X, Check, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
+import { tokenUtils } from '@/utils/tokenUtils';
+import { checkAuth } from '@/store/slices/authSlice';
 import { PasswordVerifyModal } from './PasswordVerifyModal';
 import { SettlementSection } from './components/SettlementSection';
 import { YouTubePlaylistModal } from './YouTubePlaylistModal';
@@ -21,6 +23,7 @@ interface UserInfo {
   phoneNumber: string;
   profileImage?: string;
   credits?: number;
+  youtubeConnected?: boolean;
 }
 
 interface PlaylistItem {
@@ -28,6 +31,7 @@ interface PlaylistItem {
   youtubeListId: string;
   title: string;
   thumbnailUrl: string;
+  thumbnails?: string[];
   itemCount: number;
 }
 
@@ -69,6 +73,8 @@ function formatPhone11(phoneNumber: string | undefined): string {
 
 export default function MypagePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const dispatch = useDispatch();
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const initialized = useSelector((s: RootState) => s.auth.initialized);
   const [user, setUser] = useState<UserInfo | null>(null);
@@ -106,9 +112,38 @@ export default function MypagePage() {
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistItem | null>(null);
   const [selectedPlaylist, setSelectedPlaylist] = useState<PlaylistItem | null>(null);
-  const carouselRef = useRef<HTMLDivElement>(null);
+  const [sliderIndex, setSliderIndex] = useState(0);
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [oauthResultModal, setOauthResultModal] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // OAuth 리다이렉트 처리 (토큰 저장 + URL 정리 + 결과 알림)
+  useEffect(() => {
+    const token = searchParams.get('token');
+    const success = searchParams.get('success');
+    const error = searchParams.get('error');
+
+    if (!token && !success && !error) return;
+
+    // 토큰이 있으면 저장 후 Redux 인증 상태 갱신
+    if (token) {
+      tokenUtils.setAccessToken(token);
+      dispatch(checkAuth());
+      console.log('[MyPage] OAuth token saved');
+    }
+
+    // URL에서 파라미터 제거 (보안 + URL 정돈)
+    window.history.replaceState({}, '', '/mypage');
+
+    // 결과 모달 표시
+    if (success === 'true') {
+      setOauthResultModal({ type: 'success', message: '유튜브 연동 성공!\n이제 나만의 플레이리스트를 공유할 수 있습니다!' });
+    } else if (error) {
+      setOauthResultModal({ type: 'error', message: `유튜브 연동에 실패했습니다: ${decodeURIComponent(error)}` });
+    } else if (success === 'false') {
+      setOauthResultModal({ type: 'error', message: '유튜브 연동에 실패했습니다. 다시 시도해주세요.' });
+    }
+  }, [searchParams, dispatch]);
 
   // 초기화 완료 후 사용자 정보 로드
   useEffect(() => {
@@ -122,7 +157,10 @@ export default function MypagePage() {
     // 사용자 정보 가져오기
     mypageApi.getMypage()
       .then(({ data }) => {
+        console.log('[MyPage] getMyInfo raw response:', data);
+        console.log('[MyPage] data.data:', data?.data);
         const userData = data?.data as UserInfo | undefined;
+        console.log('[MyPage] youtubeConnected:', userData?.youtubeConnected);
         if (userData) {
           setUser(userData);
           setProfileImage(userData.profileImage || null);
@@ -152,12 +190,12 @@ export default function MypagePage() {
     };
   }, []);
 
-  // 플레이리스트 탭 활성화 시 데이터 로드
+  // 플레이리스트 탭 활성화 시 데이터 로드 (유튜브 연동된 경우에만)
   useEffect(() => {
-    if (tab === 'playlists' && isAuthenticated) {
+    if (tab === 'playlists' && isAuthenticated && user?.youtubeConnected) {
       fetchPlaylists();
     }
-  }, [tab, isAuthenticated]);
+  }, [tab, isAuthenticated, user?.youtubeConnected]);
 
   const fetchPlaylists = async () => {
     setPlaylistsLoading(true);
@@ -179,15 +217,12 @@ export default function MypagePage() {
     }
   };
 
-  const scrollCarousel = (direction: 'left' | 'right') => {
-    if (!carouselRef.current) return;
-    const scrollAmount = 340; // Card width (320px) + gap (20px)
-    const newScrollLeft = carouselRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
-    carouselRef.current.scrollTo({
-      left: newScrollLeft,
-      behavior: 'smooth',
-    });
-  };
+  const CARDS_PER_VIEW = 3;
+  const CARD_GAP = 24;
+  const maxSliderIndex = Math.max(0, playlists.length - CARDS_PER_VIEW);
+
+  const slideNext = () => setSliderIndex((prev) => Math.min(prev + 1, maxSliderIndex));
+  const slidePrev = () => setSliderIndex((prev) => Math.max(prev - 1, 0));
 
   const handleDeletePlaylist = async () => {
     if (!playlistToDelete) return;
@@ -554,6 +589,89 @@ export default function MypagePage() {
       <div className={styles.content}>
         {tab === 'playlists' && (
           <div>
+            {!user?.youtubeConnected ? (
+              /* 유튜브 미연동 상태 플레이스홀더 */
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '60px 20px',
+                textAlign: 'center',
+              }}>
+                <div style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  background: '#f5f5f5',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 20,
+                }}>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                    <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19.1c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.43z" fill="#ccc"/>
+                    <polygon points="9.75,15.02 15.5,11.75 9.75,8.48" fill="#fff"/>
+                  </svg>
+                </div>
+                <p style={{
+                  fontSize: 16,
+                  color: '#666',
+                  marginBottom: 24,
+                  lineHeight: 1.6,
+                }}>
+                  유튜브를 연동하고 나만의 플레이리스트를 관리해보세요!
+                </p>
+                <button
+                  type="button"
+                  disabled={!user?.email}
+                  onClick={() => {
+                    if (!user?.email) return;
+                    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api';
+                    const baseUrl = apiBase.replace(/\/api\/?$/, '');
+                    const encodedEmail = encodeURIComponent(user.email);
+                    window.location.href = `${baseUrl}/oauth2/authorization/google?email=${encodedEmail}`;
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    padding: '12px 24px',
+                    background: '#fff',
+                    color: !user?.email ? '#aaa' : '#333',
+                    border: '1px solid #ddd',
+                    borderRadius: 8,
+                    cursor: !user?.email ? 'not-allowed' : 'pointer',
+                    fontSize: 15,
+                    fontWeight: 500,
+                    transition: 'all 0.2s',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                    opacity: !user?.email ? 0.6 : 1,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!user?.email) return;
+                    e.currentTarget.style.background = '#f8f8f8';
+                    e.currentTarget.style.borderColor = '#999';
+                    e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.12)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!user?.email) return;
+                    e.currentTarget.style.background = '#fff';
+                    e.currentTarget.style.borderColor = '#ddd';
+                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                  Google 연동하기
+                </button>
+              </div>
+            ) : (
+            <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
@@ -605,11 +723,12 @@ export default function MypagePage() {
                   </button>
                 )}
               </div>
-              {playlists.length > 1 && (
+              {playlists.length > CARDS_PER_VIEW && (
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button
                     type="button"
-                    onClick={() => scrollCarousel('left')}
+                    onClick={slidePrev}
+                    disabled={sliderIndex === 0}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -619,10 +738,12 @@ export default function MypagePage() {
                       background: '#fff',
                       border: '1px solid #ddd',
                       borderRadius: '50%',
-                      cursor: 'pointer',
+                      cursor: sliderIndex === 0 ? 'not-allowed' : 'pointer',
                       transition: 'all 0.2s',
+                      opacity: sliderIndex === 0 ? 0.4 : 1,
                     }}
                     onMouseEnter={(e) => {
+                      if (sliderIndex === 0) return;
                       e.currentTarget.style.background = '#f5f5f5';
                       e.currentTarget.style.borderColor = '#999';
                     }}
@@ -635,7 +756,8 @@ export default function MypagePage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => scrollCarousel('right')}
+                    onClick={slideNext}
+                    disabled={sliderIndex >= maxSliderIndex}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -645,10 +767,12 @@ export default function MypagePage() {
                       background: '#fff',
                       border: '1px solid #ddd',
                       borderRadius: '50%',
-                      cursor: 'pointer',
+                      cursor: sliderIndex >= maxSliderIndex ? 'not-allowed' : 'pointer',
                       transition: 'all 0.2s',
+                      opacity: sliderIndex >= maxSliderIndex ? 0.4 : 1,
                     }}
                     onMouseEnter={(e) => {
+                      if (sliderIndex >= maxSliderIndex) return;
                       e.currentTarget.style.background = '#f5f5f5';
                       e.currentTarget.style.borderColor = '#999';
                     }}
@@ -686,58 +810,14 @@ export default function MypagePage() {
                 등록된 플레이리스트가 없습니다.
               </div>
             ) : (
-              <>
-                <style>{`
-                  .playlist-carousel::-webkit-scrollbar {
-                    height: 8px;
-                  }
-                  .playlist-carousel::-webkit-scrollbar-track {
-                    background: #f0f0f0;
-                    border-radius: 4px;
-                  }
-                  .playlist-carousel::-webkit-scrollbar-thumb {
-                    background: #ccc;
-                    border-radius: 4px;
-                  }
-                  .playlist-carousel::-webkit-scrollbar-thumb:hover {
-                    background: #999;
-                  }
-                  .playlist-thumbnail-stack {
-                    position: relative;
-                  }
-                  .playlist-thumbnail-stack::before,
-                  .playlist-thumbnail-stack::after {
-                    content: '';
-                    position: absolute;
-                    width: 100%;
-                    height: 100%;
-                    background: #fff;
-                    border-radius: 8px;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-                  }
-                  .playlist-thumbnail-stack::before {
-                    top: -6px;
-                    left: -4px;
-                    transform: rotate(-2deg);
-                    z-index: -2;
-                  }
-                  .playlist-thumbnail-stack::after {
-                    top: -3px;
-                    left: -2px;
-                    transform: rotate(-1deg);
-                    z-index: -1;
-                  }
-                `}</style>
+              <div style={{ overflow: 'hidden', padding: '4px 4px 8px' }}>
                 <div
-                  ref={carouselRef}
                   style={{
                     display: 'flex',
-                    overflowX: 'auto',
-                    gap: 20,
-                    padding: '4px 4px 12px',
-                    scrollSnapType: 'x mandatory',
+                    gap: CARD_GAP,
+                    transition: 'transform 0.4s ease-out',
+                    transform: `translateX(calc(${-sliderIndex * 100 / CARDS_PER_VIEW}% - ${sliderIndex * CARD_GAP / CARDS_PER_VIEW}px))`,
                   }}
-                  className="playlist-carousel"
                 >
                 {playlists.map((playlist) => (
                   <div
@@ -746,14 +826,13 @@ export default function MypagePage() {
                       position: 'relative',
                       background: 'white',
                       borderRadius: 12,
-                      overflow: 'visible',
+                      overflow: 'hidden',
                       boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                       transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                       cursor: isDeleteMode ? 'default' : 'pointer',
-                      minWidth: '320px',
-                      maxWidth: '320px',
+                      width: `calc((100% - ${CARD_GAP * (CARDS_PER_VIEW - 1)}px) / ${CARDS_PER_VIEW})`,
+                      minWidth: `calc((100% - ${CARD_GAP * (CARDS_PER_VIEW - 1)}px) / ${CARDS_PER_VIEW})`,
                       flexShrink: 0,
-                      scrollSnapAlign: 'start',
                     }}
                     onMouseEnter={(e) => {
                       if (!isDeleteMode) {
@@ -782,8 +861,8 @@ export default function MypagePage() {
                         }}
                         style={{
                           position: 'absolute',
-                          top: -8,
-                          right: -8,
+                          top: 8,
+                          right: 8,
                           width: 32,
                           height: 32,
                           borderRadius: '50%',
@@ -810,55 +889,56 @@ export default function MypagePage() {
                         <X size={18} strokeWidth={3} />
                       </button>
                     )}
+                    {/* Thumbnail */}
                     <div
-                      className="playlist-thumbnail-stack"
                       style={{
-                        borderRadius: 12,
-                        overflow: 'hidden',
                         position: 'relative',
+                        width: '100%',
+                        height: 180,
+                        borderRadius: '12px 12px 0 0',
+                        overflow: 'hidden',
+                        background: '#f0f0f0',
                       }}
                     >
-                      <div
-                        style={{
-                          position: 'relative',
+                      {playlist.thumbnailUrl ? (
+                        <img
+                          src={playlist.thumbnailUrl}
+                          alt={playlist.title}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                      ) : (
+                        <div style={{
                           width: '100%',
-                          paddingBottom: '56.25%',
-                          background: '#000',
-                          overflow: 'hidden',
-                          borderRadius: 8,
-                        }}
-                      >
-                      <img
-                        src={playlist.thumbnailUrl || ''}
-                        alt={playlist.title}
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#999',
+                          fontSize: 14,
+                        }}>
+                          썸네일 없음
+                        </div>
+                      )}
+                      {/* Hover overlay */}
+                      <div
                         style={{
                           position: 'absolute',
                           top: 0,
                           left: 0,
                           width: '100%',
                           height: '100%',
-                          objectFit: 'contain',
-                        }}
-                      />
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          background: 'rgba(0,0,0,0.1)',
+                          background: 'transparent',
                           transition: 'background 0.2s ease',
                         }}
                         onMouseEnter={(e) => {
-                          if (!isDeleteMode) {
-                            e.currentTarget.style.background = 'rgba(0,0,0,0.3)';
-                          }
+                          if (!isDeleteMode) e.currentTarget.style.background = 'rgba(0,0,0,0.2)';
                         }}
                         onMouseLeave={(e) => {
-                          if (!isDeleteMode) {
-                            e.currentTarget.style.background = 'rgba(0,0,0,0.1)';
-                          }
+                          e.currentTarget.style.background = 'transparent';
                         }}
                       />
                     </div>
@@ -884,11 +964,12 @@ export default function MypagePage() {
                         {playlist.itemCount}곡
                       </div>
                     </div>
-                    </div>
                   </div>
                 ))}
                 </div>
-              </>
+              </div>
+            )}
+            </>
             )}
           </div>
         )}
@@ -1722,6 +1803,84 @@ export default function MypagePage() {
                 취소
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* OAuth 결과 모달 */}
+      {oauthResultModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.5)',
+          }}
+          onClick={() => setOauthResultModal(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            style={{
+              padding: 32,
+              background: '#fff',
+              borderRadius: 12,
+              maxWidth: 400,
+              width: '90%',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+              textAlign: 'center',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              width: 56,
+              height: 56,
+              borderRadius: '50%',
+              background: oauthResultModal.type === 'success' ? '#e8f5e9' : '#fbe9e7',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 16px',
+            }}>
+              {oauthResultModal.type === 'success' ? (
+                <Check size={28} color="#2e7d32" />
+              ) : (
+                <X size={28} color="#c62828" />
+              )}
+            </div>
+            <p style={{
+              margin: '0 0 24px',
+              fontSize: 16,
+              color: '#333',
+              lineHeight: 1.6,
+              whiteSpace: 'pre-line',
+            }}>
+              {oauthResultModal.message}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setOauthResultModal(null);
+                if (oauthResultModal.type === 'success') {
+                  window.location.reload();
+                }
+              }}
+              style={{
+                padding: '10px 32px',
+                background: oauthResultModal.type === 'success' ? '#1976d2' : '#666',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'pointer',
+                fontSize: 15,
+                fontWeight: 500,
+              }}
+            >
+              확인
+            </button>
           </div>
         </div>
       )}

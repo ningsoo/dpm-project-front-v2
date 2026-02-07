@@ -210,6 +210,7 @@ export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle
             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
             display: 'flex',
             flexDirection: 'column',
+            maxHeight: '85vh',
           }}
         >
           {/* Close Button */}
@@ -375,6 +376,7 @@ export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle
                   display: 'flex',
                   flexDirection: 'column',
                   flex: 1,
+                  minHeight: 0,
                 }}
               >
                 {/* Header Info */}
@@ -399,9 +401,10 @@ export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle
                   className="track-list-container"
                   style={{
                     flex: 1,
-                    maxHeight: 280,
+                    maxHeight: 400,
                     overflowY: 'auto',
                     marginBottom: 12,
+                    paddingBottom: 8,
                     borderRadius: 8,
                   }}
                 >

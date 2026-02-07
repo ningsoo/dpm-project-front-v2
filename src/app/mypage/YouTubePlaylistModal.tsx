@@ -10,6 +10,7 @@ interface PlaylistItem {
   youtubeListId: string;
   title: string;
   thumbnailUrl: string;
+  thumbnails?: string[];
   itemCount: number;
 }
 
