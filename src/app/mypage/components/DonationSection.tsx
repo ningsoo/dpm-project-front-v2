@@ -353,7 +353,7 @@ export function DonationSection({ user }: { user: { id: string } }) {
                   <div>후원일</div>
                   <div>정산요청일</div>
                   <div>정산확정일</div>
-                  <div>정산취소요청일</div>
+                  <div>정산취소일</div>
                   <div>금액</div>
                   <div>팝상태</div>
                   <div>후원자</div>
