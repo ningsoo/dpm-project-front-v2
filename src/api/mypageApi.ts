@@ -29,6 +29,14 @@ export const mypageApi = {
   getCreditUsageHistory: (params?: { start?: string; end?: string; type?: 'donation' | 'advertisement' }) =>
     fetchClient.get<ApiResponse<unknown>>('/mypage/support/sent', { params }),
 
+  /** 후원 보낸내역 - GET /mypage/support/sent (type: donation) */
+  getDonationSent: (params?: { start?: string; end?: string }) =>
+    fetchClient.get<ApiResponse<unknown>>('/mypage/support/sent', { params: { ...params, type: 'donation' } }),
+
+  /** 후원 받은내역 - GET /mypage/support/received */
+  getDonationReceived: (params?: { start?: string; end?: string }) =>
+    fetchClient.get<ApiResponse<unknown>>('/mypage/support/received', { params }),
+
   getSettlementHistory: (params?: { start?: string; end?: string }) =>
     fetchClient.get<ApiResponse<unknown>>('/mypage/settlement', { params }),
 

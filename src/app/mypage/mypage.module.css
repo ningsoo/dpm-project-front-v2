@@ -197,6 +197,88 @@
   grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) minmax(120px, 0.8fr) minmax(140px, 1fr) minmax(150px, 1fr);
 }
 
+/* 후원 섹션 */
+.donationSection {
+  width: 100%;
+}
+
+.donationSentGrid {
+  grid-template-columns: minmax(140px, 1fr) minmax(120px, 1fr) minmax(100px, 0.8fr) minmax(80px, 0.6fr) minmax(100px, 0.8fr);
+}
+
+.donationReceivedGrid {
+  grid-template-columns: minmax(140px, 1fr) minmax(120px, 1fr) minmax(100px, 0.8fr) minmax(80px, 0.6fr);
+}
+
+/* 보낸내역: 8컬럼 - 전체 폭 채우고 균등 배치 */
+.donationSentGrid8 {
+  width: 100%;
+  min-width: 100%;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+
+/* 받은내역: 8컬럼 - 전체 폭 채우고 균등 배치 */
+.donationReceivedGrid8 {
+  width: 100%;
+  min-width: 100%;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+
+/* 후원 테이블: 좌우 여백 통일, 첫/마지막 컬럼 padding 대칭 */
+.donationSentGrid8.tableHeader,
+.donationReceivedGrid8.tableHeader {
+  padding: 12px 20px;
+}
+
+.donationSentGrid8.tableHeader > div,
+.donationReceivedGrid8.tableHeader > div {
+  padding: 12px 12px;
+}
+
+.donationSentGrid8 .tableCell,
+.donationReceivedGrid8 .tableCell {
+  padding: 12px 12px;
+}
+
+/* 후원 테이블 row에도 좌우 여백 맞춤 */
+.donationSentGrid8.tableRow,
+.donationReceivedGrid8.tableRow {
+  padding: 0 20px;
+}
+
+.donationDateCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.donationDateCell span:first-child {
+  font-weight: 500;
+}
+
+.donationScrollArea {
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.donationCancelBtn {
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #c62828;
+  background: transparent;
+  border: 1px solid #c62828;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.donationCancelBtn:hover {
+  background: #c62828;
+  color: #fff;
+}
+
 /* 정산 서브탭: 밑줄 인디케이터 포커싱 */
 .settlementSubTabs {
   display: flex;

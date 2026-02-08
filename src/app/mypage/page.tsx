@@ -10,6 +10,7 @@ import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import { PasswordVerifyModal } from './PasswordVerifyModal';
 import { SettlementSection } from './components/SettlementSection';
+import { DonationSection } from './components/DonationSection';
 import { MyPageYouTubeSection } from './components/MyPageYouTubeSection';
 import styles from './mypage.module.css';
 
@@ -30,6 +31,7 @@ const TABS = [
   { id: 'liked', label: '좋아요 한 게시글' },
   { id: 'reports', label: '신고 내역' },
   { id: 'settlement', label: '정산' },
+  { id: 'donation', label: '후원' },
 ] as const;
 
 /** 11자리 연락처를 3-4-4 형식(예: 010-1234-5678)으로 변환해 프로필 렌더링용으로 반환 */
@@ -714,6 +716,9 @@ export default function MypagePage() {
         )}
         {tab === 'settlement' && (
           <SettlementSection user={user} />
+        )}
+        {tab === 'donation' && (
+          <DonationSection user={user} />
         )}
       </div>
 
