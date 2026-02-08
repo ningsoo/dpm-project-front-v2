@@ -278,7 +278,7 @@ export function DonationSection({ user }: { user: { id: string } }) {
                   <div>후원일</div>
                   <div>후원요청일</div>
                   <div>후원승인일</div>
-                  <div>취소일</div>
+                  <div>후원취소일</div>
                   <div>금액</div>
                   <div>팝상태</div>
                   <div>수혜자</div>
@@ -350,13 +350,13 @@ export function DonationSection({ user }: { user: { id: string } }) {
               <div style={{ overflowX: 'auto' }}>
                 <div className={`${styles.tableGrid} ${styles.donationReceivedGrid8} ${styles.tableHeader}`}>
                   <div>팝히스토리</div>
-                  <div>후원받은일자</div>
+                  <div>후원일</div>
                   <div>정산요청일</div>
                   <div>정산확정일</div>
                   <div>정산취소요청일</div>
                   <div>금액</div>
                   <div>팝상태</div>
-                  <div>후원인</div>
+                  <div>후원자</div>
                 </div>
                 {receivedFiltered.length === 0 ? (
                   <div className={styles.settlementEmpty}>후원 받은 내역이 없습니다.</div>
