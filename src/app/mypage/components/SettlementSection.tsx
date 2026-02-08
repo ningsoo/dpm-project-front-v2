@@ -196,12 +196,6 @@ export function SettlementSection({ user }: SettlementSectionProps) {
     };
   }, []);
 
-  const historyTotalAmount = historyList.reduce(
-    (sum, item) =>
-      sum + (typeof item.changeAmount === 'number' && !Number.isNaN(item.changeAmount) ? item.changeAmount : 0),
-    0
-  );
-
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
     const { value, hadKorean } = sanitizeEmailInput(raw);
@@ -327,12 +321,6 @@ export function SettlementSection({ user }: SettlementSectionProps) {
       <div className={styles.settlementInnerContent}>
         {subTab === 'history' && (
           <div>
-            <div className={styles.settlementSummaryBlock}>
-              <div className={styles.settlementSummaryRow}>
-                <span>총 정산액</span>
-                <span className={styles.settlementTotalAmount}>{historyTotalAmount.toLocaleString()}원</span>
-              </div>
-            </div>
             <div className={styles.settlementDateRow}>
               <input
                 type="date"
@@ -394,7 +382,6 @@ export function SettlementSection({ user }: SettlementSectionProps) {
 
         {subTab === 'register' && (
           <div>
-            <h3 className={styles.settlementHistoryTitle}>정산 정보 등록</h3>
             <form onSubmit={handleRegisterAccount} className={styles.settlementForm}>
               <div className={styles.settlementField}>
                 <label htmlFor="settlement-email">이메일</label>
@@ -490,7 +477,6 @@ export function SettlementSection({ user }: SettlementSectionProps) {
 
         {subTab === 'request' && (
           <div>
-            <h3 className={styles.settlementHistoryTitle}>정산 신청</h3>
             <div className={styles.settlementRequestSummaryBox}>
               <div className={styles.settlementSummaryRow}>
                 <span>정산 가능 금액</span>
@@ -513,9 +499,9 @@ export function SettlementSection({ user }: SettlementSectionProps) {
               ) : (
                 <div style={{ overflowX: 'auto' }}>
                   <div className={`${styles.tableGrid} ${styles.settlementGrid3} ${styles.tableHeader}`}>
-                    <div className={styles.settlementGrid3Col1}>정산번호</div>
-                    <div className={styles.settlementGrid3Col2}>정산금액</div>
-                    <div className={styles.settlementGrid3Col3}>정산승인일</div>
+                    <div className={styles.settlementGrid3Col1}>후원번호</div>
+                    <div className={styles.settlementGrid3Col2}>후원금액</div>
+                    <div className={styles.settlementGrid3Col3}>후원승인일</div>
                   </div>
                   {historyList.length === 0 ? (
                     <div className={`${styles.tableGrid} ${styles.settlementGrid3} ${styles.settlementGrid3EmptyRow}`}>
