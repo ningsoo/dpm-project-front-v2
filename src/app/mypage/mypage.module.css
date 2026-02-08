@@ -197,6 +197,59 @@
   grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) minmax(120px, 0.8fr) minmax(140px, 1fr) minmax(150px, 1fr);
 }
 
+/* 정산 신청: 3컬럼 (정산번호, 정산금액, 정산승인일) - 정산금액이 정산번호·정산승인일 중앙에 위치 */
+.settlementGrid3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.settlementGrid3Col1 {
+  text-align: center;
+}
+
+.settlementGrid3Col2 {
+  text-align: center;
+}
+
+.settlementGrid3Col3 {
+  text-align: center;
+}
+
+.settlementGrid3EmptyCell {
+  grid-column: 1 / -1;
+  text-align: center;
+}
+
+.settlementGrid3EmptyRow {
+  border-bottom: none;
+}
+
+/* 정산 신청 상단: 회색 박스 내부에 요약 + 버튼, 세로 중앙 정렬 */
+.settlementRequestSummaryBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  min-width: 0;
+}
+
+.settlementRequestSummaryBox .settlementSummaryRow {
+  flex: 1;
+  min-width: 0;
+}
+
+.settlementRequestSummaryBox .submitBtn {
+  flex-shrink: 0;
+}
+
+.settlementRequestTableWrap {
+  margin-top: 20px;
+}
+
 /* 후원 섹션 */
 .donationSection {
   width: 100%;
