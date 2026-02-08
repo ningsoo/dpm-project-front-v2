@@ -20,6 +20,7 @@ export interface SettlementUser {
 
 /** PopHistoryResponse 기반 파서. 백엔드 변경 시 이 함수만 교체하면 됨. */
 export type SettlementHistoryItem = {
+  popHistoryId?: number;
   requestedDatetime?: string;
   approvedDatetime?: string;
   changeAmount?: number;
@@ -46,7 +47,12 @@ export function parseSettlementHistory(data: unknown): SettlementHistoryItem[] {
       const changeAmount = row.changeAmount;
       const numAmount =
         typeof changeAmount === 'number' && !Number.isNaN(changeAmount) ? changeAmount : undefined;
+      const popHistoryId =
+        typeof row.popHistoryId === 'number' && !Number.isNaN(row.popHistoryId)
+          ? row.popHistoryId
+          : undefined;
       return {
+        popHistoryId,
         requestedDatetime:
           row.requestedDatetime != null ? String(row.requestedDatetime) : undefined,
         approvedDatetime:
@@ -152,7 +158,7 @@ export function SettlementSection({ user }: SettlementSectionProps) {
   };
 
   useEffect(() => {
-    if (subTab === 'history') fetchHistory();
+    if (subTab === 'history' || subTab === 'request') fetchHistory();
   }, [subTab, fetchHistory]);
 
   const phoneDigits = (accountForm.phoneNumber ?? '').replace(/\D/g, '').slice(0, 11);
@@ -485,27 +491,59 @@ export function SettlementSection({ user }: SettlementSectionProps) {
         {subTab === 'request' && (
           <div>
             <h3 className={styles.settlementHistoryTitle}>정산 신청</h3>
-            <div className={styles.settlementSummaryBlock}>
+            <div className={styles.settlementRequestSummaryBox}>
               <div className={styles.settlementSummaryRow}>
                 <span>정산 가능 금액</span>
                 <span className={styles.settlementTotalAmount}>
                   {getAvailableAmount().toLocaleString()}원
                 </span>
               </div>
+              <button
+                type="button"
+                className={styles.submitBtn}
+                disabled={requestSubmitting || getAvailableAmount() === 0}
+                onClick={handleRequestSettlementClick}
+              >
+                {requestSubmitting ? '신청 중…' : '정산요청'}
+              </button>
             </div>
-            <div className={styles.settlementRequestInfoBox}>
-              <p>정산은 매월 10일에 이행됩니다.</p>
-              <p>정산 신청 후 관리자 승인이 필요합니다.</p>
-              <p>부분 정산이 아닌 누적 금액 전체 정산으로 진행됩니다.</p>
+            <div className={styles.settlementRequestTableWrap}>
+              {historyLoading ? (
+                <p className={styles.settlementLoading}>로딩 중...</p>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <div className={`${styles.tableGrid} ${styles.settlementGrid3} ${styles.tableHeader}`}>
+                    <div className={styles.settlementGrid3Col1}>정산번호</div>
+                    <div className={styles.settlementGrid3Col2}>정산금액</div>
+                    <div className={styles.settlementGrid3Col3}>정산승인일</div>
+                  </div>
+                  {historyList.length === 0 ? (
+                    <div className={`${styles.tableGrid} ${styles.settlementGrid3} ${styles.settlementGrid3EmptyRow}`}>
+                      <div className={`${styles.settlementEmpty} ${styles.settlementGrid3EmptyCell}`}>
+                        내역이 없습니다.
+                      </div>
+                    </div>
+                  ) : (
+                    historyList.map((item, idx) => (
+                      <div
+                        key={item.popHistoryId ?? idx}
+                        className={`${styles.tableGrid} ${styles.settlementGrid3} ${styles.tableRow}`}
+                      >
+                        <div className={`${styles.tableCell} ${styles.settlementGrid3Col1}`}>
+                          {item.popHistoryId ?? '-'}
+                        </div>
+                        <div className={`${styles.tableCell} ${styles.settlementGrid3Col2}`}>
+                          {formatSettlementAmount(item.changeAmount)}
+                        </div>
+                        <div className={`${styles.tableCell} ${styles.settlementGrid3Col3}`}>
+                          {formatSettlementDate(item.approvedDatetime)}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
-            <button
-              type="button"
-              className={styles.submitBtn}
-              disabled={requestSubmitting || getAvailableAmount() === 0}
-              onClick={handleRequestSettlementClick}
-            >
-              {requestSubmitting ? '신청 중…' : '정산 요청'}
-            </button>
           </div>
         )}
       </div>
