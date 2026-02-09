@@ -80,7 +80,7 @@ function getPopStatusLabel(status?: string): string {
     case 'CANCELED':
       return '취소';
     case 'COMPLETED':
-      return '후원승인완료';
+      return '승인완료';
     default:
       return '-';
   }
