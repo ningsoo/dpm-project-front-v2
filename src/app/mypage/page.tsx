@@ -83,6 +83,20 @@ export default function MypagePage() {
   const [inquiryTotalPages, setInquiryTotalPages] = useState(0);
   const [inquiryLoading, setInquiryLoading] = useState(false);
 
+  // 문의 상세 모달
+  const [showInquiryDetailModal, setShowInquiryDetailModal] = useState(false);
+  const [inquiryDetail, setInquiryDetail] = useState<{
+    title: string;
+    inquiryType: string;
+    createdAt: string;
+    content: string;
+    attachmentUrl?: string;
+    commentStatus: string;
+    adminComment?: string;
+    commentCreatedAt?: string;
+  } | null>(null);
+  const [inquiryDetailLoading, setInquiryDetailLoading] = useState(false);
+
   // 초기화 완료 후 사용자 정보 로드
   useEffect(() => {
     if (!initialized) return;
@@ -812,7 +826,6 @@ export default function MypagePage() {
                       <div style={{ textAlign: 'center' }}>문의유형</div>
                       <div style={{ textAlign: 'center' }}>제목</div>
                       <div style={{ textAlign: 'center' }}>상태</div>
-                      <div style={{ textAlign: 'center' }}>상세보기</div>
                     </div>
                     {inquiries.length === 0 ? (
                       <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
@@ -859,33 +872,59 @@ export default function MypagePage() {
                             })()}
                           </div>
                           <div className={styles.tableCell} style={{ textAlign: 'center' }}>
-                            {item.title}
+                            <button
+                              type="button"
+                              className={styles.inquiryTitleLink}
+                              onClick={() => {
+                                setInquiryDetailLoading(true);
+                                setShowInquiryDetailModal(true);
+                                setInquiryDetail(null);
+                                mypageApi.getInquiryDetail(item.inquiryId)
+                                  .then(({ data }) => {
+                                    const detail = data?.data as {
+                                      title: string;
+                                      inquiryType: string;
+                                      createdAt: string;
+                                      content: string;
+                                      attachmentUrl?: string;
+                                      commentStatus: string;
+                                      adminComment?: string;
+                                      commentCreatedAt?: string;
+                                    } | undefined;
+                                    setInquiryDetail(detail ?? null);
+                                  })
+                                  .catch(() => {
+                                    ToastUtils.error('문의 상세 정보를 불러올 수 없습니다.');
+                                    setShowInquiryDetailModal(false);
+                                  })
+                                  .finally(() => {
+                                    setInquiryDetailLoading(false);
+                                  });
+                              }}
+                            >
+                              {item.title}
+                            </button>
                           </div>
                           <div className={styles.tableCell} style={{ textAlign: 'center' }}>
                             <span
                               className={
                                 styles.statusBadge + ' ' +
-                                (item.inquiryStatus === 'COMPLETED' ? styles.statusCompleted : styles.statusPending)
+                                (item.inquiryStatus === 'COMPLETED'
+                                  ? styles.statusCompleted
+                                  : item.inquiryStatus === 'PROCESSING'
+                                    ? styles.statusProcessing
+                                    : styles.statusPending)
                               }
                             >
-                              {item.inquiryStatus === 'COMPLETED' ? '답변완료' : '답변대기'}
+                              {(() => {
+                                const statusMap: Record<string, string> = {
+                                  PENDING: '답변 대기',
+                                  PROCESSING: '처리 중',
+                                  COMPLETED: '답변 완료',
+                                };
+                                return statusMap[item.inquiryStatus] ?? item.inquiryStatus;
+                              })()}
                             </span>
-                          </div>
-                          <div className={styles.tableCell} style={{ textAlign: 'center' }}>
-                            <button
-                              type="button"
-                              onClick={() => router.push(`/inquiry/${item.inquiryId}`)}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                color: '#1976d2',
-                                cursor: 'pointer',
-                                fontSize: 14,
-                                textDecoration: 'underline',
-                              }}
-                            >
-                              보기
-                            </button>
                           </div>
                         </div>
                       ))
@@ -1160,6 +1199,152 @@ export default function MypagePage() {
             setPasswordVerifyTarget(null);
           }}
         />
+      )}
+
+      {/* 문의 상세 모달 */}
+      {showInquiryDetailModal && (
+        <div
+          className={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setShowInquiryDetailModal(false)}
+        >
+          <div
+            className={styles.inquiryDetailCard}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              className={styles.closeBtn}
+              onClick={() => setShowInquiryDetailModal(false)}
+              aria-label="닫기"
+            >
+              <X size={20} />
+            </button>
+            <h2 className={styles.modalTitle}>문의 상세</h2>
+
+            {inquiryDetailLoading ? (
+              <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+                불러오는 중...
+              </div>
+            ) : inquiryDetail ? (
+              <div className={styles.inquiryDetailBody}>
+                {/* 문의 정보 */}
+                <div className={styles.inquiryDetailSection}>
+                  <h3 className={styles.inquiryDetailSectionTitle}>문의 정보</h3>
+                  <div className={styles.inquiryDetailRow}>
+                    <span className={styles.inquiryDetailLabel}>제목</span>
+                    <span className={styles.inquiryDetailValue}>{inquiryDetail.title}</span>
+                  </div>
+                  <div className={styles.inquiryDetailRow}>
+                    <span className={styles.inquiryDetailLabel}>유형</span>
+                    <span className={styles.inquiryDetailValue}>
+                      {({ USER: '계정/제재', PAYMENT: '결제/재화', DONATION: '후원', POST: '게시물/작업물', API: '외부 서비스 연동', ETC: '기타' } as Record<string, string>)[inquiryDetail.inquiryType] ?? inquiryDetail.inquiryType}
+                    </span>
+                  </div>
+                  <div className={styles.inquiryDetailRow}>
+                    <span className={styles.inquiryDetailLabel}>작성일시</span>
+                    <span className={styles.inquiryDetailValue}>
+                      {(() => {
+                        if (!inquiryDetail.createdAt) return '-';
+                        if (Array.isArray(inquiryDetail.createdAt)) {
+                          const [y, mo, d, h = 0, mi = 0] = inquiryDetail.createdAt as unknown as number[];
+                          return `${y}.${String(mo).padStart(2, '0')}.${String(d).padStart(2, '0')} ${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}`;
+                        }
+                        const raw = String(inquiryDetail.createdAt);
+                        const dt = new Date(raw.includes('T') ? raw : raw.replace(' ', 'T'));
+                        if (isNaN(dt.getTime())) return raw;
+                        return `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+                      })()}
+                    </span>
+                  </div>
+                  <div className={styles.inquiryDetailRow} style={{ alignItems: 'flex-start' }}>
+                    <span className={styles.inquiryDetailLabel}>내용</span>
+                    <span className={styles.inquiryDetailValue} style={{ whiteSpace: 'pre-wrap' }}>{inquiryDetail.content}</span>
+                  </div>
+                  {inquiryDetail.attachmentUrl && (
+                    <div className={styles.inquiryDetailRow} style={{ alignItems: 'flex-start' }}>
+                      <span className={styles.inquiryDetailLabel}>첨부파일</span>
+                      <span className={styles.inquiryDetailValue}>
+                        {/\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(inquiryDetail.attachmentUrl) ? (
+                          <img
+                            src={inquiryDetail.attachmentUrl}
+                            alt="첨부 이미지"
+                            className={styles.inquiryDetailAttachmentImg}
+                          />
+                        ) : (
+                          <a
+                            href={inquiryDetail.attachmentUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={styles.inquiryDetailAttachmentLink}
+                          >
+                            파일 다운로드
+                          </a>
+                        )}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* 관리자 답변 */}
+                <div className={styles.inquiryDetailSection}>
+                  <h3 className={styles.inquiryDetailSectionTitle}>관리자 답변</h3>
+                  <div className={styles.inquiryDetailRow}>
+                    <span className={styles.inquiryDetailLabel}>상태</span>
+                    <span className={styles.inquiryDetailValue}>
+                      <span
+                        className={
+                          styles.statusBadge + ' ' +
+                          (inquiryDetail.commentStatus === 'COMPLETED'
+                            ? styles.statusCompleted
+                            : inquiryDetail.commentStatus === 'PROCESSING'
+                              ? styles.statusProcessing
+                              : styles.statusPending)
+                        }
+                      >
+                        {({ PENDING: '답변 대기', PROCESSING: '처리 중', COMPLETED: '답변 완료' } as Record<string, string>)[inquiryDetail.commentStatus] ?? inquiryDetail.commentStatus}
+                      </span>
+                    </span>
+                  </div>
+                  {inquiryDetail.commentStatus === 'COMPLETED' && inquiryDetail.adminComment ? (
+                    <>
+                      <div className={styles.inquiryDetailRow} style={{ alignItems: 'flex-start' }}>
+                        <span className={styles.inquiryDetailLabel}>답변</span>
+                        <span className={styles.inquiryDetailValue} style={{ whiteSpace: 'pre-wrap' }}>{inquiryDetail.adminComment}</span>
+                      </div>
+                      {inquiryDetail.commentCreatedAt && (
+                        <div className={styles.inquiryDetailRow}>
+                          <span className={styles.inquiryDetailLabel}>답변일시</span>
+                          <span className={styles.inquiryDetailValue}>
+                            {(() => {
+                              if (Array.isArray(inquiryDetail.commentCreatedAt)) {
+                                const [y, mo, d, h = 0, mi = 0] = inquiryDetail.commentCreatedAt as unknown as number[];
+                                return `${y}.${String(mo).padStart(2, '0')}.${String(d).padStart(2, '0')} ${String(h).padStart(2, '0')}:${String(mi).padStart(2, '0')}`;
+                              }
+                              const raw = String(inquiryDetail.commentCreatedAt);
+                              const dt = new Date(raw.includes('T') ? raw : raw.replace(' ', 'T'));
+                              if (isNaN(dt.getTime())) return raw;
+                              return `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')} ${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+                            })()}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className={styles.inquiryDetailPending}>
+                      답변 준비 중입니다.
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+                정보를 불러올 수 없습니다.
+              </div>
+            )}
+          </div>
+        </div>
       )}
 
       {showCreditChargeModal && (

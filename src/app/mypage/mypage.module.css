@@ -592,9 +592,9 @@
   grid-template-columns: minmax(50px, 60px) minmax(150px, 1.2fr) minmax(200px, 1.5fr) minmax(100px, 1fr) minmax(140px, 1.2fr) minmax(120px, 1fr);
 }
 
-/* 문의 내역: 5컬럼 (문의일시, 문의유형, 제목, 상태, 상세보기) */
+/* 문의 내역: 4컬럼 (문의일시, 문의유형, 제목, 상태) */
 .inquiryGrid {
-  grid-template-columns: minmax(150px, 1fr) minmax(120px, 0.8fr) minmax(200px, 2fr) minmax(100px, 0.8fr) minmax(100px, 0.6fr);
+  grid-template-columns: minmax(150px, 1fr) minmax(120px, 0.8fr) minmax(200px, 2fr) minmax(100px, 0.8fr);
 }
 
 .statusBadge {
@@ -606,6 +606,11 @@
 }
 
 .statusPending {
+  background: #f5f5f5;
+  color: #757575;
+}
+
+.statusProcessing {
   background: #fff3e0;
   color: #e65100;
 }
@@ -832,4 +837,96 @@
 .quickAmountBtn:hover {
   background: #f5f5f5;
   border-color: rgba(0, 0, 0, 0.24);
+}
+
+/* 문의 제목 링크 스타일 */
+.inquiryTitleLink {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  text-align: center;
+  font-family: inherit;
+}
+
+.inquiryTitleLink:hover {
+  color: #1976d2;
+  text-decoration: underline;
+}
+
+/* 문의 상세 모달 */
+.inquiryDetailCard {
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 640px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.inquiryDetailBody {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.inquiryDetailSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inquiryDetailSectionTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.inquiryDetailRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 14px;
+}
+
+.inquiryDetailLabel {
+  flex-shrink: 0;
+  width: 72px;
+  font-weight: 500;
+  color: #666;
+}
+
+.inquiryDetailValue {
+  flex: 1;
+  color: #333;
+  word-break: break-word;
+}
+
+.inquiryDetailAttachmentImg {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.inquiryDetailAttachmentLink {
+  color: #1976d2;
+  text-decoration: underline;
+}
+
+.inquiryDetailPending {
+  padding: 16px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  background: #f9f9f9;
+  border-radius: 8px;
 }

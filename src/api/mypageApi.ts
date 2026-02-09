@@ -104,4 +104,8 @@ export const mypageApi = {
 
   getInquiries: (params?: { page?: number; size?: number; startDate?: string; endDate?: string;}) =>
     fetchClient.get<ApiResponse<unknown>>('/mypage/inquiry', { params }),
+
+  /** 문의 상세 조회 - GET /mypage/inquiry/{userInquiryId} */
+  getInquiryDetail: (userInquiryId: number) =>
+    fetchClient.get<ApiResponse<unknown>>(`/mypage/inquiry/${userInquiryId}`),
 };
