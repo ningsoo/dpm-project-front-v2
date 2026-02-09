@@ -7,6 +7,11 @@ import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
 import type { BoardCategory } from '@/api/boardApi';
 import type { BoardListItem } from '@/api/boardTypes';
+import {
+  extractBoardListFromResponse,
+  getBoardThumbnailUrl,
+} from '@/utils/boardThumbnailUtils';
+import type { BoardCategorySlug } from '@/utils/boardThumbnailUtils';
 import styles from './CommonBoardCarousel.module.css';
 
 const VISIBLE = 3;
@@ -25,7 +30,7 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
   const fetchPosts = useCallback(async () => {
     try {
       const { data } = await boardApi.getBoardByCategory(category);
-      const list = Array.isArray(data?.data) ? data.data : [];
+      const list = extractBoardListFromResponse(data);
       setPosts(list);
     } catch {
       setPosts([]);
@@ -115,7 +120,8 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
             else if (i === CENTER_INDEX) cardLeft = centerCardPosition - expansionOffset;
             else cardLeft = rightCardPosition;
 
-            const imageUrl = post.fileUrl;
+            const categorySlug = String(category).toLowerCase() as BoardCategorySlug;
+            const imageUrl = getBoardThumbnailUrl(post, categorySlug);
 
             return (
               <div
@@ -138,15 +144,11 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
               >
                 <div
                   className={styles.thumb}
-                  style={
-                    imageUrl
-                      ? {
-                          backgroundImage: `url(${imageUrl})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                        }
-                      : {}
-                  }
+                  style={{
+                    backgroundImage: `url(${imageUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
                 >
                   <div className={styles.overlay}>
                     <div className={styles.cardTitle}>{post.title}</div>

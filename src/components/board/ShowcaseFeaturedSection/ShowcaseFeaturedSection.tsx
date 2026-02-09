@@ -4,16 +4,13 @@ import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
-import type { BoardCategory } from '@/api/boardApi';
+import type { BoardListItem } from '@/api/boardTypes';
+import {
+  extractBoardListFromResponse,
+  getBoardThumbnailUrl,
+  getShowcaseVideoId,
+} from '@/utils/boardThumbnailUtils';
 import styles from './ShowcaseFeaturedSection.module.css';
-
-interface ShowcasePost {
-  id: string;
-  title: string;
-  authorNickname?: string;
-  thumbnail?: string;
-  youtubeUrl?: string;
-}
 
 const TOTAL = 4;
 const HOVER_DELAY = 180;
@@ -23,7 +20,7 @@ const SCALE_Y = 1.05;   // 세로 살짝
 export default function ShowcaseFeaturedSection() {
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
 
-  const [posts, setPosts] = useState<ShowcasePost[]>([]);
+  const [posts, setPosts] = useState<BoardListItem[]>([]);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
 
@@ -33,23 +30,15 @@ export default function ShowcaseFeaturedSection() {
     boardApi
       .getBoardByCategory('SHOWCASE')
       .then(({ data }) => {
-        const d = data?.data as { posts?: ShowcasePost[] };
-        const all = Array.isArray(d?.posts) ? d.posts : [];
-        setPosts(all.slice(0, TOTAL));
+        const list = extractBoardListFromResponse(data);
+        setPosts(list.slice(0, TOTAL));
       })
       .catch(() => setPosts([]));
-    }, []);
+  }, []);
 
-  const extractYoutubeId = (url?: string) => {
-    if (!url) return '';
-    const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/);
-    return m ? m[1] : '';
-  };
-
-  const embedUrl = (url?: string) => {
-    const id = extractYoutubeId(url);
-    if (!id) return '';
-    return `https://www.youtube.com/embed/${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&modestbranding=1&rel=0`;
+  const getEmbedUrl = (videoId: string) => {
+    if (!videoId) return '';
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0`;
   };
 
   const clearHoverTimer = () => {
@@ -100,18 +89,13 @@ export default function ShowcaseFeaturedSection() {
             const isActive = i === activeIndex;
             const isPlaying = i === playingIndex && isActive;
 
-            const youtubeId = extractYoutubeId(post.youtubeUrl);
-            const hasVideo = !!youtubeId;
-
-            const thumb =
-              post.thumbnail ||
-              (youtubeId
-                ? `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`
-                : undefined);
+            const videoId = getShowcaseVideoId(post);
+            const hasVideo = !!videoId;
+            const thumb = getBoardThumbnailUrl(post, 'showcase');
 
             return (
               <div
-                key={post.id}
+                key={post.boardId}
                 className={`${styles.card} ${isActive ? styles.active : ''}`}
                 style={{
                   left: getLeftPercent(i),
@@ -120,7 +104,7 @@ export default function ShowcaseFeaturedSection() {
                 onMouseEnter={() => onEnter(i)}
                 onMouseLeave={() => onLeave(i)}
                 onClick={() =>
-                  (window.location.href = `/boards/${post.id}`)
+                  (window.location.href = `/boards/${post.boardId}`)
                 }
               >
                 <div className={styles.mediaContainer}>
@@ -135,12 +119,12 @@ export default function ShowcaseFeaturedSection() {
                   )}
 
                   {hasVideo && isPlaying && (() => {
-                    const videoUrl = embedUrl(post.youtubeUrl);
-                    return videoUrl ? (
+                    const embedUrl = getEmbedUrl(videoId);
+                    return embedUrl ? (
                       <iframe
-                        key={`${post.id}-play`}
+                        key={`${post.boardId}-play`}
                         className={`${styles.video} ${styles.visible}`}
-                        src={videoUrl}
+                        src={embedUrl}
                         allow="autoplay; encrypted-media"
                         allowFullScreen
                         title={post.title}
@@ -155,7 +139,7 @@ export default function ShowcaseFeaturedSection() {
                   >
                     <div className={styles.overlayContent}>
                       <div className={styles.author}>
-                        {post.authorNickname || '—'}
+                        {post.nickname || '—'}
                       </div>
                       <div className={styles.title}>{post.title}</div>
                     </div>

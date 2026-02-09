@@ -18,7 +18,7 @@ const INQUIRY_TYPE_OPTIONS: { value: InquiryType; label: string }[] = [
   { value: 'ETC', label: '기타' },
 ];
 
-const FILENAME_REGEX = /^[a-zA-Z0-9가-힣._-]+$/;
+const FILENAME_REGEX = /^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ._-]+$/;
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
 function countCharsNoWhitespace(str: string): number {
@@ -81,7 +81,8 @@ export default function InquiryPage() {
     }
 
     if (attachment) {
-      if (!FILENAME_REGEX.test(attachment.name)) {
+      const normalizedName = attachment.name.normalize('NFC').trim();
+      if (!FILENAME_REGEX.test(normalizedName)) {
         errs.attachment = '파일명에 특수문자나 공백이 포함되어 있습니다.';
       }
       if (attachment.size > MAX_FILE_SIZE) {
@@ -99,7 +100,8 @@ export default function InquiryPage() {
       return;
     }
 
-    if (!FILENAME_REGEX.test(file.name)) {
+    const normalizedName = file.name.normalize('NFC').trim();
+    if (!FILENAME_REGEX.test(normalizedName)) {
       setErrors((prev) => ({ ...prev, attachment: '파일명에 특수문자나 공백이 포함되어 있습니다.' }));
       e.target.value = '';
       setAttachment(null);
