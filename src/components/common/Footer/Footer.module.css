@@ -26,6 +26,30 @@
   color: #ddd;
 }
 
+.inquiryLink {
+  margin-top: 10px;
+}
+
+.inquiryLink a {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #555;
+  transition: color 0.2s;
+}
+
+.inquiryLink a:hover {
+  color: #111;
+  text-decoration: underline;
+}
+
+.dark .inquiryLink a {
+  color: #999;
+}
+
+.dark .inquiryLink a:hover {
+  color: #ddd;
+}
+
 .copyright {
   margin-top: 8px;
   font-size: 0.85rem;
