@@ -47,10 +47,14 @@ export const mypageApi = {
   /** 정산 계좌 정보 등록 - POST /mypage/settlements */
   registerSettlementAccount: (body: {
     email: string;
-    username: string;
+    name: string;
     phoneNumber: string;
     accountNumber: string;
   }) => fetchClient.post<ApiResponse<unknown>>('/mypage/settlements', body),
+
+   /**  정산 가능 내역 조회 - GET /api/mypage/settlements/history/available  */
+  getAvailableSettlements: () =>
+    fetchClient.get<ApiResponse<unknown>>('/mypage/settlements/history/available'),
 
   /** 정산 신청하기 - POST /mypage/settlements/request */
   requestSettlement: () =>
