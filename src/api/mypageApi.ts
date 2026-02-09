@@ -29,13 +29,13 @@ export const mypageApi = {
   getCreditUsageHistory: (params?: { start?: string; end?: string; type?: 'donation' | 'advertisement' }) =>
     fetchClient.get<ApiResponse<unknown>>('/mypage/support/sent', { params }),
 
-  /** 후원 보낸내역 - GET /mypage/support/sent (type: donation) */
-  getDonationSent: (params?: { start?: string; end?: string }) =>
-    fetchClient.get<ApiResponse<unknown>>('/mypage/support/sent', { params: { ...params, type: 'donation' } }),
+  /** 후원 보낸내역(후원한 내역 조회) - GET /users/{userId}/donor (구 /mypage/support/sent 사용 안 함) */
+  getDonationSent: (userId: string) =>
+    fetchClient.get<ApiResponse<unknown>>(`/users/${userId}/donor`),
 
-  /** 후원 받은내역 - GET /mypage/support/received */
-  getDonationReceived: (params?: { start?: string; end?: string }) =>
-    fetchClient.get<ApiResponse<unknown>>('/mypage/support/received', { params }),
+  /** 후원 받은내역(내가 받은 후원내역 조회) - GET /users/{userId}/acceptor (구 /mypage/support/received 사용 안 함) */
+  getDonationReceived: (userId: string) =>
+    fetchClient.get<ApiResponse<unknown>>(`/users/${userId}/acceptor`),
 
   getSettlementHistory: (params?: { start?: string; end?: string }) =>
     fetchClient.get<ApiResponse<unknown>>('/mypage/settlement', { params }),

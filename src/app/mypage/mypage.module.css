@@ -145,6 +145,11 @@
   font-weight: 600;
   font-size: 14px;
   padding: 12px;
+  text-align: center;
+}
+
+.tableHeader > div {
+  text-align: center;
 }
 
 .tableRow {
@@ -154,6 +159,11 @@
 .tableCell {
   padding: 12px;
   font-size: 14px;
+  text-align: center;
+}
+
+.tableCell button {
+  display: inline-block;
 }
 
 .tableHeader > div:first-child {
@@ -302,6 +312,7 @@
 .donationDateCell {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 2px;
   font-size: 13px;
   line-height: 1.3;
