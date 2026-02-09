@@ -101,4 +101,7 @@ export const mypageApi = {
 
   getPlaylistTracks: (playlistId: number) =>
     fetchClient.get<ApiResponse<unknown>>(`/mypage/playlist/${playlistId}/items`),
+
+  getInquiries: (params?: { page?: number; size?: number; startDate?: string; endDate?: string;}) =>
+    fetchClient.get<ApiResponse<unknown>>('/mypage/inquiry', { params }),
 };
