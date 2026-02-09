@@ -45,9 +45,23 @@ export interface PageableBoardResponse {
   empty?: boolean;
 }
 
+/** PLAYLISTS 상세용 플레이리스트 아이템 */
+export interface PlaylistItem {
+  videoId: string;
+  title: string;
+  thumbnailUrl: string;
+  position: number;
+}
+
 export interface BoardDetail extends BoardListItem {
   /** 상세 조회 시 서버에서 내려주는 좋아요 여부 */
   liked?: boolean;
+  /** 플레이리스트 ID (PLAYLISTS) */
+  playlistId?: string | number | null;
+  /** 플레이리스트 제목 (PLAYLISTS) */
+  playlistTitle?: string | null;
+  /** 플레이리스트 영상 목록 (PLAYLISTS) */
+  playlistItems?: PlaylistItem[] | null;
 }
 
 /** 게시글 좋아요 API 응답 data 필드 */

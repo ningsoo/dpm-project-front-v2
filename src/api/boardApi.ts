@@ -22,10 +22,11 @@ import type {
  * 5. DELETE /api/boards/[boardId] - 게시글 삭제
  */
 export const boardApi = {
-  /** 1. 카테고리 게시글 목록 조회 - GET /api/boards/category/[categoryType] */
-  getBoardByCategory: (categoryType: BoardCategory) =>
+  /** 1. 카테고리 게시글 목록 조회 - GET /api/boards/category/[categoryType]?page={page} */
+  getBoardByCategory: (categoryType: BoardCategory, page = 0) =>
     fetchClient.get<ApiResponse<PageableBoardResponse>>(
-      `/boards/category/${categoryType}`
+      `/boards/category/${categoryType}`,
+      { params: { page } }
     ),
 
   /** 2. 카테고리 내 게시글 작성 - POST /api/boards/category/[categoryType] */

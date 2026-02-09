@@ -11,8 +11,10 @@ import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
 import { formatCreatedDateTimeFull } from '@/utils/createdDateTime';
 import { formatViews } from '@/utils/displayFormatters';
+import { extractYouTubeVideoId, getYouTubeEmbedUrl } from '@/utils/youtubeUtils';
 import type { BoardDetail } from '@/api/boardApi';
 import CommentSection from './CommentSection';
+import PlaylistDetailSection from './PlaylistDetailSection';
 import styles from './PostDetail.module.css';
 
 interface Post extends BoardDetail {
@@ -22,13 +24,6 @@ interface Post extends BoardDetail {
   playlistUrl?: string;
   photos?: string[];
   files?: { url: string; name: string }[];
-}
-
-/** 유튜브 ID 추출 */
-function extractYoutubeId(url?: string): string {
-  if (!url) return '';
-  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/);
-  return m ? m[1] : '';
 }
 
 function getCategoryDisplayName(category?: string): string {
@@ -74,7 +69,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   const currentUserId =
     typeof window !== 'undefined' ? tokenUtils.getUserIdFromToken() : null;
 
-  // ===== 게시글 조회 =====
+  // ===== 게시글 조회 (response.data.data) =====
   useEffect(() => {
     if (!boardId) return;
 
@@ -84,7 +79,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
       .getPost(boardId)
       .then(({ data }) => {
         const postData = data?.data as BoardDetail | undefined;
-        if (postData) setPost({ ...postData });
+        if (postData) setPost({ ...postData } as Post);
       })
       .catch((err: { response?: { status?: number } }) => {
         if (err?.response?.status !== 404) {
@@ -113,7 +108,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
         ToastUtils.success('글이 삭제되었습니다.');
 
         // 이동은 실제 카테고리 기준
-        const nextCat = post?.category?.toLowerCase() ?? category;
+        const nextCat = post?.categoryType?.toLowerCase() ?? post?.category?.toLowerCase() ?? category;
         router.push(`/boards/category/${nextCat}`);
       })
       .catch(() => ToastUtils.error('글 삭제에 실패했습니다.'))
@@ -148,7 +143,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
             prev
               ? {
                   ...prev,
-                  isliked: res.liked,
+                  liked: res.liked,
                   likes:
                     typeof res.likes === 'number' ? res.likes : prev.likes ?? 0,
                 }
@@ -174,25 +169,22 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   if (loading) return <div className={styles.loading}>로딩 중…</div>;
   if (!post) return <div className={styles.loading}>글이 없습니다.</div>;
 
-  const ytId = extractYoutubeId(post.fileUrl ?? undefined);
+  const categoryType = (post.categoryType ?? post.category ?? category).toString();
+  const categorySlug = categoryType.toLowerCase();
 
   const isAuthor =
     post.userId != null &&
     currentUserId != null &&
     String(post.userId) === String(currentUserId);
 
-  const Categorytype = post.category
-    ? post.category.toLowerCase()
-    : category;
-
   return (
     <article className={styles.wrap}>
       <div className={styles.categoryRow}>
         <Link
-          href={`/boards/category/${Categorytype}`}
+          href={`/boards/category/${categorySlug}`}
           className={styles.categoryLink}
         >
-          {getCategoryDisplayName(post.category)}
+          {getCategoryDisplayName(categoryType)}
         </Link>
       </div>
 
@@ -268,38 +260,46 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
       </div>
 
       <div className={styles.contentBlock}>
-        {Categorytype === 'showcase' && ytId && (
-          <div className={styles.videoWrap}>
-            <iframe
-              title="YouTube"
-              src={`https://www.youtube.com/embed/${ytId}`}
-              allowFullScreen
-            />
-          </div>
-        )}
-
-        {Categorytype === 'playlists' && post.playlistThumbnail && (
-          <a
-            href={post.playlistUrl || '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.thumbLink}
-          >
-            <img src={post.playlistThumbnail} alt="" />
-          </a>
-        )}
-
-        {Categorytype === 'spotlight' &&
-          post.photos &&
-          post.photos.length > 0 && (
-            <div className={styles.photoList}>
-              {post.photos.map((url, i) => (
-                <img key={i} src={url} alt="" />
-              ))}
+        {categorySlug === 'showcase' && (() => {
+          const linkUrl = post.linkUrl ?? post.fileUrl ?? null;
+          const videoId = extractYouTubeVideoId(linkUrl);
+          const embedUrl = getYouTubeEmbedUrl(videoId);
+          if (!videoId || !embedUrl) return null;
+          return (
+            <div className={styles.videoWrap}>
+              <iframe
+                title="YouTube"
+                src={embedUrl}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
             </div>
+          );
+        })()}
+
+        {categorySlug === 'playlists' &&
+          post.playlistItems &&
+          post.playlistItems.length > 0 && (
+            <PlaylistDetailSection
+              playlistTitle={post.playlistTitle ?? post.title ?? '플레이리스트'}
+              playlistItems={post.playlistItems}
+            />
           )}
 
-        {['community', 'reviews'].includes(Categorytype) &&
+        {categorySlug === 'spotlight' &&
+          (() => {
+            const photos = post.photos ?? post.imageUrls ?? [];
+            if (!Array.isArray(photos) || photos.length === 0) return null;
+            return (
+              <div className={styles.photoList}>
+                {photos.map((url, i) => (
+                  <img key={i} src={url} alt="" />
+                ))}
+              </div>
+            );
+          })()}
+
+        {['community', 'reviews'].includes(categorySlug) &&
           post.files &&
           post.files.length > 0 && (
             <div className={styles.fileList}>
