@@ -6,6 +6,10 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
 import type { BoardListItem } from '@/api/boardTypes';
+import {
+  extractBoardListFromResponse,
+  getBoardThumbnailUrl,
+} from '@/utils/boardThumbnailUtils';
 import { formatViews } from '@/utils/displayFormatters';
 import styles from './TopPlaylists.module.css';
 
@@ -17,7 +21,7 @@ export default function TopPlaylists() {
     boardApi
       .getBoardByCategory('PLAYLISTS')
       .then(({ data }) => {
-        const list = Array.isArray(data?.data) ? data.data : [];
+        const list = extractBoardListFromResponse(data);
         setPosts(list.slice(0, 8));
       })
       .catch(() => setPosts([]));
@@ -32,7 +36,7 @@ export default function TopPlaylists() {
         {posts.map((p) => (
           <Link key={p.boardId} href={`/boards/${p.boardId}`} className={styles.card}>
             <div className={styles.thumbWrap}>
-              <img src={p.fileUrl || '/placeholder-playlist.png'} alt="" className={styles.thumb} />
+              <img src={getBoardThumbnailUrl(p, 'playlists')} alt="" className={styles.thumb} />
             </div>
             <div className={styles.body}>
               <div className={styles.cardTitle}>{p.title}</div>

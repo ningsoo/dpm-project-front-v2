@@ -13,6 +13,36 @@ export interface BoardListItem {
   countComment?: number;
   createdDateTime: number[]; // [year, month, day, hour, minute, second]
   fileUrl: string | null;
+  /** 카테고리 타입 (목록 API 응답) */
+  categoryType?: string;
+  /** YouTube 링크 (SHOWCASE) */
+  linkUrl?: string | null;
+  /** 썸네일/이미지 URL (서버에서 내려주는 URL) */
+  imageUrl?: string | null;
+  /** 이미지 URL 배열 */
+  imageUrls?: string[] | null;
+  /** 첨부파일 URL */
+  attachmentUrl?: string | null;
+  /** 좋아요 여부 (상세 조회 시) */
+  liked?: boolean;
+}
+
+/** 페이지네이션된 게시글 목록 API 응답 data 구조 */
+export interface PageableBoardResponse {
+  content: BoardListItem[];
+  pageable?: {
+    pageNumber: number;
+    pageSize: number;
+    sort?: { empty?: boolean; sorted?: boolean; unsorted?: boolean };
+  };
+  totalPages?: number;
+  totalElements?: number;
+  size?: number;
+  number?: number;
+  first?: boolean;
+  last?: boolean;
+  numberOfElements?: number;
+  empty?: boolean;
 }
 
 export interface BoardDetail extends BoardListItem {
