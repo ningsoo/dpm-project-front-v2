@@ -18,6 +18,22 @@ export function extractBoardListFromResponse(
   return Array.isArray(content) ? content : [];
 }
 
+/**
+ * API 응답에서 페이지네이션 정보 추출
+ * @returns { content, last } - last: 마지막 페이지 여부
+ */
+export function extractPageableInfoFromResponse(
+  data: { data?: PageableBoardResponse | BoardListItem[] } | null
+): { content: BoardListItem[]; last: boolean } {
+  const content = extractBoardListFromResponse(data);
+  if (!data?.data || Array.isArray(data.data)) {
+    return { content, last: true };
+  }
+  const d = data.data as PageableBoardResponse;
+  const last = d.last === true;
+  return { content, last };
+}
+
 export type BoardCategorySlug =
   | 'showcase'
   | 'playlists'
