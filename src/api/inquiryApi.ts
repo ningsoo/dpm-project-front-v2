@@ -3,27 +3,30 @@ import type { ApiResponse } from './authApi';
 
 export type InquiryType = 'USER' | 'PAYMENT' | 'DONATION' | 'POST' | 'API' | 'ETC';
 
-export interface CreateInquiryParams {
+export interface CreateInquiryBody {
   inquiryType: InquiryType;
   title: string;
   content: string;
-  attachment?: File;
+  fileUrl: string | null;
+  fileKey: string | null;
+}
+
+export interface S3UploadResult {
+  fileUrl: string;
+  fileKey: string;
 }
 
 export const inquiryApi = {
-  createInquiry: (params: CreateInquiryParams) => {
+  /** S3 단일 파일 업로드 - POST /s3/upload/single */
+  uploadFile: (file: File) => {
     const formData = new FormData();
-    formData.append('inquiryType', params.inquiryType);
-    formData.append('title', params.title);
-    formData.append('content', params.content);
-    if (params.attachment) {
-      formData.append('attachment', params.attachment);
-    }
-
-    return fetchClient.post<ApiResponse<unknown>>('/inquiry/create', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    formData.append('file', file);
+    return fetchClient.post<ApiResponse<S3UploadResult>>('/s3/upload/single', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+
+  /** 문의 등록 - POST /inquiries/create (JSON) */
+  createInquiry: (body: CreateInquiryBody) =>
+    fetchClient.post<ApiResponse<unknown>>('/inquiry/create', body),
 };

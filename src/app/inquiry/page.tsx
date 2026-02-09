@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { X } from 'lucide-react';
 import { RootState } from '@/store';
-import { inquiryApi, InquiryType } from '@/api/inquiryApi';
+import { inquiryApi, type InquiryType } from '@/api/inquiryApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import styles from './inquiry.module.css';
 
@@ -189,11 +189,30 @@ export default function InquiryPage() {
     setShowConfirmModal(false);
     setSubmitting(true);
     try {
+      // Step 1: 파일이 있으면 S3에 업로드
+      let fileUrl: string | null = null;
+      let fileKey: string | null = null;
+
+      if (attachment) {
+        try {
+          const uploadRes = await inquiryApi.uploadFile(attachment);
+          const uploadData = uploadRes.data?.data;
+          fileUrl = uploadData?.fileUrl ?? null;
+          fileKey = uploadData?.fileKey ?? null;
+        } catch {
+          ToastUtils.error('파일 업로드에 실패했습니다.');
+          setSubmitting(false);
+          return;
+        }
+      }
+
+      // Step 2: 문의 등록 (JSON)
       await inquiryApi.createInquiry({
         inquiryType,
         title,
         content,
-        attachment: attachment || undefined,
+        fileUrl,
+        fileKey,
       });
       ToastUtils.success('1대1 문의가 등록되었습니다.');
       router.push('/');
