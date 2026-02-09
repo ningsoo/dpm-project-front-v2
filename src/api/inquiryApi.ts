@@ -9,11 +9,13 @@ export interface CreateInquiryBody {
   content: string;
   fileUrl: string | null;
   fileKey: string | null;
+  isImage: boolean | null;
 }
 
 export interface S3UploadResult {
   fileUrl: string;
   fileKey: string;
+  isImage: boolean;
 }
 
 export const inquiryApi = {

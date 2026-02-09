@@ -90,7 +90,8 @@ export default function MypagePage() {
     inquiryType: string;
     createdAt: string;
     content: string;
-    attachmentUrl?: string;
+    fileUrl?: string;
+    isImage?: boolean;
     commentStatus: string;
     adminComment?: string;
     commentCreatedAt?: string;
@@ -881,16 +882,20 @@ export default function MypagePage() {
                                 setInquiryDetail(null);
                                 mypageApi.getInquiryDetail(item.inquiryId)
                                   .then(({ data }) => {
+                                    console.log('[InquiryDetail] raw API response:', data);
+                                    console.log('[InquiryDetail] data.data:', data?.data);
                                     const detail = data?.data as {
                                       title: string;
                                       inquiryType: string;
                                       createdAt: string;
                                       content: string;
-                                      attachmentUrl?: string;
+                                      fileUrl?: string;
+                                      isImage?: boolean;
                                       commentStatus: string;
                                       adminComment?: string;
                                       commentCreatedAt?: string;
                                     } | undefined;
+                                    console.log('[InquiryDetail] fileUrl:', detail?.fileUrl);
                                     setInquiryDetail(detail ?? null);
                                   })
                                   .catch(() => {
@@ -1262,24 +1267,24 @@ export default function MypagePage() {
                     <span className={styles.inquiryDetailLabel}>내용</span>
                     <span className={styles.inquiryDetailValue} style={{ whiteSpace: 'pre-wrap' }}>{inquiryDetail.content}</span>
                   </div>
-                  {inquiryDetail.attachmentUrl && (
+                  {inquiryDetail.fileUrl && (
                     <div className={styles.inquiryDetailRow} style={{ alignItems: 'flex-start' }}>
                       <span className={styles.inquiryDetailLabel}>첨부파일</span>
                       <span className={styles.inquiryDetailValue}>
-                        {/\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(inquiryDetail.attachmentUrl) ? (
+                        {inquiryDetail.isImage ? (
                           <img
-                            src={inquiryDetail.attachmentUrl}
+                            src={inquiryDetail.fileUrl}
                             alt="첨부 이미지"
                             className={styles.inquiryDetailAttachmentImg}
                           />
                         ) : (
                           <a
-                            href={inquiryDetail.attachmentUrl}
+                            href={inquiryDetail.fileUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className={styles.inquiryDetailAttachmentLink}
                           >
-                            파일 다운로드
+                            첨부파일 다운로드
                           </a>
                         )}
                       </span>

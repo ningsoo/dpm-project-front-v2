@@ -95,12 +95,7 @@ export default function InquiryPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) {
-      setAttachment(null);
-      setErrors((prev) => {
-        const next = { ...prev };
-        delete next.attachment;
-        return next;
-      });
+      // 파일 탐색기에서 취소 → 기존 첨부 파일 상태 유지
       return;
     }
 
@@ -192,6 +187,7 @@ export default function InquiryPage() {
       // Step 1: 파일이 있으면 S3에 업로드
       let fileUrl: string | null = null;
       let fileKey: string | null = null;
+      let isImage: boolean | null = null;
 
       if (attachment) {
         try {
@@ -199,6 +195,7 @@ export default function InquiryPage() {
           const uploadData = uploadRes.data?.data;
           fileUrl = uploadData?.fileUrl ?? null;
           fileKey = uploadData?.fileKey ?? null;
+          isImage = uploadData?.isImage ?? null;
         } catch {
           ToastUtils.error('파일 업로드에 실패했습니다.');
           setSubmitting(false);
@@ -213,6 +210,7 @@ export default function InquiryPage() {
         content,
         fileUrl,
         fileKey,
+        isImage,
       });
       ToastUtils.success('1대1 문의가 등록되었습니다.');
       router.push('/');
