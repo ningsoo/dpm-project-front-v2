@@ -373,7 +373,7 @@ export function DonationSection() {
                         key={row.popHistoryId ?? idx}
                         className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableRow}`}
                       >
-                        <div className={styles.tableCell}>-</div>
+                        <div className={styles.tableCell}>{row.popHistoryId ?? '-'}</div>
                         <div className={styles.tableCell}>
                           <DonationDateCell dt={row.createdDatetime} />
                         </div>
@@ -443,7 +443,7 @@ export function DonationSection() {
                       key={row.popHistoryId ?? idx}
                       className={`${styles.tableGrid} ${styles.donationReceivedGrid8} ${styles.tableRow}`}
                     >
-                      <div className={styles.tableCell}>-</div>
+                      <div className={styles.tableCell}>{row.popHistoryId ?? '-'}</div>
                       <div className={styles.tableCell}>
                         <DonationDateCell dt={row.createdDatetime} />
                       </div>
