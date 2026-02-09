@@ -3,6 +3,7 @@ import { fetchClient } from './fetchClient';
 export interface SignupBody {
   email: string;
   password: string;
+  name: string;
   nickname: string;
   phoneNumber: string;
 }

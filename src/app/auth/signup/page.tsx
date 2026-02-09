@@ -7,7 +7,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import { authApi } from '@/api/authApi';
 import { ToastUtils } from '@/utils/toastUtils';
-import { validatePhonePartsStrict } from '@/utils/authValidation';
+import { validatePhonePartsStrict, validateNameFormatByRule } from '@/utils/authValidation';
 import styles from '../auth.module.css';
 
 const PWD_REQUIRE = '대문자, 숫자, 특수문자 포함 10자 이상, 공백금지';
@@ -41,6 +41,9 @@ export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
+  const [nameTouched, setNameTouched] = useState(false);
+  const [nameError, setNameError] = useState('');
   const [nickname, setNickname] = useState('');
   const phonePart0Ref = useRef<HTMLInputElement>(null);
   const phonePart1Ref = useRef<HTMLInputElement>(null);
@@ -83,6 +86,7 @@ export default function SignupPage() {
   const pwdOk = pwdErrors.length === 0;
   const confirmOk = password && confirmPassword && password === confirmPassword;
   const confirmError = confirmPassword && password && password !== confirmPassword;
+  const nameOk = name.length > 0 && !nameError;
   
   // 닉네임 형식 검사 함수 (우선순위: 공백 > 특수문자 > 한글 자음/모음 단독)
   const validateNicknameFormat = (value: string): string => {
@@ -377,6 +381,13 @@ export default function SignupPage() {
     };
   }, []);
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setName(v);
+    setNameTouched(true);
+    setNameError(validateNameFormatByRule(v));
+  };
+
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     // 10자 넘으면 입력 막기
@@ -445,8 +456,13 @@ export default function SignupPage() {
       setPhoneErrorUx(phoneValidation.error);
     }
 
+    // name 재검증
+    const nameErr = validateNameFormatByRule(name);
+    setNameError(nameErr);
+    const nameOkNow = name.length > 0 && !nameErr;
+
     // submit 조건 검사
-    if (!pwdOk || !confirmOk || !nicknameOk || !phoneOk || errors.email || errors.nickname || !emailVerified || !nicknameVerified) {
+    if (!pwdOk || !confirmOk || !nameOkNow || !nicknameOk || !phoneOk || errors.email || errors.nickname || !emailVerified || !nicknameVerified) {
       return;
     }
     
@@ -457,6 +473,7 @@ export default function SignupPage() {
       await authApi.signup({
         email,
         password,
+        name,
         nickname,
         phoneNumber: phoneForServer,
       });
@@ -590,6 +607,21 @@ export default function SignupPage() {
           </div>
           <span className={styles.error}>
             {confirmError ? '비밀번호가 일치하지 않습니다' : ''}
+          </span>
+        </label>
+
+        <label className={styles.label}>
+          이름
+          <input
+            type="text"
+            placeholder="김산독"
+            autoComplete="name"
+            value={name}
+            onChange={handleNameChange}
+            className={styles.input}
+          />
+          <span className={styles.error}>
+            {(nameTouched || submitAttempted) ? nameError : ''}
           </span>
         </label>
 
@@ -771,7 +803,7 @@ export default function SignupPage() {
         <button
           type="submit"
           className={styles.submit}
-          disabled={!pwdOk || !confirmOk || !nicknameOk || !phoneOk || !!errors.email || !!errors.nickname || !emailVerified || !nicknameVerified || loading}
+          disabled={!pwdOk || !confirmOk || !nameOk || !nicknameOk || !phoneOk || !!errors.email || !!errors.nickname || !emailVerified || !nicknameVerified || loading}
         >
           {loading ? '처리 중…' : '가입하기'}
         </button>

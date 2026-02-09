@@ -163,3 +163,19 @@ export function validateEmailForSubmit(value: string): { ok: boolean; error: str
   if (!EMAIL_FULL_REGEX.test(trimmed)) return { ok: false, error: '올바른 이메일 형식이 아닙니다' };
   return { ok: true, error: '' };
 }
+
+/**
+ * 이름 형식 검증 (한글/영어만 허용)
+ * - 허용: 한글(가-힣), 영어(A-Z a-z)
+ * - 금지: 숫자, 특수문자, 공백(스페이스/탭 포함)
+ * - 빈 문자열이면 '' 반환
+ * - 통과 시 '' 반환
+ * - 실패 시 '이름은 한글 또는 영어만 입력할 수 있습니다' 반환
+ */
+export function validateNameFormatByRule(value: string): string {
+  if (value === '') return '';
+  if (!/^[A-Za-z가-힣]+$/.test(value)) {
+    return '이름은 한글 또는 영어만 입력할 수 있습니다';
+  }
+  return '';
+}
