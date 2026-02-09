@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { fetchClient } from '@/api/fetchClient';
+import { mypageApi } from '@/api/mypageApi';
+import { tokenUtils } from '@/utils/tokenUtils';
 import { ToastUtils } from '@/utils/toastUtils';
 import styles from '../mypage.module.css';
 
@@ -18,12 +20,16 @@ export type PopHistoryResponseRow = {
   related?: { id?: number | null; name?: string | null };
 };
 
-function parseRestResponse(res: unknown): PopHistoryResponseRow[] {
-  if (!res || typeof res !== 'object') return [];
-  const obj = res as Record<string, unknown>;
+/**
+ * ApiResponse({ success, message, data }) 형태의 res.data에서 rows 추출.
+ * - res.data.data 배열 우선, 없으면 res.data가 직접 배열인 경우 허용.
+ */
+function parseRestResponse(apiBody: unknown): PopHistoryResponseRow[] {
+  if (!apiBody || typeof apiBody !== 'object') return [];
+  const obj = apiBody as Record<string, unknown>;
   const data = obj.data;
   if (Array.isArray(data)) return data as PopHistoryResponseRow[];
-  if (Array.isArray(res)) return res as PopHistoryResponseRow[];
+  if (Array.isArray(apiBody)) return apiBody as PopHistoryResponseRow[];
   return [];
 }
 
@@ -60,6 +66,42 @@ function formatAmount(amount?: number): string {
   return String(amount);
 }
 
+/** 보낸내역 전용: changeAmount를 절대값으로 표시. 없으면 0 */
+function formatAmountAbs(amount?: number): string {
+  if (typeof amount !== 'number' || Number.isNaN(amount)) return '0';
+  return String(Math.abs(amount));
+}
+
+/** popStatus를 한글 라벨로 변환 */
+function getPopStatusLabel(status?: string): string {
+  switch (status) {
+    case 'CANCEL_REQUEST':
+      return '취소요청';
+    case 'CANCELED':
+      return '취소';
+    case 'COMPLETED':
+      return '승인완료';
+    default:
+      return '-';
+  }
+}
+
+/** 금액을 콤마 포함하여 표시 */
+const numberFormatter = new Intl.NumberFormat('ko-KR');
+
+function formatAmountWithComma(amount?: number): string {
+  if (typeof amount !== 'number' || Number.isNaN(amount)) return '0';
+  return numberFormatter.format(amount);
+}
+
+/** 보낸내역 전용: 금액을 절대값 + 콤마로 표시 */
+function formatAmountAbsWithComma(amount?: number): string {
+  if (typeof amount !== 'number' || Number.isNaN(amount)) return '0';
+  return numberFormatter.format(Math.abs(amount));
+}
+
+const FIXED_CANCEL_REASON = '구매자 변심으로 인한 취소';
+
 /** createdDatetime 기준 최신순. createdDatetime 없으면 맨 아래로 */
 function sortByCreatedDatetimeDesc(rows: PopHistoryResponseRow[]): PopHistoryResponseRow[] {
   return [...rows].sort((a, b) => {
@@ -86,7 +128,11 @@ function filterByDateRange(rows: PopHistoryResponseRow[], range: { start: string
   });
 }
 
-export function DonationSection({ user }: { user: { id: string } }) {
+const showedUserIdNullToastRef = { current: false };
+
+export function DonationSection() {
+  const userId = tokenUtils.getUserIdFromAccessToken();
+  if (userId !== null) showedUserIdNullToastRef.current = false;
   const [subTab, setSubTab] = useState<'sent' | 'received'>('sent');
   const [inputRange, setInputRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
   const [appliedRange, setAppliedRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
@@ -102,45 +148,72 @@ export function DonationSection({ user }: { user: { id: string } }) {
   const [cancelReason, setCancelReason] = useState('');
   const [cancelReasonError, setCancelReasonError] = useState('');
   const [showReasonModal, setShowReasonModal] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
 
   const fetchSent = useCallback(async () => {
-    const userId = Number(user.id);
-    if (Number.isNaN(userId)) {
+    const uid = tokenUtils.getUserIdFromAccessToken();
+    if (uid === null) {
       setSentRaw([]);
+      setSentLoading(false);
+      if (!showedUserIdNullToastRef.current) {
+        showedUserIdNullToastRef.current = true;
+        ToastUtils.error('로그인 정보를 확인할 수 없습니다. 다시 로그인해주세요.');
+      }
       return;
     }
     setSentLoading(true);
     try {
-      const res = await fetchClient.get<unknown>(`/users/${userId}/donor`);
+      const res = await mypageApi.getDonationSent(String(uid));
       const rows = parseRestResponse(res.data);
       setSentRaw(Array.isArray(rows) ? rows : []);
-    } catch {
+      const dataObj = res.data as unknown as Record<string, unknown> | null;
+      const dataSummary =
+        dataObj && typeof dataObj === 'object'
+          ? {
+              success: dataObj.success,
+              message: dataObj.message,
+              dataLength: Array.isArray(dataObj.data) ? dataObj.data.length : '-',
+            }
+          : res.data;
+    } catch (err) {
       setSentRaw([]);
     } finally {
       setSentLoading(false);
       setVisibleCountSent(BATCH_SIZE);
     }
-  }, [user.id]);
+  }, []);
 
   const fetchReceived = useCallback(async () => {
-    const userId = Number(user.id);
-    if (Number.isNaN(userId)) {
+    const uid = tokenUtils.getUserIdFromAccessToken();
+    if (uid === null) {
       setReceivedRaw([]);
+      setReceivedLoading(false);
+      if (!showedUserIdNullToastRef.current) {
+        showedUserIdNullToastRef.current = true;
+        ToastUtils.error('로그인 정보를 확인할 수 없습니다. 다시 로그인해주세요.');
+      }
       return;
     }
     setReceivedLoading(true);
     try {
-      const res = await fetchClient.get<unknown>(`/users/${userId}/acceptor`);
+      const res = await mypageApi.getDonationReceived(String(uid));
       const rows = parseRestResponse(res.data);
       setReceivedRaw(Array.isArray(rows) ? rows : []);
-    } catch {
+      const dataObj = res.data as unknown as Record<string, unknown> | null;
+      const dataSummary =
+        dataObj && typeof dataObj === 'object'
+          ? {
+              success: dataObj.success,
+              message: dataObj.message,
+              dataLength: Array.isArray(dataObj.data) ? dataObj.data.length : '-',
+            }
+          : res.data;
+    } catch (err) {
       setReceivedRaw([]);
     } finally {
       setReceivedLoading(false);
     }
-  }, [user.id]);
+  }, []);
 
   useEffect(() => {
     if (subTab === 'sent') {
@@ -157,10 +230,7 @@ export function DonationSection({ user }: { user: { id: string } }) {
   );
   const receivedFiltered = useMemo(
     () =>
-      filterByDateRange(
-        sortByCreatedDatetimeDesc(receivedRaw.filter((r) => r.popStatus === 'COMPLETED')),
-        appliedRange
-      ),
+      filterByDateRange(sortByCreatedDatetimeDesc(receivedRaw), appliedRange),
     [receivedRaw, appliedRange]
   );
   const sentVisible = useMemo(
@@ -169,6 +239,9 @@ export function DonationSection({ user }: { user: { id: string } }) {
   );
   const hasMoreSent = sentFiltered.length > visibleCountSent;
   sentFilteredLengthRef.current = sentFiltered.length;
+
+  useEffect(() => {
+  }, [subTab, sentFiltered.length, receivedFiltered.length]);
 
   const handleSearch = useCallback(() => {
     setAppliedRange({ start: inputRange.start, end: inputRange.end });
@@ -202,14 +275,23 @@ export function DonationSection({ user }: { user: { id: string } }) {
       ToastUtils.error('취소할 내역을 확인할 수 없습니다.');
       return;
     }
-    const userId = Number(user.id);
-    if (Number.isNaN(userId)) return;
+    const uid = tokenUtils.getUserIdFromAccessToken();
+    if (uid === null) {
+      ToastUtils.error('로그인 정보를 확인할 수 없습니다. 다시 로그인해주세요.');
+      return;
+    }
 
+    const body = {
+      popHistoryId,
+      changeAmount: Math.abs(target.changeAmount ?? 0),
+      message: FIXED_CANCEL_REASON,
+    };
     setCancelSubmitting(true);
     try {
-      await fetchClient.post<unknown>(`/users/${userId}/donations/cancel`, { popHistoryId });
-      setShowConfirmModal(false);
+      await fetchClient.post<unknown>(`/users/${uid}/donations/cancel`, body);
       setCancelTarget(null);
+      setCancelReason('');
+      setCancelReasonError('');
       ToastUtils.success('후원이 취소되었습니다.');
       await fetchSent();
     } catch (err: unknown) {
@@ -218,9 +300,8 @@ export function DonationSection({ user }: { user: { id: string } }) {
       ToastUtils.error(msg || '후원 취소 요청에 실패했습니다.');
     } finally {
       setCancelSubmitting(false);
-      setShowConfirmModal(false);
     }
-  }, [cancelTarget, user.id, fetchSent]);
+  }, [cancelTarget, fetchSent]);
 
   return (
     <div className={styles.donationSection}>
@@ -292,7 +373,7 @@ export function DonationSection({ user }: { user: { id: string } }) {
                         key={row.popHistoryId ?? idx}
                         className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableRow}`}
                       >
-                        <div className={styles.tableCell}>-</div>
+                        <div className={styles.tableCell}>{row.popHistoryId ?? '-'}</div>
                         <div className={styles.tableCell}>
                           <DonationDateCell dt={row.createdDatetime} />
                         </div>
@@ -305,7 +386,7 @@ export function DonationSection({ user }: { user: { id: string } }) {
                         <div className={styles.tableCell}>
                           <DonationDateCell dt={row.cancelDatetime} />
                         </div>
-                        <div className={styles.tableCell}>{formatAmount(row.changeAmount)}</div>
+                        <div className={styles.tableCell}>{formatAmountAbsWithComma(row.changeAmount)}</div>
                         <div className={styles.tableCell}>
                           {row.popStatus === 'COMPLETED' ? (
                             <button
@@ -314,19 +395,15 @@ export function DonationSection({ user }: { user: { id: string } }) {
                               disabled={cancelSubmitting}
                               onClick={() => {
                                 setCancelTarget(row);
-                                setCancelReason('');
+                                setCancelReason(FIXED_CANCEL_REASON);
                                 setCancelReasonError('');
                                 setShowReasonModal(true);
                               }}
                             >
                               취소하기
                             </button>
-                          ) : row.popStatus === 'CANCEL_REQUEST' ? (
-                            '취소 요청중'
-                          ) : row.popStatus === 'CANCELED' ? (
-                            '취소완료'
                           ) : (
-                            '-'
+                            getPopStatusLabel(row.popStatus)
                           )}
                         </div>
                         <div className={styles.tableCell}>{row.related?.name ?? '-'}</div>
@@ -366,7 +443,7 @@ export function DonationSection({ user }: { user: { id: string } }) {
                       key={row.popHistoryId ?? idx}
                       className={`${styles.tableGrid} ${styles.donationReceivedGrid8} ${styles.tableRow}`}
                     >
-                      <div className={styles.tableCell}>-</div>
+                      <div className={styles.tableCell}>{row.popHistoryId ?? '-'}</div>
                       <div className={styles.tableCell}>
                         <DonationDateCell dt={row.createdDatetime} />
                       </div>
@@ -379,8 +456,8 @@ export function DonationSection({ user }: { user: { id: string } }) {
                       <div className={styles.tableCell}>
                         <DonationDateCell dt={row.cancelDatetime} />
                       </div>
-                      <div className={styles.tableCell}>{formatAmount(row.changeAmount)}</div>
-                      <div className={styles.tableCell}>{row.popStatus ?? '-'}</div>
+                      <div className={styles.tableCell}>{formatAmountWithComma(row.changeAmount)}</div>
+                      <div className={styles.tableCell}>{getPopStatusLabel(row.popStatus)}</div>
                       <div className={styles.tableCell}>{row.related?.name ?? '-'}</div>
                     </div>
                   ))
@@ -399,70 +476,30 @@ export function DonationSection({ user }: { user: { id: string } }) {
           aria-labelledby="donation-reason-modal-title"
         >
           <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <h3 id="donation-reason-modal-title" className={styles.modalTitle}>
-              후원 취소 사유를 입력해주세요.
+            <h3
+              id="donation-reason-modal-title"
+              className={styles.modalTitle}
+              style={{ fontSize: '1rem' }}
+            >
+              후원 취소 사유를 선택하세요.
             </h3>
-            <textarea
-              value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
-              placeholder="최소 10자 이상 작성해주세요"
+            <input
+              type="text"
+              value={FIXED_CANCEL_REASON}
+              readOnly
               className={styles.settlementInput}
-              rows={4}
-              style={{ marginBottom: 8, width: '100%', resize: 'vertical' }}
+              style={{ marginBottom: 8, width: '100%' }}
             />
-            {cancelReasonError && (
-              <p style={{ color: '#c62828', fontSize: 14, margin: '0 0 12px' }}>{cancelReasonError}</p>
-            )}
-            <div className={styles.settlementConfirmActions}>
-              <button
-                type="button"
-                className={styles.settlementConfirmBtn}
-                onClick={() => {
-                  if (cancelReason.trim().length < 10) {
-                    setCancelReasonError('최소 10자 이상 작성해주세요.');
-                    return;
-                  }
-                  setCancelReasonError('');
-                  setShowReasonModal(false);
-                  setShowConfirmModal(true);
-                }}
-              >
-                확인
-              </button>
-              <button
-                type="button"
-                className={styles.settlementConfirmCancelBtn}
-                onClick={() => {
-                  setShowReasonModal(false);
-                  setCancelReason('');
-                  setCancelReasonError('');
-                  setCancelTarget(null);
-                }}
-              >
-                취소
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showConfirmModal && (
-        <div
-          className={styles.modalOverlay}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="donation-confirm-modal-title"
-        >
-          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <h3 id="donation-confirm-modal-title" className={styles.modalTitle}>
-              정말 이 음악인에 대한 후원을 취소하시겠습니까?
-            </h3>
             <div className={styles.settlementConfirmActions}>
               <button
                 type="button"
                 className={styles.settlementConfirmBtn}
                 disabled={cancelSubmitting}
-                onClick={handleConfirmCancel}
+                onClick={() => {
+                  setCancelReasonError('');
+                  setShowReasonModal(false);
+                  handleConfirmCancel();
+                }}
               >
                 {cancelSubmitting ? '처리 중…' : '확인'}
               </button>
@@ -471,7 +508,9 @@ export function DonationSection({ user }: { user: { id: string } }) {
                 className={styles.settlementConfirmCancelBtn}
                 disabled={cancelSubmitting}
                 onClick={() => {
-                  setShowConfirmModal(false);
+                  setShowReasonModal(false);
+                  setCancelReason('');
+                  setCancelReasonError('');
                   setCancelTarget(null);
                 }}
               >

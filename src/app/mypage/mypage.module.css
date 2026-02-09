@@ -145,6 +145,12 @@
   font-weight: 600;
   font-size: 14px;
   padding: 12px;
+  text-align: center;
+}
+
+.tableHeader > div {
+  text-align: center;
+  white-space: nowrap;
 }
 
 .tableRow {
@@ -154,6 +160,11 @@
 .tableCell {
   padding: 12px;
   font-size: 14px;
+  text-align: center;
+}
+
+.tableCell button {
+  display: inline-block;
 }
 
 .tableHeader > div:first-child {
@@ -263,18 +274,18 @@
   grid-template-columns: minmax(140px, 1fr) minmax(120px, 1fr) minmax(100px, 0.8fr) minmax(80px, 0.6fr);
 }
 
-/* 보낸내역: 8컬럼 - 전체 폭 채우고 균등 배치 */
+/* 보낸내역: 8컬럼 - 팝히스토리 컬럼만 작게, 나머지 균등 배치 */
 .donationSentGrid8 {
   width: 100%;
   min-width: 100%;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-columns: minmax(100px, 0.7fr) repeat(7, minmax(0, 1fr));
 }
 
-/* 받은내역: 8컬럼 - 전체 폭 채우고 균등 배치 */
+/* 받은내역: 8컬럼 - 팝히스토리 컬럼만 작게, 나머지 균등 배치 */
 .donationReceivedGrid8 {
   width: 100%;
   min-width: 100%;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-columns: minmax(100px, 0.7fr) repeat(7, minmax(0, 1fr));
 }
 
 /* 후원 테이블: 좌우 여백 통일, 첫/마지막 컬럼 padding 대칭 */
@@ -302,6 +313,7 @@
 .donationDateCell {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 2px;
   font-size: 13px;
   line-height: 1.3;

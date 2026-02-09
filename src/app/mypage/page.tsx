@@ -552,11 +552,11 @@ export default function MypagePage() {
             <div style={{ overflowX: 'auto' }}>
               <div>
                 <div className={styles.tableGrid + ' ' + styles.postsGrid + ' ' + styles.tableHeader}>
-                  <div style={{ textAlign: 'left' }}>게시판 종류</div>
-                  <div style={{ textAlign: 'center' }}>제목</div>
-                  <div style={{ textAlign: 'center' }}>날짜</div>
-                  <div style={{ textAlign: 'center' }}>조회</div>
-                  <div style={{ textAlign: 'center' }}>추천</div>
+                  <div>게시판 종류</div>
+                  <div>제목</div>
+                  <div>날짜</div>
+                  <div>조회</div>
+                  <div>추천</div>
                 </div>
                 <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
                   게시글이 없습니다.
@@ -609,10 +609,10 @@ export default function MypagePage() {
             <div style={{ overflowX: 'auto' }}>
               <div>
                 <div className={styles.tableGrid + ' ' + styles.commentsGrid + ' ' + styles.tableHeader}>
-                  <div style={{ textAlign: 'left' }}>게시판 종류</div>
-                  <div style={{ textAlign: 'center' }}>댓글내용</div>
-                  <div style={{ textAlign: 'center' }}>원문 글 제목</div>
-                  <div style={{ textAlign: 'center' }}>작성일</div>
+                  <div>게시판 종류</div>
+                  <div>댓글내용</div>
+                  <div>원문 글 제목</div>
+                  <div>작성일</div>
                 </div>
                 <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
                   댓글이 없습니다.
@@ -665,12 +665,12 @@ export default function MypagePage() {
             <div style={{ overflowX: 'auto' }}>
               <div>
                 <div className={styles.tableGrid + ' ' + styles.likedGrid + ' ' + styles.tableHeader}>
-                  <div style={{ textAlign: 'left' }}>게시판 종류</div>
-                  <div style={{ textAlign: 'center' }}>제목</div>
-                  <div style={{ textAlign: 'center' }}>작성자</div>
-                  <div style={{ textAlign: 'center' }}>날짜</div>
-                  <div style={{ textAlign: 'center' }}>조회</div>
-                  <div style={{ textAlign: 'center' }}>추천</div>
+                  <div>게시판 종류</div>
+                  <div>제목</div>
+                  <div>작성자</div>
+                  <div>날짜</div>
+                  <div>조회</div>
+                  <div>추천</div>
                 </div>
                 <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
                   좋아요 한 게시글이 없습니다.
@@ -732,7 +732,7 @@ export default function MypagePage() {
             <div style={{ overflowX: 'auto' }}>
               <div>
                 <div className={styles.tableGrid + ' ' + styles.reportsGrid + ' ' + styles.tableHeader}>
-                  <div style={{ textAlign: 'center' }}>
+                  <div>
                     <input
                       type="checkbox"
                       onChange={(e) => {
@@ -745,11 +745,11 @@ export default function MypagePage() {
                       }}
                     />
                   </div>
-                  <div style={{ textAlign: 'left' }}>신고일시</div>
-                  <div style={{ textAlign: 'center' }}>신고사유</div>
-                  <div style={{ textAlign: 'center' }}>상태</div>
-                  <div style={{ textAlign: 'center' }}>글 바로가기</div>
-                  <div style={{ textAlign: 'center' }}>신고 취소</div>
+                  <div>신고일시</div>
+                  <div>신고사유</div>
+                  <div>상태</div>
+                  <div>글 바로가기</div>
+                  <div>신고 취소</div>
                 </div>
                 <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
                   신고 내역이 없습니다.
@@ -762,7 +762,7 @@ export default function MypagePage() {
           <SettlementSection user={user} />
         )}
         {tab === 'donation' && (
-          <DonationSection user={user} />
+          <DonationSection />
         )}
         {tab === 'inquiries' && (
           <div>

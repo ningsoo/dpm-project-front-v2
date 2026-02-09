@@ -351,11 +351,11 @@ export function SettlementSection({ user }: SettlementSectionProps) {
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <div className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableHeader}`}>
-                  <div style={{ textAlign: 'left' }}>정산요청일</div>
-                  <div style={{ textAlign: 'center' }}>정산승인일</div>
-                  <div style={{ textAlign: 'center' }}>변동 수량</div>
-                  <div style={{ textAlign: 'center' }}>정산금액</div>
-                  <div style={{ textAlign: 'right', paddingRight: '20px' }}>정산처리상태</div>
+                  <div>정산요청일</div>
+                  <div>정산승인일</div>
+                  <div>변동 수량</div>
+                  <div>정산금액</div>
+                  <div style={{ paddingRight: '20px' }}>정산처리상태</div>
                 </div>
                 {historyList.length === 0 ? (
                   <div className={styles.settlementEmpty}>정산 내역이 없습니다.</div>
@@ -369,7 +369,7 @@ export function SettlementSection({ user }: SettlementSectionProps) {
                       <div className={styles.tableCell}>{formatSettlementDate(item.approvedDatetime)}</div>
                       <div className={styles.tableCell}>{formatSettlementAmount(item.changeAmount)}</div>
                       <div className={styles.tableCell}>{formatSettlementAmount(item.changeAmount)}</div>
-                      <div className={styles.tableCell} style={{ textAlign: 'right', paddingRight: '20px' }}>
+                      <div className={styles.tableCell} style={{ paddingRight: '20px' }}>
                         {item.statusLabel ?? '정산신청'}
                       </div>
                     </div>
