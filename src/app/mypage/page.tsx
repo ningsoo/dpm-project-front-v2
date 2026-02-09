@@ -4,13 +4,14 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
-import { CreditCard, Key, User, Plus, Search, Pencil, Heart, X, Check } from 'lucide-react';
+import { Key, User, Plus, Search, Pencil, Heart, X, Check } from 'lucide-react';
 import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import { PasswordVerifyModal } from './PasswordVerifyModal';
 import { SettlementSection } from './components/SettlementSection';
 import { DonationSection } from './components/DonationSection';
+import { PopSection } from './components/PopSection';
 import { MyPageYouTubeSection } from './components/MyPageYouTubeSection';
 import styles from './mypage.module.css';
 
@@ -33,11 +34,11 @@ const TABS = [
   { id: 'settlement', label: '정산' },
   { id: 'donation', label: '후원' },
   { id: 'inquiries', label: '문의내역' },
+  { id: 'pop', label: 'POP' },
 ] as const;
 
 /** 11자리 연락처를 3-4-4 형식(예: 010-1234-5678)으로 변환해 프로필 렌더링용으로 반환 */
 function formatPhone11(phoneNumber: string | undefined): string {
-  console.log('phoneNumber', phoneNumber);
   if (phoneNumber == null || phoneNumber === '') return '';
   const digits = phoneNumber.replace(/\D/g, '');
   if (digits.length !== 11) return phoneNumber;
@@ -458,14 +459,6 @@ export default function MypagePage() {
           <div className={styles.credits}>POP {user.credits ?? 0}</div>
         </div>
         <div className={styles.profileActions}>
-          <button
-            type="button"
-            className={styles.iconLink}
-            title="POP 충전"
-            onClick={() => setShowCreditChargeModal(true)}
-          >
-            <CreditCard size={22} />
-          </button>
           <button
             type="button"
             className={styles.iconLink}
@@ -971,6 +964,9 @@ export default function MypagePage() {
               </>
             )}
           </div>
+        )}
+        {tab === 'pop' && (
+          <PopSection user={user} onChargeClick={() => setShowCreditChargeModal(true)} />
         )}
       </div>
 
