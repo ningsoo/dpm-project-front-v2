@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import { X } from 'lucide-react';
+import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 
@@ -21,6 +23,7 @@ interface YouTubePlaylistModalProps {
 }
 
 export function YouTubePlaylistModal({ isOpen, onClose, onSuccess }: YouTubePlaylistModalProps) {
+  const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const [playlists, setPlaylists] = useState<PlaylistItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [registering, setRegistering] = useState(false);
@@ -146,8 +149,8 @@ export function YouTubePlaylistModal({ isOpen, onClose, onSuccess }: YouTubePlay
               style={{
                 width: 48,
                 height: 48,
-                border: '4px solid #f0f0f0',
-                borderTop: '4px solid #1976d2',
+                border: `4px solid ${darkMode ? '#333' : '#f0f0f0'}`,
+                borderTop: `4px solid ${darkMode ? '#3A3934' : '#1976d2'}`,
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite',
               }}

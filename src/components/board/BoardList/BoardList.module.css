@@ -335,3 +335,99 @@
   transform: translateY(0);
   opacity: 0.8;
 }
+
+/* Dark mode */
+:global(.dark) .filter {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .input {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .card {
+  background: #242422;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .thumbWrap {
+  background: #2E2E2C;
+}
+
+:global(.dark) .cardTitle {
+  color: #B5B3A7;
+}
+
+:global(.dark) .meta {
+  color: #8A877D;
+}
+
+:global(.dark) .table th {
+  color: #A19E94;
+  background: #242422;
+}
+
+:global(.dark) .table th,
+:global(.dark) .table td {
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .table tr:hover td {
+  background: #2E2E2C;
+}
+
+:global(.dark) .empty {
+  color: #8A877D;
+}
+
+:global(.dark) .loading {
+  color: #8A877D;
+}
+
+:global(.dark) .modalContent {
+  background: #242422;
+}
+
+:global(.dark) .modalMessage {
+  color: #B5B3A7;
+}
+
+:global(.dark) .categoryTitle {
+  color: #B5B3A7;
+}
+
+:global(.dark) .categoryTitle:hover {
+  color: #A19E94;
+}
+
+:global(.dark) .table a {
+  color: #B5B3A7;
+}
+
+:global(.dark) .searchBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .searchBtn:hover {
+  background: #42413B;
+}
+
+:global(.dark) .writeBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .writeBtn:hover {
+  background: #42413B;
+}
+
+:global(.dark) .topButton {
+  background: #3A3934;
+}
+
+:global(.dark) .topButton:hover {
+  background: #42413B;
+}

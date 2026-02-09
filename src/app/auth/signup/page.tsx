@@ -3,6 +3,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import { authApi } from '@/api/authApi';
@@ -38,6 +40,7 @@ function validatePassword(p: string): string[] {
 
 export default function SignupPage() {
   const router = useRouter();
+  const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -532,7 +535,7 @@ export default function SignupPage() {
               disabled={!emailAvailable || emailVerified || emailVerificationPending || !!errors.email || !!emailHangulError || !!emailFormatError || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)}
               className={styles.emailVerifyBtn}
               style={{
-                backgroundColor: emailVerified ? '#4caf50' : emailVerificationPending ? '#999' : (emailAvailable && !errors.email && !emailHangulError && !emailFormatError && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? '#1976d2' : '#ccc'),
+                backgroundColor: emailVerified ? '#4caf50' : emailVerificationPending ? '#999' : (emailAvailable && !errors.email && !emailHangulError && !emailFormatError && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? (darkMode ? '#7B7F9E' : '#1976d2') : '#ccc'),
                 cursor: emailVerified || emailVerificationPending ? 'not-allowed' : (emailAvailable && !errors.email && !emailHangulError && !emailFormatError && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'pointer' : 'not-allowed'),
               }}
             >
@@ -648,7 +651,7 @@ export default function SignupPage() {
               disabled={!nicknameFormatOk}
               className={styles.actionBtn}
               style={{
-                background: nicknameFormatOk ? '#1976d2' : '#ccc',
+                background: nicknameFormatOk ? (darkMode ? '#7B7F9E' : '#1976d2') : '#ccc',
                 cursor: nicknameFormatOk ? 'pointer' : 'not-allowed',
               }}
             >

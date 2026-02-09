@@ -15,8 +15,8 @@
 }
 
 .header.dark {
-  background: #1a1a1a;
-  border-bottom-color: #333;
+  background: #1D1D1B;
+  border-bottom-color: #3A3A38;
 }
 
 .authHeader {
@@ -32,7 +32,7 @@
 }
 
 .dark .logo {
-  color: #fff;
+  color: #B5B3A7;
 }
 
 .nav {
@@ -56,12 +56,12 @@
 }
 
 .dark .navLink {
-  color: #ccc;
+  color: #A19E94;
 }
 
 .dark .navLink:hover {
-  background: #333;
-  color: #fff;
+  background: #2E2E2C;
+  color: #B5B3A7;
 }
 
 .actions {
@@ -91,12 +91,12 @@
 }
 
 .dark .iconBtn {
-  color: #aaa;
+  color: #8A877D;
 }
 
 .dark .iconBtn:hover {
-  background: #333;
-  color: #fff;
+  background: #2E2E2C;
+  color: #B5B3A7;
 }
 
 .badge {

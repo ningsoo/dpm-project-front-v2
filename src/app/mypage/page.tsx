@@ -48,6 +48,7 @@ export default function MypagePage() {
   const router = useRouter();
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const initialized = useSelector((s: RootState) => s.auth.initialized);
+  const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<string>('playlists');
@@ -528,7 +529,7 @@ export default function MypagePage() {
               <button
                 type="button"
                 onClick={() => handleSearch('posts')}
-                onMouseEnter={(e) => { e.currentTarget.style.color = '#1976d2'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = darkMode ? '#3A3934' : '#1976d2'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; }}
                 style={{
                   position: 'absolute',
@@ -585,7 +586,7 @@ export default function MypagePage() {
               <button
                 type="button"
                 onClick={() => handleSearch('comments')}
-                onMouseEnter={(e) => { e.currentTarget.style.color = '#1976d2'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = darkMode ? '#3A3934' : '#1976d2'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; }}
                 style={{
                   position: 'absolute',
@@ -641,7 +642,7 @@ export default function MypagePage() {
               <button
                 type="button"
                 onClick={() => handleSearch('liked')}
-                onMouseEnter={(e) => { e.currentTarget.style.color = '#1976d2'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = darkMode ? '#3A3934' : '#1976d2'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; }}
                 style={{
                   position: 'absolute',
@@ -700,7 +701,7 @@ export default function MypagePage() {
                 onClick={() => handleDateRangeSearch('reports')}
                 style={{
                   padding: '8px 16px',
-                  background: '#1976d2',
+                  background: darkMode ? '#6B7080' : '#1976d2',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 8,
@@ -803,7 +804,7 @@ export default function MypagePage() {
                 }}
                 style={{
                   padding: '8px 16px',
-                  background: '#1976d2',
+                  background: darkMode ? '#6B7080' : '#1976d2',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 8,
@@ -1019,7 +1020,7 @@ export default function MypagePage() {
                 onClick={handleReportCancelConfirm}
                 style={{
                   padding: '8px 16px',
-                  background: '#1976d2',
+                  background: darkMode ? '#6B7080' : '#1976d2',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 8,
@@ -1135,7 +1136,7 @@ export default function MypagePage() {
                   top: cropArea.y,
                   width: cropArea.size,
                   height: cropArea.size,
-                  border: '3px solid #1976d2',
+                  border: `3px solid ${darkMode ? '#3A3934' : '#1976d2'}`,
                   borderRadius: '50%',
                   cursor: isDragging ? 'grabbing' : 'grab',
                   boxSizing: 'border-box',
@@ -1171,7 +1172,7 @@ export default function MypagePage() {
                 onClick={handleCropConfirm}
                 style={{
                   padding: '8px 16px',
-                  background: '#1976d2',
+                  background: darkMode ? '#6B7080' : '#1976d2',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 8,

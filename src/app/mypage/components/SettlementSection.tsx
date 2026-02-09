@@ -256,11 +256,11 @@ export function SettlementSection({ user }: SettlementSectionProps) {
             {loading ? <p className={styles.settlementLoading}>로딩 중...</p> : (
               <div style={{ overflowX: 'auto' }}>
                 <div className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableHeader}`}>
-                  <div>정산요청일</div>
-                  <div>정산승인일</div>
-                  <div>변동 수량</div>
-                  <div>정산금액</div>
-                  <div style={{ paddingRight: '20px' }}>정산처리상태</div>
+                  <div style={centerStyle}>정산요청일</div>
+                  <div style={centerStyle}>정산승인일</div>
+                  <div style={centerStyle}>변동 수량</div>
+                  <div style={centerStyle}>정산금액</div>
+                  <div style={centerStyle}>정산처리상태</div>
                 </div>
                 {historyList.length === 0 ? <div className={styles.settlementEmpty}>내역이 없습니다.</div> : 
                   historyList.map((item, idx) => (

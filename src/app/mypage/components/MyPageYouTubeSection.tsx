@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Plus, X, Check, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
@@ -41,6 +42,7 @@ const CARD_GAP = 24;
 export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSectionProps) {
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
+  const darkMode = useSelector((s: RootState) => s.ui.darkMode);
 
   const [showYouTubePlaylistModal, setShowYouTubePlaylistModal] = useState(false);
   const [playlists, setPlaylists] = useState<PlaylistItem[]>([]);
@@ -217,7 +219,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                 alignItems: 'center',
                 gap: 4,
                 padding: '8px 16px',
-                background: '#1976d2',
+                background: darkMode ? '#6B7080' : '#1976d2',
                 color: '#fff',
                 border: 'none',
                 borderRadius: 8,
@@ -327,8 +329,8 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
               style={{
                 width: 48,
                 height: 48,
-                border: '4px solid #f0f0f0',
-                borderTop: '4px solid #1976d2',
+                border: `4px solid ${darkMode ? '#333' : '#f0f0f0'}`,
+                borderTop: `4px solid ${darkMode ? '#7B7F9E' : '#1976d2'}`,
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite',
               }}
