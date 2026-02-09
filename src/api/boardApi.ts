@@ -10,6 +10,7 @@ import type {
   CreateBoardRequest,
   UpdateBoardRequest,
   CreateCommentRequest,
+  PageableBoardResponse,
 } from './boardTypes';
 
 /**
@@ -23,7 +24,7 @@ import type {
 export const boardApi = {
   /** 1. 카테고리 게시글 목록 조회 - GET /api/boards/category/[categoryType] */
   getBoardByCategory: (categoryType: BoardCategory) =>
-    fetchClient.get<ApiResponse<BoardListItem[]>>(
+    fetchClient.get<ApiResponse<PageableBoardResponse>>(
       `/boards/category/${categoryType}`
     ),
 

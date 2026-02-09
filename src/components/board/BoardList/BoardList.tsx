@@ -11,6 +11,13 @@ import type { BoardListItem } from '@/api/boardTypes';
 import { ToastUtils } from '@/utils/toastUtils';
 import { formatCreatedDateTime, toDate } from '@/utils/createdDateTime';
 import { formatViews, formatCommentCount } from '@/utils/displayFormatters';
+import {
+  extractBoardListFromResponse,
+  getBoardThumbnailUrl,
+  getShowcaseVideoId,
+} from '@/utils/boardThumbnailUtils';
+import type { BoardCategorySlug } from '@/utils/boardThumbnailUtils';
+import YouTubeHoverThumbnail from '@/components/board/YouTubeHoverThumbnail';
 import ShowcaseFeaturedSection from '@/components/board/ShowcaseFeaturedSection';
 import CommonBoardCarousel from '@/components/board/CommonBoardCarousel';
 import styles from './BoardList.module.css';
@@ -42,7 +49,6 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
   const [loading, setLoading] = useState(true);
   const [searchType, setSearchType] = useState<'title' | 'nickname'>('title');
   const [search, setSearch] = useState('');
-  const [hoveredBoardId, setHoveredBoardId] = useState<number | null>(null);
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
 
   const categoryType = toBoardCategory(category);
@@ -54,7 +60,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
     setLoading(true);
     try {
       const { data } = await boardApi.getBoardByCategory(categoryType);
-      const list = Array.isArray(data?.data) ? data.data : [];
+      const list = extractBoardListFromResponse(data);
       
       let filtered = list;
       const kw = search.trim();
@@ -168,10 +174,10 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
       ) : viewMode === 'grid' ? (
         <div className={styles.grid}>
           {posts.map((p) => {
-            const ytId = extractYtId(p.fileUrl ?? undefined);
-            const isHovered = hoveredBoardId === p.boardId;
+            const safeCat = category as BoardCategorySlug;
+            const thumbnailUrl = getBoardThumbnailUrl(p, safeCat);
             const isShowcase = category === 'showcase';
-            const showVideo = isShowcase && isHovered && ytId;
+            const videoId = isShowcase ? getShowcaseVideoId(p) : '';
 
             const handleCardClick = () => {
               router.push(`/boards/${p.boardId}`);
@@ -181,8 +187,6 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
               <div
                 key={p.boardId}
                 className={styles.card}
-                onMouseEnter={() => setHoveredBoardId(p.boardId)}
-                onMouseLeave={() => setHoveredBoardId(null)}
                 onClick={handleCardClick}
                 role="button"
                 tabIndex={0}
@@ -195,33 +199,14 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                 style={{ cursor: 'pointer' }}
               >
                 <div className={styles.thumbWrap}>
-                  {showVideo ? (
-                    <iframe
-                      className={styles.thumb}
-                      src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytId}`}
-                      allow="autoplay; encrypted-media"
-                      allowFullScreen
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        border: 'none',
-                        pointerEvents: 'none',
-                      }}
+                  {isShowcase && videoId ? (
+                    <YouTubeHoverThumbnail
+                      thumbnailUrl={thumbnailUrl}
+                      videoId={videoId}
+                      alt={p.title}
                     />
                   ) : (
-                    <img
-                      src={
-                        p.fileUrl ||
-                        (ytId
-                          ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
-                          : '/placeholder-playlist.png')
-                      }
-                      alt=""
-                      className={styles.thumb}
-                    />
+                    <img src={thumbnailUrl} alt="" className={styles.thumb} />
                   )}
                 </div>
                 <div className={styles.cardBody}>
@@ -312,10 +297,4 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
       )}
     </section>
   );
-}
-
-function extractYtId(url?: string): string {
-  if (!url) return '';
-  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/);
-  return m ? m[1] : '';
 }
