@@ -72,29 +72,53 @@ function formatAmountAbs(amount?: number): string {
   return String(Math.abs(amount));
 }
 
-/** popStatus를 한글 라벨로 변환 */
+/** popStatus -> 한글 라벨 */
+const DONATION_STATUS_MAP: Record<string, string> = {
+  PENDING: '대기',
+  COMPLETED: '완료',
+  CANCELED: '취소',
+  CANCEL_REQUEST: '취소요청',
+  SETTLEMENT_REQUEST: '정산요청',
+  SETTLEMENT_COMPLETED: '정산완료',
+  EXPIRED: '만료',
+};
+
 function getPopStatusLabel(status?: string): string {
+  if (!status) return '대기';
+  return DONATION_STATUS_MAP[status] ?? '대기';
+}
+
+/** popStatus -> 배지 CSS 클래스 */
+function getDonationStatusBadgeClass(status?: string): string {
+  if (!status) return styles.popStatusNeutral;
   switch (status) {
-    case 'CANCEL_REQUEST':
-      return '취소요청';
-    case 'CANCELED':
-      return '취소';
     case 'COMPLETED':
-      return '승인완료';
+    case 'SETTLEMENT_COMPLETED':
+      return styles.popStatusPositive;
+    case 'CANCELED':
+    case 'EXPIRED':
+      return styles.popStatusNegative;
+    case 'PENDING':
+    case 'CANCEL_REQUEST':
+    case 'SETTLEMENT_REQUEST':
+      return styles.popStatusNeutral;
     default:
-      return '-';
+      return styles.popStatusNeutral;
   }
 }
 
-/** 금액을 콤마 포함하여 표시 */
-const numberFormatter = new Intl.NumberFormat('ko-KR');
-
-function formatAmountWithComma(amount?: number): string {
-  if (typeof amount !== 'number' || Number.isNaN(amount)) return '0';
-  return numberFormatter.format(amount);
+/** 취소하기 버튼 노출 가능 여부 */
+function isCancelable(row: PopHistoryResponseRow): boolean {
+  if (row.approvedDatetime) return false;
+  if (row.popStatus === 'COMPLETED') return false;
+  if (row.popStatus === 'CANCELED') return false;
+  return true;
 }
 
-/** 보낸내역 전용: 금액을 절대값 + 콤마로 표시 */
+/** 금액을 콤마 포함하여 절대값으로 표시 */
+const numberFormatter = new Intl.NumberFormat('ko-KR');
+
+/** 금액을 절대값 + 콤마로 표시 */
 function formatAmountAbsWithComma(amount?: number): string {
   if (typeof amount !== 'number' || Number.isNaN(amount)) return '0';
   return numberFormatter.format(Math.abs(amount));
@@ -354,14 +378,15 @@ export function DonationSection() {
               <p className={styles.settlementLoading}>로딩 중...</p>
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <div className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableHeader}`}>
-                  <div>팝히스토리</div>
+                <div className={`${styles.tableGrid} ${styles.donationSentGrid9} ${styles.tableHeader}`}>
+                  <div>No.</div>
                   <div>후원일</div>
-                  <div>후원요청일</div>
-                  <div>후원승인일</div>
-                  <div>후원취소일</div>
+                  <div>요청일</div>
+                  <div>승인일</div>
+                  <div>취소일</div>
                   <div>금액</div>
-                  <div>팝상태</div>
+                  <div>상태</div>
+                  <div>취소</div>
                   <div>수혜자</div>
                 </div>
                 {sentVisible.length === 0 ? (
@@ -371,7 +396,7 @@ export function DonationSection() {
                     {sentVisible.map((row, idx) => (
                       <div
                         key={row.popHistoryId ?? idx}
-                        className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableRow}`}
+                        className={`${styles.tableGrid} ${styles.donationSentGrid9} ${styles.tableRow}`}
                       >
                         <div className={styles.tableCell}>{row.popHistoryId ?? '-'}</div>
                         <div className={styles.tableCell}>
@@ -388,7 +413,12 @@ export function DonationSection() {
                         </div>
                         <div className={styles.tableCell}>{formatAmountAbsWithComma(row.changeAmount)}</div>
                         <div className={styles.tableCell}>
-                          {row.popStatus === 'COMPLETED' ? (
+                          <span className={getDonationStatusBadgeClass(row.popStatus)}>
+                            {getPopStatusLabel(row.popStatus)}
+                          </span>
+                        </div>
+                        <div className={styles.tableCell}>
+                          {isCancelable(row) && (
                             <button
                               type="button"
                               className={styles.donationCancelBtn}
@@ -402,8 +432,6 @@ export function DonationSection() {
                             >
                               취소하기
                             </button>
-                          ) : (
-                            getPopStatusLabel(row.popStatus)
                           )}
                         </div>
                         <div className={styles.tableCell}>{row.related?.name ?? '-'}</div>
@@ -426,13 +454,13 @@ export function DonationSection() {
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <div className={`${styles.tableGrid} ${styles.donationReceivedGrid8} ${styles.tableHeader}`}>
-                  <div>팝히스토리</div>
+                  <div>No.</div>
                   <div>후원일</div>
-                  <div>정산요청일</div>
-                  <div>정산확정일</div>
-                  <div>정산취소일</div>
+                  <div>요청일</div>
+                  <div>확정일</div>
+                  <div>취소일</div>
                   <div>금액</div>
-                  <div>팝상태</div>
+                  <div>상태</div>
                   <div>후원자</div>
                 </div>
                 {receivedFiltered.length === 0 ? (
@@ -456,8 +484,12 @@ export function DonationSection() {
                       <div className={styles.tableCell}>
                         <DonationDateCell dt={row.cancelDatetime} />
                       </div>
-                      <div className={styles.tableCell}>{formatAmountWithComma(row.changeAmount)}</div>
-                      <div className={styles.tableCell}>{getPopStatusLabel(row.popStatus)}</div>
+                      <div className={styles.tableCell}>{formatAmountAbsWithComma(row.changeAmount)}</div>
+                      <div className={styles.tableCell}>
+                        <span className={getDonationStatusBadgeClass(row.popStatus)}>
+                          {getPopStatusLabel(row.popStatus)}
+                        </span>
+                      </div>
                       <div className={styles.tableCell}>{row.related?.name ?? '-'}</div>
                     </div>
                   ))

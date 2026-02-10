@@ -776,12 +776,22 @@ export default function MypagePage() {
               />
               <button
                 type="button"
+                disabled={inquiryLoading || (!!dateRange.inquiries.start !== !!dateRange.inquiries.end)}
                 onClick={() => {
+                  const { start, end } = dateRange.inquiries;
+                  if ((start && !end) || (!start && end)) {
+                    ToastUtils.error('시작일과 종료일을 모두 선택해 주세요.');
+                    return;
+                  }
+                  if (start && end && start > end) {
+                    ToastUtils.error('종료일이 시작일보다 빠를 수 없습니다.');
+                    return;
+                  }
                   setInquiryPage(0);
                   setInquiryLoading(true);
                   const params: { page: number; size: number; startDate?: string; endDate?: string } = { page: 0, size: 10 };
-                  if (dateRange.inquiries.start) params.startDate = dateRange.inquiries.start;
-                  if (dateRange.inquiries.end) params.endDate = dateRange.inquiries.end;
+                  if (start) params.startDate = start;
+                  if (end) params.endDate = end;
                   mypageApi.getInquiries(params)
                     .then(({ data }) => {
                       const pageData = data?.data as { content?: { createdAt: string; inquiryType: string; title: string; inquiryStatus: string; inquiryId: number }[]; totalPages?: number } | undefined;
@@ -797,15 +807,17 @@ export default function MypagePage() {
                 }}
                 style={{
                   padding: '8px 16px',
-                  background: darkMode ? '#6B7080' : '#1976d2',
+                  background: (inquiryLoading || (!!dateRange.inquiries.start !== !!dateRange.inquiries.end))
+                    ? '#b0b0b0'
+                    : darkMode ? '#6B7080' : '#1976d2',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 8,
-                  cursor: 'pointer',
+                  cursor: (inquiryLoading || (!!dateRange.inquiries.start !== !!dateRange.inquiries.end)) ? 'not-allowed' : 'pointer',
                   fontSize: 14,
                 }}
               >
-                조회
+                {inquiryLoading ? '조회 중…' : '조회'}
               </button>
             </div>
             {inquiryLoading ? (

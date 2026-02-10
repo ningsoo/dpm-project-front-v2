@@ -23,6 +23,7 @@ const PURCHASE_COLUMNS = ['충전일시', '충전수량', '팝타겟', '결제�
 export type PopUsageRow = {
   requestedDatetime?: string;
   createdDatetime?: string;
+  approvedDatetime?: string | null;
   changeAmount?: number;
   popTarget?: string;
   popStatus?: string;
@@ -73,34 +74,65 @@ function PopUsageDateCell({ dt }: { dt?: string }) {
   );
 }
 
-/** popTarget -> 한글 라벨 (후원/홍보) */
+/** popTarget -> 한글 라벨 */
+const POP_TARGET_MAP: Record<string, string> = {
+  CHARGE: '충전',
+  DONATION: '후원',
+  FEATURED_BOARD: '게시글 홍보',
+  RECEIVED: '수령',
+  EVENT: '이벤트',
+};
+
 function mapPopTargetToLabel(popTarget?: string): string {
   if (!popTarget) return '-';
-  const s = String(popTarget).toLowerCase();
-  if (s === 'donation') return '후원';
-  if (s === 'advertisement') return '홍보';
-  return '-';
+  return POP_TARGET_MAP[popTarget] ?? '-';
 }
 
-/** popStatus -> 한글 라벨 (사용완료/사용취소) */
+/** popStatus -> 한글 라벨 */
+const POP_STATUS_MAP: Record<string, string> = {
+  PENDING: '대기',
+  COMPLETED: '완료',
+  CANCELED: '취소',
+  CANCEL_REQUEST: '취소요청',
+  SETTLEMENT_REQUEST: '정산요청',
+  SETTLEMENT_COMPLETED: '정산완료',
+  EXPIRED: '만료',
+};
+
 function mapPopStatusToLabel(popStatus?: string): string {
   if (!popStatus) return '-';
-  const s = String(popStatus).toLowerCase();
-  if (s === 'completed') return '사용완료';
-  if (s === 'canceled' || s === 'cancelled') return '사용취소';
-  return '-';
+  return POP_STATUS_MAP[popStatus] ?? '-';
 }
 
-/** changeAmount를 "원" 단위로 표시 */
+/** popStatus -> 배지 CSS 클래스 */
+function getPopStatusBadgeClass(popStatus?: string): string {
+  if (!popStatus) return '';
+  switch (popStatus) {
+    case 'COMPLETED':
+    case 'SETTLEMENT_COMPLETED':
+      return styles.popStatusPositive;
+    case 'CANCELED':
+    case 'EXPIRED':
+      return styles.popStatusNegative;
+    case 'PENDING':
+    case 'CANCEL_REQUEST':
+    case 'SETTLEMENT_REQUEST':
+      return styles.popStatusNeutral;
+    default:
+      return styles.popStatusNeutral;
+  }
+}
+
+/** changeAmount를 "원" 단위로 표시 (절대값) */
 function formatAmountWithWon(amount?: number): string {
   if (typeof amount !== 'number' || Number.isNaN(amount)) return '-';
-  return `${amount}원`;
+  return `${Math.abs(amount)}원`;
 }
 
-/** changeAmount를 POP 단위로 표시 */
+/** changeAmount를 POP 단위로 표시 (절대값) */
 function formatAmountWithPop(amount?: number): string {
   if (typeof amount !== 'number' || Number.isNaN(amount)) return '-';
-  return `${amount} POP`;
+  return `${Math.abs(amount)} POP`;
 }
 
 /** actualAmount를 원 단위로 표시 (천단위 콤마) */
@@ -145,9 +177,8 @@ export function PopSection({ user, onChargeClick }: PopSectionProps) {
         const rows = parsePopResponse(body?.data ?? body) as PopUsageRow[];
         setUsageList(Array.isArray(rows) ? rows : []);
       })
-      .catch(handleError)
       .finally(() => setUsageLoading(false));
-  }, [handleError]);
+  }, []);
 
   const fetchPurchase = useCallback(() => {
     setPurchaseLoading(true);
@@ -287,16 +318,20 @@ export function PopSection({ user, onChargeClick }: PopSectionProps) {
                       {mapPopTargetToLabel(row.popTarget)}
                     </div>
                     <div className={styles.tableCell}>
-                      {mapPopStatusToLabel(row.popStatus)}
+                      <span className={getPopStatusBadgeClass(row.popStatus)}>
+                        {mapPopStatusToLabel(row.popStatus)}
+                      </span>
                     </div>
                     <div className={styles.tableCell}>
-                      <button
-                        type="button"
-                        className={styles.donationCancelBtn}
-                        onClick={handleCancelUsageClick}
-                      >
-                        사용취소
-                      </button>
+                      {!row.approvedDatetime && row.popStatus !== 'COMPLETED' && row.popStatus !== 'CANCELED' && (
+                        <button
+                          type="button"
+                          className={styles.donationCancelBtn}
+                          onClick={handleCancelUsageClick}
+                        >
+                          사용취소
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
