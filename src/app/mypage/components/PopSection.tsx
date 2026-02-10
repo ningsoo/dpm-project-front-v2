@@ -10,7 +10,7 @@ import styles from '../mypage.module.css';
 import type { AxiosError } from 'axios';
 
 interface PopSectionProps {
-  user: { id: string; credits?: number };
+  user: { id: string; popBalance?: number };
   onChargeClick?: () => void;
 }
 
@@ -281,7 +281,7 @@ function PopSection({ user, onChargeClick }: PopSectionProps) {
       <div className={styles.settlementRequestSummaryBox}>
         <div className={styles.settlementSummaryRow}>
           <span>보유 POP</span>
-          <span className={styles.settlementTotalAmount}>{user.credits ?? 0}</span>
+          <span className={styles.settlementTotalAmount}>{(user.popBalance ?? 0).toLocaleString('ko-KR')}</span>
         </div>
         <button
           type="button"

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { Key, User, Plus, Search, Pencil, Heart, X, Check } from 'lucide-react';
@@ -22,7 +22,7 @@ interface UserInfo {
   nickname: string;
   phoneNumber: string;
   profileImage?: string;
-  credits?: number;
+  popBalance?: number;
   youtubeConnected?: boolean;
 }
 
@@ -46,14 +46,23 @@ function formatPhone11(phoneNumber: string | undefined): string {
   return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
 }
 
+const TAB_IDS = TABS.map((t) => t.id);
+
+function getValidTab(tabParam: string | null): string {
+  if (tabParam && TAB_IDS.includes(tabParam as (typeof TAB_IDS)[number])) return tabParam;
+  return 'playlists';
+}
+
 export default function MypagePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const initialized = useSelector((s: RootState) => s.auth.initialized);
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<string>('playlists');
+  const [tab, setTab] = useState<string>(() => getValidTab(tabParam));
   const [searchQuery, setSearchQuery] = useState({ posts: '', comments: '', liked: '' });
   const [dateRange, setDateRange] = useState({
     settlement: { start: '', end: '' },
@@ -100,6 +109,12 @@ export default function MypagePage() {
     commentCreatedAt?: string;
   } | null>(null);
   const [inquiryDetailLoading, setInquiryDetailLoading] = useState(false);
+
+  // URL tab 쿼리와 tab state 동기화 (뒤로가기/링크/새로고침 시)
+  useEffect(() => {
+    const next = getValidTab(searchParams.get('tab'));
+    setTab(next);
+  }, [searchParams]);
 
   // 초기화 완료 후 사용자 정보 로드
   useEffect(() => {
@@ -474,7 +489,7 @@ export default function MypagePage() {
           </div>
           <div className={styles.email}>{user.email}</div>
           <div className={styles.phone}>{formatPhone11(user.phoneNumber) || '—'}</div>
-          <div className={styles.credits}>POP {user.credits ?? 0}</div>
+          <div className={styles.credits}>POP {(user.popBalance ?? 0).toLocaleString('ko-KR')}</div>
         </div>
         <div className={styles.profileActions}>
           <button
@@ -508,7 +523,10 @@ export default function MypagePage() {
             key={t.id}
             type="button"
             className={tab === t.id ? styles.tabActive : styles.tab}
-            onClick={() => setTab(t.id)}
+            onClick={() => {
+              setTab(t.id);
+              router.replace(`/mypage?tab=${t.id}`);
+            }}
           >
             {t.label}
           </button>

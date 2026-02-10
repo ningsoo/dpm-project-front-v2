@@ -146,7 +146,7 @@ export default function CreditClient() {
     }
 
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const successUrl = `${origin}/mypage/credit/success`;
+    const successUrl = `${origin}/mypage/credit/success?changeAmount=${changeAmount}`;
     const failUrl = `${origin}/mypage/credit/fail`;
 
     try {

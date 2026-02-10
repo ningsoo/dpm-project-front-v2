@@ -58,11 +58,10 @@ function formatMethod(method: string | null | undefined): string {
   return method;
 }
 
-/** confirm 응답 data에서 approvedAt, method, totalAmount 추출 */
+/** confirm 응답 data에서 approvedAt, method 추출 */
 function getConfirmDisplayValues(data: unknown): {
   approvedAt: string;
   method: string;
-  totalAmount: string;
 } {
   const raw = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
   const approvedAt =
@@ -73,18 +72,9 @@ function getConfirmDisplayValues(data: unknown): {
     (raw.method as string) ??
     (raw.paymentMethod as string) ??
     '';
-  const totalAmount =
-    typeof raw.totalAmount === 'number'
-      ? raw.totalAmount
-      : typeof raw.total_amount === 'number'
-        ? raw.total_amount
-        : typeof raw.amount === 'number'
-          ? raw.amount
-          : 0;
   return {
     approvedAt: formatApprovedAt(approvedAt),
     method: formatMethod(method),
-    totalAmount: Number(totalAmount).toLocaleString('ko-KR'),
   };
 }
 
@@ -98,6 +88,7 @@ export default function SuccessClient() {
   const paymentKey = params.get('paymentKey') ?? '';
   const orderId = params.get('orderId') ?? '';
   const amount = parseAmount(params.get('amount'));
+  const changeAmount = parseAmount(params.get('changeAmount'));
 
   const [status, setStatus] = useState<Status>('idle');
   const [confirmData, setConfirmData] = useState<unknown>(null);
@@ -109,7 +100,8 @@ export default function SuccessClient() {
     const hasInvalid =
       !paymentKey.trim() ||
       !orderId.trim() ||
-      amount == null;
+      amount == null ||
+      changeAmount == null;
 
     if (hasInvalid) {
       ToastUtils.error('잘못된 접근입니다.');
@@ -165,13 +157,14 @@ export default function SuccessClient() {
     );
   }
 
-  const { approvedAt, method, totalAmount } = getConfirmDisplayValues(confirmData);
+  const { approvedAt, method } = getConfirmDisplayValues(confirmData);
+  const displayAmountText = changeAmount != null ? `${changeAmount.toLocaleString('ko-KR')} POP` : '0 POP';
 
   return (
     <div className={creditStyles.wrap}>
       <div className={creditStyles.inner}>
         <h1 className={creditStyles.title}>결제 완료</h1>
-        <section className={creditStyles.summaryBox} style={{ padding: '20px', lineHeight: 1.6 }}>
+        <section className={`${creditStyles.summaryBox} ${creditStyles.summaryBoxCenter}`} style={{ padding: '20px', lineHeight: 1.6 }}>
           <p style={{ margin: 0 }}>
             <span className={styles.successHighlight}>{approvedAt}</span>
             {' '}
@@ -179,15 +172,15 @@ export default function SuccessClient() {
             {' '}
             방식으로
             <br />
-            <span className={styles.successHighlight}>{totalAmount}</span>
+            <span className={styles.successHighlight}>{displayAmountText}</span>
             {' '}
-            POP 충전이 완료되었습니다!
+            충전이 완료되었습니다!
           </p>
         </section>
         <button
           type="button"
           className={creditStyles.submitBtn}
-          onClick={() => router.push('/mypage')}
+          onClick={() => router.push('/mypage?tab=pop')}
         >
           내 재화로 이동
         </button>
