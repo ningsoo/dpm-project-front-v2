@@ -23,12 +23,12 @@ export const inquiryApi = {
   uploadFile: (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    return fetchClient.post<ApiResponse<S3UploadResult>>('/s3/upload/single', formData, {
+    return fetchClient.post<ApiResponse<S3UploadResult>>('/api/s3/upload/single', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
 
   /** 문의 등록 - POST /inquiries/create (JSON) */
   createInquiry: (body: CreateInquiryBody) =>
-    fetchClient.post<ApiResponse<unknown>>('/inquiry/create', body),
+    fetchClient.post<ApiResponse<unknown>>('/api/inquiry/create', body),
 };

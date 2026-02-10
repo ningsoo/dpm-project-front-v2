@@ -164,7 +164,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
               disabled={!user?.email}
               onClick={() => {
                 if (!user?.email) return;
-                const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080/api';
+                const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
                 const baseUrl = apiBase.replace(/\/api\/?$/, '');
                 const encodedEmail = encodeURIComponent(user.email);
                 window.location.href = `${baseUrl}/oauth2/authorization/google?email=${encodedEmail}`;

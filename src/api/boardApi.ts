@@ -25,20 +25,20 @@ export const boardApi = {
   /** 1. 카테고리 게시글 목록 조회 - GET /api/boards/category/[categoryType]?page={page} */
   getBoardByCategory: (categoryType: BoardCategory, page = 0) =>
     fetchClient.get<ApiResponse<PageableBoardResponse>>(
-      `/boards/category/${categoryType}`,
+      `/api/boards/category/${categoryType}`,
       { params: { page } }
     ),
 
   /** 2. 카테고리 내 게시글 작성 - POST /api/boards/category/[categoryType] (JSON) */
   createPost: (categoryType: BoardCategory, body: CreateBoardRequest) =>
     fetchClient.post<ApiResponse<string>>(
-      `/boards/category/${categoryType}`,
+      `/api/boards/category/${categoryType}`,
       body
     ),
 
   /** 2-1. SHOWCASE 게시글 작성 - POST /api/boards/category/SHOWCASE (multipart) */
   createPostShowcase: (formData: FormData) =>
-    fetchClient.post<ApiResponse<string>>('/boards/category/SHOWCASE', formData),
+    fetchClient.post<ApiResponse<string>>('/api/boards/category/SHOWCASE', formData),
 
   /** 2-2. PLAYLISTS 게시글 작성 - POST /api/boards/category/PLAYLISTS (multipart) */
   createPostPlaylists: (formData: FormData) =>
@@ -58,20 +58,20 @@ export const boardApi = {
   /** 3. 게시글 상세 조회 - GET /api/boards/[boardId] */
   getPost: (boardId: string) =>
     fetchClient.get<ApiResponse<BoardDetail>>(
-      `/boards/${boardId}`
+      `/api/boards/${boardId}`
     ),
 
   /** 4. 게시글 수정 - PUT /api/boards/[boardId] */
   updatePost: (boardId: string, body: UpdateBoardRequest) =>
     fetchClient.patch<ApiResponse<string>>(
-      `/boards/${boardId}`,
+      `/api/boards/${boardId}`,
       body
     ),
 
   /** 5. 게시글 삭제 - DELETE /api/boards/[boardId] */
   deletePost: (boardId: string) =>
     fetchClient.delete<ApiResponse<string>>(
-      `/boards/${boardId}`
+      `/api/boards/${boardId}`
     ),
 
   /**
@@ -80,7 +80,7 @@ export const boardApi = {
    */
   getComments: (boardId: string) =>
     fetchClient.get<ApiResponse<CommentItem[]>>(
-      `/boards/${boardId}/comments`
+      `/api/boards/${boardId}/comments`
     ),
 
   /**
@@ -89,7 +89,7 @@ export const boardApi = {
    */
   createComment: (boardId: string, body: CreateCommentRequest) =>
     fetchClient.post<ApiResponse<CommentItem>>(
-      `/boards/${boardId}/comments`,
+      `/api/boards/${boardId}/comments`,
       body
     ),
 
@@ -99,7 +99,7 @@ export const boardApi = {
    */
   deleteComment: (boardId: string, commentId: string) =>
     fetchClient.delete<ApiResponse<string>>(
-      `/boards/${boardId}/comments/${commentId}`
+      `/api/boards/${boardId}/comments/${commentId}`
     ),
 
   /**
@@ -108,7 +108,7 @@ export const boardApi = {
    */
   likePost: (boardId: string) =>
     fetchClient.post<ApiResponse<BoardLikeResponse>>(
-      `/boards/${boardId}/like`
+      `/api/boards/${boardId}/like`
     ),
 
   /**
@@ -117,7 +117,7 @@ export const boardApi = {
    */
   likeComment: (boardId: string, commentId: string) =>
     fetchClient.post<ApiResponse<CommentLikeResponse>>(
-      `/boards/${boardId}/comments/${commentId}/like`
+      `/api/boards/${boardId}/comments/${commentId}/like`
     ),
 };
 
