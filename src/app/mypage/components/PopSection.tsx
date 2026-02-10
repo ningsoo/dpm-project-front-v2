@@ -2,7 +2,9 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { fetchClient } from '@/api/fetchClient';
 import { ToastUtils } from '@/utils/toastUtils';
+import { tokenUtils } from '@/utils/tokenUtils';
 import { mypageApi } from '@/api/mypageApi';
 import styles from '../mypage.module.css';
 import type { AxiosError } from 'axios';
@@ -21,12 +23,14 @@ const USAGE_COLUMNS = ['사용일시', '사용수량', '사용대상', '사용�
 const PURCHASE_COLUMNS = ['충전일시', '충전수량', '팝타겟', '결제금액', '유효기간', '구매취소'];
 
 export type PopUsageRow = {
+  popHistoryId?: number;
   requestedDatetime?: string;
   createdDatetime?: string;
+  approvedDatetime?: string | null;
   changeAmount?: number;
   popTarget?: string;
   popStatus?: string;
-  related?: { name?: string | null };
+  related?: { id?: number | null; name?: string | null };
 };
 
 export type PopPurchaseRow = {
@@ -73,34 +77,65 @@ function PopUsageDateCell({ dt }: { dt?: string }) {
   );
 }
 
-/** popTarget -> 한글 라벨 (후원/홍보) */
+/** popTarget -> 한글 라벨 */
+const POP_TARGET_MAP: Record<string, string> = {
+  CHARGE: '충전',
+  DONATION: '후원',
+  FEATURED_BOARD: '게시글 홍보',
+  RECEIVED: '수령',
+  EVENT: '이벤트',
+};
+
 function mapPopTargetToLabel(popTarget?: string): string {
   if (!popTarget) return '-';
-  const s = String(popTarget).toLowerCase();
-  if (s === 'donation') return '후원';
-  if (s === 'advertisement') return '홍보';
-  return '-';
+  return POP_TARGET_MAP[popTarget] ?? '-';
 }
 
-/** popStatus -> 한글 라벨 (사용완료/사용취소) */
+/** popStatus -> 한글 라벨 */
+const POP_STATUS_MAP: Record<string, string> = {
+  PENDING: '대기',
+  COMPLETED: '완료',
+  CANCELED: '취소',
+  CANCEL_REQUEST: '취소요청',
+  SETTLEMENT_REQUEST: '정산요청',
+  SETTLEMENT_COMPLETED: '정산완료',
+  EXPIRED: '만료',
+};
+
 function mapPopStatusToLabel(popStatus?: string): string {
   if (!popStatus) return '-';
-  const s = String(popStatus).toLowerCase();
-  if (s === 'completed') return '사용완료';
-  if (s === 'canceled' || s === 'cancelled') return '사용취소';
-  return '-';
+  return POP_STATUS_MAP[popStatus] ?? '-';
 }
 
-/** changeAmount를 "원" 단위로 표시 */
+/** popStatus -> 배지 CSS 클래스 */
+function getPopStatusBadgeClass(popStatus?: string): string {
+  if (!popStatus) return '';
+  switch (popStatus) {
+    case 'COMPLETED':
+    case 'SETTLEMENT_COMPLETED':
+      return styles.popStatusPositive;
+    case 'CANCELED':
+    case 'EXPIRED':
+      return styles.popStatusNegative;
+    case 'PENDING':
+    case 'CANCEL_REQUEST':
+    case 'SETTLEMENT_REQUEST':
+      return styles.popStatusNeutral;
+    default:
+      return styles.popStatusNeutral;
+  }
+}
+
+/** changeAmount를 "원" 단위로 표시 (절대값) */
 function formatAmountWithWon(amount?: number): string {
   if (typeof amount !== 'number' || Number.isNaN(amount)) return '-';
-  return `${amount}원`;
+  return `${Math.abs(amount)}`;
 }
 
-/** changeAmount를 POP 단위로 표시 */
+/** changeAmount를 POP 단위로 표시 (절대값) */
 function formatAmountWithPop(amount?: number): string {
   if (typeof amount !== 'number' || Number.isNaN(amount)) return '-';
-  return `${amount} POP`;
+  return `${Math.abs(amount)} `;
 }
 
 /** actualAmount를 원 단위로 표시 (천단위 콤마) */
@@ -123,6 +158,9 @@ export function PopSection({ user, onChargeClick }: PopSectionProps) {
   const [purchaseList, setPurchaseList] = useState<PopPurchaseRow[]>([]);
   const [usageLoading, setUsageLoading] = useState(false);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<PopUsageRow | null>(null);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [cancelSubmitting, setCancelSubmitting] = useState(false);
 
   const handleError = useCallback(
     (err: unknown) => {
@@ -145,9 +183,8 @@ export function PopSection({ user, onChargeClick }: PopSectionProps) {
         const rows = parsePopResponse(body?.data ?? body) as PopUsageRow[];
         setUsageList(Array.isArray(rows) ? rows : []);
       })
-      .catch(handleError)
       .finally(() => setUsageLoading(false));
-  }, [handleError]);
+  }, []);
 
   const fetchPurchase = useCallback(() => {
     setPurchaseLoading(true);
@@ -172,9 +209,60 @@ export function PopSection({ user, onChargeClick }: PopSectionProps) {
     }
   }, [subTab, fetchPurchase]);
 
-  const handleCancelUsageClick = () => {
-    ToastUtils.info('준비중입니다.');
+  const handleCancelUsageClick = (row: PopUsageRow) => {
+    setCancelTarget(row);
+    setShowConfirmModal(true);
   };
+
+  const DONATION_CANCEL_REASON = '구매자 변심으로 인한 취소';
+  const FEATURED_CANCEL_REASON = '사용자 요청에 의한 취소';
+
+  const handleConfirmCancel = useCallback(async () => {
+    const target = cancelTarget;
+    if (!target) return;
+
+    const popHistoryId = target.popHistoryId;
+    if (popHistoryId == null || typeof popHistoryId !== 'number' || Number.isNaN(popHistoryId)) {
+      ToastUtils.error('취소할 내역을 확인할 수 없습니다.');
+      return;
+    }
+
+    const uid = tokenUtils.getUserIdFromAccessToken();
+    if (uid === null) {
+      ToastUtils.error('로그인 정보를 확인할 수 없습니다. 다시 로그인해주세요.');
+      return;
+    }
+
+    setShowConfirmModal(false);
+    setCancelTarget(null);
+    setCancelSubmitting(true);
+
+    try {
+      if (target.popTarget === 'DONATION') {
+        await fetchClient.post<unknown>(`/api/users/${uid}/donations/cancel`, {
+          popHistoryId,
+          changeAmount: Math.abs(target.changeAmount ?? 0),
+          message: DONATION_CANCEL_REASON,
+        });
+        ToastUtils.success('후원이 취소되었습니다.');
+      } else {
+        await mypageApi.cancelPopUsage({
+          userId: uid,
+          popHistoryId,
+          boardId: target.related?.id ?? null,
+          cancelReason: FEATURED_CANCEL_REASON,
+        });
+        ToastUtils.success('재화 사용 취소가 완료되었습니다.');
+      }
+      fetchUsage();
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: { message?: string } } })?.response?.data;
+      const msg = typeof data?.message === 'string' ? data.message : undefined;
+      ToastUtils.error(msg || '취소 요청에 실패했습니다.');
+    } finally {
+      setCancelSubmitting(false);
+    }
+  }, [cancelTarget, fetchUsage]);
 
   const handleCancelPurchaseClick = () => {
     ToastUtils.info('준비중입니다.');
@@ -287,16 +375,21 @@ export function PopSection({ user, onChargeClick }: PopSectionProps) {
                       {mapPopTargetToLabel(row.popTarget)}
                     </div>
                     <div className={styles.tableCell}>
-                      {mapPopStatusToLabel(row.popStatus)}
+                      <span className={getPopStatusBadgeClass(row.popStatus)}>
+                        {mapPopStatusToLabel(row.popStatus)}
+                      </span>
                     </div>
                     <div className={styles.tableCell}>
-                      <button
-                        type="button"
-                        className={styles.donationCancelBtn}
-                        onClick={handleCancelUsageClick}
-                      >
-                        사용취소
-                      </button>
+                      {!row.approvedDatetime && row.popStatus !== 'COMPLETED' && row.popStatus !== 'CANCELED' && (
+                        <button
+                          type="button"
+                          className={styles.donationCancelBtn}
+                          disabled={cancelSubmitting}
+                          onClick={() => handleCancelUsageClick(row)}
+                        >
+                          사용취소
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -363,6 +456,51 @@ export function PopSection({ user, onChargeClick }: PopSectionProps) {
           </div>
         )}
       </div>
+
+      {showConfirmModal && cancelTarget && (
+        <div
+          className={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pop-cancel-modal-title"
+        >
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <h3
+              id="pop-cancel-modal-title"
+              className={styles.modalTitle}
+              style={{ fontSize: '1.1rem', marginBottom: 12 }}
+            >
+              {cancelTarget.popTarget === 'DONATION' ? '후원 취소 확인' : '게시글 홍보 취소 확인'}
+            </h3>
+            <p className={styles.donationConfirmMessage}>
+              {cancelTarget.popTarget === 'DONATION'
+                ? '정말 이 음악인에 대한 후원을 취소하시겠습니까?'
+                : '이 게시글 홍보를 취소하고 재화를 환불받으시겠습니까?'}
+            </p>
+            <div className={styles.settlementConfirmActions}>
+              <button
+                type="button"
+                className={styles.settlementConfirmBtn}
+                disabled={cancelSubmitting}
+                onClick={handleConfirmCancel}
+              >
+                {cancelSubmitting ? '처리 중…' : '확인'}
+              </button>
+              <button
+                type="button"
+                className={styles.settlementConfirmCancelBtn}
+                disabled={cancelSubmitting}
+                onClick={() => {
+                  setShowConfirmModal(false);
+                  setCancelTarget(null);
+                }}
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

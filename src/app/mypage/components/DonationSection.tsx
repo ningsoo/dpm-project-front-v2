@@ -72,29 +72,53 @@ function formatAmountAbs(amount?: number): string {
   return String(Math.abs(amount));
 }
 
-/** popStatus를 한글 라벨로 변환 */
+/** popStatus -> 한글 라벨 */
+const DONATION_STATUS_MAP: Record<string, string> = {
+  PENDING: '대기',
+  COMPLETED: '완료',
+  CANCELED: '취소',
+  CANCEL_REQUEST: '취소요청',
+  SETTLEMENT_REQUEST: '정산요청',
+  SETTLEMENT_COMPLETED: '정산완료',
+  EXPIRED: '만료',
+};
+
 function getPopStatusLabel(status?: string): string {
+  if (!status) return '대기';
+  return DONATION_STATUS_MAP[status] ?? '대기';
+}
+
+/** popStatus -> 배지 CSS 클래스 */
+function getDonationStatusBadgeClass(status?: string): string {
+  if (!status) return styles.popStatusNeutral;
   switch (status) {
-    case 'CANCEL_REQUEST':
-      return '취소요청';
-    case 'CANCELED':
-      return '취소';
     case 'COMPLETED':
-      return '승인완료';
+    case 'SETTLEMENT_COMPLETED':
+      return styles.popStatusPositive;
+    case 'CANCELED':
+    case 'EXPIRED':
+      return styles.popStatusNegative;
+    case 'PENDING':
+    case 'CANCEL_REQUEST':
+    case 'SETTLEMENT_REQUEST':
+      return styles.popStatusNeutral;
     default:
-      return '-';
+      return styles.popStatusNeutral;
   }
 }
 
-/** 금액을 콤마 포함하여 표시 */
-const numberFormatter = new Intl.NumberFormat('ko-KR');
-
-function formatAmountWithComma(amount?: number): string {
-  if (typeof amount !== 'number' || Number.isNaN(amount)) return '0';
-  return numberFormatter.format(amount);
+/** 취소하기 버튼 노출 가능 여부 */
+function isCancelable(row: PopHistoryResponseRow): boolean {
+  if (row.approvedDatetime) return false;
+  if (row.popStatus === 'COMPLETED') return false;
+  if (row.popStatus === 'CANCELED') return false;
+  return true;
 }
 
-/** 보낸내역 전용: 금액을 절대값 + 콤마로 표시 */
+/** 금액을 콤마 포함하여 절대값으로 표시 */
+const numberFormatter = new Intl.NumberFormat('ko-KR');
+
+/** 금액을 절대값 + 콤마로 표시 */
 function formatAmountAbsWithComma(amount?: number): string {
   if (typeof amount !== 'number' || Number.isNaN(amount)) return '0';
   return numberFormatter.format(Math.abs(amount));
@@ -145,9 +169,7 @@ export function DonationSection() {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const sentFilteredLengthRef = useRef(0);
   const [cancelTarget, setCancelTarget] = useState<PopHistoryResponseRow | null>(null);
-  const [cancelReason, setCancelReason] = useState('');
-  const [cancelReasonError, setCancelReasonError] = useState('');
-  const [showReasonModal, setShowReasonModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
 
   const fetchSent = useCallback(async () => {
@@ -286,12 +308,11 @@ export function DonationSection() {
       changeAmount: Math.abs(target.changeAmount ?? 0),
       message: FIXED_CANCEL_REASON,
     };
+    setShowConfirmModal(false);
+    setCancelTarget(null);
     setCancelSubmitting(true);
     try {
       await fetchClient.post<unknown>(`/api/users/${uid}/donations/cancel`, body);
-      setCancelTarget(null);
-      setCancelReason('');
-      setCancelReasonError('');
       ToastUtils.success('후원이 취소되었습니다.');
       await fetchSent();
     } catch (err: unknown) {
@@ -354,14 +375,15 @@ export function DonationSection() {
               <p className={styles.settlementLoading}>로딩 중...</p>
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <div className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableHeader}`}>
-                  <div>팝히스토리</div>
+                <div className={`${styles.tableGrid} ${styles.donationSentGrid9} ${styles.tableHeader}`}>
+                  <div>No.</div>
                   <div>후원일</div>
-                  <div>후원요청일</div>
-                  <div>후원승인일</div>
-                  <div>후원취소일</div>
+                  <div>요청일</div>
+                  <div>승인일</div>
+                  <div>취소일</div>
                   <div>금액</div>
-                  <div>팝상태</div>
+                  <div>상태</div>
+                  <div>취소</div>
                   <div>수혜자</div>
                 </div>
                 {sentVisible.length === 0 ? (
@@ -371,7 +393,7 @@ export function DonationSection() {
                     {sentVisible.map((row, idx) => (
                       <div
                         key={row.popHistoryId ?? idx}
-                        className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableRow}`}
+                        className={`${styles.tableGrid} ${styles.donationSentGrid9} ${styles.tableRow}`}
                       >
                         <div className={styles.tableCell}>{row.popHistoryId ?? '-'}</div>
                         <div className={styles.tableCell}>
@@ -388,22 +410,23 @@ export function DonationSection() {
                         </div>
                         <div className={styles.tableCell}>{formatAmountAbsWithComma(row.changeAmount)}</div>
                         <div className={styles.tableCell}>
-                          {row.popStatus === 'COMPLETED' ? (
+                          <span className={getDonationStatusBadgeClass(row.popStatus)}>
+                            {getPopStatusLabel(row.popStatus)}
+                          </span>
+                        </div>
+                        <div className={styles.tableCell}>
+                          {isCancelable(row) && (
                             <button
                               type="button"
                               className={styles.donationCancelBtn}
                               disabled={cancelSubmitting}
                               onClick={() => {
                                 setCancelTarget(row);
-                                setCancelReason(FIXED_CANCEL_REASON);
-                                setCancelReasonError('');
-                                setShowReasonModal(true);
+                                setShowConfirmModal(true);
                               }}
                             >
                               취소하기
                             </button>
-                          ) : (
-                            getPopStatusLabel(row.popStatus)
                           )}
                         </div>
                         <div className={styles.tableCell}>{row.related?.name ?? '-'}</div>
@@ -426,13 +449,13 @@ export function DonationSection() {
             ) : (
               <div style={{ overflowX: 'auto' }}>
                 <div className={`${styles.tableGrid} ${styles.donationReceivedGrid8} ${styles.tableHeader}`}>
-                  <div>팝히스토리</div>
+                  <div>No.</div>
                   <div>후원일</div>
-                  <div>정산요청일</div>
-                  <div>정산확정일</div>
-                  <div>정산취소일</div>
+                  <div>요청일</div>
+                  <div>확정일</div>
+                  <div>취소일</div>
                   <div>금액</div>
-                  <div>팝상태</div>
+                  <div>상태</div>
                   <div>후원자</div>
                 </div>
                 {receivedFiltered.length === 0 ? (
@@ -456,8 +479,12 @@ export function DonationSection() {
                       <div className={styles.tableCell}>
                         <DonationDateCell dt={row.cancelDatetime} />
                       </div>
-                      <div className={styles.tableCell}>{formatAmountWithComma(row.changeAmount)}</div>
-                      <div className={styles.tableCell}>{getPopStatusLabel(row.popStatus)}</div>
+                      <div className={styles.tableCell}>{formatAmountAbsWithComma(row.changeAmount)}</div>
+                      <div className={styles.tableCell}>
+                        <span className={getDonationStatusBadgeClass(row.popStatus)}>
+                          {getPopStatusLabel(row.popStatus)}
+                        </span>
+                      </div>
                       <div className={styles.tableCell}>{row.related?.name ?? '-'}</div>
                     </div>
                   ))
@@ -468,38 +495,30 @@ export function DonationSection() {
         )}
       </div>
 
-      {showReasonModal && (
+      {showConfirmModal && (
         <div
           className={styles.modalOverlay}
           role="dialog"
           aria-modal="true"
-          aria-labelledby="donation-reason-modal-title"
+          aria-labelledby="donation-cancel-modal-title"
         >
           <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <h3
-              id="donation-reason-modal-title"
+              id="donation-cancel-modal-title"
               className={styles.modalTitle}
-              style={{ fontSize: '1rem' }}
+              style={{ fontSize: '1.1rem', marginBottom: 12 }}
             >
-              후원 취소 사유를 선택하세요.
+              후원 취소 확인
             </h3>
-            <input
-              type="text"
-              value={FIXED_CANCEL_REASON}
-              readOnly
-              className={styles.settlementInput}
-              style={{ marginBottom: 8, width: '100%' }}
-            />
+            <p className={styles.donationConfirmMessage}>
+              정말 이 음악인에 대한 후원을 취소하시겠습니까?
+            </p>
             <div className={styles.settlementConfirmActions}>
               <button
                 type="button"
                 className={styles.settlementConfirmBtn}
                 disabled={cancelSubmitting}
-                onClick={() => {
-                  setCancelReasonError('');
-                  setShowReasonModal(false);
-                  handleConfirmCancel();
-                }}
+                onClick={handleConfirmCancel}
               >
                 {cancelSubmitting ? '처리 중…' : '확인'}
               </button>
@@ -508,9 +527,7 @@ export function DonationSection() {
                 className={styles.settlementConfirmCancelBtn}
                 disabled={cancelSubmitting}
                 onClick={() => {
-                  setShowReasonModal(false);
-                  setCancelReason('');
-                  setCancelReasonError('');
+                  setShowConfirmModal(false);
                   setCancelTarget(null);
                 }}
               >
