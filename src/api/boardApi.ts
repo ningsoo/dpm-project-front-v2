@@ -29,12 +29,16 @@ export const boardApi = {
       { params: { page } }
     ),
 
-  /** 2. 카테고리 내 게시글 작성 - POST /api/boards/category/[categoryType] */
+  /** 2. 카테고리 내 게시글 작성 - POST /api/boards/category/[categoryType] (JSON) */
   createPost: (categoryType: BoardCategory, body: CreateBoardRequest) =>
     fetchClient.post<ApiResponse<string>>(
       `/boards/category/${categoryType}`,
       body
     ),
+
+  /** 2-1. SHOWCASE 게시글 작성 - POST /api/boards/category/SHOWCASE (multipart) */
+  createPostShowcase: (formData: FormData) =>
+    fetchClient.post<ApiResponse<string>>('/boards/category/SHOWCASE', formData),
 
   /** 3. 게시글 상세 조회 - GET /api/boards/[boardId] */
   getPost: (boardId: string) =>
