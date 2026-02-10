@@ -288,7 +288,7 @@ export function DonationSection() {
     };
     setCancelSubmitting(true);
     try {
-      await fetchClient.post<unknown>(`/users/${uid}/donations/cancel`, body);
+      await fetchClient.post<unknown>(`/api/users/${uid}/donations/cancel`, body);
       setCancelTarget(null);
       setCancelReason('');
       setCancelReasonError('');

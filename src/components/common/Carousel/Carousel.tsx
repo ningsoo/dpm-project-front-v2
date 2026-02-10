@@ -35,7 +35,7 @@ export default function Carousel({ category, variant = 'spotlight', autoSlideInt
 
   const fetchPosts = useCallback(async () => {
     try {
-      const { data } = await boardApi.getBoardByCategory(category, {});
+      const { data } = await boardApi.getBoardByCategory(category, 0);
       const list = (data?.data as { posts?: CarouselPost[] })?.posts ?? [];
       // 월간 조회수 기준 정렬 (현재는 등록일 기준으로 가정, 추후 API에서 정렬된 데이터 받아올 예정)
       setPosts(Array.isArray(list) ? list.slice(0, 10) : []);

@@ -14,9 +14,10 @@ import {
 
 export interface SettlementUser {
   email: string;
-  name: string;
+  name?: string;
   phoneNumber: string;
-  accountNumber: string;
+  accountNumber?: string;
+  nickname?: string;
 }
 
 export type SettlementHistoryItem = {
