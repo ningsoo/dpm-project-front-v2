@@ -45,6 +45,14 @@ export interface PageableBoardResponse {
   empty?: boolean;
 }
 
+/** COMMUNITY/REVIEWS 상세 조회 시 첨부파일 (imageUrls 또는 attachment 중 하나만 존재) */
+export interface BoardAttachment {
+  /** API 응답이 filekey(소문자)로 올 수 있음 */
+  fileKey?: string;
+  filekey?: string;
+  originalFilename: string;
+}
+
 /** PLAYLISTS 상세용 플레이리스트 아이템 */
 export interface PlaylistItem {
   videoId: string;
@@ -56,6 +64,8 @@ export interface PlaylistItem {
 export interface BoardDetail extends BoardListItem {
   /** 상세 조회 시 서버에서 내려주는 좋아요 여부 */
   liked?: boolean;
+  /** COMMUNITY/REVIEWS 첨부파일 (imageUrl 또는 attachment 중 하나만 존재) */
+  attachment?: BoardAttachment | null;
   /** 플레이리스트 ID (PLAYLISTS) */
   playlistId?: string | number | null;
   /** 플레이리스트 제목 (PLAYLISTS) */

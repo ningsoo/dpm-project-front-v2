@@ -228,7 +228,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
         <div className={styles.loading}>로딩 중…</div>
       ) : viewMode === 'grid' ? (
         <div className={styles.grid}>
-          {displayedPosts.map((p) => {
+          {displayedPosts.map((p, idx) => {
             const safeCat = category as BoardCategorySlug;
             const thumbnailUrl = getBoardThumbnailUrl(p, safeCat);
             const isShowcase = category === 'showcase';
@@ -240,7 +240,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
 
             return (
               <div
-                key={p.boardId}
+                key={`${p.boardId}-${idx}`}
                 className={styles.card}
                 onClick={handleCardClick}
                 role="button"
@@ -300,9 +300,9 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
               </tr>
             </thead>
             <tbody>
-              {displayedPosts.map((p) => (
+              {displayedPosts.map((p, idx) => (
                 <tr
-                  key={p.boardId}
+                  key={`${p.boardId}-${idx}`}
                   onClick={() => router.push(`/boards/${p.boardId}`)}
                   style={{ cursor: 'pointer' }}
                 >
