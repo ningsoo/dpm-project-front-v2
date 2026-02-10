@@ -261,6 +261,25 @@
   margin-top: 20px;
 }
 
+/* POP 섹션 */
+.popSection {
+  width: 100%;
+}
+
+.popTableWrap {
+  margin-top: 16px;
+}
+
+.popUsageGrid6,
+.popPurchaseGrid6 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.popGridEmptyCell {
+  grid-column: 1 / -1;
+  text-align: center;
+}
+
 /* 후원 섹션 */
 .donationSection {
   width: 100%;

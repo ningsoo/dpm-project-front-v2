@@ -102,6 +102,18 @@ export const mypageApi = {
   getPlaylistTracks: (playlistId: number) =>
     fetchClient.get<ApiResponse<unknown>>(`/mypage/playlist/${playlistId}/items`),
 
+  /** POP 사용내역 - GET /mypage/pop-usage */
+  getPopUsageHistory: () =>
+    fetchClient.get<ApiResponse<unknown>>('/mypage/pop-usage'),
+
+  /** POP 구매내역 - GET /mypage/pop-purchase */
+  getPopPurchaseHistory: () =>
+    fetchClient.get<ApiResponse<unknown>>('/mypage/pop-purchase'),
+
+  /** POP 사용취소 - POST /mypage/pop-usage/cancel (이 단계에서는 호출하지 말고 준비만) */
+  cancelPopUsage: (body?: Record<string, unknown>) =>
+    fetchClient.post<ApiResponse<unknown>>('/mypage/pop-usage/cancel', body ?? {}),
+
   getInquiries: (params?: { page?: number; size?: number; startDate?: string; endDate?: string;}) =>
     fetchClient.get<ApiResponse<unknown>>('/mypage/inquiry', { params }),
 
