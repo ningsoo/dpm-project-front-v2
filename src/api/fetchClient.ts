@@ -54,12 +54,15 @@ async function doRefresh(): Promise<string | null> {
   throw new Error('Refresh response has no accessToken');
 }
 
-// ─── Request: Authorization 헤더만 추가 ───
+// ─── Request: Authorization 헤더 + FormData 시 Content-Type 제거 ───
 fetchClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = tokenUtils.getAccessToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    if (config.data instanceof FormData && config.headers) {
+      delete config.headers['Content-Type'];
     }
     return config;
   },
