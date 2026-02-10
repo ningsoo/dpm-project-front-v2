@@ -150,7 +150,7 @@ function mapPurchaseTargetToLabel(target?: string): string {
   return String(target).toUpperCase() === 'CHARGE' ? '충전' : '-';
 }
 
-export function PopSection({ user, onChargeClick }: PopSectionProps) {
+function PopSection({ user, onChargeClick }: PopSectionProps) {
   const router = useRouter();
   const [subTab, setSubTab] = useState<'usage' | 'purchase'>('usage');
   const [inputRange, setInputRange] = useState({ start: '', end: '' });
@@ -504,3 +504,5 @@ export function PopSection({ user, onChargeClick }: PopSectionProps) {
     </div>
   );
 }
+
+export default PopSection;

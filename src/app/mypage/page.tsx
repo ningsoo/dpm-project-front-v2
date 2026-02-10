@@ -7,11 +7,12 @@ import { useSelector } from 'react-redux';
 import { Key, User, Plus, Search, Pencil, Heart, X, Check } from 'lucide-react';
 import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
+import { preparePayment } from '@/api/creditApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import { PasswordVerifyModal } from './PasswordVerifyModal';
 import { SettlementSection } from './components/SettlementSection';
 import { DonationSection } from './components/DonationSection';
-import { PopSection } from './components/PopSection';
+import PopSection from './components/PopSection';
 import { MyPageYouTubeSection } from './components/MyPageYouTubeSection';
 import styles from './mypage.module.css';
 
@@ -373,18 +374,34 @@ export default function MypagePage() {
     }, 500);
   };
 
-  const handleCreditPurchase = () => {
-    // 최종 검증 1번 더 실행
+  const handleCreditPurchase = async () => {
+    // 1) 입력 검증
     const error = validateCreditAmount(creditAmount);
     if (error) {
       setCreditError(error);
       return;
     }
 
-    const amount = parseInt(creditAmount, 10);
-    setShowCreditChargeModal(false);
-    setCreditError('');
-    router.push(`/mypage/credit?amount=${amount}`);
+    const changeAmount = parseInt(creditAmount, 10);
+    const amount = changeAmount + Math.floor(changeAmount / 10);
+
+    try {
+      // 2) POST /v1/payments/prepare
+      const res = await preparePayment(changeAmount, amount);
+      const body = res.data;
+
+      if (body?.success === true && body?.data?.orderId) {
+        const orderId = body.data.orderId;
+        setShowCreditChargeModal(false);
+        setCreditError('');
+        router.push(`/mypage/credit?orderId=${encodeURIComponent(orderId)}&changeAmount=${changeAmount}&amount=${amount}`);
+      } else {
+        ToastUtils.error(body?.message ?? '결제 준비에 실패했습니다.');
+      }
+    } catch (err: unknown) {
+      const ax = err as { response?: { data?: { message?: string } } };
+      ToastUtils.error(ax?.response?.data?.message ?? '결제 준비에 실패했습니다.');
+    }
   };
 
   const closeModal = () => {

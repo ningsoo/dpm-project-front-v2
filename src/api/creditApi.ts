@@ -1,15 +1,41 @@
-import { fetchClient } from './fetchClient';
+import { fetchClient, PAYMENT_BASE } from './fetchClient';
 import type { ApiResponse } from './authApi';
 
+/** 결제 API 공통 응답 타입 */
+export interface RestResponse<T> {
+  success: boolean;
+  message: string | null;
+  data: T;
+}
+
+/** POST {PAYMENT_BASE}/prepare - 결제 준비 (응답 data에 orderId 포함) */
+export function preparePayment(changeAmount: number, amount: number) {
+  return fetchClient.post<RestResponse<{ orderId: string }>>(`${PAYMENT_BASE}/prepare`, {
+    changeAmount,
+    amount,
+  });
+}
+
+/** POST /v1/payments/confirm - 결제 확정 (/api prefix 미사용, baseURL만 사용) */
+export function confirmPayment(orderId: string, paymentKey: string, amount: number) {
+  return fetchClient.post<RestResponse<unknown>>('/v1/payments/confirm', {
+    orderId,
+    paymentKey,
+    amount,
+  });
+}
+
 export const creditApi = {
+  /** 결제 준비 - /v1/payments/prepare 사용 (/api prefix 미사용) */
   chargeRequest: (amount: number, payMethod: string) =>
     fetchClient.post<ApiResponse<{ orderId: string; redirectUrl?: string }>>(
-      '/api/mypage/credit/charge/request',
+      `${PAYMENT_BASE}/prepare`,
       { amount, payMethod }
     ),
 
+  /** 결제 확정 - /v1/payments/confirm 사용 (/api prefix 미사용) */
   chargeConfirm: (orderId: string, paymentKey: string, amount: number) =>
-    fetchClient.post<ApiResponse<unknown>>('/api/mypage/credit/charge/confirm', {
+    fetchClient.post<ApiResponse<unknown>>(`${PAYMENT_BASE}/confirm`, {
       orderId,
       paymentKey,
       amount,
