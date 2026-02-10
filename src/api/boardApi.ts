@@ -42,16 +42,16 @@ export const boardApi = {
 
   /** 2-2. PLAYLISTS 게시글 작성 - POST /api/boards/category/PLAYLISTS (multipart) */
   createPostPlaylists: (formData: FormData) =>
-    fetchClient.post<ApiResponse<string>>('/boards/category/PLAYLISTS', formData),
+    fetchClient.post<ApiResponse<string>>('/api/boards/category/PLAYLISTS', formData),
 
   /** 2-3. SPOTLIGHT 게시글 작성 - POST /api/boards/category/SPOTLIGHT (multipart) */
   createPostSpotlight: (formData: FormData) =>
-    fetchClient.post<ApiResponse<string>>('/boards/category/SPOTLIGHT', formData),
+    fetchClient.post<ApiResponse<string>>('/api/boards/category/SPOTLIGHT', formData),
 
   /** 2-4. COMMUNITY/REVIEWS 게시글 작성 - POST /api/boards/category/{categoryType} (multipart) */
   createPostWithFile: (categoryType: BoardCategory, formData: FormData) =>
     fetchClient.post<ApiResponse<string>>(
-      `/boards/category/${categoryType}`,
+      `/api/boards/category/${categoryType}`,
       formData
     ),
 
@@ -61,12 +61,28 @@ export const boardApi = {
       `/api/boards/${boardId}`,
     ),
 
-  /** 4. 게시글 수정 - PUT /api/boards/[boardId] */
+  /** 4. 게시글 수정 - PATCH /api/boards/[boardId] (JSON) */
   updatePost: (boardId: string, body: UpdateBoardRequest) =>
     fetchClient.patch<ApiResponse<string>>(
       `/api/boards/${boardId}`,
       body
     ),
+
+  /** 4-1. SHOWCASE 게시글 수정 - PATCH /api/boards/[boardId] (multipart, data: { title, content, youtubeUrl }) */
+  updatePostShowcase: (boardId: string, formData: FormData) =>
+    fetchClient.patch<ApiResponse<string>>(`/api/boards/${boardId}`, formData),
+
+  /** 4-2. PLAYLISTS 게시글 수정 - PATCH /api/boards/[boardId] (multipart, data: { title, content, playlistId }) */
+  updatePostPlaylists: (boardId: string, formData: FormData) =>
+    fetchClient.patch<ApiResponse<string>>(`/api/boards/${boardId}`, formData),
+
+  /** 4-3. SPOTLIGHT 게시글 수정 - PATCH /api/boards/[boardId] (multipart, data: { title, content, deleteAttachmentIds, imageOrder }, files) */
+  updatePostSpotlight: (boardId: string, formData: FormData) =>
+    fetchClient.patch<ApiResponse<string>>(`/api/boards/${boardId}`, formData),
+
+  /** 4-4. COMMUNITY/REVIEWS 게시글 수정 - PATCH /api/boards/[boardId] (multipart, data: { title, content }, deleteIds, files) */
+  updatePostCommunityReviews: (boardId: string, formData: FormData) =>
+    fetchClient.patch<ApiResponse<string>>(`/api/boards/${boardId}`, formData),
 
   /** 5. 게시글 삭제 - DELETE /api/boards/[boardId] */
   deletePost: (boardId: string) =>

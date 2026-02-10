@@ -11,10 +11,14 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'
 export const fetchClient = axios.create({
   baseURL: API_BASE,
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
   timeout: 10000,
+});
+
+fetchClient.interceptors.request.use(config => {
+  if (!(config.data instanceof FormData)) {
+    config.headers['Content-Type'] = 'application/json';
+  }
+  return config;
 });
 
 /**
