@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 type StatusEntry = {
   status: number;
@@ -23,9 +23,10 @@ const STATUS_MAP: Record<string, StatusEntry> = {
   },
 };
 
-export async function GET(_req: Request, { params }: { params: { code: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   try {
-    const entry = STATUS_MAP[params.code];
+    const { code } = await params;
+    const entry = STATUS_MAP[code];
 
     if (!entry) {
       return NextResponse.json(
@@ -36,7 +37,7 @@ export async function GET(_req: Request, { params }: { params: { code: string } 
 
     return NextResponse.json(
       { status: entry.status, title: entry.title, message: entry.description },
-      { status: entry.status, statusText: entry.title }
+      { status: entry.status }
     );
   } catch (error) {
     console.error('Failed to return status response', error);
