@@ -70,9 +70,50 @@
 
 .empty {
   text-align: center;
-  padding: 60px;
+  padding: 40px 24px;
   color: #666;
   font-size: 0.95rem;
+}
+
+.emptyMessage {
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.emptyButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.emptyBtnYes {
+  padding: 10px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: #1976d2;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.emptyBtnYes:hover {
+  background: #1565c0;
+}
+
+.emptyBtnNo {
+  padding: 10px 24px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #333;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.emptyBtnNo:hover {
+  background: #eee;
 }
 
 .list {

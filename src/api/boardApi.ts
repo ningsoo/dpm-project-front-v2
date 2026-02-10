@@ -119,6 +119,16 @@ export const boardApi = {
     ),
 
   /**
+   * 댓글 수정
+   * PATCH /api/boards/{boardId}/comments/{commentId}
+   */
+  updateComment: (boardId: string, commentId: string, body: { content: string }) =>
+    fetchClient.patch<ApiResponse<unknown>>(
+      `/api/boards/${boardId}/comments/${commentId}`,
+      body
+    ),
+
+  /**
    * 게시글 좋아요
    * POST /api/boards/{boardId}/like
    */
