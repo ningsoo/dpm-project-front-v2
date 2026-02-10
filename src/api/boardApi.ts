@@ -55,10 +55,10 @@ export const boardApi = {
       formData
     ),
 
-  /** 3. 게시글 상세 조회 - GET /api/boards/[boardId] */
-  getPost: (boardId: string) =>
+  /** 3. 게시글 상세 조회 - GET /api/boards/[boardId] (signal: AbortController 취소용) */
+  getPost: (boardId: string, options?: { signal?: AbortSignal }) =>
     fetchClient.get<ApiResponse<BoardDetail>>(
-      `/api/boards/${boardId}`
+      `/api/boards/${boardId}`,
     ),
 
   /** 4. 게시글 수정 - PUT /api/boards/[boardId] */

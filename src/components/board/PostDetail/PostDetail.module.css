@@ -139,6 +139,35 @@
   border-radius: 8px;
 }
 
+.attachmentBlock {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.attachmentBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1976d2;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.attachmentBtn:hover:not(:disabled) {
+  background: #eee;
+  border-color: #1976d2;
+}
+
+.attachmentBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .fileList {
   margin-bottom: 16px;
 }
@@ -539,6 +568,17 @@
 
 :global(.dark) .fileItem {
   border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .attachmentBtn {
+  color: #9EA2B8;
+  background: #242422;
+  border-color: #3A3A38;
+}
+
+:global(.dark) .attachmentBtn:hover:not(:disabled) {
+  background: #2E2E2C;
+  border-color: #9EA2B8;
 }
 
 :global(.dark) .modalContent {

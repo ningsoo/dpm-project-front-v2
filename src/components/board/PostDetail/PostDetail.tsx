@@ -7,6 +7,7 @@ import { Heart, Eye, MoreVertical } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
+import { s3Api } from '@/api/s3Api';
 import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
 import { formatCreatedDateTimeFull } from '@/utils/createdDateTime';
@@ -63,31 +64,60 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   const [reportReason, setReportReason] = useState('');
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
+  const [attachmentDownloading, setAttachmentDownloading] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
 
   const currentUserId =
     typeof window !== 'undefined' ? tokenUtils.getUserIdFromToken() : null;
 
-  // ===== 게시글 조회 (response.data.data) =====
+  // ===== 게시글 조회 (boardId 확정 시 1회만, AbortController로 StrictMode 중복 호출 방지) =====
   useEffect(() => {
-    if (!boardId) return;
+    const validId = typeof boardId === 'string' && boardId.trim() !== '';
+    if (!validId) {
+      setLoading(false);
+      setPost(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const { signal } = controller;
 
     setLoading(true);
 
     boardApi
-      .getPost(boardId)
+      .getPost(boardId, { signal })
       .then(({ data }) => {
+        if (signal.aborted) return;
         const postData = data?.data as BoardDetail | undefined;
         if (postData) setPost({ ...postData } as Post);
+        else setPost(null);
       })
-      .catch((err: { response?: { status?: number } }) => {
-        if (err?.response?.status !== 404) {
-          console.error('게시글 조회 실패', err);
+      .catch((err: unknown) => {
+        const e = err as { name?: string; response?: { status?: number; statusText?: string; data?: unknown }; message?: string };
+        if (e?.name === 'AbortError' || signal.aborted) return;
+        const status = e?.response?.status;
+        if (status === 500) {
+          const resData = e?.response?.data;
+          console.error(
+            '[게시글 상세 500]',
+            'boardId:', boardId,
+            '| status:', status,
+            '| statusText:', e?.response?.statusText ?? '(없음)',
+            '| message:', e?.message ?? '(없음)',
+            '| response.data:', typeof resData === 'object' ? JSON.stringify(resData) : resData
+          );
+        } else if (status !== 404) {
+          console.error('게시글 조회 실패', 'boardId:', boardId, 'status:', status, err);
         }
         ToastUtils.error('글을 불러올 수 없습니다');
+        setPost(null);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!signal.aborted) setLoading(false);
+      });
+
+    return () => controller.abort();
   }, [boardId]);
 
   useEffect(() => {
@@ -164,6 +194,26 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
       return;
     }
     setShowReportModal(true);
+  };
+
+  /** 첨부파일 다운로드: Presigned URL 발급 후 브라우저 다운로드 트리거 */
+  const handleFileDownload = async (fileKey: string, _originalFilename?: string) => {
+    if (attachmentDownloading) return;
+    setAttachmentDownloading(true);
+    try {
+      const { data } = await s3Api.getPresignedUrl(fileKey);
+      const presignedUrl =
+        (data as { url?: string })?.url ?? (data as { data?: { url?: string } })?.data?.url ?? null;
+      if (!presignedUrl) {
+        ToastUtils.error('다운로드 URL을 받지 못했습니다.');
+        return;
+      }
+      window.location.href = presignedUrl;
+    } catch {
+      ToastUtils.error('파일 다운로드에 실패했습니다.');
+    } finally {
+      setAttachmentDownloading(false);
+    }
   };
 
   if (loading) return <div className={styles.loading}>로딩 중…</div>;
@@ -300,20 +350,50 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
           })()}
 
         {['community', 'reviews'].includes(categorySlug) &&
-          post.files &&
-          post.files.length > 0 && (
-            <div className={styles.fileList}>
-              {post.files.map((f, i) => (
-                <div key={i} className={styles.fileItem}>
-                  <a href={f.url} download>
-                    {f.name}
-                  </a>
-                </div>
-              ))}
-            </div>
-          )}
+          (() => {
+            const urls = (post.imageUrls ?? []).filter(
+              (u): u is string => typeof u === 'string' && u.trim() !== ''
+            );
+            if (urls.length === 0) return null;
+            return (
+              <div className={styles.photoList}>
+                {urls.map((url, i) => (
+                  <img key={i} src={url} alt="" />
+                ))}
+              </div>
+            );
+          })()}
 
         <div className={styles.text}>{post.content}</div>
+
+        {['community', 'reviews'].includes(categorySlug) &&
+          (() => {
+            const att = post.attachment;
+            if (!att || typeof att !== 'object') return null;
+            const fileKey =
+              (typeof att.fileKey === 'string' && att.fileKey.trim() !== '' ? att.fileKey : null) ??
+              (typeof (att as { filekey?: string }).filekey === 'string' &&
+              (att as { filekey: string }).filekey.trim() !== ''
+                ? (att as { filekey: string }).filekey
+                : null);
+            const originalFilename =
+              typeof att.originalFilename === 'string' && att.originalFilename.trim() !== ''
+                ? att.originalFilename.trim()
+                : '첨부파일';
+            if (!fileKey) return null;
+            return (
+              <div className={styles.attachmentBlock}>
+                <button
+                  type="button"
+                  className={styles.attachmentBtn}
+                  onClick={() => handleFileDownload(fileKey, originalFilename)}
+                  disabled={attachmentDownloading}
+                >
+                  [첨부파일] {originalFilename}
+                </button>
+              </div>
+            );
+          })()}
       </div>
 
       <CommentSection
