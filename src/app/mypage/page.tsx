@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { Key, User, Plus, Search, Pencil, Heart, X, Check } from 'lucide-react';
@@ -47,6 +47,7 @@ function formatPhone11(phoneNumber: string | undefined): string {
 
 export default function MypagePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const initialized = useSelector((s: RootState) => s.auth.initialized);
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
@@ -135,6 +136,14 @@ export default function MypagePage() {
         setLoading(false);
       });
   }, [initialized, isAuthenticated, router]);
+
+  // 게시글 상세 등에서 "충전하기"로 진입 시 충전 모달 자동 오픈
+  useEffect(() => {
+    if (searchParams.get('openCharge') === '1') {
+      setShowCreditChargeModal(true);
+      router.replace('/mypage', { scroll: false });
+    }
+  }, [searchParams, router]);
 
   // 문의내역 탭 활성화 시 데이터 fetch
   useEffect(() => {

@@ -96,6 +96,10 @@ export default function CommentSection({
   const [showCommentReportModal, setShowCommentReportModal] = useState<string | null>(null);
   const [commentReportReason, setCommentReportReason] = useState('');
   const [commentLikeLoading, setCommentLikeLoading] = useState<string | null>(null);
+  const [commentSubmitLoading, setCommentSubmitLoading] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
+  const [commentEditLoading, setCommentEditLoading] = useState<string | null>(null);
 
   const commentMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const currentUserId =
@@ -141,8 +145,15 @@ export default function CommentSection({
   }, [commentMenuOpen]);
 
   const handleCommentSubmit = () => {
-    if (!isAuthenticated || !commentText.trim() || commentText.length > 50) return;
+    if (
+      !isAuthenticated ||
+      !commentText.trim() ||
+      commentText.length > 50 ||
+      commentSubmitLoading
+    )
+      return;
 
+    setCommentSubmitLoading(true);
     boardApi
       .createComment(boardId, { content: commentText.trim() })
       .then(({ data }) => {
@@ -158,7 +169,64 @@ export default function CommentSection({
           setComments((prev) => [...prev, newComment]);
         }
       })
-      .catch(() => ToastUtils.error('댓글 등록 실패'));
+      .catch(() => ToastUtils.error('댓글 등록 실패'))
+      .finally(() => setCommentSubmitLoading(false));
+  };
+
+  const handleCommentKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleCommentSubmit();
+    }
+  };
+
+  const handleEditStart = (commentId: string, content: string) => {
+    setCommentMenuOpen(null);
+    setEditingCommentId(commentId);
+    setEditingContent(content);
+  };
+
+  const handleEditCancel = () => {
+    setEditingCommentId(null);
+    setEditingContent('');
+  };
+
+  const handleEditSubmit = (commentId: string, originalContent: string) => {
+    const trimmed = editingContent.trim();
+    if (!trimmed) {
+      ToastUtils.error('댓글 내용을 입력해주세요.');
+      return;
+    }
+    if (trimmed === originalContent) {
+      handleEditCancel();
+      return;
+    }
+    if (commentEditLoading) return;
+
+    setCommentEditLoading(commentId);
+    boardApi
+      .updateComment(boardId, commentId, { content: trimmed })
+      .then(() => {
+        setComments((prev) =>
+          prev.map((c) =>
+            (c.commentId ?? c.id) === commentId ? { ...c, content: trimmed } : c
+          )
+        );
+        handleEditCancel();
+      })
+      .catch(() => ToastUtils.error('댓글 수정에 실패했습니다.'))
+      .finally(() => setCommentEditLoading(null));
+  };
+
+  const handleEditKeyDown = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>,
+    commentId: string,
+    originalContent: string
+  ) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleEditSubmit(commentId, originalContent);
+    }
   };
 
   const handleCommentDeleteConfirm = () => {
@@ -233,8 +301,7 @@ export default function CommentSection({
         {commentOpen && (
           <>
             <div className={styles.commentForm}>
-              <input
-                type="text"
+              <textarea
                 placeholder={
                   isAuthenticated
                     ? '댓글 (1~50자)'
@@ -245,20 +312,26 @@ export default function CommentSection({
                   if (!isAuthenticated) return;
                   setCommentText(e.target.value);
                 }}
+                onKeyDown={handleCommentKeyDown}
                 onFocus={() => {
                   if (!isAuthenticated) onLoginRequired();
                 }}
                 className={styles.commentInput}
                 maxLength={50}
                 readOnly={!isAuthenticated}
+                rows={2}
               />
               <button
                 type="button"
                 className={styles.commentSubmit}
                 onClick={handleCommentSubmit}
-                disabled={!isAuthenticated || !commentText.trim()}
+                disabled={
+                  !isAuthenticated ||
+                  !commentText.trim() ||
+                  commentSubmitLoading
+                }
               >
-                등록
+                {commentSubmitLoading ? '등록 중…' : '등록'}
               </button>
             </div>
 
@@ -301,7 +374,7 @@ export default function CommentSection({
                               <button
                                 className={styles.menuItem}
                                 onClick={() =>
-                                  ToastUtils.info('댓글 수정 기능은 준비 중입니다.')
+                                  handleEditStart(apiCommentId, c.content)
                                 }
                               >
                                 수정
@@ -325,18 +398,60 @@ export default function CommentSection({
                       )}
                     </div>
                   </div>
-                  <div className={styles.commentBody}>{c.content}</div>
-                  <div className={styles.commentFooter}>
-                    <button
-                      type="button"
-                      className={`${styles.commentLikeBtn} ${c.toggledLike ? styles.likeBtnLiked : ''}`}
-                      onClick={() => handleCommentLikeClick(apiCommentId)}
-                      disabled={isCommentLikeLoading}
-                    >
-                      <Heart size={14} fill={c.toggledLike ? 'currentColor' : 'none'} />
-                      <span>{c.likeCount}</span>
-                    </button>
-                  </div>
+                  {editingCommentId === apiCommentId ? (
+                    <div className={styles.commentEditBlock}>
+                      <textarea
+                        className={styles.commentEditInput}
+                        value={editingContent}
+                        onChange={(e) => setEditingContent(e.target.value)}
+                        onKeyDown={(e) =>
+                          handleEditKeyDown(e, apiCommentId, c.content)
+                        }
+                        maxLength={50}
+                        rows={2}
+                        disabled={!!commentEditLoading}
+                      />
+                      <div className={styles.commentEditActions}>
+                        <button
+                          type="button"
+                          className={styles.commentEditCancel}
+                          onClick={handleEditCancel}
+                          disabled={!!commentEditLoading}
+                        >
+                          취소
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.commentEditSubmit}
+                          onClick={() =>
+                            handleEditSubmit(apiCommentId, c.content)
+                          }
+                          disabled={
+                            !!commentEditLoading || !editingContent.trim()
+                          }
+                        >
+                          {commentEditLoading === apiCommentId
+                            ? '수정 중…'
+                            : '수정 완료'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className={styles.commentBody}>{c.content}</div>
+                      <div className={styles.commentFooter}>
+                        <button
+                          type="button"
+                          className={`${styles.commentLikeBtn} ${c.toggledLike ? styles.likeBtnLiked : ''}`}
+                          onClick={() => handleCommentLikeClick(apiCommentId)}
+                          disabled={isCommentLikeLoading}
+                        >
+                          <Heart size={14} fill={c.toggledLike ? 'currentColor' : 'none'} />
+                          <span>{c.likeCount}</span>
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               );
             })}
