@@ -169,9 +169,7 @@ export function DonationSection() {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const sentFilteredLengthRef = useRef(0);
   const [cancelTarget, setCancelTarget] = useState<PopHistoryResponseRow | null>(null);
-  const [cancelReason, setCancelReason] = useState('');
-  const [cancelReasonError, setCancelReasonError] = useState('');
-  const [showReasonModal, setShowReasonModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
 
   const fetchSent = useCallback(async () => {
@@ -310,12 +308,11 @@ export function DonationSection() {
       changeAmount: Math.abs(target.changeAmount ?? 0),
       message: FIXED_CANCEL_REASON,
     };
+    setShowConfirmModal(false);
+    setCancelTarget(null);
     setCancelSubmitting(true);
     try {
       await fetchClient.post<unknown>(`/api/users/${uid}/donations/cancel`, body);
-      setCancelTarget(null);
-      setCancelReason('');
-      setCancelReasonError('');
       ToastUtils.success('후원이 취소되었습니다.');
       await fetchSent();
     } catch (err: unknown) {
@@ -425,9 +422,7 @@ export function DonationSection() {
                               disabled={cancelSubmitting}
                               onClick={() => {
                                 setCancelTarget(row);
-                                setCancelReason(FIXED_CANCEL_REASON);
-                                setCancelReasonError('');
-                                setShowReasonModal(true);
+                                setShowConfirmModal(true);
                               }}
                             >
                               취소하기
@@ -500,38 +495,30 @@ export function DonationSection() {
         )}
       </div>
 
-      {showReasonModal && (
+      {showConfirmModal && (
         <div
           className={styles.modalOverlay}
           role="dialog"
           aria-modal="true"
-          aria-labelledby="donation-reason-modal-title"
+          aria-labelledby="donation-cancel-modal-title"
         >
           <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <h3
-              id="donation-reason-modal-title"
+              id="donation-cancel-modal-title"
               className={styles.modalTitle}
-              style={{ fontSize: '1rem' }}
+              style={{ fontSize: '1.1rem', marginBottom: 12 }}
             >
-              후원 취소 사유를 선택하세요.
+              후원 취소 확인
             </h3>
-            <input
-              type="text"
-              value={FIXED_CANCEL_REASON}
-              readOnly
-              className={styles.settlementInput}
-              style={{ marginBottom: 8, width: '100%' }}
-            />
+            <p className={styles.donationConfirmMessage}>
+              정말 이 음악인에 대한 후원을 취소하시겠습니까?
+            </p>
             <div className={styles.settlementConfirmActions}>
               <button
                 type="button"
                 className={styles.settlementConfirmBtn}
                 disabled={cancelSubmitting}
-                onClick={() => {
-                  setCancelReasonError('');
-                  setShowReasonModal(false);
-                  handleConfirmCancel();
-                }}
+                onClick={handleConfirmCancel}
               >
                 {cancelSubmitting ? '처리 중…' : '확인'}
               </button>
@@ -540,9 +527,7 @@ export function DonationSection() {
                 className={styles.settlementConfirmCancelBtn}
                 disabled={cancelSubmitting}
                 onClick={() => {
-                  setShowReasonModal(false);
-                  setCancelReason('');
-                  setCancelReasonError('');
+                  setShowConfirmModal(false);
                   setCancelTarget(null);
                 }}
               >

@@ -114,9 +114,9 @@ export const mypageApi = {
   getPopPurchaseHistory: () =>
     fetchClient.get<ApiResponse<unknown>>('/api/mypage/pop-purchase'),
 
-  /** POP 사용취소 - POST /mypage/pop-usage/cancel (이 단계에서는 호출하지 말고 준비만) */
-  cancelPopUsage: (body?: Record<string, unknown>) =>
-    fetchClient.post<ApiResponse<unknown>>('/api/mypage/pop-usage/cancel', body ?? {}),
+  /** POP 사용취소 - POST /mypage/pop-usage/cancel */
+  cancelPopUsage: (body: { userId: number; popHistoryId: number; boardId?: number | null; cancelReason: string }) =>
+    fetchClient.post<ApiResponse<unknown>>('/api/mypage/pop-usage/cancel', body),
 
   getInquiries: (params?: { page?: number; size?: number; startDate?: string; endDate?: string;}) =>
     fetchClient.get<ApiResponse<unknown>>('/api/mypage/inquiry', { params }),

@@ -400,6 +400,18 @@
   overflow-y: auto;
 }
 
+/* 후원 취소 확인 모달 메시지 */
+.donationConfirmMessage {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+  color: #444;
+  line-height: 1.6;
+}
+
+:global(.dark) .donationConfirmMessage {
+  color: #A19E94;
+}
+
 .donationCancelBtn {
   padding: 5px 14px;
   font-size: 13px;
