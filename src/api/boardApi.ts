@@ -40,6 +40,21 @@ export const boardApi = {
   createPostShowcase: (formData: FormData) =>
     fetchClient.post<ApiResponse<string>>('/boards/category/SHOWCASE', formData),
 
+  /** 2-2. PLAYLISTS 게시글 작성 - POST /api/boards/category/PLAYLISTS (multipart) */
+  createPostPlaylists: (formData: FormData) =>
+    fetchClient.post<ApiResponse<string>>('/boards/category/PLAYLISTS', formData),
+
+  /** 2-3. SPOTLIGHT 게시글 작성 - POST /api/boards/category/SPOTLIGHT (multipart) */
+  createPostSpotlight: (formData: FormData) =>
+    fetchClient.post<ApiResponse<string>>('/boards/category/SPOTLIGHT', formData),
+
+  /** 2-4. COMMUNITY/REVIEWS 게시글 작성 - POST /api/boards/category/{categoryType} (multipart) */
+  createPostWithFile: (categoryType: BoardCategory, formData: FormData) =>
+    fetchClient.post<ApiResponse<string>>(
+      `/boards/category/${categoryType}`,
+      formData
+    ),
+
   /** 3. 게시글 상세 조회 - GET /api/boards/[boardId] */
   getPost: (boardId: string) =>
     fetchClient.get<ApiResponse<BoardDetail>>(
