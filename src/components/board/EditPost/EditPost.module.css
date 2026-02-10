@@ -90,3 +90,50 @@
   text-align: center;
   color: #666;
 }
+
+/* Dark mode */
+:global(.dark) .h1 {
+  color: #B5B3A7;
+}
+
+:global(.dark) .label {
+  color: #A19E94;
+}
+
+:global(.dark) .input,
+:global(.dark) .textarea {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .input:focus,
+:global(.dark) .textarea:focus {
+  border-color: #B5B3A7;
+}
+
+:global(.dark) .cancel {
+  background: #2E2E2C;
+  color: #A19E94;
+}
+
+:global(.dark) .cancel:hover {
+  background: #3A3A38;
+}
+
+:global(.dark) .loading {
+  color: #8A877D;
+}
+
+:global(.dark) .submit {
+  background: #3A3934;
+}
+
+:global(.dark) .submit:hover:not(:disabled) {
+  background: #42413B;
+}
+
+:global(.dark) .input:focus,
+:global(.dark) .textarea:focus {
+  border-color: #9EA2B8;
+}

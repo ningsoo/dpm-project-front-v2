@@ -961,3 +961,307 @@
   background: #f9f9f9;
   border-radius: 8px;
 }
+
+/* Dark mode */
+:global(.dark) .profile {
+  background: #242422;
+}
+
+:global(.dark) .avatar {
+  background: #3A3A38;
+}
+
+:global(.dark) .nickname {
+  color: #B5B3A7;
+}
+
+:global(.dark) .email,
+:global(.dark) .phone {
+  color: #8A877D;
+}
+
+:global(.dark) .iconLink {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #8A877D;
+}
+
+:global(.dark) .iconLink:hover {
+  background: #2E2E2C;
+  color: #B5B3A7;
+}
+
+:global(.dark) .tabs {
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .tab {
+  background: #242422;
+  color: #8A877D;
+}
+
+:global(.dark) .tab:hover {
+  background: #2E2E2C;
+  color: #A19E94;
+}
+
+:global(.dark) .content {
+  color: #A19E94;
+}
+
+:global(.dark) .tableGrid {
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .tableHeader {
+  background: #242422;
+  border-bottom-color: #3A3A38;
+  color: #A19E94;
+}
+
+:global(.dark) .tableRow {
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .tableCell {
+  color: #A19E94;
+}
+
+:global(.dark) .pageBtn {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #A19E94;
+}
+
+:global(.dark) .pageBtn:hover:not(:disabled) {
+  border-color: #B5B3A7;
+  color: #B5B3A7;
+}
+
+:global(.dark) .settlementSubTab {
+  color: #8A877D;
+}
+
+:global(.dark) .settlementSubTab:hover {
+  color: #A19E94;
+}
+
+:global(.dark) .settlementSubTabs {
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .settlementSummaryBlock,
+:global(.dark) .settlementRequestSummaryBox,
+:global(.dark) .settlementRequestInfoBox {
+  background: #242422;
+  border-color: #3A3A38;
+}
+
+:global(.dark) .settlementSummaryRow {
+  color: #A19E94;
+}
+
+:global(.dark) .settlementHistoryTitle {
+  color: #B5B3A7;
+}
+
+:global(.dark) .settlementDateInput {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .settlementInput {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .settlementInput:focus {
+  border-color: #B5B3A7;
+}
+
+:global(.dark) .settlementField label {
+  color: #A19E94;
+}
+
+:global(.dark) .settlementRequestHint {
+  color: #8A877D;
+}
+
+:global(.dark) .settlementRequestInfoBox {
+  color: #A19E94;
+}
+
+:global(.dark) .settlementLoading,
+:global(.dark) .settlementEmpty {
+  color: #8A877D;
+}
+
+:global(.dark) .settlementConfirmCancelBtn {
+  background: #2E2E2C;
+  border-color: #3A3A38;
+  color: #A19E94;
+}
+
+:global(.dark) .settlementConfirmCancelBtn:hover:not(:disabled) {
+  background: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .donationCancelBtn {
+  color: #c62828;
+  border-color: #c62828;
+}
+
+:global(.dark) .modalCard {
+  background: #242422;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark) .modalTitle {
+  color: #B5B3A7;
+}
+
+:global(.dark) .closeBtn {
+  color: #8A877D;
+}
+
+:global(.dark) .closeBtn:hover {
+  background: #2E2E2C;
+  color: #B5B3A7;
+}
+
+:global(.dark) .amountInput {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .clearButton {
+  color: #8A877D;
+}
+
+:global(.dark) .totalRow {
+  background: #2E2E2C;
+}
+
+:global(.dark) .totalRow > div:first-child {
+  color: #8A877D;
+}
+
+:global(.dark) .helperText {
+  color: #8A877D;
+}
+
+:global(.dark) .quickAmountBtn {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #A19E94;
+}
+
+:global(.dark) .quickAmountBtn:hover {
+  background: #2E2E2C;
+}
+
+:global(.dark) .inquiryDetailCard {
+  background: #242422;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark) .inquiryDetailSectionTitle {
+  color: #B5B3A7;
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .inquiryDetailLabel {
+  color: #8A877D;
+}
+
+:global(.dark) .inquiryDetailValue {
+  color: #A19E94;
+}
+
+:global(.dark) .inquiryDetailAttachmentImg {
+  border-color: #3A3A38;
+}
+
+:global(.dark) .inquiryDetailPending {
+  color: #8A877D;
+  background: #2E2E2C;
+}
+
+:global(.dark) .credits {
+  color: #B5B3A7;
+}
+
+:global(.dark) .iconLinkActive {
+  border-color: #B5B3A7;
+  color: #B5B3A7;
+}
+
+:global(.dark) .tabActive {
+  background: #3A3934;
+}
+
+:global(.dark) .pageBtnActive {
+  background: #3A3934;
+  border-color: #3A3934;
+}
+
+:global(.dark) .pageBtn:hover:not(:disabled) {
+  border-color: #B5B3A7;
+  color: #B5B3A7;
+}
+
+:global(.dark) .settlementSubTabActive {
+  color: #B5B3A7;
+}
+
+:global(.dark) .settlementSubTabIndicator {
+  background: #B5B3A7;
+}
+
+:global(.dark) .settlementTotalAmount {
+  color: #B5B3A7;
+}
+
+:global(.dark) .settlementSearchBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .settlementSearchBtn:hover:not(:disabled) {
+  background: #42413B;
+}
+
+:global(.dark) .settlementConfirmBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .settlementConfirmBtn:hover:not(:disabled) {
+  background: #42413B;
+}
+
+:global(.dark) .primaryButton {
+  background: #3A3934;
+}
+
+:global(.dark) .primaryButton:hover:not(:disabled) {
+  background: #42413B;
+}
+
+:global(.dark) .helperLink {
+  color: #B5B3A7;
+}
+
+:global(.dark) .inquiryTitleLink:hover {
+  color: #B5B3A7;
+}
+
+:global(.dark) .inquiryDetailAttachmentLink {
+  color: #B5B3A7;
+}
+
+:global(.dark) .totalRow > div:last-child {
+  color: #B5B3A7;
+}

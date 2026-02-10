@@ -160,3 +160,52 @@
     transform: scaleY(1);
   }
 }
+
+/* Dark mode */
+:global(.dark) .playerPlaceholder {
+  color: #8A877D;
+}
+
+:global(.dark) .playlistTitle {
+  color: #B5B3A7;
+}
+
+:global(.dark) .trackCount {
+  color: #8A877D;
+}
+
+:global(.dark) .trackList {
+  border-color: #3A3A38;
+}
+
+:global(.dark) .trackList::-webkit-scrollbar-track {
+  background: #242422;
+}
+
+:global(.dark) .trackList::-webkit-scrollbar-thumb {
+  background: #3A3A38;
+}
+
+:global(.dark) .trackItem {
+  border-bottom-color: #2E2E2C;
+}
+
+:global(.dark) .trackItem:hover {
+  background: #2E2E2C;
+}
+
+:global(.dark) .trackItem.active {
+  background: #1B2838;
+}
+
+:global(.dark) .trackNum {
+  color: #8A877D;
+}
+
+:global(.dark) .trackThumb {
+  background: #2E2E2C;
+}
+
+:global(.dark) .trackTitle {
+  color: #A19E94;
+}

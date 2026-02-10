@@ -446,3 +446,155 @@
   color: #111827;
   text-decoration: underline;
 }
+
+/* Dark mode */
+:global(.dark) .titleRow {
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .title {
+  color: #B5B3A7;
+}
+
+:global(.dark) .iconBtn {
+  color: #8A877D;
+}
+
+:global(.dark) .iconBtn:hover {
+  background: #2E2E2C;
+  color: #B5B3A7;
+}
+
+:global(.dark) .author {
+  color: #A19E94;
+}
+
+:global(.dark) .text {
+  color: #A19E94;
+}
+
+:global(.dark) .commentSection {
+  border-top-color: #3A3A38;
+}
+
+:global(.dark) .commentTitle {
+  color: #B5B3A7;
+}
+
+:global(.dark) .commentInput {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .commentInput:focus {
+  border-color: #B5B3A7;
+}
+
+:global(.dark) .commentItem {
+  border-bottom-color: #2E2E2C;
+}
+
+:global(.dark) .commentDate {
+  color: #8A877D;
+}
+
+:global(.dark) .commentBody {
+  color: #A19E94;
+}
+
+:global(.dark) .commentLikeBtn {
+  color: #8A877D;
+}
+
+:global(.dark) .commentLikeBtn:hover {
+  background: #2E2E2C;
+}
+
+:global(.dark) .menuBtn {
+  color: #8A877D;
+}
+
+:global(.dark) .menuBtn:hover {
+  color: #B5B3A7;
+}
+
+:global(.dark) .loading {
+  color: #8A877D;
+}
+
+:global(.dark) .menuDropdown {
+  background: #242422;
+  border-color: #3A3A38;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .menuItem {
+  color: #A19E94;
+}
+
+:global(.dark) .menuItem:hover {
+  background: #2E2E2C;
+}
+
+:global(.dark) .fileItem {
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .modalContent {
+  background: #242422;
+}
+
+:global(.dark) .modalMessage {
+  color: #B5B3A7;
+}
+
+:global(.dark) .reportTextarea {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .reportTextarea:focus {
+  border-color: #B5B3A7;
+}
+
+:global(.dark) .categoryLink {
+  color: #B5B3A7;
+}
+
+:global(.dark) .fileItem a {
+  color: #9EA2B8;
+}
+
+:global(.dark) .author:hover {
+  color: #9EA2B8;
+}
+
+:global(.dark) .replyBtn {
+  color: #9EA2B8;
+}
+
+:global(.dark) .commentSubmit {
+  background: #3A3934;
+}
+
+:global(.dark) .commentSubmit:hover {
+  background: #42413B;
+}
+
+:global(.dark) .commentInput:focus {
+  border-color: #9EA2B8;
+}
+
+:global(.dark) .modalButtonConfirm {
+  background: #3A3934;
+}
+
+:global(.dark) .modalButtonConfirm:hover {
+  background: #42413B;
+}
+
+:global(.dark) .reportTextarea:focus {
+  border-color: #9EA2B8;
+}

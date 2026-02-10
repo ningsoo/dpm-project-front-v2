@@ -3,11 +3,13 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import { authApi } from '@/api/authApi';
 import { ToastUtils } from '@/utils/toastUtils';
-import { validatePhonePartsStrict } from '@/utils/authValidation';
+import { validatePhonePartsStrict, validateNameFormatByRule } from '@/utils/authValidation';
 import styles from '../auth.module.css';
 
 const PWD_REQUIRE = '대문자, 숫자, 특수문자 포함 10자 이상, 공백금지';
@@ -38,9 +40,13 @@ function validatePassword(p: string): string[] {
 
 export default function SignupPage() {
   const router = useRouter();
+  const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
+  const [nameTouched, setNameTouched] = useState(false);
+  const [nameError, setNameError] = useState('');
   const [nickname, setNickname] = useState('');
   const phonePart0Ref = useRef<HTMLInputElement>(null);
   const phonePart1Ref = useRef<HTMLInputElement>(null);
@@ -83,6 +89,7 @@ export default function SignupPage() {
   const pwdOk = pwdErrors.length === 0;
   const confirmOk = password && confirmPassword && password === confirmPassword;
   const confirmError = confirmPassword && password && password !== confirmPassword;
+  const nameOk = name.length > 0 && !nameError;
   
   // 닉네임 형식 검사 함수 (우선순위: 공백 > 특수문자 > 한글 자음/모음 단독)
   const validateNicknameFormat = (value: string): string => {
@@ -377,6 +384,13 @@ export default function SignupPage() {
     };
   }, []);
 
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setName(v);
+    setNameTouched(true);
+    setNameError(validateNameFormatByRule(v));
+  };
+
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     // 10자 넘으면 입력 막기
@@ -445,8 +459,13 @@ export default function SignupPage() {
       setPhoneErrorUx(phoneValidation.error);
     }
 
+    // name 재검증
+    const nameErr = validateNameFormatByRule(name);
+    setNameError(nameErr);
+    const nameOkNow = name.length > 0 && !nameErr;
+
     // submit 조건 검사
-    if (!pwdOk || !confirmOk || !nicknameOk || !phoneOk || errors.email || errors.nickname || !emailVerified || !nicknameVerified) {
+    if (!pwdOk || !confirmOk || !nameOkNow || !nicknameOk || !phoneOk || errors.email || errors.nickname || !emailVerified || !nicknameVerified) {
       return;
     }
     
@@ -457,6 +476,7 @@ export default function SignupPage() {
       await authApi.signup({
         email,
         password,
+        name,
         nickname,
         phoneNumber: phoneForServer,
       });
@@ -515,7 +535,7 @@ export default function SignupPage() {
               disabled={!emailAvailable || emailVerified || emailVerificationPending || !!errors.email || !!emailHangulError || !!emailFormatError || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)}
               className={styles.emailVerifyBtn}
               style={{
-                backgroundColor: emailVerified ? '#4caf50' : emailVerificationPending ? '#999' : (emailAvailable && !errors.email && !emailHangulError && !emailFormatError && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? '#1976d2' : '#ccc'),
+                backgroundColor: emailVerified ? '#4caf50' : emailVerificationPending ? '#999' : (emailAvailable && !errors.email && !emailHangulError && !emailFormatError && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? (darkMode ? '#7B7F9E' : '#1976d2') : '#ccc'),
                 cursor: emailVerified || emailVerificationPending ? 'not-allowed' : (emailAvailable && !errors.email && !emailHangulError && !emailFormatError && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'pointer' : 'not-allowed'),
               }}
             >
@@ -594,6 +614,21 @@ export default function SignupPage() {
         </label>
 
         <label className={styles.label}>
+          이름
+          <input
+            type="text"
+            placeholder="김산독"
+            autoComplete="name"
+            value={name}
+            onChange={handleNameChange}
+            className={styles.input}
+          />
+          <span className={styles.error}>
+            {(nameTouched || submitAttempted) ? nameError : ''}
+          </span>
+        </label>
+
+        <label className={styles.label}>
           닉네임
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
@@ -616,7 +651,7 @@ export default function SignupPage() {
               disabled={!nicknameFormatOk}
               className={styles.actionBtn}
               style={{
-                background: nicknameFormatOk ? '#1976d2' : '#ccc',
+                background: nicknameFormatOk ? (darkMode ? '#7B7F9E' : '#1976d2') : '#ccc',
                 cursor: nicknameFormatOk ? 'pointer' : 'not-allowed',
               }}
             >
@@ -771,7 +806,7 @@ export default function SignupPage() {
         <button
           type="submit"
           className={styles.submit}
-          disabled={!pwdOk || !confirmOk || !nicknameOk || !phoneOk || !!errors.email || !!errors.nickname || !emailVerified || !nicknameVerified || loading}
+          disabled={!pwdOk || !confirmOk || !nameOk || !nicknameOk || !phoneOk || !!errors.email || !!errors.nickname || !emailVerified || !nicknameVerified || loading}
         >
           {loading ? '처리 중…' : '가입하기'}
         </button>
