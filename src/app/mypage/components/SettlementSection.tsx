@@ -216,8 +216,12 @@ export function SettlementSection({ user }: SettlementSectionProps) {
       accountNumber: trimmed,
     })
       .then((res: any) => {
-        if (res.data?.success === false) ToastUtils.error(res.data.message);
-        else ToastUtils.success('정산 계좌가 등록되었습니다.');
+        if (res.data?.success === false) {
+          ToastUtils.error(res.data.message);
+        } else {
+          ToastUtils.success('정산 계좌가 등록되었습니다.');
+          setSubTab('request');
+        }
       })
       .catch(() => ToastUtils.error('등록 실패'))
       .finally(() => setAccountSubmitting(false));
@@ -292,20 +296,20 @@ export function SettlementSection({ user }: SettlementSectionProps) {
             {loading ? <p className={styles.settlementLoading}>로딩 중...</p> : (
               <div style={{ overflowX: 'auto' }}>
                 <div className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableHeader}`}>
-                  <div style={centerStyle}>정산요청일</div>
-                  <div style={centerStyle}>정산승인일</div>
-                  <div style={centerStyle}>변동 수량</div>
-                  <div style={centerStyle}>정산금액</div>
-                  <div style={centerStyle}>정산처리상태</div>
+                  <div>정산요청일</div>
+                  <div>정산승인일</div>
+                  <div>변동 수량</div>
+                  <div>정산금액</div>
+                  <div>정산처리상태</div>
                 </div>
                 {historyList.length === 0 ? <div className={styles.settlementEmpty}>내역이 없습니다.</div> : 
                   historyList.map((item, idx) => (
                     <div key={idx} className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableRow}`}>
-                      <div className={styles.tableCell} style={centerStyle}><SettlementDateCell dt={item.requestedDatetime} /></div>
-                      <div className={styles.tableCell} style={centerStyle}><SettlementDateCell dt={item.approvedDatetime} /></div>
-                      <div className={styles.tableCell} style={centerStyle}>{formatSettlementAmount(item.changeAmount)}</div>
-                      <div className={styles.tableCell} style={centerStyle}>{formatSettlementAmount(item.changeAmount)}</div>
-                      <div className={styles.tableCell} style={centerStyle}>{item.statusLabel ?? '정산신청'}</div>
+                      <div className={styles.tableCell}><SettlementDateCell dt={item.requestedDatetime} /></div>
+                      <div className={styles.tableCell}><SettlementDateCell dt={item.approvedDatetime} /></div>
+                      <div className={styles.tableCell}>{formatSettlementAmount(item.changeAmount)}</div>
+                      <div className={styles.tableCell}>{formatSettlementAmount(item.changeAmount)}</div>
+                      <div className={styles.tableCell}>{item.statusLabel ?? '정산신청'}</div>
                     </div>
                   ))
                 }
@@ -337,7 +341,18 @@ export function SettlementSection({ user }: SettlementSectionProps) {
                     {!isAccountNumberTyping && accountNumberError ? accountNumberError : ''}
                   </span>
                 </div>
-                <button type="submit" className={styles.submitBtn} disabled={accountSubmitting}>등록</button>
+                <button 
+                  type="submit" 
+                  className={styles.submitBtn} 
+                  disabled={
+                    accountSubmitting || 
+                    isAccountNumberTyping || 
+                    !!accountNumberError || 
+                    accountNumber.trim().length === 0
+                  }
+                >
+                  등록
+                </button>
              </form>
            </div>
         )}
@@ -365,27 +380,23 @@ export function SettlementSection({ user }: SettlementSectionProps) {
             <div className={styles.settlementRequestTableWrap}>
               {availableLoading ? <p className={styles.settlementLoading}>로딩 중...</p> : (
                 <div style={{ overflowX: 'auto' }}>
-                  <div className={`${styles.tableGrid} ${styles.settlementGrid3} ${styles.tableHeader}`}>
-                    <div className={styles.settlementGrid3Col1} style={centerStyle}>후원번호</div>
-                    <div className={styles.settlementGrid3Col2} style={centerStyle}>후원금액</div>
-                    <div className={styles.settlementGrid3Col3} style={centerStyle}>후원승인일</div>
+                  <div className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableHeader}`}>
+                    <div style={centerStyle}>후원금액</div>
+                    <div style={centerStyle}>후원승인일</div>
                   </div>
                   {availableRows.length === 0 ? (
-                    <div className={`${styles.tableGrid} ${styles.settlementGrid3} ${styles.settlementGrid3EmptyRow}`}>
-                      <div className={`${styles.settlementEmpty} ${styles.settlementGrid3EmptyCell}`}>
+                    <div className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
+                      <div className={styles.tableCell} style={{ ...centerStyle, gridColumn: '1 / -1' }}>
                         내역이 없습니다.
                       </div>
                     </div>
                   ) : (
                     availableRows.map((row, idx) => (
-                      <div key={row.transactionId ?? idx} className={`${styles.tableGrid} ${styles.settlementGrid3} ${styles.tableRow}`}>
-                        <div className={`${styles.tableCell} ${styles.settlementGrid3Col1}`} style={centerStyle}>
-                          {row.transactionId ?? '-'}
-                        </div>
-                        <div className={`${styles.tableCell} ${styles.settlementGrid3Col2}`} style={centerStyle}>
+                      <div key={row.transactionId ?? idx} className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
+                        <div className={styles.tableCell} style={centerStyle}>
                           {formatSettlementAmount(typeof row.changeAmount === 'number' ? Math.abs(row.changeAmount) : undefined)}
                         </div>
-                        <div className={`${styles.tableCell} ${styles.settlementGrid3Col3}`} style={centerStyle}>
+                        <div className={styles.tableCell} style={centerStyle}>
                           <SettlementDateCell dt={row.approvedDatetime ?? row.createdDatetime} />
                         </div>
                       </div>
