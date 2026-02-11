@@ -11,6 +11,8 @@ import type { AxiosError } from 'axios';
 
 interface PopSectionProps {
   user: { id: string; popBalance?: number };
+  subTab: 'usage' | 'purchase';
+  onChangeSubTab: (next: 'usage' | 'purchase') => void;
   onChargeClick?: () => void;
 }
 
@@ -126,16 +128,16 @@ function getPopStatusBadgeClass(popStatus?: string): string {
   }
 }
 
-/** changeAmount를 "원" 단위로 표시 (절대값) */
+/** changeAmount를 "원" 단위로 표시 (절대값, 천단위 콤마) */
 function formatAmountWithWon(amount?: number): string {
   if (typeof amount !== 'number' || Number.isNaN(amount)) return '-';
-  return `${Math.abs(amount)}`;
+  return Math.abs(amount).toLocaleString('ko-KR');
 }
 
-/** changeAmount를 POP 단위로 표시 (절대값) */
+/** changeAmount를 POP 단위로 표시 (절대값, 천단위 콤마) */
 function formatAmountWithPop(amount?: number): string {
   if (typeof amount !== 'number' || Number.isNaN(amount)) return '-';
-  return `${Math.abs(amount)} `;
+  return `${Math.abs(amount).toLocaleString('ko-KR')} `;
 }
 
 /** actualAmount를 원 단위로 표시 (천단위 콤마) */
@@ -150,9 +152,8 @@ function mapPurchaseTargetToLabel(target?: string): string {
   return String(target).toUpperCase() === 'CHARGE' ? '충전' : '-';
 }
 
-function PopSection({ user, onChargeClick }: PopSectionProps) {
+function PopSection({ user, subTab, onChangeSubTab, onChargeClick }: PopSectionProps) {
   const router = useRouter();
-  const [subTab, setSubTab] = useState<'usage' | 'purchase'>('usage');
   const [inputRange, setInputRange] = useState({ start: '', end: '' });
   const [usageList, setUsageList] = useState<PopUsageRow[]>([]);
   const [purchaseList, setPurchaseList] = useState<PopPurchaseRow[]>([]);
@@ -300,7 +301,7 @@ function PopSection({ user, onChargeClick }: PopSectionProps) {
             role="tab"
             aria-selected={subTab === t.id}
             className={subTab === t.id ? styles.settlementSubTabActive : styles.settlementSubTab}
-            onClick={() => setSubTab(t.id)}
+            onClick={() => onChangeSubTab(t.id)}
           >
             {t.label}
             {subTab === t.id && <span className={styles.settlementSubTabIndicator} aria-hidden="true" />}
@@ -439,7 +440,7 @@ function PopSection({ user, onChargeClick }: PopSectionProps) {
                   </div>
                   <div className={styles.tableCell}>
                     {row.isCanceled ? (
-                      <span style={{ color: '#999' }}>취소완료</span>
+                      <span className={styles.popCanceledText}>취소완료</span>
                     ) : (
                       <button
                         type="button"
