@@ -11,6 +11,7 @@ import { logout as authLogout } from '@/store/slices/authSlice';
 import { authApi } from '@/api/authApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import logoImg from '@/assets/site/logo.png';
+import whiteLogoImg from '@/assets/site/whitelogo.png';
 import styles from './Header.module.css';
 
 const CATEGORIES = [
@@ -53,7 +54,14 @@ export default function Header() {
     return (
       <header className={`${styles.header} ${styles.authHeader} ${darkMode ? styles.dark : ''}`}>
         <Link href="/" className={styles.logo}>
-          <Image src={logoImg} alt="SOUNDOCK" className={styles.logoImg} width={340} height={36} priority />
+          <Image
+            src={darkMode ? whiteLogoImg : logoImg}
+            alt="SOUNDOCK"
+            className={styles.logoImg}
+            width={340}
+            height={36}
+            priority
+          />
         </Link>
       </header>
     );
@@ -62,7 +70,14 @@ export default function Header() {
   return (
     <header className={`${styles.header} ${darkMode ? styles.dark : ''}`}>
       <Link href="/" className={styles.logo}>
-        <Image src={logoImg} alt="SOUNDOCK" className={styles.logoImg} width={140} height={36} priority />
+        <Image
+          src={darkMode ? whiteLogoImg : logoImg}
+          alt="SOUNDOCK"
+          className={styles.logoImg}
+          width={140}
+          height={36}
+          priority
+        />
       </Link>
 
       <nav className={styles.nav}>

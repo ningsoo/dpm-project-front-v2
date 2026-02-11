@@ -5,13 +5,10 @@ interface UiState {
   unreadMessageCount: number;
 }
 
-const getInitialDarkMode = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  return localStorage.getItem('darkMode') === 'true';
-};
-
 const initialState: UiState = {
-  darkMode: getInitialDarkMode(),
+  // SSR/CSR 일관성을 위해 기본값은 항상 false.
+  // 실제 사용자 설정은 클라이언트에서 ThemeSync가 mount 된 뒤 localStorage로부터 복원한다.
+  darkMode: false,
   unreadMessageCount: 0,
 };
 

@@ -15,8 +15,8 @@ import type { BoardCategorySlug } from '@/utils/boardThumbnailUtils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './CommonBoardCarousel.module.css';
 
-const VISIBLE = 3;
-const CENTER_INDEX = Math.floor(VISIBLE / 2);
+const CARD_GAP = 20;
+const TRANSITION_MS = 600;
 
 interface CommonBoardCarouselProps {
   category: BoardCategory;
@@ -29,10 +29,14 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
   const [posts, setPosts] = useState<BoardListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [center, setCenter] = useState(0);
+  const [transitionEnabled, setTransitionEnabled] = useState(false);
+  const [layoutReady, setLayoutReady] = useState(false);
   const [hoveredCenter, setHoveredCenter] = useState(false);
+  const [cardWidth, setCardWidth] = useState(300);
+  const [wrapperWidth, setWrapperWidth] = useState(0);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const CARD_GAP = 20;
+  const shouldResetWhenReachEndRef = useRef(false);
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -51,70 +55,132 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
     fetchPosts();
   }, [fetchPosts]);
 
-  /* 자동 슬라이드 */
+  const N = Math.min(posts.length, 10);
+  const totalCount = N * 3;
+
+  /** layout 준비 후 center=N, layoutReady 세팅 (초기 밀림 방지) */
   useEffect(() => {
-    if (posts.length === 0) return;
+    if (N === 0 || wrapperWidth <= 0 || layoutReady) return;
+    setTransitionEnabled(false);
+    setCenter(N);
+    requestAnimationFrame(() => {
+      setLayoutReady(true);
+      requestAnimationFrame(() => {
+        setTransitionEnabled(true);
+      });
+    });
+  }, [N, wrapperWidth, layoutReady]);
+
+  /** 끝 도달 시 점프 애니메이션 제거 (2N → N 리셋) */
+  useEffect(() => {
+    if (!layoutReady) return;
+    if (center !== 2 * N) return;
+    if (!shouldResetWhenReachEndRef.current) return;
+    const t = setTimeout(() => {
+      setTransitionEnabled(false);
+      setCenter(N);
+      shouldResetWhenReachEndRef.current = false;
+      requestAnimationFrame(() => {
+        setTransitionEnabled(true);
+      });
+    }, TRANSITION_MS);
+    return () => clearTimeout(t);
+  }, [center, N, layoutReady]);
+
+  /** center 안정화 가드 */
+  useEffect(() => {
+    if (!layoutReady) return;
+    if (center < N - 1 || center > 2 * N) {
+      setTransitionEnabled(false);
+      setCenter(N);
+      requestAnimationFrame(() => {
+        setTransitionEnabled(true);
+      });
+    }
+  }, [center, N, layoutReady]);
+
+  /** autoplay */
+  useEffect(() => {
+    if (!layoutReady || N === 0) return;
     const t = setInterval(() => {
-      setCenter((c) => (c + 1) % Math.min(posts.length, 10));
+      setCenter((c) => {
+        if (c >= 2 * N - 1) {
+          shouldResetWhenReachEndRef.current = true;
+          return 2 * N;
+        }
+        return c + 1;
+      });
     }, 4000);
     return () => clearInterval(t);
-  }, [posts.length]);
-
-  /* 카드 너비 계산 */
-  const [cardWidths, setCardWidths] = useState({ base: 300 });
+  }, [N, layoutReady]);
 
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
-
-    const calculateCardWidths = () => {
-      const containerWidth = el.clientWidth;
-      if (containerWidth <= 0) return;
-      const baseWidth = Math.floor((containerWidth - CARD_GAP * 2) / 3);
-      setCardWidths({ base: Math.max(200, baseWidth) });
+    const update = () => {
+      const w = el.clientWidth;
+      if (w <= 0) return;
+      const base = Math.max(200, Math.floor((w - CARD_GAP * 2) / 3));
+      setCardWidth(base);
+      setWrapperWidth(w);
     };
-
-    calculateCardWidths();
-    const observer = new ResizeObserver(calculateCardWidths);
+    update();
+    const observer = new ResizeObserver(update);
     observer.observe(el);
-    window.addEventListener('resize', calculateCardWidths);
-
+    window.addEventListener('resize', update);
     return () => {
       observer.disconnect();
-      window.removeEventListener('resize', calculateCardWidths);
+      window.removeEventListener('resize', update);
     };
   }, [posts.length]);
 
   const movePrev = () => {
-    const len = Math.min(posts.length, 10);
-    if (len === 0) return;
-    setCenter((c) => (c - 1 + len) % len);
+    if (N === 0) return;
+    if (center === N) {
+      setTransitionEnabled(false);
+      setCenter(2 * N);
+      requestAnimationFrame(() => {
+        setCenter(2 * N - 1);
+        requestAnimationFrame(() => setTransitionEnabled(true));
+      });
+    } else {
+      setCenter((c) => c - 1);
+    }
   };
 
   const moveNext = () => {
-    const len = Math.min(posts.length, 10);
-    if (len === 0) return;
-    setCenter((c) => (c + 1) % len);
+    if (N === 0) return;
+    if (center >= 2 * N - 1) {
+      shouldResetWhenReachEndRef.current = true;
+      setCenter(2 * N);
+    } else {
+      setCenter((c) => c + 1);
+    }
   };
 
   const goToPost = (postId: number) => {
     router.push(`/boards/${postId}`);
   };
 
-  const displayPosts = posts.slice(0, 10);
+  const originalPosts = posts.slice(0, 10);
+  const displayPosts = [...originalPosts, ...originalPosts, ...originalPosts];
+  const len = displayPosts.length;
 
-  const getDisplayIndex = (offset: number) => {
-    const len = displayPosts.length;
-    if (len === 0) return 0;
-    return (center + offset + len) % len;
-  };
+  const translateX =
+    layoutReady && len > 0 && wrapperWidth > 0
+      ? wrapperWidth / 2 - cardWidth / 2 - center * (cardWidth + CARD_GAP)
+      : 0;
+
+  const trackTransform = layoutReady
+    ? `translateX(${translateX}px)`
+    : 'translateX(0px)';
 
   if (isLoading) {
     return (
       <section className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''}`}>
         <div className={styles.wrapper}>
           <div className={styles.track}>
-            {Array.from({ length: VISIBLE }).map((_, i) => (
+            {[0, 1, 2].map((i) => (
               <div key={`skeleton-${i}`} className={styles.skeletonCard} />
             ))}
           </div>
@@ -138,56 +204,39 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
   return (
     <section className={`${styles.section} ${darkMode ? 'dark' : ''}`}>
       <div className={styles.wrapper} ref={wrapperRef}>
-
-        <button className={styles.prevBtn} onClick={movePrev}>
+        <button type="button" className={styles.prevBtn} onClick={movePrev} aria-label="이전">
           <ChevronLeft size={48} />
         </button>
-
-        <button className={styles.nextBtn} onClick={moveNext}>
+        <button type="button" className={styles.nextBtn} onClick={moveNext} aria-label="다음">
           <ChevronRight size={48} />
         </button>
 
-        <div className={styles.track}>
-          {Array.from({ length: VISIBLE }).map((_, i) => {
-            const displayIndex = getDisplayIndex(i - CENTER_INDEX);
-            const post = displayPosts[displayIndex];
-            if (!post) return null;
-
-            const isCenter = i === CENTER_INDEX;
-            const cardWidth = cardWidths.base;
-
-            const leftCardPosition = 0;
-            const centerCardPosition = cardWidth + CARD_GAP;
-            const rightCardPosition = (cardWidth + CARD_GAP) * 2;
-
-            let cardLeft = 0;
-            if (i === 0) cardLeft = leftCardPosition;
-            else if (i === CENTER_INDEX) cardLeft = centerCardPosition;
-            else cardLeft = rightCardPosition;
-
+        <div
+          className={styles.track}
+          style={{
+            transform: trackTransform,
+            transition: transitionEnabled ? undefined : 'none',
+          }}
+        >
+          {displayPosts.map((post, index) => {
+            const isCenter = index === center;
             const categorySlug = String(category).toLowerCase() as BoardCategorySlug;
             const imageUrl = getBoardThumbnailUrl(post, categorySlug);
-
             return (
               <div
-                key={`${post.boardId}-${displayIndex}-${i}`}
+                key={`${post.boardId}-${index}`}
+                role="button"
+                tabIndex={0}
                 className={`${styles.card} ${isCenter ? styles.center : ''} ${
                   hoveredCenter && isCenter ? styles.expanded : ''
                 }`}
-                style={{
-                  width: `${cardWidth}px`,
-                  left: `${cardLeft}px`,
-                  position: 'absolute',
-                  zIndex: isCenter ? 10 : 1,
-                }}
+                style={{ width: cardWidth, minWidth: cardWidth }}
                 onMouseEnter={() => isCenter && setHoveredCenter(true)}
                 onMouseLeave={() => isCenter && setHoveredCenter(false)}
                 onClick={() => goToPost(post.boardId)}
+                onKeyDown={(e) => e.key === 'Enter' && goToPost(post.boardId)}
               >
-                <div
-                  className={styles.thumb}
-                  style={{ backgroundImage: `url(${imageUrl})` }}
-                >
+                <div className={styles.thumb} style={{ backgroundImage: `url(${imageUrl})` }}>
                   <div className={styles.overlay}>
                     <div className={styles.cardTitle}>{post.title}</div>
                     <div className={styles.desc}>{post.content || ''}</div>
