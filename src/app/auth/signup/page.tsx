@@ -89,7 +89,7 @@ export default function SignupPage() {
   const pwdOk = pwdErrors.length === 0;
   const confirmOk = password && confirmPassword && password === confirmPassword;
   const confirmError = confirmPassword && password && password !== confirmPassword;
-  const nameOk = name.length > 0 && !nameError;
+  const nameOk = name.length >= 2 && !nameError;
   
   // 닉네임 형식 검사 함수 (우선순위: 공백 > 특수문자 > 한글 자음/모음 단독)
   const validateNicknameFormat = (value: string): string => {
@@ -386,6 +386,7 @@ export default function SignupPage() {
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value;
+    if (v.length > 20) return;
     setName(v);
     setNameTouched(true);
     setNameError(validateNameFormatByRule(v));
@@ -462,7 +463,7 @@ export default function SignupPage() {
     // name 재검증
     const nameErr = validateNameFormatByRule(name);
     setNameError(nameErr);
-    const nameOkNow = name.length > 0 && !nameErr;
+    const nameOkNow = name.length >= 2 && !nameErr;
 
     // submit 조건 검사
     if (!pwdOk || !confirmOk || !nameOkNow || !nicknameOk || !phoneOk || errors.email || errors.nickname || !emailVerified || !nicknameVerified) {
@@ -624,7 +625,7 @@ export default function SignupPage() {
             className={styles.input}
           />
           <span className={styles.error}>
-            {(nameTouched || submitAttempted) ? nameError : ''}
+            {(nameTouched || submitAttempted) && name.length >= 2 ? nameError : ''}
           </span>
         </label>
 
