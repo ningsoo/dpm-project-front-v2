@@ -46,7 +46,7 @@ export type PopPurchaseRow = {
   target?: string;
   actualAmount?: number | null;
   expiredDatetime?: string;
-  canceled?: boolean;
+  isCanceled?: boolean;
 };
 
 function parsePopResponse(res: unknown): unknown[] {
@@ -470,13 +470,13 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
                     {mapPurchaseTargetToLabel(row.target)}
                   </div>
                   <div className={styles.tableCell}>
-                    {formatActualAmount(row.actualAmount)}
+                     {formatActualAmount(row.actualAmount ?? row.changeAmount)}
                   </div>
                   <div className={styles.tableCell}>
                     <PopUsageDateCell dt={row.expiredDatetime} />
                   </div>
                   <div className={styles.tableCell}>
-                    {row.canceled === true ? (
+                    {(row.isCanceled === true) ? (
                       <span className={styles.popCanceledText}>취소완료</span>
                     ) : (
                       <button
