@@ -280,6 +280,7 @@ export const authApi = {
   /**
    * POST /passwordless/withdrawal (인증 필요, fetchClient)
    */
+  async postPasswordlessWithdrawal(): Promise<{ ok: boolean }> {
     try {
       await fetchClient.post('/passwordless/withdrawal', {}, { timeout: 10000 });
       return { ok: true };
