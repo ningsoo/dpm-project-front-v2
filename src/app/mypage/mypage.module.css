@@ -390,25 +390,65 @@
     10%;  /* 후원자 */
 }
 
+/* 보낸내역: 8컬럼 (No. 제거) */
+.donationSentGrid8 {
+  width: 100%;
+  grid-template-columns:
+    14%   /* 후원일 */
+    14%   /* 요청일 */
+    14%   /* 승인일 */
+    14%   /* 취소일 */
+    10%   /* 금액 */
+    10%   /* 상태 */
+    12%   /* 취소 */
+    12%;  /* 수혜자 */
+}
+
+/* 받은내역: 7컬럼 (No. 제거) */
+.donationReceivedGrid7 {
+  width: 100%;
+  grid-template-columns:
+    16%   /* 후원일 */
+    16%   /* 요청일 */
+    16%   /* 확정일 */
+    16%   /* 취소일 */
+    12%   /* 금액 */
+    12%   /* 상태 */
+    12%;  /* 후원자 */
+}
+
 /* 후원 테이블: 헤더·셀 패딩 통일 */
 .donationSentGrid9.tableHeader,
-.donationReceivedGrid8.tableHeader {
+.donationReceivedGrid8.tableHeader,
+.donationSentGrid8.tableHeader,
+.donationReceivedGrid7.tableHeader {
   padding: 0;
 }
 
 .donationSentGrid9.tableHeader > div,
-.donationReceivedGrid8.tableHeader > div {
+.donationReceivedGrid8.tableHeader > div,
+.donationSentGrid8.tableHeader > div,
+.donationReceivedGrid7.tableHeader > div {
   padding: 10px 6px;
 }
 
 .donationSentGrid9 .tableCell,
-.donationReceivedGrid8 .tableCell {
+.donationReceivedGrid8 .tableCell,
+.donationSentGrid8 .tableCell,
+.donationReceivedGrid7 .tableCell {
   padding: 10px 6px;
 }
 
 .donationSentGrid9.tableRow,
-.donationReceivedGrid8.tableRow {
+.donationReceivedGrid8.tableRow,
+.donationSentGrid8.tableRow,
+.donationReceivedGrid7.tableRow {
   padding: 0;
+}
+
+.donationSentGrid8.tableHeader > div:first-child,
+.donationReceivedGrid7.tableHeader > div:first-child {
+  padding-left: 6px;
 }
 
 .donationDateCell {
