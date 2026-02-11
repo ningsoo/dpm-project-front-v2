@@ -6,6 +6,7 @@ import { fetchClient } from '@/api/fetchClient';
 import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
 import { mypageApi } from '@/api/mypageApi';
+import { cancelPayment } from '@/api/creditApi';
 import styles from '../mypage.module.css';
 import type { AxiosError } from 'axios';
 
@@ -13,6 +14,7 @@ interface PopSectionProps {
   user: { id: string; popBalance?: number };
   subTab: 'usage' | 'purchase';
   onChangeSubTab: (next: 'usage' | 'purchase') => void;
+  onPopBalanceRefresh?: () => Promise<void> | void;
   onChargeClick?: () => void;
 }
 
@@ -36,20 +38,26 @@ export type PopUsageRow = {
 };
 
 export type PopPurchaseRow = {
+  popHistoryId?: number;
+  orderId?: string;
+  paymentKey?: string;
   createdDatetime?: string;
   changeAmount?: number;
   target?: string;
-  actualAmount?: number;
+  actualAmount?: number | null;
   expiredDatetime?: string;
-  isCanceled?: boolean;
+  canceled?: boolean;
 };
 
 function parsePopResponse(res: unknown): unknown[] {
+  if (Array.isArray(res)) return res;
   if (!res || typeof res !== 'object') return [];
   const obj = res as Record<string, unknown>;
-  const data = obj.data;
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(res)) return res;
+  if (obj.data && Array.isArray(obj.data)) return obj.data;
+  if (obj.data && typeof obj.data === 'object' && obj.data !== null) {
+    const innerData = (obj.data as Record<string, unknown>).data;
+    if (Array.isArray(innerData)) return innerData;
+  }
   return [];
 }
 
@@ -140,10 +148,10 @@ function formatAmountWithPop(amount?: number): string {
   return `${Math.abs(amount).toLocaleString('ko-KR')} `;
 }
 
-/** actualAmount를 원 단위로 표시 (천단위 콤마) */
-function formatActualAmount(amount?: number): string {
-  if (typeof amount !== 'number' || Number.isNaN(amount)) return '-';
-  return `${amount.toLocaleString()}원`;
+/** actualAmount를 원 단위로 표시 (천단위 콤마, null 처리) */
+function formatActualAmount(amount?: number | null): string {
+  if (amount == null || typeof amount !== 'number' || Number.isNaN(amount)) return '-';
+  return `${amount.toLocaleString('ko-KR')}원`;
 }
 
 /** target이 CHARGE인 경우 "충전" 표시 */
@@ -152,7 +160,7 @@ function mapPurchaseTargetToLabel(target?: string): string {
   return String(target).toUpperCase() === 'CHARGE' ? '충전' : '-';
 }
 
-function PopSection({ user, subTab, onChangeSubTab, onChargeClick }: PopSectionProps) {
+function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onChargeClick }: PopSectionProps) {
   const router = useRouter();
   const [inputRange, setInputRange] = useState({ start: '', end: '' });
   const [usageList, setUsageList] = useState<PopUsageRow[]>([]);
@@ -162,6 +170,9 @@ function PopSection({ user, subTab, onChangeSubTab, onChargeClick }: PopSectionP
   const [cancelTarget, setCancelTarget] = useState<PopUsageRow | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
+  const [purchaseCancelTarget, setPurchaseCancelTarget] = useState<PopPurchaseRow | null>(null);
+  const [showPurchaseCancelModal, setShowPurchaseCancelModal] = useState(false);
+  const [purchaseCancelSubmitting, setPurchaseCancelSubmitting] = useState(false);
 
   const handleError = useCallback(
     (err: unknown) => {
@@ -180,8 +191,7 @@ function PopSection({ user, subTab, onChangeSubTab, onChargeClick }: PopSectionP
     mypageApi
       .getPopUsageHistory()
       .then((res) => {
-        const body = res.data as { data?: unknown };
-        const rows = parsePopResponse(body?.data ?? body) as PopUsageRow[];
+        const rows = parsePopResponse(res.data) as PopUsageRow[];
         setUsageList(Array.isArray(rows) ? rows : []);
       })
       .finally(() => setUsageLoading(false));
@@ -192,8 +202,7 @@ function PopSection({ user, subTab, onChangeSubTab, onChargeClick }: PopSectionP
     mypageApi
       .getPopPurchaseHistory()
       .then((res) => {
-        const body = res.data as { data?: unknown };
-        const rows = parsePopResponse(body?.data ?? body) as PopPurchaseRow[];
+        const rows = parsePopResponse(res.data) as PopPurchaseRow[];
         setPurchaseList(Array.isArray(rows) ? rows : []);
       })
       .catch(handleError)
@@ -265,9 +274,37 @@ function PopSection({ user, subTab, onChangeSubTab, onChargeClick }: PopSectionP
     }
   }, [cancelTarget, fetchUsage]);
 
-  const handleCancelPurchaseClick = () => {
-    ToastUtils.info('준비중입니다.');
+  const handleCancelPurchaseClick = (row: PopPurchaseRow) => {
+    setPurchaseCancelTarget(row);
+    setShowPurchaseCancelModal(true);
   };
+
+  const handleConfirmPurchaseCancel = useCallback(async () => {
+    const row = purchaseCancelTarget;
+    if (!row) return;
+    const paymentKey = row.paymentKey;
+    if (!paymentKey || typeof paymentKey !== 'string' || !paymentKey.trim()) {
+      ToastUtils.error('paymentKey를 확인할 수 없습니다.');
+      setShowPurchaseCancelModal(false);
+      setPurchaseCancelTarget(null);
+      return;
+    }
+    setShowPurchaseCancelModal(false);
+    setPurchaseCancelTarget(null);
+    setPurchaseCancelSubmitting(true);
+    try {
+      await cancelPayment(paymentKey, '사용자 요청에 의한 취소');
+      ToastUtils.success('구매 취소가 완료되었습니다.');
+      await onPopBalanceRefresh?.();
+      fetchPurchase();
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: { message?: string } } })?.response?.data;
+      const msg = typeof data?.message === 'string' ? data.message : undefined;
+      ToastUtils.error(msg || '구매 취소에 실패했습니다.');
+    } finally {
+      setPurchaseCancelSubmitting(false);
+    }
+  }, [purchaseCancelTarget, fetchPurchase, onPopBalanceRefresh]);
 
   const handleSearch = () => {
     if (subTab === 'usage') {
@@ -439,13 +476,13 @@ function PopSection({ user, subTab, onChangeSubTab, onChargeClick }: PopSectionP
                     <PopUsageDateCell dt={row.expiredDatetime} />
                   </div>
                   <div className={styles.tableCell}>
-                    {row.isCanceled ? (
+                    {row.canceled === true ? (
                       <span className={styles.popCanceledText}>취소완료</span>
                     ) : (
                       <button
                         type="button"
                         className={styles.donationCancelBtn}
-                        onClick={handleCancelPurchaseClick}
+                        onClick={() => handleCancelPurchaseClick(row)}
                       >
                         구매취소
                       </button>
@@ -494,6 +531,49 @@ function PopSection({ user, subTab, onChangeSubTab, onChargeClick }: PopSectionP
                 onClick={() => {
                   setShowConfirmModal(false);
                   setCancelTarget(null);
+                }}
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPurchaseCancelModal && purchaseCancelTarget && (
+        <div
+          className={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pop-purchase-cancel-modal-title"
+        >
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <h3
+              id="pop-purchase-cancel-modal-title"
+              className={styles.modalTitle}
+              style={{ fontSize: '1.1rem', marginBottom: 12 }}
+            >
+              구매 취소 확인
+            </h3>
+            <p className={styles.donationConfirmMessage}>
+              구매를 취소하시겠습니까?
+            </p>
+            <div className={styles.settlementConfirmActions}>
+              <button
+                type="button"
+                className={styles.settlementConfirmBtn}
+                disabled={purchaseCancelSubmitting}
+                onClick={handleConfirmPurchaseCancel}
+              >
+                {purchaseCancelSubmitting ? '처리 중…' : '확인'}
+              </button>
+              <button
+                type="button"
+                className={styles.settlementConfirmCancelBtn}
+                disabled={purchaseCancelSubmitting}
+                onClick={() => {
+                  setShowPurchaseCancelModal(false);
+                  setPurchaseCancelTarget(null);
                 }}
               >
                 취소

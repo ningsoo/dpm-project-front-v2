@@ -1130,6 +1130,18 @@ export default function MypagePage() {
               onChangeSubTab={(next) => {
                 router.replace(`/mypage?tab=pop&popSubTab=${next}`, { scroll: false });
               }}
+              onPopBalanceRefresh={async () => {
+                try {
+                  const { data } = await mypageApi.getMypage();
+                  const userData = data?.data as UserInfo | undefined;
+                  if (userData) {
+                    setUser(userData);
+                    setProfileImage(userData.profileImage || null);
+                  }
+                } catch (error) {
+                  console.error('Failed to refresh pop balance:', error);
+                }
+              }}
               onChargeClick={() => setShowCreditChargeModal(true)}
             />
           );
