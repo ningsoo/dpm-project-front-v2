@@ -152,6 +152,14 @@ export default function MypagePage() {
       });
   }, [initialized, isAuthenticated, router]);
 
+  // 게시글 상세 등에서 "충전하기"로 진입 시 충전 모달 자동 오픈
+  useEffect(() => {
+    if (searchParams.get('openCharge') === '1') {
+      setShowCreditChargeModal(true);
+      router.replace('/mypage', { scroll: false });
+    }
+  }, [searchParams, router]);
+
   // 문의내역 탭 활성화 시 데이터 fetch
   useEffect(() => {
     if (tab !== 'inquiries' || !isAuthenticated) return;

@@ -16,6 +16,7 @@ import { extractYouTubeVideoId, getYouTubeEmbedUrl } from '@/utils/youtubeUtils'
 import type { BoardDetail } from '@/api/boardApi';
 import CommentSection from './CommentSection';
 import PlaylistDetailSection from './PlaylistDetailSection';
+import DonationModal from './DonationModal';
 import styles from './PostDetail.module.css';
 
 interface Post extends BoardDetail {
@@ -62,6 +63,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
+  const [showDonationModal, setShowDonationModal] = useState(false);
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
   const [attachmentDownloading, setAttachmentDownloading] = useState(false);
@@ -307,7 +309,42 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
       <div className={styles.authorRow}>
         <span className={styles.author}>{post.nickname || '—'}</span>
+        {!isAuthor && post.userId != null && (
+          <button
+            type="button"
+            className={styles.donateBtn}
+            onClick={() => {
+              if (!isAuthenticated) {
+                setShowLoginRequiredModal(true);
+                return;
+              }
+              setShowDonationModal(true);
+            }}
+          >
+            POP 선물
+          </button>
+        )}
       </div>
+
+      {showDonationModal && post.userId != null && (
+        <DonationModal
+          open={showDonationModal}
+          onClose={() => setShowDonationModal(false)}
+          targetUserId={Number(post.userId)}
+          targetNickname={post.nickname || '—'}
+          onSuccess={() => {
+            setShowDonationModal(false);
+            boardApi.getPost(boardId).then(({ data }) => {
+              const postData = data?.data as BoardDetail | undefined;
+              if (postData) setPost({ ...postData } as Post);
+            }).catch(() => {});
+          }}
+          onOpenCharge={() => {
+            setShowDonationModal(false);
+            router.push('/mypage?openCharge=1');
+          }}
+        />
+      )}
 
       <div className={styles.contentBlock}>
         {categorySlug === 'showcase' && (() => {

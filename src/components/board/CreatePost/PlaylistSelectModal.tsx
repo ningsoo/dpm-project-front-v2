@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
@@ -25,6 +26,7 @@ export function PlaylistSelectModal({
   onClose,
   onSelect,
 }: PlaylistSelectModalProps) {
+  const router = useRouter();
   const [playlists, setPlaylists] = useState<MyPlaylistItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -50,11 +52,11 @@ export function PlaylistSelectModal({
     } catch (error: unknown) {
       const status = (error as { response?: { status?: number } })?.response?.status;
       if (status === 401) {
-        ToastUtils.error('로그인이 필요합니다.');
+        setPlaylists([]);
       } else {
         ToastUtils.error('플레이리스트를 불러오는데 실패했습니다.');
+        onClose();
       }
-      onClose();
     } finally {
       setLoading(false);
     }
@@ -99,7 +101,17 @@ export function PlaylistSelectModal({
             <div className={styles.spinner} />
           </div>
         ) : playlists.length === 0 ? (
-          <div className={styles.empty}>등록된 플레이리스트가 없습니다.</div>
+          <div className={styles.empty}>
+            <p className={styles.emptyMessage}>저장된 플레이리스트가 없습니다. 마이페이지로 이동하시겠습니까?</p>
+            <div className={styles.emptyButtons}>
+              <button type="button" className={styles.emptyBtnYes} onClick={() => { onClose(); router.push('/mypage'); }}>
+                예
+              </button>
+              <button type="button" className={styles.emptyBtnNo} onClick={onClose}>
+                아니요
+              </button>
+            </div>
+          </div>
         ) : (
           <>
             <ul className={styles.list}>
