@@ -375,8 +375,7 @@ export function DonationSection() {
               <p className={styles.settlementLoading}>로딩 중...</p>
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <div className={`${styles.tableGrid} ${styles.donationSentGrid9} ${styles.tableHeader}`}>
-                  <div>No.</div>
+                <div className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableHeader}`}>
                   <div>후원일</div>
                   <div>요청일</div>
                   <div>승인일</div>
@@ -393,9 +392,8 @@ export function DonationSection() {
                     {sentVisible.map((row, idx) => (
                       <div
                         key={row.popHistoryId ?? idx}
-                        className={`${styles.tableGrid} ${styles.donationSentGrid9} ${styles.tableRow}`}
+                        className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableRow}`}
                       >
-                        <div className={styles.tableCell}>{row.popHistoryId ?? '-'}</div>
                         <div className={styles.tableCell}>
                           <DonationDateCell dt={row.createdDatetime} />
                         </div>
@@ -448,8 +446,7 @@ export function DonationSection() {
               <p className={styles.settlementLoading}>로딩 중...</p>
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <div className={`${styles.tableGrid} ${styles.donationReceivedGrid8} ${styles.tableHeader}`}>
-                  <div>No.</div>
+                <div className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableHeader}`}>
                   <div>후원일</div>
                   <div>요청일</div>
                   <div>확정일</div>
@@ -464,9 +461,8 @@ export function DonationSection() {
                   receivedFiltered.map((row, idx) => (
                     <div
                       key={row.popHistoryId ?? idx}
-                      className={`${styles.tableGrid} ${styles.donationReceivedGrid8} ${styles.tableRow}`}
+                      className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableRow}`}
                     >
-                      <div className={styles.tableCell}>{row.popHistoryId ?? '-'}</div>
                       <div className={styles.tableCell}>
                         <DonationDateCell dt={row.createdDatetime} />
                       </div>
