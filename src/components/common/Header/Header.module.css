@@ -48,11 +48,12 @@
 
 .navLink {
   padding: 8px 12px;
-  font-size: 0.9rem;
+  font-size: 1.2rem;
   color: #444;
   text-decoration: none;
   border-radius: 8px;
   transition: background 0.2s, color 0.2s;
+  font-weight: 600;
 }
 
 .navLink:hover {

@@ -17,6 +17,7 @@ import { SettlementSection } from './components/SettlementSection';
 import { DonationSection } from './components/DonationSection';
 import PopSection from './components/PopSection';
 import { MyPageYouTubeSection } from './components/MyPageYouTubeSection';
+import defaultProfileImg from '@/assets/site/profile.png';
 import styles from './mypage.module.css';
 
 interface UserInfo {
@@ -85,6 +86,8 @@ export default function MypagePage() {
   const [cropArea, setCropArea] = useState({ x: 0, y: 0, size: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeStartRef = useRef({ x: 0, y: 0, size: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [receivedLikes, setReceivedLikes] = useState(0);
@@ -200,6 +203,37 @@ export default function MypagePage() {
     };
   }, []);
 
+  // 크롭 영역 리사이즈 시 window mousemove/mouseup (항상 동일 훅 순서 유지)
+  useEffect(() => {
+    if (!isResizing) return;
+    const onMouseMove = (e: MouseEvent) => {
+      const rect = imageRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const relX = e.clientX - rect.left;
+      const relY = e.clientY - rect.top;
+      const newSize = Math.min(relX - resizeStartRef.current.x, relY - resizeStartRef.current.y);
+      const maxSize = Math.min(rect.width, rect.height) * 0.95;
+      const maxSizeByX = rect.width - resizeStartRef.current.x;
+      const maxSizeByY = rect.height - resizeStartRef.current.y;
+      const clampedSize = Math.max(
+        80,
+        Math.min(maxSize, maxSizeByX, maxSizeByY, Math.round(newSize))
+      );
+      setCropArea({
+        x: resizeStartRef.current.x,
+        y: resizeStartRef.current.y,
+        size: clampedSize,
+      });
+    };
+    const onMouseUp = () => setIsResizing(false);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [isResizing]);
+
   if (!initialized || loading) {
     return (
       <div className={styles.wrap}>
@@ -283,32 +317,36 @@ export default function MypagePage() {
 
   const handleCropConfirm = () => {
     if (!selectedImage || !imageRef.current) return;
-    
+
+    const displayWidth = imageRef.current.clientWidth;
+    const displayHeight = imageRef.current.clientHeight;
+
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const img = new Image();
     img.onload = () => {
-      const imgSize = Math.min(img.width, img.height);
-      const scale = imgSize / (cropArea.size || 200);
+      const size = cropArea.size || 200;
+      const scaleX = img.width / displayWidth;
+      const scaleY = img.height / displayHeight;
+
+      const sourceX = cropArea.x * scaleX;
+      const sourceY = cropArea.y * scaleY;
+      const sourceW = size * scaleX;
+      const sourceH = size * scaleY;
+
       canvas.width = 200;
       canvas.height = 200;
-      
-      const sourceX = (img.width - imgSize) / 2 + cropArea.x * scale;
-      const sourceY = (img.height - imgSize) / 2 + cropArea.y * scale;
-      const sourceSize = (cropArea.size || 200) * scale;
-      
       ctx.beginPath();
       ctx.arc(100, 100, 100, 0, 2 * Math.PI);
       ctx.clip();
-      
       ctx.drawImage(
         img,
-        sourceX, sourceY, sourceSize, sourceSize,
+        sourceX, sourceY, sourceW, sourceH,
         0, 0, 200, 200
       );
-      
+
       const croppedImageUrl = canvas.toDataURL('image/png');
       setProfileImage(croppedImageUrl);
       setShowCropModal(false);
@@ -337,8 +375,12 @@ export default function MypagePage() {
     }
   };
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imageRef.current) return;
+  const CROP_MIN_SIZE = 80;
+  const CROP_MAX_SIZE_RATIO = 0.95;
+
+  const handleCropAreaMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!imageRef.current || (e.target as HTMLElement).dataset.resizeHandle === 'true') return;
+    e.preventDefault();
     setIsDragging(true);
     const rect = imageRef.current.getBoundingClientRect();
     setDragStart({
@@ -347,14 +389,15 @@ export default function MypagePage() {
     });
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging || !imageRef.current) return;
+  const handleCropAreaMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!imageRef.current) return;
+    if (isResizing) return;
+    if (!isDragging) return;
     const rect = imageRef.current.getBoundingClientRect();
     const newX = e.clientX - rect.left - dragStart.x;
     const newY = e.clientY - rect.top - dragStart.y;
     const maxX = rect.width - cropArea.size;
     const maxY = rect.height - cropArea.size;
-    
     setCropArea((prev) => ({
       ...prev,
       x: Math.max(0, Math.min(newX, maxX)),
@@ -362,8 +405,21 @@ export default function MypagePage() {
     }));
   };
 
+  const handleResizeHandleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!imageRef.current) return;
+    setIsResizing(true);
+    resizeStartRef.current = {
+      x: cropArea.x,
+      y: cropArea.y,
+      size: cropArea.size,
+    };
+  };
+
   const handleMouseUp = () => {
     setIsDragging(false);
+    setIsResizing(false);
   };
 
   const validateCreditAmount = (value: string): string => {
@@ -484,9 +540,10 @@ export default function MypagePage() {
           <div
             className={styles.avatar}
             style={{
-              backgroundImage: profileImage ? `url(${profileImage})` : undefined,
-              backgroundSize: 'cover',
+              backgroundImage: `url(${profileImage || defaultProfileImg.src})`,
+              backgroundSize: profileImage ? 'cover' : 'contain',
               backgroundPosition: 'center',
+              backgroundRepeat: 'no-repeat',
             }}
           />
           {showPencilIcon && (
@@ -1272,11 +1329,31 @@ export default function MypagePage() {
                   cursor: isDragging ? 'grabbing' : 'grab',
                   boxSizing: 'border-box',
                 }}
-                onMouseDown={handleMouseDown}
-                onMouseMove={handleMouseMove}
+                onMouseDown={handleCropAreaMouseDown}
+                onMouseMove={handleCropAreaMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
-              />
+              >
+                <div
+                  data-resize-handle="true"
+                  role="button"
+                  tabIndex={0}
+                  aria-label="크롭 영역 크기 조절"
+                  onMouseDown={handleResizeHandleMouseDown}
+                  style={{
+                    position: 'absolute',
+                    right: 2,
+                    bottom: 2,
+                    width: 20,
+                    height: 20,
+                    borderRadius: '50%',
+                    background: darkMode ? '#3A3934' : '#1976d2',
+                    border: '2px solid #fff',
+                    cursor: 'nwse-resize',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
             </div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
               <button

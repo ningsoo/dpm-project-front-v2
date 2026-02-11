@@ -1,49 +1,74 @@
-/* ShowcaseFeaturedSection과 동일한 기준. 부모(BoardList .section)가 이미 max-width 1200px + padding 24px */
+/* ============================= */
+/* Section Layout */
+/* ============================= */
+
+/* 부모 max-width 1200 기준 내부 full */
 .section {
+  position: relative;
   width: 100%;
   max-width: 100%;
-  padding: 0;
   margin: 0 auto;
-  overflow-x: hidden;
+  padding: 0;
+  overflow: hidden;
   background: #fafafa;
-}
-
-/* CLS 방지: 로딩/빈 상태에서도 동일 높이 유지 */
-.sectionPlaceholder .track {
-  min-height: 420px;
 }
 
 :global(.dark) .section {
   background: #1D1D1B;
 }
 
+/* CLS 방지 (렌더 전 높이 확보) */
+.sectionPlaceholder {
+  min-height: 420px;
+}
+
+/* ============================= */
+/* Wrapper */
+/* ============================= */
+
 .wrapper {
+  overflow: hidden;
   position: relative;
   width: 100%;
-  max-width: 100%;
   margin: 0 auto;
-  padding: 0;
-  overflow: hidden;
 }
 
-/* ShowcaseFeaturedSection .cardWrapper height 420px 기준 */
+/* ============================= */
+/* Track */
+/* ============================= */
+
 .track {
-  position: relative;
-  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: max-content;
   height: 420px;
+  transition: transform 0.6s ease-in-out;
+  will-change: transform;
 }
 
-/* ShowcaseFeaturedSection .card height 380px, 비율·썸네일 처리 동일 */
+/* Skeleton / CLS 방지 */
+.sectionPlaceholder .track {
+  min-height: 420px;
+}
+
+/* ============================= */
+/* Card */
+/* ============================= */
+
 .card {
+  position: relative;
+  flex-shrink: 0;
   height: 380px;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  cursor: pointer;
-  transition: width 0.3s ease, left 0.3s ease, transform 0.3s ease;
   overflow: hidden;
+  cursor: pointer;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  /* hover 흔들림 방지 */
+  transform: translateZ(0);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .card:hover {
@@ -54,12 +79,17 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
+/* ============================= */
+/* Center Card */
+/* ============================= */
+
 .card.center {
-  height: 380px;
+  z-index: 2;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 }
 
 .card.center.expanded {
+  transform: scale(1.1) translateZ(0);
   transform-origin: center;
 }
 
@@ -67,14 +97,19 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
 
+/* ============================= */
+/* Thumbnail */
+/* ============================= */
+
 .thumb {
   width: 100%;
   height: 100%;
-  background: #eee;
   border-radius: 12px;
-  position: relative;
+
   display: flex;
   align-items: flex-end;
+
+  background: #eee;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -84,24 +119,39 @@
   background: #2E2E2C;
 }
 
+/* ============================= */
+/* Overlay */
+/* ============================= */
+
 .overlay {
   width: 100%;
   padding: 20px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
   border-radius: 0 0 12px 12px;
+
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.7),
+    rgba(0, 0, 0, 0)
+  );
 }
 
 .card.center .overlay {
   padding: 30px;
 }
 
+/* ============================= */
+/* Text */
+/* ============================= */
+
 .cardTitle {
   font-size: 1rem;
   font-weight: 600;
   color: #fff;
+
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
@@ -113,15 +163,18 @@
   margin-top: 8px;
   font-size: 0.85rem;
   color: rgba(255, 255, 255, 0.9);
+
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
 }
 
 .card.center .desc {
   font-size: 1rem;
   margin-top: 10px;
+
   white-space: normal;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -130,21 +183,19 @@
   overflow: hidden;
 }
 
-/* ===== Skeleton (로딩 UI) ===== */
+/* ============================= */
+/* Skeleton */
+/* ============================= */
+
 .skeletonCard {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: calc((100% - 40px) / 3);
+  position: relative;
+  flex: 1;
+  min-width: 200px;
   height: 380px;
   border-radius: 12px;
   overflow: hidden;
   background: #e8e8e8;
 }
-
-.skeletonCard:nth-child(1) { left: 0; }
-.skeletonCard:nth-child(2) { left: calc((100% - 40px) / 3 + 20px); }
-.skeletonCard:nth-child(3) { left: calc(((100% - 40px) / 3 + 20px) * 2); }
 
 .skeletonCard::after {
   content: '';
@@ -179,6 +230,10 @@
   100% { background-position: -200% 0; }
 }
 
+/* ============================= */
+/* Empty */
+/* ============================= */
+
 .emptyState {
   position: absolute;
   top: 50%;
@@ -192,24 +247,32 @@
   color: #8A877D;
 }
 
-/* ===== Lucide 버튼 ===== */
+/* ============================= */
+/* Navigation Buttons */
+/* ============================= */
+
 .prevBtn,
 .nextBtn {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
   z-index: 30;
-  background: rgba(0, 0, 0, 0.6);
-  color: white;
-  border: none;
+
   width: 64px;
   height: 64px;
   border-radius: 50%;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
   cursor: pointer;
+
   backdrop-filter: blur(4px);
+  transition: background 0.2s ease;
 }
 
 .prevBtn { left: 10px; }
@@ -218,19 +281,4 @@
 .prevBtn:hover,
 .nextBtn:hover {
   background: rgba(0, 0, 0, 0.8);
-}
-
-/* ===== 확장 방식 변경 (핵심 수정) ===== */
-.card {
-  transition: transform 0.3s ease, left 0.3s ease;
-}
-
-/* 기본 중앙 상태 */
-.card.center {
-  transform: translateY(-50%);
-}
-
-/* 🔥 hover 시에만 균형 확장 */
-.card.center.expanded {
-  transform: translateY(-50%) scale(1.1);
 }

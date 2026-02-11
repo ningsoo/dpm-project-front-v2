@@ -334,15 +334,17 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
       )}
 
       {showTopButton && (
-        <button
-          type="button"
-          className={styles.topButton}
-          onClick={scrollToTop}
-          aria-label="맨 위로 이동"
-          title="맨 위로 이동"
-        >
-          Top
-        </button>
+        <div className={styles.topButtonContainer}>
+          <button
+            type="button"
+            className={styles.topButton}
+            onClick={scrollToTop}
+            aria-label="맨 위로 이동"
+            title="맨 위로 이동"
+          >
+            Top
+          </button>
+        </div>
       )}
 
       {showLoginRequiredModal && (
