@@ -295,7 +295,15 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
     try {
       await cancelPayment(paymentKey, '사용자 요청에 의한 취소');
       ToastUtils.success('구매 취소가 완료되었습니다.');
+
+      setPurchaseList((prev) =>
+        prev.map((item) =>
+          item.paymentKey === paymentKey ? { ...item, canceled: true } : item
+        )
+      );
+
       await onPopBalanceRefresh?.();
+      // 서버 데이터로 동기화
       fetchPurchase();
     } catch (err: unknown) {
       const data = (err as { response?: { data?: { message?: string } } })?.response?.data;
