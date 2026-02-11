@@ -41,8 +41,97 @@ Passwordless 등록/로그인 플로우를 로그인 화면에 통합한다.
 
 ## 2-4. 원본 HTML 코드 전문
 
-아래 영역에 원본 HTML 코드를 그대로 붙여넣기.
 
-```html
-<!-- 원본 HTML 코드 붙여넣기 -->
-```
+<!DOCTYPE html>
+<html>
+<head>
+    <title>X1280 Student Sample</title>
+    <style>
+        .sp-box { background: #ffffcc; padding: 10px; border: 1px dashed #666; margin-top: 10px; font-size: 1.2em; }
+        .success { color: green; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h2>Passwordless X1280 Demo</h2>
+    
+    <input type="text" id="userId" value="student01">
+    <button onclick="check()">1. Check Status</button>
+    <hr>
+
+    <div id="status">Status: Waiting...</div>
+    
+    <div id="actions" style="margin-top: 10px;">
+        <button id="reg" style="display:none" onclick="reg()">2. Register (Show QR)</button>
+        <button id="auth" style="display:none" onclick="login()">2. Request Login Push</button>
+    </div>
+
+    <!-- This will show the Service Password -->
+    <div id="spContainer"></div>
+    <div id="qr"></div>
+
+    <script>
+        const log = (msg) => document.getElementById('status').innerText = "Status: " + msg;
+        let pollInterval;
+
+        async function check() {
+            clearInterval(pollInterval); // Stop any old polling
+            const id = document.getElementById('userId').value;
+            const res = await fetch(`/api/v1/auth/status?user=${id}`);
+            const json = await res.json();
+            const exists = json.data.exist;
+            
+            log(exists ? "User Registered" : "New User");
+            document.getElementById('reg').style.display = exists ? 'none' : 'block';
+            document.getElementById('auth').style.display = exists ? 'block' : 'none';
+            document.getElementById('spContainer').innerHTML = '';
+        }
+
+        async function reg() {
+            const id = document.getElementById('userId').value;
+            const res = await fetch(`/api/v1/auth/register`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id})
+            });
+            const json = await res.json();
+            document.getElementById('qr').innerHTML = `<p>Scan this:</p><img src="${json.data.qr}">`;
+            log("QR Generated. Scan then click Check again.");
+        }
+
+        async function login() {
+            const id = document.getElementById('userId').value;
+            log("Sending Push...");
+            const res = await fetch(`/api/v1/auth/login-trigger?userId=${id}&ip=127.0.0.1`, {method: 'POST'});
+            const json = await res.json();
+            
+            if(json.result) {
+                const sp = json.data.servicePassword;
+                document.getElementById('spContainer').innerHTML = 
+                    `<div class="sp-box"><strong>Service Password:</strong> ${sp}<br><small>Approve on phone now...</small></div>`;
+                log("PUSH SENT! Polling for approval...");
+                
+                // START POLLING for the result
+                startPolling(id);
+            } else {
+                log("Error: " + json.msg);
+            }
+        }
+
+        function startPolling(userId) {
+            clearInterval(pollInterval);
+            pollInterval = setInterval(async () => {
+                const res = await fetch(`/api/v1/auth/result?userId=${userId}`);
+                const json = await res.json();
+                
+                // If 'auth' is 'Y', the user clicked "Approve" on their phone
+                if (json.data && json.data.auth === "Y") {
+                    clearInterval(pollInterval);
+                    log("SUCCESS!");
+                    document.getElementById('status').className = 'success';
+                    document.getElementById('spContainer').innerHTML += '<h3 class="success">LOGIN APPROVED!</h3>';
+                }
+            }, 2000); // Check every 2 seconds
+        }
+    </script>
+</body>
+</html>

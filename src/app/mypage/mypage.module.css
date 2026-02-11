@@ -258,6 +258,35 @@
   flex-shrink: 0;
 }
 
+/* 결제 완료 화면: 내려온 값 강조 (파란색 + 굵게) */
+.successHighlight {
+  color: #1976d2;
+  font-weight: 700;
+}
+
+/* POP 탭 충전하기 = 정산요청 버튼과 동일 스타일 */
+.popSection .settlementRequestSummaryBox .submitBtn {
+  align-self: center;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: #1976d2;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.popSection .settlementRequestSummaryBox .submitBtn:hover:not(:disabled) {
+  background: #1565c0;
+}
+
+.popSection .settlementRequestSummaryBox .submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .settlementRequestTableWrap {
   margin-top: 20px;
 }
