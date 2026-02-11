@@ -21,19 +21,22 @@ export default function ShowcaseFeaturedSection() {
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
 
   const [posts, setPosts] = useState<BoardListItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
 
   const hoverTimer = useRef<number | null>(null);
 
   useEffect(() => {
+    setIsLoading(true);
     boardApi
       .getBoardByCategory('SHOWCASE')
       .then(({ data }) => {
         const list = extractBoardListFromResponse(data);
         setPosts(list.slice(0, TOTAL));
       })
-      .catch(() => setPosts([]));
+      .catch(() => setPosts([]))
+      .finally(() => setIsLoading(false));
   }, []);
 
   const getEmbedUrl = (videoId: string) => {
@@ -79,7 +82,39 @@ export default function ShowcaseFeaturedSection() {
     return `translateY(-50%) scaleX(${SCALE_X}) scaleY(${SCALE_Y})`;
   };
 
-  if (posts.length < TOTAL) return null;
+  /* 로딩 중: 높이 선점 + 스켈레톤 */
+  if (isLoading) {
+    return (
+      <section className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''}`}>
+        <div className={styles.container}>
+          <div className={styles.cardWrapper}>
+            {Array.from({ length: TOTAL }).map((_, i) => (
+              <div
+                key={`skeleton-${i}`}
+                className={styles.skeletonCard}
+                style={{ left: `${i * 25}%` }}
+              >
+                <div className={styles.skeletonThumb} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  /* 로드 완료 후 데이터 부족: 높이 유지 + 빈 상태 */
+  if (posts.length < TOTAL) {
+    return (
+      <section className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''}`}>
+        <div className={styles.container}>
+          <div className={styles.cardWrapper}>
+            <div className={styles.emptyState}>등록된 쇼케이스가 없습니다.</div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className={`${styles.section} ${darkMode ? 'dark' : ''}`}>
