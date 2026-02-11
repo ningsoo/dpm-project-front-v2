@@ -17,6 +17,7 @@ import type { BoardDetail } from '@/api/boardApi';
 import CommentSection from './CommentSection';
 import PlaylistDetailSection from './PlaylistDetailSection';
 import DonationModal from './DonationModal';
+import { PopIcon } from '@/assets/site/paths';
 import styles from './PostDetail.module.css';
 
 interface Post extends BoardDetail {
@@ -348,8 +349,9 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
               }
               setShowDonationModal(true);
             }}
+            aria-label="POP 선물"
           >
-            POP 선물
+            <PopIcon size={32} />
           </button>
         )}
       </div>

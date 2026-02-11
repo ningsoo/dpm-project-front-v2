@@ -249,8 +249,10 @@
   color: #666;
 }
 
+/* CLS 방지: Featured/Carousel 영역 높이 선점(420px) → 검색 영역 고정 */
 .carouselSection {
   margin-bottom: 32px;
+  min-height: 420px;
 }
 
 .modalOverlay {

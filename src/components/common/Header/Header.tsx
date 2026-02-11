@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { Moon, Mail, User, LogIn, LogOut } from 'lucide-react';
@@ -9,6 +10,7 @@ import { toggleDarkMode } from '@/store/slices/uiSlice';
 import { logout as authLogout } from '@/store/slices/authSlice';
 import { authApi } from '@/api/authApi';
 import { ToastUtils } from '@/utils/toastUtils';
+import logoImg from '@/assets/site/logo.png';
 import styles from './Header.module.css';
 
 const CATEGORIES = [
@@ -50,7 +52,9 @@ export default function Header() {
   if (variant === 'auth') {
     return (
       <header className={`${styles.header} ${styles.authHeader} ${darkMode ? styles.dark : ''}`}>
-        <Link href="/" className={styles.logo}>SOUNDOCK</Link>
+        <Link href="/" className={styles.logo}>
+          <Image src={logoImg} alt="SOUNDOCK" className={styles.logoImg} width={340} height={36} priority />
+        </Link>
       </header>
     );
   }
@@ -58,7 +62,7 @@ export default function Header() {
   return (
     <header className={`${styles.header} ${darkMode ? styles.dark : ''}`}>
       <Link href="/" className={styles.logo}>
-        SOUNDOCK
+        <Image src={logoImg} alt="SOUNDOCK" className={styles.logoImg} width={140} height={36} priority />
       </Link>
 
       <nav className={styles.nav}>
