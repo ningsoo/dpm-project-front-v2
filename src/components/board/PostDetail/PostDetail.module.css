@@ -389,6 +389,21 @@
   color: #666;
 }
 
+.retryBtn {
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #fff;
+  background: #1976d2;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.retryBtn:hover {
+  background: #1565c0;
+}
+
 .menuWrapper {
   position: relative;
 }
@@ -649,6 +664,15 @@
 
 :global(.dark) .loading {
   color: #8A877D;
+}
+
+:global(.dark) .retryBtn {
+  background: #3b82f6;
+  color: #fff;
+}
+
+:global(.dark) .retryBtn:hover {
+  background: #2563eb;
 }
 
 :global(.dark) .menuDropdown {

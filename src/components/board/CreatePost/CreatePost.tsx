@@ -369,8 +369,8 @@ export default function CreatePost({ category }: CreatePostProps) {
                 <div
                   className={styles.playlistPreviewThumb}
                   style={{
-                    backgroundImage: selectedPlaylist.thumbnailUrl
-                      ? `url(${selectedPlaylist.thumbnailUrl})`
+                    backgroundImage: (selectedPlaylist.thumbnailUrl ?? (selectedPlaylist as { thumbnail_url?: string }).thumbnail_url)
+                      ? `url(${selectedPlaylist.thumbnailUrl ?? (selectedPlaylist as { thumbnail_url?: string }).thumbnail_url})`
                       : undefined,
                   }}
                 />

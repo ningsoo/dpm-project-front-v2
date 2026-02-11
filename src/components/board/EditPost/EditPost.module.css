@@ -66,6 +66,48 @@
   display: block;
 }
 
+.playlistPreview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.playlistPreviewThumb {
+  width: 120px;
+  height: 68px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: #e0e0e0;
+  background-size: cover;
+  background-position: center;
+}
+
+.playlistPreviewInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.playlistPreviewTitle {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playlistPreviewCount {
+  font-size: 0.85rem;
+  color: #666;
+}
+
 .btnGroup {
   display: flex;
   gap: 12px;
