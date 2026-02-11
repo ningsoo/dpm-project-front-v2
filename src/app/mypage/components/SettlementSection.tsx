@@ -28,6 +28,21 @@ export type SettlementHistoryItem = {
   statusLabel?: '정산신청' | '정산완료';
 };
 
+/** 정산 가능 내역 개별 항목 */
+export type AvailableSettlementRow = {
+  transactionId?: number;
+  changeAmount?: number;
+  approvedDatetime?: string;
+  createdDatetime?: string;
+};
+
+/** getAvailableSettlements 응답 구조 */
+export type AvailableSettlementsData = {
+  totalAmount: number;
+  totalCount: number;
+  popHistoryResponses: AvailableSettlementRow[];
+};
+
 /** 날짜 문자열을 날짜/시간으로 분리 */
 function formatDateTwoLines(dt?: string): { date: string; time: string } {
   if (!dt || typeof dt !== 'string') return { date: '-', time: '' };
@@ -118,11 +133,9 @@ export function SettlementSection({ user }: SettlementSectionProps) {
   const [requestSubmitting, setRequestSubmitting] = useState(false);
   const [showRequestConfirm, setShowRequestConfirm] = useState(false);
 
-  const getAvailableAmount = useCallback(() => {
-    return historyList.reduce(
-      (sum, item) => sum + (item.changeAmount || 0), 0
-    );
-  }, [historyList]);
+  const [availableAmount, setAvailableAmount] = useState(0);
+  const [availableRows, setAvailableRows] = useState<AvailableSettlementRow[]>([]);
+  const [availableLoading, setAvailableLoading] = useState(false);
   
   const fetchHistory = useCallback(() => {
     setLoading(true);
@@ -140,11 +153,30 @@ export function SettlementSection({ user }: SettlementSectionProps) {
       .finally(() => setLoading(false));
   }, [historyRange.start, historyRange.end]);
 
+  const fetchAvailable = useCallback(() => {
+    setAvailableLoading(true);
+    mypageApi.getAvailableSettlements()
+      .then((res) => {
+        const body = res.data as any;
+        const data = (body?.data ?? body) as Partial<AvailableSettlementsData> | null;
+        setAvailableAmount(typeof data?.totalAmount === 'number' ? data.totalAmount : 0);
+        setAvailableRows(Array.isArray(data?.popHistoryResponses) ? data.popHistoryResponses : []);
+      })
+      .catch(() => {
+        setAvailableAmount(0);
+        setAvailableRows([]);
+        ToastUtils.error('정산 가능 내역을 불러올 수 없습니다.');
+      })
+      .finally(() => setAvailableLoading(false));
+  }, []);
+
   useEffect(() => {
-    if (subTab === 'history' || subTab === 'request') {
+    if (subTab === 'history') {
       fetchHistory();
+    } else if (subTab === 'request') {
+      fetchAvailable();
     }
-  }, [subTab, fetchHistory]);
+  }, [subTab, fetchHistory, fetchAvailable]);
 
   const phoneDigits = (accountForm.phoneNumber ?? '').replace(/\D/g, '').slice(0, 11);
   const phoneComplete = phoneDigits.length === 11;
@@ -206,7 +238,7 @@ export function SettlementSection({ user }: SettlementSectionProps) {
         }
         
         ToastUtils.success('정산 신청이 완료되었습니다.');
-        fetchHistory(); 
+        fetchAvailable();
       })
       .catch((err: any) => {
          setShowRequestConfirm(false); // 실패해도 모달 닫기
@@ -310,12 +342,10 @@ export function SettlementSection({ user }: SettlementSectionProps) {
             <div className={styles.settlementRequestSummaryBox}>
               <div className={styles.settlementSummaryRow}>
                 <span>정산 가능 금액</span>
-                {/* 6,000원으로 그대로 나옴 */}
                 <span className={styles.settlementTotalAmount}>
-                  {getAvailableAmount().toLocaleString()}원
+                  {availableAmount.toLocaleString()}원
                 </span>
               </div>
-              {/* 버튼은 항상 활성화 (0원이라도 누를 수 있음) */}
               <button
                 type="button"
                 className={styles.submitBtn}
@@ -325,32 +355,32 @@ export function SettlementSection({ user }: SettlementSectionProps) {
                 {requestSubmitting ? '신청 중…' : '정산요청'}
               </button>
             </div>
-            
+
             <div className={styles.settlementRequestTableWrap}>
-              {loading ? <p className={styles.settlementLoading}>로딩 중...</p> : (
+              {availableLoading ? <p className={styles.settlementLoading}>로딩 중...</p> : (
                 <div style={{ overflowX: 'auto' }}>
                   <div className={`${styles.tableGrid} ${styles.settlementGrid3} ${styles.tableHeader}`}>
                     <div className={styles.settlementGrid3Col1} style={centerStyle}>후원번호</div>
                     <div className={styles.settlementGrid3Col2} style={centerStyle}>후원금액</div>
                     <div className={styles.settlementGrid3Col3} style={centerStyle}>후원승인일</div>
                   </div>
-                  {historyList.length === 0 ? (
+                  {availableRows.length === 0 ? (
                     <div className={`${styles.tableGrid} ${styles.settlementGrid3} ${styles.settlementGrid3EmptyRow}`}>
                       <div className={`${styles.settlementEmpty} ${styles.settlementGrid3EmptyCell}`}>
                         내역이 없습니다.
                       </div>
                     </div>
                   ) : (
-                    historyList.map((item, idx) => (
-                      <div key={idx} className={`${styles.tableGrid} ${styles.settlementGrid3} ${styles.tableRow}`}>
+                    availableRows.map((row, idx) => (
+                      <div key={row.transactionId ?? idx} className={`${styles.tableGrid} ${styles.settlementGrid3} ${styles.tableRow}`}>
                         <div className={`${styles.tableCell} ${styles.settlementGrid3Col1}`} style={centerStyle}>
-                          {item.popHistoryId ?? '-'}
+                          {row.transactionId ?? '-'}
                         </div>
                         <div className={`${styles.tableCell} ${styles.settlementGrid3Col2}`} style={centerStyle}>
-                          {formatSettlementAmount(item.changeAmount)}
+                          {formatSettlementAmount(typeof row.changeAmount === 'number' ? Math.abs(row.changeAmount) : undefined)}
                         </div>
                         <div className={`${styles.tableCell} ${styles.settlementGrid3Col3}`} style={centerStyle}>
-                           <SettlementDateCell dt={item.approvedDatetime} />
+                          <SettlementDateCell dt={row.approvedDatetime ?? row.createdDatetime} />
                         </div>
                       </div>
                     ))
