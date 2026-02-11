@@ -22,6 +22,19 @@ fetchClient.interceptors.request.use(config => {
 });
 
 /**
+ * 무인증 전용 클라이언트 (Authorization·401 refresh 인터셉터 없음)
+ * Passwordless register / login-trigger / result / cancel 등 로그인 없이 호출하는 API용.
+ */
+export const noAuthClient = axios.create({
+  baseURL: API_BASE,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 10000,
+});
+
+/**
  * Refresh 전용 클라이언트 (인터셉터 없음 → 무한루프/중첩 방지)
  * - Refresh Token은 HttpOnly Cookie로만 전송 (body에 넣지 않음)
  */
@@ -112,6 +125,11 @@ fetchClient.interceptors.response.use(
     }
 
     if (err.response.status !== 401 || config._retry) {
+      return Promise.reject(err);
+    }
+
+    // /passwordless/* 요청에서 401 시 refresh 시도하지 않고 즉시 reject (불필요한 /auth/refresh 방지)
+    if (config.url?.startsWith('/passwordless/')) {
       return Promise.reject(err);
     }
 
