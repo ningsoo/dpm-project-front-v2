@@ -59,6 +59,8 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
+  const [retryTrigger, setRetryTrigger] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
@@ -73,12 +75,13 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   const currentUserId =
     typeof window !== 'undefined' ? tokenUtils.getUserIdFromToken() : null;
 
-  // ===== 게시글 조회 (boardId 확정 시 1회만, AbortController로 StrictMode 중복 호출 방지) =====
+  // ===== 게시글 조회 (boardId 확정 시 1회, retry 시 재호출) =====
   useEffect(() => {
     const validId = typeof boardId === 'string' && boardId.trim() !== '';
     if (!validId) {
       setLoading(false);
       setPost(null);
+      setFetchError(false);
       return;
     }
 
@@ -86,6 +89,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
     const { signal } = controller;
 
     setLoading(true);
+    setFetchError(false);
 
     boardApi
       .getPost(boardId, { signal })
@@ -94,6 +98,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
         const postData = data?.data as BoardDetail | undefined;
         if (postData) setPost({ ...postData } as Post);
         else setPost(null);
+        setFetchError(false);
       })
       .catch((err: unknown) => {
         const e = err as { name?: string; response?: { status?: number; statusText?: string; data?: unknown }; message?: string };
@@ -109,18 +114,22 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
             '| message:', e?.message ?? '(없음)',
             '| response.data:', typeof resData === 'object' ? JSON.stringify(resData) : resData
           );
+          ToastUtils.error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
         } else if (status !== 404) {
           console.error('게시글 조회 실패', 'boardId:', boardId, 'status:', status, err);
+          ToastUtils.error('글을 불러올 수 없습니다');
+        } else {
+          ToastUtils.error('글을 불러올 수 없습니다');
         }
-        ToastUtils.error('글을 불러올 수 없습니다');
         setPost(null);
+        setFetchError(true);
       })
       .finally(() => {
         if (!signal.aborted) setLoading(false);
       });
 
     return () => controller.abort();
-  }, [boardId]);
+  }, [boardId, retryTrigger]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -219,7 +228,26 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   };
 
   if (loading) return <div className={styles.loading}>로딩 중…</div>;
-  if (!post) return <div className={styles.loading}>글이 없습니다.</div>;
+  if (!post) {
+    if (fetchError) {
+      return (
+        <div className={styles.loading}>
+          <p style={{ marginBottom: 12 }}>일시적인 오류가 발생했습니다.</p>
+          <p style={{ marginBottom: 16, fontSize: '0.9rem', color: '#666' }}>
+            서버에서 응답하지 않습니다. 잠시 후 다시 시도해 주세요.
+          </p>
+          <button
+            type="button"
+            className={styles.retryBtn}
+            onClick={() => setRetryTrigger((t) => t + 1)}
+          >
+            다시 시도
+          </button>
+        </div>
+      );
+    }
+    return <div className={styles.loading}>글이 없습니다.</div>;
+  }
 
   const categoryType = (post.categoryType ?? post.category ?? category).toString();
   const categorySlug = categoryType.toLowerCase();

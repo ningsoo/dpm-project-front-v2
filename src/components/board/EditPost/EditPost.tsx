@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { boardApi } from '@/api/boardApi';
+import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import { extractYouTubeVideoId, getYouTubeThumbnailUrl } from '@/utils/youtubeUtils';
 import { PlaylistSelectModal, type MyPlaylistItem } from '@/components/board/CreatePost/PlaylistSelectModal';
@@ -94,6 +95,41 @@ export default function EditPost({ category, boardId }: EditPostProps) {
   const youtubeUrlOk = !!youtubeUrl.trim() && !youtubeUrlError && !!youtubeVideoId;
   const playlistIdOk = selectedPlaylist != null && selectedPlaylist.playlistId != null;
 
+  /** PLAYLISTS 수정 시 썸네일이 없을 때 내 플레이리스트 또는 트랙 목록으로 썸네일 보강 */
+  const fetchPlaylistThumbnail = (playlistId: number, fallback: MyPlaylistItem) => {
+    mypageApi
+      .getMyPlaylists()
+      .then(({ data }) => {
+        const raw = Array.isArray(data?.data) ? data.data as Record<string, unknown>[] : [];
+        const found = raw.find((p) => Number(p.playlistId ?? p.playlist_id) === playlistId);
+        const thumb = found ? String(found.thumbnailUrl ?? found.thumbnail_url ?? '') : '';
+        if (thumb) {
+          setSelectedPlaylist({
+            ...fallback,
+            thumbnailUrl: thumb,
+            title: String(found?.title ?? fallback.title),
+            itemCount: Number(found?.itemCount ?? found?.item_count ?? fallback.itemCount),
+          });
+          return;
+        }
+        return mypageApi.getPlaylistTracks(playlistId);
+      })
+      .then((res) => {
+        if (!res?.data?.data || !Array.isArray(res.data.data)) return;
+        const tracks = res.data.data as Record<string, unknown>[];
+        const first = tracks[0];
+        const firstThumb = first ? String(first.thumbnailUrl ?? first.thumbnail_url ?? '') : '';
+        if (firstThumb) {
+          setSelectedPlaylist((prev) =>
+            prev && prev.playlistId === playlistId
+              ? { ...prev, thumbnailUrl: firstThumb }
+              : prev
+          );
+        }
+      })
+      .catch(() => {});
+  };
+
   // 상세조회 API 호출 → 폼 초기값 세팅
   useEffect(() => {
     if (!boardId) {
@@ -131,14 +167,18 @@ export default function EditPost({ category, boardId }: EditPostProps) {
           const items = d.playlistItems ?? [];
           const thumb =
             (items[0] as { thumbnailUrl?: string } | undefined)?.thumbnailUrl ?? '';
-          if (pid != null && (pt || items.length > 0)) {
-            setSelectedPlaylist({
+          if (pid != null) {
+            const initial: MyPlaylistItem = {
               playlistId: Number(pid),
               youtubeListId: '',
               title: String(pt),
               thumbnailUrl: thumb,
-              itemCount: items.length,
-            });
+              itemCount: Array.isArray(items) ? items.length : 0,
+            };
+            setSelectedPlaylist(initial);
+            if (!thumb) {
+              fetchPlaylistThumbnail(Number(pid), initial);
+            }
           }
         }
 
@@ -506,8 +546,8 @@ export default function EditPost({ category, boardId }: EditPostProps) {
                 <div
                   className={styles.playlistPreviewThumb}
                   style={{
-                    backgroundImage: selectedPlaylist.thumbnailUrl
-                      ? `url(${selectedPlaylist.thumbnailUrl})`
+                    backgroundImage: (selectedPlaylist.thumbnailUrl ?? (selectedPlaylist as { thumbnail_url?: string }).thumbnail_url)
+                      ? `url(${selectedPlaylist.thumbnailUrl ?? (selectedPlaylist as { thumbnail_url?: string }).thumbnail_url})`
                       : undefined,
                   }}
                 />

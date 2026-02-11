@@ -45,7 +45,15 @@ export function PlaylistSelectModal({
       const playlistArray = response.data?.data;
 
       if (Array.isArray(playlistArray)) {
-        setPlaylists(playlistArray);
+        const normalized = playlistArray.map((p: Record<string, unknown>) => ({
+          ...p,
+          playlistId: Number(p.playlistId ?? p.playlist_id ?? 0),
+          title: String(p.title ?? ''),
+          thumbnailUrl: String(p.thumbnailUrl ?? p.thumbnail_url ?? ''),
+          itemCount: Number(p.itemCount ?? p.item_count ?? 0),
+          youtubeListId: String(p.youtubeListId ?? p.youtube_list_id ?? ''),
+        })) as MyPlaylistItem[];
+        setPlaylists(normalized);
       } else {
         setPlaylists([]);
       }
@@ -62,16 +70,26 @@ export function PlaylistSelectModal({
     }
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (selectedId == null) {
       ToastUtils.error('플레이리스트를 선택해주세요.');
       return;
     }
     const playlist = playlists.find((p) => p.playlistId === selectedId);
-    if (playlist) {
-      onSelect(playlist);
-      onClose();
+    if (!playlist) return;
+
+    let thumbnailUrl = playlist.thumbnailUrl ?? (playlist as unknown as Record<string, unknown>).thumbnail_url as string | undefined;
+    try {
+      const res = await mypageApi.getPlaylistTracks(playlist.playlistId);
+      const tracks = Array.isArray(res?.data?.data) ? (res.data.data as Record<string, unknown>[]) : [];
+      const first = tracks[0];
+      const trackThumb = first ? String(first.thumbnailUrl ?? first.thumbnail_url ?? '') : '';
+      if (trackThumb) thumbnailUrl = trackThumb;
+    } catch {
+      // 트랙 조회 실패 시 기존 thumbnailUrl 유지
     }
+    onSelect({ ...playlist, thumbnailUrl: thumbnailUrl ?? '' });
+    onClose();
   };
 
   if (!isOpen) return null;
