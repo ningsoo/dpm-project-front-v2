@@ -4,13 +4,6 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import styles from '../mypage.module.css';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
-import {
-  sanitizeEmailInput,
-  validateEmailForSubmit,
-  validateEmailForUX,
-  validateNicknameFormatBySignupRule,
-  validatePhoneFromDigitsStrict,
-} from '@/utils/authValidation';
 
 export interface SettlementUser {
   email: string;
@@ -118,16 +111,10 @@ export function SettlementSection({ user }: SettlementSectionProps) {
   const [loading, setLoading] = useState(false);
   const [historyRange, setHistoryRange] = useState({ start: '', end: '' });
   
-  const [accountForm, setAccountForm] = useState({
-    email: '', name: '', phoneNumber: '', accountNumber: '',
-  });
-  const [registerErrors, setRegisterErrors] = useState<any>({});
-  const [emailHangulError, setEmailHangulError] = useState('');
-  const [emailFormatError, setEmailFormatError] = useState('');
-  const emailDebounceRef = useRef<any>(null);
-  const [phoneTouched, setPhoneTouched] = useState(false);
-  const [phoneErrorUx, setPhoneErrorUx] = useState('');
-  const phoneDebounceRef = useRef<any>(null);
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountNumberError, setAccountNumberError] = useState('');
+  const [isAccountNumberTyping, setIsAccountNumberTyping] = useState(false);
+  const accountNumberDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const [accountSubmitting, setAccountSubmitting] = useState(false);
   
   const [requestSubmitting, setRequestSubmitting] = useState(false);
@@ -178,39 +165,55 @@ export function SettlementSection({ user }: SettlementSectionProps) {
     }
   }, [subTab, fetchHistory, fetchAvailable]);
 
-  const phoneDigits = (accountForm.phoneNumber ?? '').replace(/\D/g, '').slice(0, 11);
-  const phoneComplete = phoneDigits.length === 11;
-  useEffect(() => {
-    if (phoneDebounceRef.current) clearTimeout(phoneDebounceRef.current);
-    if (phoneComplete) {
-      phoneDebounceRef.current = setTimeout(() => {
-        const result = validatePhoneFromDigitsStrict(phoneDigits);
-        setPhoneErrorUx(result.ok ? '' : result.error);
-      }, 600);
-    } else {
-      setPhoneErrorUx('');
-    }
-  }, [phoneDigits, phoneComplete]);
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value, hadKorean } = sanitizeEmailInput(e.target.value);
-    setAccountForm(prev => ({ ...prev, email: value }));
-    setEmailHangulError(hadKorean ? '한글 불가' : '');
-    if (emailDebounceRef.current) clearTimeout(emailDebounceRef.current);
-    if (!value) return;
-    emailDebounceRef.current = setTimeout(() => {
-      const { error } = validateEmailForUX(value);
-      setEmailFormatError(error);
-    }, 1200);
+  const validateAccountNumber = (value: string): string => {
+    if (!value) return '';
+    if (!/^\d+$/.test(value)) return '계좌 번호는 502로 시작하며 1로 끝나는 11자리 숫자여야 합니다.';
+    if (value.length !== 11) return '계좌 번호는 502로 시작하며 1로 끝나는 11자리 숫자여야 합니다.';
+    if (!value.startsWith('502')) return '계좌 번호는 502로 시작하며 1로 끝나는 11자리 숫자여야 합니다.';
+    if (!value.endsWith('1')) return '계좌 번호는 502로 시작하며 1로 끝나는 11자리 숫자여야 합니다.';
+    return '';
   };
+
+  const handleAccountNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value.length > 11) return;
+    setAccountNumber(value);
+    setIsAccountNumberTyping(true);
+    setAccountNumberError('');
+    
+    if (accountNumberDebounceRef.current) {
+      clearTimeout(accountNumberDebounceRef.current);
+    }
+    
+    accountNumberDebounceRef.current = setTimeout(() => {
+      setIsAccountNumberTyping(false);
+      const error = validateAccountNumber(value);
+      setAccountNumberError(error);
+    }, 300);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (accountNumberDebounceRef.current) {
+        clearTimeout(accountNumberDebounceRef.current);
+      }
+    };
+  }, []);
 
   const handleRegisterAccount = (e: React.FormEvent) => {
     e.preventDefault();
+    const trimmed = accountNumber.trim();
+    const error = validateAccountNumber(trimmed);
+    if (error) {
+      setAccountNumberError(error);
+      return;
+    }
     setAccountSubmitting(true);
     mypageApi.registerSettlementAccount({
-      ...accountForm, 
-      name: accountForm.name.trim(),
-      accountNumber: accountForm.accountNumber.trim()
+      email: user.email,
+      name: user.name ?? '',
+      phoneNumber: user.phoneNumber,
+      accountNumber: trimmed,
     })
       .then((res: any) => {
         if (res.data?.success === false) ToastUtils.error(res.data.message);
@@ -317,19 +320,22 @@ export function SettlementSection({ user }: SettlementSectionProps) {
              <form onSubmit={handleRegisterAccount} className={styles.settlementForm}>
                 <div className={styles.settlementField}>
                   <label>이메일</label>
-                  <input type="email" value={accountForm.email} onChange={handleEmailChange} className={styles.settlementInput} />
+                  <input type="email" value={user.email} readOnly className={styles.settlementInput} />
                 </div>
                 <div className={styles.settlementField}>
                   <label>이름</label>
-                  <input type="text" value={accountForm.name} onChange={e=>setAccountForm({...accountForm, name:e.target.value})} className={styles.settlementInput} />
+                  <input type="text" value={user.name ?? ''} readOnly className={styles.settlementInput} />
                 </div>
                 <div className={styles.settlementField}>
                   <label>연락처</label>
-                  <input type="tel" value={accountForm.phoneNumber} onChange={e=>setAccountForm({...accountForm, phoneNumber:e.target.value})} className={styles.settlementInput} />
+                  <input type="tel" value={user.phoneNumber} readOnly className={styles.settlementInput} />
                 </div>
                 <div className={styles.settlementField}>
                   <label>계좌번호</label>
-                  <input type="text" value={accountForm.accountNumber} onChange={e=>setAccountForm({...accountForm, accountNumber:e.target.value})} className={styles.settlementInput} placeholder="파민 뱅크 계좌만 가능합니다" />
+                  <input type="text" value={accountNumber} onChange={handleAccountNumberChange} className={styles.settlementInput} placeholder="파민 뱅크 계좌만 가능합니다" />
+                  <span className={styles.error} style={{ display: 'block', marginTop: 4, fontSize: '0.875rem', color: '#d32f2f', minHeight: '20px' }}>
+                    {!isAccountNumberTyping && accountNumberError ? accountNumberError : ''}
+                  </span>
                 </div>
                 <button type="submit" className={styles.submitBtn} disabled={accountSubmitting}>등록</button>
              </form>
