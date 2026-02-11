@@ -3,10 +3,13 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
 import { Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
 import { authApi } from '@/api/authApi';
 import { ToastUtils } from '@/utils/toastUtils';
+import { validatePhonePartsStrict, validateNameFormatByRule } from '@/utils/authValidation';
 import styles from '../auth.module.css';
 
 const PWD_REQUIRE = '대문자, 숫자, 특수문자 포함 10자 이상, 공백금지';
@@ -37,9 +40,13 @@ function validatePassword(p: string): string[] {
 
 export default function SignupPage() {
   const router = useRouter();
+  const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState('');
+  const [nameTouched, setNameTouched] = useState(false);
+  const [nameError, setNameError] = useState('');
   const [nickname, setNickname] = useState('');
   const phonePart0Ref = useRef<HTMLInputElement>(null);
   const phonePart1Ref = useRef<HTMLInputElement>(null);
@@ -47,6 +54,10 @@ export default function SignupPage() {
   const [phonePart0, setPhonePart0] = useState('');
   const [phonePart1, setPhonePart1] = useState('');
   const [phonePart2, setPhonePart2] = useState('');
+  const [phoneTouched, setPhoneTouched] = useState(false);
+  const [phoneErrorUx, setPhoneErrorUx] = useState('');
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const phoneDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isComposing, setIsComposing] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -78,6 +89,7 @@ export default function SignupPage() {
   const pwdOk = pwdErrors.length === 0;
   const confirmOk = password && confirmPassword && password === confirmPassword;
   const confirmError = confirmPassword && password && password !== confirmPassword;
+  const nameOk = name.length > 0 && !nameError;
   
   // 닉네임 형식 검사 함수 (우선순위: 공백 > 특수문자 > 한글 자음/모음 단독)
   const validateNicknameFormat = (value: string): string => {
@@ -105,8 +117,9 @@ export default function SignupPage() {
   // 닉네임 형식 검사 통과 여부
   const nicknameFormatOk = nickname.length > 0 && nickname.length <= 10 && !validateNicknameFormat(nickname);
   const nicknameOk = nicknameFormatOk;
-  // 앞자리 010~019 허용, 중간·끝 각 4자리
-  const phoneOk = /^01[0-9]$/.test(phonePart0) && phonePart1.length === 4 && phonePart2.length === 4;
+  const phoneValidation = validatePhonePartsStrict(phonePart0, phonePart1, phonePart2);
+  const phoneComplete = phonePart0.length === 3 && phonePart1.length === 4 && phonePart2.length === 4;
+  const phoneOk = phoneComplete && phoneValidation.ok;
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
@@ -322,6 +335,27 @@ export default function SignupPage() {
   };
 
   useEffect(() => {
+    if (phoneDebounceRef.current) {
+      clearTimeout(phoneDebounceRef.current);
+      phoneDebounceRef.current = null;
+    }
+    if (phoneComplete) {
+      phoneDebounceRef.current = setTimeout(() => {
+        phoneDebounceRef.current = null;
+        const result = validatePhonePartsStrict(phonePart0, phonePart1, phonePart2);
+        setPhoneErrorUx(result.ok ? '' : result.error);
+      }, 600);
+    } else {
+      setPhoneErrorUx('');
+    }
+    return () => {
+      if (phoneDebounceRef.current) {
+        clearTimeout(phoneDebounceRef.current);
+      }
+    };
+  }, [phonePart0, phonePart1, phonePart2, phoneComplete]);
+
+  useEffect(() => {
     return () => {
       if (emailDebounceRef.current) {
         clearTimeout(emailDebounceRef.current);
@@ -331,6 +365,9 @@ export default function SignupPage() {
       }
       if (nicknameDebounceRef.current) {
         clearTimeout(nicknameDebounceRef.current);
+      }
+      if (phoneDebounceRef.current) {
+        clearTimeout(phoneDebounceRef.current);
       }
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current);
@@ -346,6 +383,13 @@ export default function SignupPage() {
       }
     };
   }, []);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const v = e.target.value;
+    setName(v);
+    setNameTouched(true);
+    setNameError(validateNameFormatByRule(v));
+  };
 
   const handleNicknameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -405,12 +449,23 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    setSubmitAttempted(true);
+
     // loading 중 submit 재진입 방지
     if (loading) return;
-    
+
+    // 제출 시점에 3칸 완성인데 prefix 규칙 위반이면 즉시 에러 표시
+    if (phoneComplete && !phoneValidation.ok && phoneValidation.error) {
+      setPhoneErrorUx(phoneValidation.error);
+    }
+
+    // name 재검증
+    const nameErr = validateNameFormatByRule(name);
+    setNameError(nameErr);
+    const nameOkNow = name.length > 0 && !nameErr;
+
     // submit 조건 검사
-    if (!pwdOk || !confirmOk || !nicknameOk || !phoneOk || errors.email || errors.nickname || !emailVerified || !nicknameVerified) {
+    if (!pwdOk || !confirmOk || !nameOkNow || !nicknameOk || !phoneOk || errors.email || errors.nickname || !emailVerified || !nicknameVerified) {
       return;
     }
     
@@ -421,6 +476,7 @@ export default function SignupPage() {
       await authApi.signup({
         email,
         password,
+        name,
         nickname,
         phoneNumber: phoneForServer,
       });
@@ -479,7 +535,7 @@ export default function SignupPage() {
               disabled={!emailAvailable || emailVerified || emailVerificationPending || !!errors.email || !!emailHangulError || !!emailFormatError || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)}
               className={styles.emailVerifyBtn}
               style={{
-                backgroundColor: emailVerified ? '#4caf50' : emailVerificationPending ? '#999' : (emailAvailable && !errors.email && !emailHangulError && !emailFormatError && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? '#1976d2' : '#ccc'),
+                backgroundColor: emailVerified ? '#4caf50' : emailVerificationPending ? '#999' : (emailAvailable && !errors.email && !emailHangulError && !emailFormatError && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? (darkMode ? '#7B7F9E' : '#1976d2') : '#ccc'),
                 cursor: emailVerified || emailVerificationPending ? 'not-allowed' : (emailAvailable && !errors.email && !emailHangulError && !emailFormatError && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'pointer' : 'not-allowed'),
               }}
             >
@@ -558,6 +614,21 @@ export default function SignupPage() {
         </label>
 
         <label className={styles.label}>
+          이름
+          <input
+            type="text"
+            placeholder="김산독"
+            autoComplete="name"
+            value={name}
+            onChange={handleNameChange}
+            className={styles.input}
+          />
+          <span className={styles.error}>
+            {(nameTouched || submitAttempted) ? nameError : ''}
+          </span>
+        </label>
+
+        <label className={styles.label}>
           닉네임
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <input
@@ -580,7 +651,7 @@ export default function SignupPage() {
               disabled={!nicknameFormatOk}
               className={styles.actionBtn}
               style={{
-                background: nicknameFormatOk ? '#1976d2' : '#ccc',
+                background: nicknameFormatOk ? (darkMode ? '#7B7F9E' : '#1976d2') : '#ccc',
                 cursor: nicknameFormatOk ? 'pointer' : 'not-allowed',
               }}
             >
@@ -609,11 +680,13 @@ export default function SignupPage() {
               placeholder="010"
               value={phonePart0}
               onChange={(e) => {
+                setPhoneTouched(true);
                 const value = e.target.value.replace(/\D/g, '').slice(0, 3);
                 setPhonePart0(value);
                 if (value.length === 3) phonePart1Ref.current?.focus();
               }}
               onPaste={(e) => {
+                setPhoneTouched(true);
                 e.preventDefault();
                 const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 11);
                 if (digits.length >= 11) {
@@ -647,11 +720,13 @@ export default function SignupPage() {
               placeholder="1234"
               value={phonePart1}
               onChange={(e) => {
+                setPhoneTouched(true);
                 const value = e.target.value.replace(/\D/g, '').slice(0, 4);
                 setPhonePart1(value);
                 if (value.length === 4) phonePart2Ref.current?.focus();
               }}
               onPaste={(e) => {
+                setPhoneTouched(true);
                 e.preventDefault();
                 const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 11);
                 if (digits.length >= 11) {
@@ -688,10 +763,12 @@ export default function SignupPage() {
               placeholder="5678"
               value={phonePart2}
               onChange={(e) => {
+                setPhoneTouched(true);
                 const value = e.target.value.replace(/\D/g, '').slice(0, 4);
                 setPhonePart2(value);
               }}
               onPaste={(e) => {
+                setPhoneTouched(true);
                 e.preventDefault();
                 const digits = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 11);
                 if (digits.length >= 11) {
@@ -719,12 +796,17 @@ export default function SignupPage() {
               maxLength={4}
             />
           </div>
+          <div style={{ minHeight: '22px', marginTop: 4 }}>
+            {(submitAttempted || (phoneTouched && phoneComplete)) && phoneErrorUx ? (
+              <span className={styles.error}>{phoneErrorUx}</span>
+            ) : null}
+          </div>
         </label>
 
         <button
           type="submit"
           className={styles.submit}
-          disabled={!pwdOk || !confirmOk || !nicknameOk || !phoneOk || !!errors.email || !!errors.nickname || !emailVerified || !nicknameVerified || loading}
+          disabled={!pwdOk || !confirmOk || !nameOk || !nicknameOk || !phoneOk || !!errors.email || !!errors.nickname || !emailVerified || !nicknameVerified || loading}
         >
           {loading ? '처리 중…' : '가입하기'}
         </button>

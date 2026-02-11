@@ -6,6 +6,12 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
 import type { BoardListItem } from '@/api/boardTypes';
+import {
+  extractBoardListFromResponse,
+  getBoardThumbnailUrl,
+  getShowcaseVideoId,
+} from '@/utils/boardThumbnailUtils';
+import YouTubeHoverThumbnail from '@/components/board/YouTubeHoverThumbnail';
 import { formatViews } from '@/utils/displayFormatters';
 import styles from './TopShowcase.module.css';
 
@@ -13,13 +19,12 @@ export default function TopShowcase() {
   const router = useRouter();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const [posts, setPosts] = useState<BoardListItem[]>([]);
-  const [hoveredBoardId, setHoveredBoardId] = useState<number | null>(null);
 
   useEffect(() => {
     boardApi
       .getBoardByCategory('SHOWCASE')
       .then(({ data }) => {
-        const list = Array.isArray(data?.data) ? data.data : [];
+        const list = extractBoardListFromResponse(data);
         setPosts(list.slice(0, 8));
       })
       .catch(() => setPosts([]));
@@ -32,9 +37,8 @@ export default function TopShowcase() {
       <h2 className={styles.title}>TOP Showcase</h2>
       <div className={styles.grid}>
         {posts.map((p) => {
-          const ytId = extractYoutubeId(p.fileUrl ?? undefined);
-          const isHovered = hoveredBoardId === p.boardId;
-          const showVideo = isHovered && ytId;
+          const thumbnailUrl = getBoardThumbnailUrl(p, 'showcase');
+          const videoId = getShowcaseVideoId(p);
 
           const handleCardClick = () => {
             router.push(`/boards/${p.boardId}`);
@@ -44,8 +48,6 @@ export default function TopShowcase() {
             <div
               key={p.boardId}
               className={styles.card}
-              onMouseEnter={() => setHoveredBoardId(p.boardId)}
-              onMouseLeave={() => setHoveredBoardId(null)}
               onClick={handleCardClick}
               role="button"
               tabIndex={0}
@@ -58,30 +60,14 @@ export default function TopShowcase() {
               style={{ cursor: 'pointer' }}
             >
               <div className={styles.thumbWrap}>
-                {showVideo ? (
-                  <>
-                    <iframe
-                      className={styles.thumb}
-                      src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytId}&modestbranding=1&rel=0`}
-                      allow="autoplay; encrypted-media"
-                      allowFullScreen
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        border: 'none',
-                        pointerEvents: 'none',
-                      }}
-                    />
-                  </>
-                ) : (
-                  <img
-                    src={p.fileUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : '/placeholder-playlist.png')}
-                    alt=""
-                    className={styles.thumb}
+                {videoId ? (
+                  <YouTubeHoverThumbnail
+                    thumbnailUrl={thumbnailUrl}
+                    videoId={videoId}
+                    alt={p.title}
                   />
+                ) : (
+                  <img src={thumbnailUrl} alt="" className={styles.thumb} />
                 )}
               </div>
               <div className={styles.body}>
@@ -96,10 +82,4 @@ export default function TopShowcase() {
       </div>
     </section>
   );
-}
-
-function extractYoutubeId(url?: string): string {
-  if (!url) return '';
-  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/);
-  return m ? m[1] : '';
 }

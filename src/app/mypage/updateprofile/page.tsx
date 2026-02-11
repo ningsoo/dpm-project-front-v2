@@ -20,6 +20,7 @@ interface UserInfo {
 
 export default function UpdateProfilePage() {
   const router = useRouter();
+  const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const initialized = useSelector((s: RootState) => s.auth.initialized);
   const [user, setUser] = useState<UserInfo | null>(null);
@@ -206,7 +207,7 @@ export default function UpdateProfilePage() {
               disabled={!nicknameFormatOk}
               className={styles.actionBtn}
               style={{
-                background: nicknameFormatOk ? '#1976d2' : '#ccc',
+                background: nicknameFormatOk ? (darkMode ? '#3A3934' : '#1976d2') : '#ccc',
                 cursor: nicknameFormatOk ? 'pointer' : 'not-allowed',
               }}
             >

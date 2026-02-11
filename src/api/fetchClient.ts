@@ -3,7 +3,7 @@ import { tokenUtils } from '@/utils/tokenUtils';
 import { store } from '@/store';
 import { clearAuth } from '@/store/slices/authSlice';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://192.168.200.88:8080/api';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
 
 /**
  * 메인 API 클라이언트 (Authorization 헤더 + 401 시 refresh 후 재시도)
@@ -11,10 +11,14 @@ const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://192.168.200.88:
 export const fetchClient = axios.create({
   baseURL: API_BASE,
   withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-  },
   timeout: 10000,
+});
+
+fetchClient.interceptors.request.use(config => {
+  if (!(config.data instanceof FormData)) {
+    config.headers['Content-Type'] = 'application/json';
+  }
+  return config;
 });
 
 /**
@@ -61,7 +65,7 @@ function getAccessTokenFromResponse(data: unknown): string | null {
 
 /** refresh 1회 수행. 성공 시 새 accessToken 반환, 실패 시 throw */
 async function doRefresh(): Promise<string | null> {
-  const response = await refreshClient.post('/auth/refresh');
+  const response = await refreshClient.post('/api/auth/refresh');
   const token = getAccessTokenFromResponse(response.data);
   if (token) return token;
   throw new Error('Refresh response has no accessToken');
@@ -87,7 +91,7 @@ function isGetComments404(err: AxiosError): boolean {
   return (
     status === 404 &&
     method === 'get' &&
-    /\/boards\/[^/]+\/comments$/.test(url)
+    /^(?:\/api)?\/boards\/[^/]+\/comments$/.test(url)
   );
 }
 
@@ -111,7 +115,7 @@ fetchClient.interceptors.response.use(
     }
 
     // refresh 요청 자체가 실패한 경우 → refresh 재시도 금지
-    if (config.url?.includes('/auth/refresh')) {
+    if (config.url?.includes('/api/auth/refresh')) {
       return Promise.reject(err);
     }
 

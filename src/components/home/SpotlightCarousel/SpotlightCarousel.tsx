@@ -6,6 +6,10 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
 import type { BoardListItem } from '@/api/boardTypes';
+import {
+  extractBoardListFromResponse,
+  getBoardThumbnailUrl,
+} from '@/utils/boardThumbnailUtils';
 import styles from './SpotlightCarousel.module.css';
 
 const VISIBLE = 3;
@@ -20,7 +24,7 @@ export default function SpotlightCarousel() {
   const fetchSpotlights = useCallback(async () => {
     try {
       const { data } = await boardApi.getBoardByCategory('SPOTLIGHT');
-      const list = Array.isArray(data?.data) ? data.data : [];
+      const list = extractBoardListFromResponse(data);
       setPosts(list);
     } catch {
       setPosts([]);
@@ -130,15 +134,11 @@ export default function SpotlightCarousel() {
               >
                 <div
                   className={styles.thumb}
-                  style={
-                    post.fileUrl
-                      ? {
-                          backgroundImage: `url(${post.fileUrl})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                        }
-                      : {}
-                  }
+                  style={{
+                    backgroundImage: `url(${getBoardThumbnailUrl(post, 'spotlight')})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
                 >
                   <div className={styles.overlay}>
                     <div className={styles.cardTitle}>{post.title}</div>

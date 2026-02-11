@@ -1,5 +1,7 @@
-'use client';
+import { Suspense } from 'react';
+import LoginClient from './LoginClient';
 
+export default function Page() {
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -704,6 +706,9 @@ export default function LoginPage() {
   };
 
   return (
+    <Suspense fallback={<div style={{ padding: 24 }}>로딩 중...</div>}>
+      <LoginClient />
+    </Suspense>
     <div className={styles.wrap}>
       <form onSubmit={handleSubmit} className={styles.form} noValidate>
         <h1 className={styles.h1}>로그인</h1>

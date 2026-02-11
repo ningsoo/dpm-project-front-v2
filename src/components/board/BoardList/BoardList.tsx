@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSelector } from 'react-redux';
@@ -9,8 +9,15 @@ import { boardApi } from '@/api/boardApi';
 import type { BoardCategory } from '@/api/boardApi';
 import type { BoardListItem } from '@/api/boardTypes';
 import { ToastUtils } from '@/utils/toastUtils';
-import { formatCreatedDateTime, toDate } from '@/utils/createdDateTime';
+import { formatCreatedDateTime } from '@/utils/createdDateTime';
 import { formatViews, formatCommentCount } from '@/utils/displayFormatters';
+import {
+  extractPageableInfoFromResponse,
+  getBoardThumbnailUrl,
+  getShowcaseVideoId,
+} from '@/utils/boardThumbnailUtils';
+import type { BoardCategorySlug } from '@/utils/boardThumbnailUtils';
+import YouTubeHoverThumbnail from '@/components/board/YouTubeHoverThumbnail';
 import ShowcaseFeaturedSection from '@/components/board/ShowcaseFeaturedSection';
 import CommonBoardCarousel from '@/components/board/CommonBoardCarousel';
 import styles from './BoardList.module.css';
@@ -39,68 +46,122 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
   const pathname = usePathname();
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const [posts, setPosts] = useState<BoardListItemWithDisplay[]>([]);
+  const [page, setPage] = useState(0);
+  const [last, setLast] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasError, setHasError] = useState(false);
   const [searchType, setSearchType] = useState<'title' | 'nickname'>('title');
   const [search, setSearch] = useState('');
-  const [hoveredBoardId, setHoveredBoardId] = useState<number | null>(null);
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
 
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const listContainerRef = useRef<HTMLDivElement>(null);
+
   const categoryType = toBoardCategory(category);
-  
-  // community, reviews 카테고리인지 확인
+
   const shouldShowNumbers = category === 'community' || category === 'reviews';
 
-  const fetchList = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data } = await boardApi.getBoardByCategory(categoryType);
-      const list = Array.isArray(data?.data) ? data.data : [];
-      
-      let filtered = list;
-      const kw = search.trim();
-      if (kw) {
-        filtered = list.filter((p) => {
-          if (searchType === 'title') {
-            return (p.title ?? '').includes(kw);
-          } else {
-            return (p.nickname ?? '').includes(kw);
-          }
-        });
-      }
+  const processAndAssignDisplayNumber = useCallback(
+    (list: BoardListItem[], startIndex: number): BoardListItemWithDisplay[] => {
+      if (!shouldShowNumbers) return list as BoardListItemWithDisplay[];
+      return list.map((item, i) => ({
+        ...item,
+        displayNumber: startIndex + i + 1,
+      }));
+    },
+    [shouldShowNumbers]
+  );
 
-      // community, reviews 카테고리일 때만 정렬 및 번호 부여
-      if (shouldShowNumbers) {
-        // createdDateTime 기준 최신순 정렬
-        const sorted = [...filtered].sort((a, b) => {
-          const dateA = toDate(a.createdDateTime)?.getTime() ?? 0;
-          const dateB = toDate(b.createdDateTime)?.getTime() ?? 0;
-          return dateB - dateA; // 내림차순 (최신순)
-        });
-
-        // 화면용 번호 부여 (1부터 시작)
-        const withDisplayNumber = sorted.map((item, index) => ({
-          ...item,
-          displayNumber: index + 1,
-        }));
-
-        setPosts(withDisplayNumber);
+  const fetchPage = useCallback(
+    async (pageNum: number, isAppend: boolean) => {
+      if (isAppend) {
+        setLoadingMore(true);
       } else {
-        // showcase, playlists, spotlight는 번호 없이 그대로
-        setPosts(filtered);
+        setLoading(true);
       }
-    } catch {
-      ToastUtils.error('게시글을 불러올 수 없습니다');
-      setPosts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [categoryType, search, searchType, shouldShowNumbers]);
+      try {
+        const { data } = await boardApi.getBoardByCategory(categoryType, pageNum);
+        const { content, last: isLast } = extractPageableInfoFromResponse(data);
+
+        const startIndex = isAppend ? posts.length : 0;
+        const withDisplay = processAndAssignDisplayNumber(content, startIndex);
+
+        if (isAppend) {
+          setPosts((prev) => [...prev, ...withDisplay] as BoardListItemWithDisplay[]);
+        } else {
+          setPosts(withDisplay);
+        }
+        setPage(pageNum);
+        setLast(isLast);
+        setHasError(false);
+      } catch {
+        ToastUtils.error('게시글을 불러올 수 없습니다');
+        if (!isAppend) setPosts([]);
+        setHasError(true);
+      } finally {
+        if (isAppend) {
+          setLoadingMore(false);
+        } else {
+          setLoading(false);
+        }
+      }
+    },
+    [categoryType, posts.length, processAndAssignDisplayNumber]
+  );
+
+  const fetchInitial = useCallback(() => {
+    setPosts([]);
+    setPage(0);
+    setLast(false);
+    setHasError(false);
+    fetchPage(0, false);
+  }, [fetchPage]);
+
+  const fetchMore = useCallback(() => {
+    if (loading || loadingMore || last || hasError) return;
+    fetchPage(page + 1, true);
+  }, [loading, loadingMore, last, hasError, page, fetchPage]);
 
   useEffect(() => {
-    fetchList();
-  }, [fetchList]);
+    fetchInitial();
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [categoryType]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const onSearch = () => fetchList();
+  const showTopButton = page >= 1;
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (!entry?.isIntersecting) return;
+        if (loading || loadingMore || last || hasError) return;
+        fetchMore();
+      },
+      { root: null, rootMargin: '100px', threshold: 0 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [loading, loadingMore, last, hasError, fetchMore]);
+
+  const displayedPosts = useMemo(() => {
+    const kw = search.trim();
+    if (!kw) return posts;
+    return posts.filter((p) => {
+      if (searchType === 'title') return (p.title ?? '').includes(kw);
+      return (p.nickname ?? '').includes(kw);
+    });
+  }, [posts, search, searchType]);
+
+  const onSearch = () => {};
 
   const safeCat = ['showcase', 'playlists', 'spotlight', 'community', 'reviews'].includes(category)
     ? category
@@ -120,7 +181,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
   };
 
   return (
-    <section className={styles.section}>
+    <section className={styles.section} ref={listContainerRef}>
       {category === 'showcase' && (
         <div className={styles.carouselSection}>
           <ShowcaseFeaturedSection />
@@ -167,11 +228,11 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
         <div className={styles.loading}>로딩 중…</div>
       ) : viewMode === 'grid' ? (
         <div className={styles.grid}>
-          {posts.map((p) => {
-            const ytId = extractYtId(p.fileUrl ?? undefined);
-            const isHovered = hoveredBoardId === p.boardId;
+          {displayedPosts.map((p, idx) => {
+            const safeCat = category as BoardCategorySlug;
+            const thumbnailUrl = getBoardThumbnailUrl(p, safeCat);
             const isShowcase = category === 'showcase';
-            const showVideo = isShowcase && isHovered && ytId;
+            const videoId = isShowcase ? getShowcaseVideoId(p) : '';
 
             const handleCardClick = () => {
               router.push(`/boards/${p.boardId}`);
@@ -179,10 +240,8 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
 
             return (
               <div
-                key={p.boardId}
+                key={`${p.boardId}-${idx}`}
                 className={styles.card}
-                onMouseEnter={() => setHoveredBoardId(p.boardId)}
-                onMouseLeave={() => setHoveredBoardId(null)}
                 onClick={handleCardClick}
                 role="button"
                 tabIndex={0}
@@ -195,33 +254,14 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                 style={{ cursor: 'pointer' }}
               >
                 <div className={styles.thumbWrap}>
-                  {showVideo ? (
-                    <iframe
-                      className={styles.thumb}
-                      src={`https://www.youtube.com/embed/${ytId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${ytId}`}
-                      allow="autoplay; encrypted-media"
-                      allowFullScreen
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%',
-                        border: 'none',
-                        pointerEvents: 'none',
-                      }}
+                  {isShowcase && videoId ? (
+                    <YouTubeHoverThumbnail
+                      thumbnailUrl={thumbnailUrl}
+                      videoId={videoId}
+                      alt={p.title}
                     />
                   ) : (
-                    <img
-                      src={
-                        p.fileUrl ||
-                        (ytId
-                          ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
-                          : '/placeholder-playlist.png')
-                      }
-                      alt=""
-                      className={styles.thumb}
-                    />
+                    <img src={thumbnailUrl} alt="" className={styles.thumb} />
                   )}
                 </div>
                 <div className={styles.cardBody}>
@@ -260,9 +300,9 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
               </tr>
             </thead>
             <tbody>
-              {posts.map((p) => (
+              {displayedPosts.map((p, idx) => (
                 <tr
-                  key={p.boardId}
+                  key={`${p.boardId}-${idx}`}
                   onClick={() => router.push(`/boards/${p.boardId}`)}
                   style={{ cursor: 'pointer' }}
                 >
@@ -283,8 +323,26 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
         </div>
       )}
 
+      <div ref={sentinelRef} className={styles.infiniteScrollSentinel} aria-hidden />
+
+      {loadingMore && (
+        <div className={styles.loading}>더 불러오는 중…</div>
+      )}
+
       {!loading && posts.length === 0 && (
         <div className={styles.empty}>등록된 게시글이 없습니다.</div>
+      )}
+
+      {showTopButton && (
+        <button
+          type="button"
+          className={styles.topButton}
+          onClick={scrollToTop}
+          aria-label="맨 위로 이동"
+          title="맨 위로 이동"
+        >
+          Top
+        </button>
       )}
 
       {showLoginRequiredModal && (
@@ -312,10 +370,4 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
       )}
     </section>
   );
-}
-
-function extractYtId(url?: string): string {
-  if (!url) return '';
-  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/);
-  return m ? m[1] : '';
 }

@@ -5,7 +5,7 @@
 
 /* ✅ 핵심 */
 :global(.dark) .section {
-  background: #111;
+  background: #1D1D1B;
 }
 
 .title {
@@ -18,7 +18,7 @@
 
 /* ✅ */
 :global(.dark) .title {
-  color: #fff;
+  color: #B5B3A7;
 }
 
 .wrapper {
@@ -84,7 +84,7 @@
 
 /* ✅ */
 :global(.dark) .thumb {
-  background: #333;
+  background: #2E2E2C;
 }
 
 .overlay {

@@ -79,4 +79,49 @@ export const tokenUtils = {
       return null;
     }
   },
+
+  /**
+   * JWT payload에서 userId를 number로 추출 (조회 URL 구성용).
+   * userId > id > sub 순으로 확인, number로 변환 가능한 값만 인정.
+   * 권한 판별용이 아님(서명 검증 없음).
+   */
+  getUserIdFromAccessToken: (): number | null => {
+    if (typeof window === 'undefined') return null;
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (!token || typeof token !== 'string') return null;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const json = atob(base64);
+      const payload = JSON.parse(json) as Record<string, unknown>;
+      const raw = payload.userId ?? payload.id ?? payload.sub;
+      if (raw === undefined || raw === null) return null;
+      const num = typeof raw === 'number' ? raw : Number(raw);
+      return Number.isFinite(num) ? num : null;
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * JWT payload에서 role 추출 (조회 URL 구성용).
+   * 권한 판별용이 아님(서명 검증 없음).
+   */
+  getRoleFromAccessToken: (): string | null => {
+    if (typeof window === 'undefined') return null;
+    const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (!token || typeof token !== 'string') return null;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const json = atob(base64);
+      const payload = JSON.parse(json) as Record<string, unknown>;
+      const role = payload.role;
+      return role != null && typeof role === 'string' ? role : null;
+    } catch {
+      return null;
+    }
+  },
 };

@@ -520,3 +520,80 @@
   display: flex;
   justify-content: center;
 }
+
+/* Dark mode */
+:global(.dark) .h1 {
+  color: #B5B3A7;
+}
+
+:global(.dark) .label {
+  color: #A19E94;
+}
+
+:global(.dark) .input {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .input::placeholder {
+  color: #8A877D;
+}
+
+:global(.dark) .input:focus {
+  border-color: #B5B3A7;
+}
+
+:global(.dark) .eye {
+  color: #8A877D;
+}
+
+:global(.dark) .helper {
+  color: #8A877D;
+}
+
+:global(.dark) .links a {
+  color: #A19E94;
+}
+
+:global(.dark) .verifyText {
+  color: #A19E94;
+}
+
+:global(.dark) .resend a {
+  color: #A19E94;
+}
+
+:global(.dark) .withdrawLink,
+:global(.dark) .withdrawLinkNoUnderline {
+  color: #A19E94;
+}
+
+:global(.dark) .spinnerWrap {
+  background: rgba(27, 27, 25, 0.7);
+}
+
+:global(.dark) .spinner {
+  border-color: #3A3A38;
+  border-top-color: #B5B3A7;
+}
+
+:global(.dark) .submit {
+  background: #7B7F9E;
+}
+
+:global(.dark) .submit:hover:not(:disabled) {
+  background: #6B6F8E;
+}
+
+:global(.dark) .input:focus {
+  border-color: #9EA2B8;
+}
+
+:global(.dark) .resend button {
+  color: #9EA2B8;
+}
+
+:global(.dark) .spinner {
+  border-top-color: #9EA2B8;
+}

@@ -6,8 +6,8 @@
 }
 
 .footer.dark {
-  background: #111;
-  border-top-color: #333;
+  background: #1D1D1B;
+  border-top-color: #3A3A38;
 }
 
 .inner {
@@ -23,7 +23,31 @@
 }
 
 .dark .brand {
-  color: #ddd;
+  color: #B5B3A7;
+}
+
+.inquiryLink {
+  margin-top: 10px;
+}
+
+.inquiryLink a {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #555;
+  transition: color 0.2s;
+}
+
+.inquiryLink a:hover {
+  color: #111;
+  text-decoration: underline;
+}
+
+.dark .inquiryLink a {
+  color: #8A877D;
+}
+
+.dark .inquiryLink a:hover {
+  color: #B5B3A7;
 }
 
 .copyright {
@@ -33,5 +57,5 @@
 }
 
 .dark .copyright {
-  color: #999;
+  color: #8A877D;
 }

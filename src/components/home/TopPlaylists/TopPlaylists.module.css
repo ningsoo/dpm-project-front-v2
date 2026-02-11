@@ -3,8 +3,8 @@
   background: #fafafa;
 }
 
-.dark .section {
-  background: #111;
+:global(.dark) .section {
+  background: #1D1D1B;
 }
 
 .title {
@@ -15,8 +15,8 @@
   color: #111;
 }
 
-.dark .title {
-  color: #fff;
+:global(.dark) .title {
+  color: #B5B3A7;
 }
 
 .grid {
@@ -41,8 +41,8 @@
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-.dark .card {
-  background: #1a1a1a;
+:global(.dark) .card {
+  background: #242422;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
@@ -53,8 +53,8 @@
   overflow: hidden;
 }
 
-.dark .thumbWrap {
-  background: #333;
+:global(.dark) .thumbWrap {
+  background: #2E2E2C;
 }
 
 .thumb {
@@ -75,8 +75,8 @@
   color: #666;
 }
 
-.dark .author {
-  color: #999;
+:global(.dark) .author {
+  color: #8A877D;
 }
 
 .cardTitle {
@@ -89,8 +89,8 @@
   white-space: nowrap;
 }
 
-.dark .cardTitle {
-  color: #eee;
+:global(.dark) .cardTitle {
+  color: #B5B3A7;
 }
 
 .likes {
@@ -99,6 +99,6 @@
   color: #888;
 }
 
-.dark .likes {
-  color: #aaa;
+:global(.dark) .likes {
+  color: #8A877D;
 }

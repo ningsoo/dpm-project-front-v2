@@ -17,6 +17,7 @@ function getPasswordlessErrorMessage(err: unknown, fallback: string): string {
 export interface SignupBody {
   email: string;
   password: string;
+  name: string;
   nickname: string;
   phoneNumber: string;
 }
@@ -34,48 +35,48 @@ export interface ApiResponse<T> {
 
 export const authApi = {
   signup: (body: SignupBody) =>
-    fetchClient.post<ApiResponse<unknown>>('/auth/signup', body, { timeout: 30000 }),
+    fetchClient.post<ApiResponse<unknown>>('/api/auth/signup', body, { timeout: 30000 }),
 
   login: (body: LoginBody) =>
-    fetchClient.post<ApiResponse<unknown>>('/auth/login', body),
+    fetchClient.post<ApiResponse<unknown>>('/api/auth/login', body),
 
   logout: () =>
-    fetchClient.post<ApiResponse<unknown>>('/auth/logout'),
+    fetchClient.post<ApiResponse<unknown>>('/api/auth/logout'),
 
   withdraw: () =>
-    fetchClient.delete<ApiResponse<unknown>>('/mypage/me'),
+    fetchClient.delete<ApiResponse<unknown>>('/api/mypage/me'),
 
   checkEmail: (email: string) =>
-    fetchClient.get<ApiResponse<{ available: boolean; message?: string | null }>>('/auth/email', {
+    fetchClient.get<ApiResponse<{ available: boolean; message?: string | null }>>('/api/auth/email', {
       params: { email },
     }),
 
   checkNickname: (nickname: string) =>
-    fetchClient.get<ApiResponse<{ available: boolean }>>('/auth/nickname', { params: { nickname } }),
+    fetchClient.get<ApiResponse<{ available: boolean }>>('/api/auth/nickname', { params: { nickname } }),
 
   sendVerification: (email: string) =>
-    fetchClient.post<ApiResponse<unknown>>('/auth/verification', { email }, { timeout: 30000 }),
+    fetchClient.post<ApiResponse<unknown>>('/api/auth/verification', { email }, { timeout: 30000 }),
 
   verifyStatus: (email: string) =>
     fetchClient.get<ApiResponse<{ verified: boolean; expired: boolean; email: string }>>(
-      '/auth/verify/status',
+      '/api/auth/verify/status',
       { params: { email }, timeout: 30000 }
     ),
 
   confirmVerification: (token: string) =>
-    fetchClient.post<ApiResponse<unknown>>('/auth/verification', { token }),
+    fetchClient.post<ApiResponse<unknown>>('/api/auth/verification', { token }),
 
   refresh: () =>
-    fetchClient.post<ApiResponse<{ accessToken?: string }>>('/auth/refresh', {}),
+    fetchClient.post<ApiResponse<{ accessToken?: string }>>('/api/auth/refresh', {}),
 
   findEmail: (email: string) =>
-    fetchClient.post<ApiResponse<null>>('/auth/find-email', { email }, { timeout: 30000 }),
+    fetchClient.post<ApiResponse<null>>('/api/auth/find-email', { email }, { timeout: 30000 }),
 
   findPassword: (email: string) =>
-    fetchClient.patch<ApiResponse<unknown>>('/auth/findpassword', { email }),
+    fetchClient.patch<ApiResponse<unknown>>('/api/auth/findpassword', { email }),
 
   resetPassword: (token: string, newPassword: string) =>
-    fetchClient.patch<ApiResponse<unknown>>('/auth/findpassword', { token, newPassword }),
+    fetchClient.patch<ApiResponse<unknown>>('/api/auth/findpassword', { token, newPassword }),
 
   // --- Passwordless (noAuthClient) ---
   // 실패 공통 JSON: { success: false, message: "", data: null }. 에러 메시지는 response.data.message만 사용.
@@ -279,7 +280,6 @@ export const authApi = {
   /**
    * POST /passwordless/withdrawal (인증 필요, fetchClient)
    */
-  async postPasswordlessWithdrawal(): Promise<{ ok: boolean }> {
     try {
       await fetchClient.post('/passwordless/withdrawal', {}, { timeout: 10000 });
       return { ok: true };
