@@ -131,8 +131,8 @@ fetchClient.interceptors.response.use(
       return Promise.reject(err);
     }
 
-    // /passwordless/* 요청에서 401 시 refresh 시도하지 않고 즉시 reject (불필요한 /auth/refresh 방지)
-    if (config.url?.startsWith('/passwordless/')) {
+    // /api/passwordless/* 요청에서 401 시 refresh 시도하지 않고 즉시 reject (불필요한 /auth/refresh 방지)
+    if (config.url?.startsWith('/api/passwordless/')) {
       return Promise.reject(err);
     }
 
