@@ -30,6 +30,7 @@ export default function Header() {
       : 'main';
   const dispatch = useDispatch<AppDispatch>();
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
+  const authInitialized = useSelector((s: RootState) => s.auth.initialized);
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const unreadCount = useSelector((s: RootState) => s.ui.unreadMessageCount);
 
@@ -89,29 +90,40 @@ export default function Header() {
       </nav>
 
       <div className={styles.actions}>
-        <button type="button" className={styles.iconBtn} onClick={handleDarkMode} aria-label="다크 모드">
-          <Moon size={20} />
-        </button>
-
-        {isAuthenticated ? (
+        {!authInitialized ? (
+          /* 인증 상태 확인 전까지 스켈레톤 표시 → 로그인/로그아웃 UI 깜빡임 방지 */
           <>
-            <Link href="#" className={styles.msgWrapper} aria-label="메시지">
-              <button type="button" className={styles.iconBtn}>
-                <Mail size={20} />
-                {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
-              </button>
-            </Link>
-            <Link href="/mypage" className={styles.iconBtn} aria-label="마이페이지">
-              <User size={20} />
-            </Link>
-            <button type="button" className={styles.iconBtn} onClick={handleLogout} aria-label="로그아웃">
-              <LogOut size={20} />
-            </button>
+            <span className={styles.actionsSkeleton} aria-hidden />
+            <span className={styles.actionsSkeleton} aria-hidden />
+            <span className={styles.actionsSkeleton} aria-hidden />
+            <span className={styles.actionsSkeleton} aria-hidden />
           </>
         ) : (
-          <Link href="/auth/login" className={styles.iconBtn} aria-label="로그인">
-            <LogIn size={20} />
-          </Link>
+          <>
+            <button type="button" className={styles.iconBtn} onClick={handleDarkMode} aria-label="다크 모드">
+              <Moon size={20} />
+            </button>
+            {isAuthenticated ? (
+              <>
+                <Link href="#" className={styles.msgWrapper} aria-label="메시지">
+                  <button type="button" className={styles.iconBtn}>
+                    <Mail size={20} />
+                    {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
+                  </button>
+                </Link>
+                <Link href="/mypage" className={styles.iconBtn} aria-label="마이페이지">
+                  <User size={20} />
+                </Link>
+                <button type="button" className={styles.iconBtn} onClick={handleLogout} aria-label="로그아웃">
+                  <LogOut size={20} />
+                </button>
+              </>
+            ) : (
+              <Link href="/auth/login" className={styles.iconBtn} aria-label="로그인">
+                <LogIn size={20} />
+              </Link>
+            )}
+          </>
         )}
       </div>
     </header>
