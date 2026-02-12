@@ -1,11 +1,11 @@
+/* theme: html.dark 단일 소스 → 최초 페인트부터 다크 적용, 전환 시 즉시 반영 */
 .footer {
   padding: 32px 24px;
   background: #fafafa;
   border-top: 1px solid #eee;
-  transition: background 0.2s, border-color 0.2s;
 }
 
-.footer.dark {
+:global(html.dark) .footer {
   background: #1D1D1B;
   border-top-color: #3A3A38;
 }
@@ -22,7 +22,7 @@
   color: #333;
 }
 
-.dark .brand {
+:global(html.dark) .brand {
   color: #B5B3A7;
 }
 
@@ -34,7 +34,6 @@
   font-size: 0.85rem;
   font-weight: 500;
   color: #555;
-  transition: color 0.2s;
 }
 
 .inquiryLink a:hover {
@@ -42,11 +41,11 @@
   text-decoration: underline;
 }
 
-.dark .inquiryLink a {
+:global(html.dark) .inquiryLink a {
   color: #8A877D;
 }
 
-.dark .inquiryLink a:hover {
+:global(html.dark) .inquiryLink a:hover {
   color: #B5B3A7;
 }
 
@@ -56,6 +55,6 @@
   color: #666;
 }
 
-.dark .copyright {
+:global(html.dark) .copyright {
   color: #8A877D;
 }

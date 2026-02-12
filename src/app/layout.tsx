@@ -11,9 +11,22 @@ export const metadata: Metadata = {
   description: 'Share your creative works and music playlists',
 };
 
+const themeScript = `
+(function() {
+  try {
+    var stored = localStorage.getItem('darkMode');
+    if (stored === 'true') document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko">
+    <html lang="ko" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body>
         <Providers>
           <ThemeSync />

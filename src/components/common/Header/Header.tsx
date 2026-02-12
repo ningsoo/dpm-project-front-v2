@@ -35,7 +35,6 @@ export default function Header() {
   const dispatch = useDispatch<AppDispatch>();
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const authInitialized = useSelector((s: RootState) => s.auth.initialized);
-  const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const unreadCount = useSelector((s: RootState) => s.ui.unreadMessageCount);
 
   /* 인증 resolve 후 실제 UI를 opacity 전환으로 노출 (깜빡임 제거) */
@@ -68,32 +67,28 @@ export default function Header() {
 
   if (variant === 'auth') {
     return (
-      <header className={`${styles.header} ${styles.authHeader} ${darkMode ? styles.dark : ''}`}>
-        <Link href="/" className={styles.logo}>
-          <Image
-            src={darkMode ? whiteLogoImg : logoImg}
-            alt="SOUNDOCK"
-            className={styles.logoImg}
-            width={340}
-            height={36}
-            priority
-          />
+      <header className={`${styles.header} ${styles.authHeader}`}>
+        <Link href="/" className={styles.logo} aria-label="SOUNDOCK">
+          <span className={styles.logoLight} aria-hidden>
+            <Image src={logoImg} alt="" className={styles.logoImg} width={340} height={36} priority />
+          </span>
+          <span className={styles.logoDark} aria-hidden>
+            <Image src={whiteLogoImg} alt="" className={styles.logoImg} width={340} height={36} priority />
+          </span>
         </Link>
       </header>
     );
   }
 
   return (
-    <header className={`${styles.header} ${darkMode ? styles.dark : ''}`}>
+    <header className={styles.header}>
       <Link href="/" className={styles.logo}>
-        <Image
-          src={darkMode ? whiteLogoImg : logoImg}
-          alt="SOUNDOCK"
-          className={styles.logoImg}
-          width={140}
-          height={36}
-          priority
-        />
+        <span className={styles.logoLight} aria-hidden>
+          <Image src={logoImg} alt="SOUNDOCK" className={styles.logoImg} width={140} height={36} priority />
+        </span>
+        <span className={styles.logoDark} aria-hidden>
+          <Image src={whiteLogoImg} alt="SOUNDOCK" className={styles.logoImg} width={140} height={36} priority />
+        </span>
       </Link>
 
       <nav className={styles.nav}>
