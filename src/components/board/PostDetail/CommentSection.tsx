@@ -148,7 +148,7 @@ export default function CommentSection({
     if (
       !isAuthenticated ||
       !commentText.trim() ||
-      commentText.length > 50 ||
+      commentText.length > 100 ||
       commentSubmitLoading
     )
       return;
@@ -304,7 +304,7 @@ export default function CommentSection({
               <textarea
                 placeholder={
                   isAuthenticated
-                    ? '댓글 (1~50자)'
+                    ? '댓글을 입력해주세요.'
                     : '로그인 후 댓글을 작성할 수 있습니다.'
                 }
                 value={commentText}
@@ -317,7 +317,7 @@ export default function CommentSection({
                   if (!isAuthenticated) onLoginRequired();
                 }}
                 className={styles.commentInput}
-                maxLength={50}
+                maxLength={100}
                 readOnly={!isAuthenticated}
                 rows={2}
               />
@@ -347,6 +347,15 @@ export default function CommentSection({
                 <div key={c.commentId ?? c.id} className={styles.commentItem}>
                   <div className={styles.commentHead}>
                     <span className={styles.commentAuthor}>{c.nickname}</span>
+                    <button
+                      type="button"
+                      className={`${styles.commentLikeBtn} ${c.toggledLike ? styles.likeBtnLiked : ''}`}
+                      onClick={() => handleCommentLikeClick(apiCommentId)}
+                      disabled={isCommentLikeLoading}
+                    >
+                      <Heart size={16} fill={c.toggledLike ? 'currentColor' : 'none'} />
+                      <span>{c.likeCount}</span>
+                    </button>
                     <span className={styles.commentDate}>
                       {formatCreatedDateTimeFull(c.createdDateTime)}
                     </span>
@@ -437,20 +446,7 @@ export default function CommentSection({
                       </div>
                     </div>
                   ) : (
-                    <>
-                      <div className={styles.commentBody}>{c.content}</div>
-                      <div className={styles.commentFooter}>
-                        <button
-                          type="button"
-                          className={`${styles.commentLikeBtn} ${c.toggledLike ? styles.likeBtnLiked : ''}`}
-                          onClick={() => handleCommentLikeClick(apiCommentId)}
-                          disabled={isCommentLikeLoading}
-                        >
-                          <Heart size={14} fill={c.toggledLike ? 'currentColor' : 'none'} />
-                          <span>{c.likeCount}</span>
-                        </button>
-                      </div>
-                    </>
+                    <div className={styles.commentBody}>{c.content}</div>
                   )}
                 </div>
               );

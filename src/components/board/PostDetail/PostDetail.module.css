@@ -1,0 +1,818 @@
+.wrap {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.title {
+  flex: 1;
+  font-size: 1.35rem;
+  font-weight: 500;
+  color: #111;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: #666;
+  cursor: pointer;
+}
+
+.iconBtn:hover {
+  background: #f0f0f0;
+  color: #111;
+}
+
+.likeBtnLiked {
+  color: #c62828;
+}
+
+.likeBtnLiked:hover {
+  color: #b71c1c;
+}
+
+.authorRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.author {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.author:hover {
+  color: #1976d2;
+  text-decoration: underline;
+}
+
+.donateBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.donateBtn:hover,
+.donateBtn:focus,
+.donateBtn:focus-visible {
+  outline: none;
+}
+
+.donateBtn:hover {
+  transform: scale(1.08);
+  opacity: 0.9;
+}
+
+.donateBtn:active {
+  transform: scale(0.98);
+}
+
+.contentBlock {
+  margin-bottom: 24px;
+}
+
+.videoWrap {
+  position: relative;
+  padding-top: 56.25%;
+  margin-bottom: 16px;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* 이미지 letterbox 영역을 페이지 배경과 통일 (spotlight / community / reviews)
+   - 라이트: wrap 배경과 동일
+   - 다크: BoardFormLayout .wrap과 동일한 #1e1e1c 사용 (다르면 톤 차이로 보임)
+   - overlay/pseudo/filter 없음 유지으로 색상 불일치 방지 */
+.heroVideoWrap.heroVideoWrap {
+  background: #ffffff;
+  box-shadow: none;
+  opacity: 1;
+}
+
+.heroVideoWrap.heroVideoWrap::before,
+.heroVideoWrap.heroVideoWrap::after {
+  display: none !important;
+}
+
+:global(.dark) .heroVideoWrap.heroVideoWrap {
+  background: #1e1e1c;
+  box-shadow: none;
+  opacity: 1;
+}
+
+.videoWrap iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.thumbLink {
+  display: block;
+  max-width: 320px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.thumbLink img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.photoList {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.photoList img {
+  max-width: 200px;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.attachmentBlock {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.attachmentBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1976d2;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.attachmentBtn:hover:not(:disabled) {
+  background: #eee;
+  border-color: #1976d2;
+}
+
+.attachmentBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.fileList {
+  margin-bottom: 16px;
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #eee;
+}
+
+.fileItem a {
+  color: #1976d2;
+  text-decoration: none;
+}
+
+.fileItem a:hover {
+  text-decoration: underline;
+}
+
+.text {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #333;
+  white-space: pre-wrap;
+}
+
+.commentSection {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #eee;
+}
+
+.commentTitle {
+  margin: 0 0 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.commentForm {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.commentInput {
+  flex: 1;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+}
+
+.commentInput:focus {
+  border-color: #1976d2;
+}
+
+.commentSubmit {
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #fff;
+  background: #1976d2;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.commentItem {
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.commentHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.commentAuthor {
+  margin-right: auto;
+}
+
+.commentDate {
+  font-size: 0.6rem;
+  color: #888;
+  white-space: nowrap;
+}
+
+.commentBody {
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.commentEditBlock {
+  margin-top: 4px;
+}
+
+.commentEditInput {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+  resize: none;
+  min-height: 56px;
+  box-sizing: border-box;
+}
+
+.commentEditInput:focus {
+  border-color: #1976d2;
+}
+
+.commentEditActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.commentEditCancel {
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  color: #666;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.commentEditCancel:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.commentEditSubmit {
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #fff;
+  background: #1976d2;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.commentEditSubmit:hover:not(:disabled) {
+  background: #1565c0;
+}
+
+.commentEditSubmit:disabled,
+.commentEditCancel:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.commentFooter {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.commentLikeBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: #666;
+  cursor: pointer;
+}
+
+.commentLikeBtn:hover {
+  background: #f0f0f0;
+  color: #c62828;
+}
+
+.replyBtn {
+  margin-top: 8px;
+  padding: 4px 0;
+  font-size: 0.85rem;
+  color: #1976d2;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.menuBtn {
+  padding: 2px 6px;
+  font-size: 0.85rem;
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+}
+
+.menuBtn:hover {
+  color: #333;
+}
+
+.loading {
+  padding: 48px;
+  text-align: center;
+  color: #666;
+}
+
+.retryBtn {
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #fff;
+  background: #1976d2;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.retryBtn:hover {
+  background: #1565c0;
+}
+
+.menuWrapper {
+  position: relative;
+}
+
+.iconBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.iconBtn:disabled:hover {
+  background: none;
+  color: #666;
+}
+
+.menuDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  min-width: 120px;
+  overflow: hidden;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 0.9rem;
+  color: #333;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.menuItem:hover {
+  background: #f5f5f5;
+}
+
+.menuItem:first-child {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+
+.menuItem:last-child {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modalContent {
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+}
+
+.modalMessage {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  color: #333;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modalButton {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modalButtonCancel {
+  background: #999;
+}
+
+.modalButtonCancel:hover {
+  background: #777;
+}
+
+.modalButtonConfirm {
+  background: #1976d2;
+}
+
+.modalButtonConfirm:hover {
+  background: #1565c0;
+}
+
+.modalButtonDelete {
+  background: #c62828;
+}
+
+.modalButtonDelete:hover {
+  background: #b71c1c;
+}
+
+.reportTextarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  resize: none;
+  font-family: inherit;
+}
+
+.reportTextarea:focus {
+  outline: none;
+  border-color: #1976d2;
+}
+
+.categoryRow {
+  margin-bottom: 8px;
+}
+
+.categoryLink {
+  display: inline-block;
+  font-size: 25px;
+  font-weight: 600;
+  color: #000000;
+  text-decoration: none;
+  transition: color 0.8s;
+}
+
+.categoryLink:hover {
+  color: #111827;
+  text-decoration: underline;
+}
+
+.topButtonContainer {
+  position: sticky;
+  bottom: 24px;
+  display: flex;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.topButton {
+  position: relative;
+  right: -240px;
+  bottom: 0;
+  z-index: 1;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  background: #1976d2;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  transition: background 0.2s, transform 0.2s;
+  pointer-events: auto;
+}
+
+.topButton:hover {
+  background: #1565c0;
+  transform: translateY(-2px);
+}
+
+.topButton:active {
+  transform: translateY(0);
+}
+
+/* Dark mode */
+:global(.dark) .titleRow {
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .title {
+  color: #B5B3A7;
+}
+
+:global(.dark) .iconBtn {
+  color: #8A877D;
+}
+
+:global(.dark) .iconBtn:hover {
+  background: #2E2E2C;
+  color: #B5B3A7;
+}
+
+:global(.dark) .author {
+  color: #A19E94;
+}
+
+
+:global(.dark) .text {
+  color: #A19E94;
+}
+
+:global(.dark) .commentSection {
+  border-top-color: #3A3A38;
+}
+
+:global(.dark) .commentTitle {
+  color: #B5B3A7;
+}
+
+:global(.dark) .commentInput {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .commentInput:focus {
+  border-color: #B5B3A7;
+}
+
+:global(.dark) .commentItem {
+  border-bottom-color: #2E2E2C;
+}
+
+:global(.dark) .commentDate {
+  color: #8A877D;
+}
+
+:global(.dark) .commentBody {
+  color: #A19E94;
+}
+
+:global(.dark) .commentEditInput {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #E8E6DC;
+}
+
+:global(.dark) .commentEditInput:focus {
+  border-color: #B5B3A7;
+}
+
+:global(.dark) .commentEditCancel {
+  background: #3A3A38;
+  color: #A19E94;
+}
+
+:global(.dark) .commentEditCancel:hover:not(:disabled) {
+  background: #4A4A48;
+  color: #B5B3A7;
+}
+
+:global(.dark) .commentLikeBtn {
+  color: #8A877D;
+}
+
+:global(.dark) .commentLikeBtn:hover {
+  background: #2E2E2C;
+}
+
+:global(.dark) .menuBtn {
+  color: #8A877D;
+}
+
+:global(.dark) .menuBtn:hover {
+  color: #B5B3A7;
+}
+
+:global(.dark) .loading {
+  color: #8A877D;
+}
+
+:global(.dark) .retryBtn {
+  background: #3b82f6;
+  color: #fff;
+}
+
+:global(.dark) .retryBtn:hover {
+  background: #2563eb;
+}
+
+:global(.dark) .menuDropdown {
+  background: #242422;
+  border-color: #3A3A38;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .menuItem {
+  color: #A19E94;
+}
+
+:global(.dark) .menuItem:hover {
+  background: #2E2E2C;
+}
+
+:global(.dark) .fileItem {
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .attachmentBtn {
+  color: #9EA2B8;
+  background: #242422;
+  border-color: #3A3A38;
+}
+
+:global(.dark) .attachmentBtn:hover:not(:disabled) {
+  background: #2E2E2C;
+  border-color: #9EA2B8;
+}
+
+:global(.dark) .modalContent {
+  background: #242422;
+}
+
+:global(.dark) .modalMessage {
+  color: #B5B3A7;
+}
+
+:global(.dark) .reportTextarea {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .reportTextarea:focus {
+  border-color: #B5B3A7;
+}
+
+:global(.dark) .categoryLink {
+  color: #B5B3A7;
+}
+
+:global(.dark) .fileItem a {
+  color: #9EA2B8;
+}
+
+:global(.dark) .author:hover {
+  color: #9EA2B8;
+}
+
+:global(.dark) .replyBtn {
+  color: #9EA2B8;
+}
+
+:global(.dark) .commentSubmit {
+  background: #3A3934;
+}
+
+:global(.dark) .commentSubmit:hover {
+  background: #42413B;
+}
+
+:global(.dark) .commentInput:focus {
+  border-color: #9EA2B8;
+}
+
+:global(.dark) .modalButtonConfirm {
+  background: #3A3934;
+}
+
+:global(.dark) .modalButtonConfirm:hover {
+  background: #42413B;
+}
+
+:global(.dark) .reportTextarea:focus {
+  border-color: #9EA2B8;
+}
