@@ -211,7 +211,7 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
             (row) =>
               row.paymentKey != null &&
               row.paymentKey !== '' &&
-              row.popStatus === 'COMPLETED'
+              (row.popStatus === 'COMPLETED' || row.popStatus === 'CANCELED')
           )
         );
       })
@@ -528,12 +528,12 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
                      {formatActualAmount(row.actualAmount)}
                   </div>
                   <div className={styles.tableCell}>
-                    <PopUsageDateCell dt={row.canceled === true || row.isCanceled === true ? undefined : row.expiredDatetime} />
+                    <PopUsageDateCell dt={row.popStatus === 'CANCELED' ? undefined : row.expiredDatetime} />
                   </div>
                   <div className={styles.tableCell}>
-                    {(row.canceled === true || row.isCanceled === true) ? (
-                      <span className={styles.popStatusPositive}>취소완료</span>
-                    ) : (
+                    {row.popStatus === 'CANCELED' ? (
+                      <span className={styles.popStatusNeutral}>취소완료</span>
+                    ) : row.popStatus === 'COMPLETED' ? (
                       <button
                         type="button"
                         className={styles.donationCancelBtn}
@@ -541,7 +541,7 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
                       >
                         구매취소
                       </button>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               ))
