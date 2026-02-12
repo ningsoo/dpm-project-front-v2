@@ -4,13 +4,6 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import styles from '../mypage.module.css';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
-import {
-  sanitizeEmailInput,
-  validateEmailForSubmit,
-  validateEmailForUX,
-  validateNicknameFormatBySignupRule,
-  validatePhoneFromDigitsStrict,
-} from '@/utils/authValidation';
 
 export interface SettlementUser {
   email: string;
@@ -118,16 +111,10 @@ export function SettlementSection({ user }: SettlementSectionProps) {
   const [loading, setLoading] = useState(false);
   const [historyRange, setHistoryRange] = useState({ start: '', end: '' });
   
-  const [accountForm, setAccountForm] = useState({
-    email: '', name: '', phoneNumber: '', accountNumber: '',
-  });
-  const [registerErrors, setRegisterErrors] = useState<any>({});
-  const [emailHangulError, setEmailHangulError] = useState('');
-  const [emailFormatError, setEmailFormatError] = useState('');
-  const emailDebounceRef = useRef<any>(null);
-  const [phoneTouched, setPhoneTouched] = useState(false);
-  const [phoneErrorUx, setPhoneErrorUx] = useState('');
-  const phoneDebounceRef = useRef<any>(null);
+  const [accountNumber, setAccountNumber] = useState('');
+  const [accountNumberError, setAccountNumberError] = useState('');
+  const [isAccountNumberTyping, setIsAccountNumberTyping] = useState(false);
+  const accountNumberDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const [accountSubmitting, setAccountSubmitting] = useState(false);
   
   const [requestSubmitting, setRequestSubmitting] = useState(false);
@@ -178,43 +165,63 @@ export function SettlementSection({ user }: SettlementSectionProps) {
     }
   }, [subTab, fetchHistory, fetchAvailable]);
 
-  const phoneDigits = (accountForm.phoneNumber ?? '').replace(/\D/g, '').slice(0, 11);
-  const phoneComplete = phoneDigits.length === 11;
-  useEffect(() => {
-    if (phoneDebounceRef.current) clearTimeout(phoneDebounceRef.current);
-    if (phoneComplete) {
-      phoneDebounceRef.current = setTimeout(() => {
-        const result = validatePhoneFromDigitsStrict(phoneDigits);
-        setPhoneErrorUx(result.ok ? '' : result.error);
-      }, 600);
-    } else {
-      setPhoneErrorUx('');
-    }
-  }, [phoneDigits, phoneComplete]);
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { value, hadKorean } = sanitizeEmailInput(e.target.value);
-    setAccountForm(prev => ({ ...prev, email: value }));
-    setEmailHangulError(hadKorean ? '한글 불가' : '');
-    if (emailDebounceRef.current) clearTimeout(emailDebounceRef.current);
-    if (!value) return;
-    emailDebounceRef.current = setTimeout(() => {
-      const { error } = validateEmailForUX(value);
-      setEmailFormatError(error);
-    }, 1200);
+  const validateAccountNumber = (value: string): string => {
+    if (!value) return '';
+    if (!/^\d+$/.test(value)) return '계좌 번호는 502로 시작하며 1로 끝나는 11자리 숫자여야 합니다.';
+    if (value.length !== 11) return '계좌 번호는 502로 시작하며 1로 끝나는 11자리 숫자여야 합니다.';
+    if (!value.startsWith('502')) return '계좌 번호는 502로 시작하며 1로 끝나는 11자리 숫자여야 합니다.';
+    if (!value.endsWith('1')) return '계좌 번호는 502로 시작하며 1로 끝나는 11자리 숫자여야 합니다.';
+    return '';
   };
+
+  const handleAccountNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    const value = raw.replace(/\D/g, '').slice(0, 11);
+    setAccountNumber(value);
+    setIsAccountNumberTyping(true);
+    setAccountNumberError('');
+    
+    if (accountNumberDebounceRef.current) {
+      clearTimeout(accountNumberDebounceRef.current);
+    }
+    
+    accountNumberDebounceRef.current = setTimeout(() => {
+      setIsAccountNumberTyping(false);
+      const error = validateAccountNumber(value);
+      setAccountNumberError(error);
+    }, 300);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (accountNumberDebounceRef.current) {
+        clearTimeout(accountNumberDebounceRef.current);
+      }
+    };
+  }, []);
 
   const handleRegisterAccount = (e: React.FormEvent) => {
     e.preventDefault();
+    const trimmed = accountNumber.trim();
+    const error = validateAccountNumber(trimmed);
+    if (error) {
+      setAccountNumberError(error);
+      return;
+    }
     setAccountSubmitting(true);
     mypageApi.registerSettlementAccount({
-      ...accountForm, 
-      name: accountForm.name.trim(),
-      accountNumber: accountForm.accountNumber.trim()
+      email: user.email,
+      name: user.name ?? '',
+      phoneNumber: user.phoneNumber,
+      accountNumber: trimmed,
     })
       .then((res: any) => {
-        if (res.data?.success === false) ToastUtils.error(res.data.message);
-        else ToastUtils.success('정산 계좌가 등록되었습니다.');
+        if (res.data?.success === false) {
+          ToastUtils.error(res.data.message);
+        } else {
+          ToastUtils.success('정산 계좌가 등록되었습니다.');
+          setSubTab('request');
+        }
       })
       .catch(() => ToastUtils.error('등록 실패'))
       .finally(() => setAccountSubmitting(false));
@@ -231,18 +238,16 @@ export function SettlementSection({ user }: SettlementSectionProps) {
       .then((res: any) => {
         setShowRequestConfirm(false);
         
-        // 서버가 200 OK를 줬지만 success: false인 경우
-        if (res.data?.success == true) {
-          ToastUtils.error(res.data.message || '정산 신청에 실패했습니다.');
+        if (res.data?.success === false) {
+          ToastUtils.error(res.data?.message || '정산 신청에 실패했습니다.');
           return;
         }
         
         ToastUtils.success('정산 신청이 완료되었습니다.');
-        fetchAvailable();
+        setSubTab('history');
       })
       .catch((err: any) => {
-         setShowRequestConfirm(false); // 실패해도 모달 닫기
-         
+         setShowRequestConfirm(false);
          const msg = err.response?.data?.message || '정산 가능한 금액이 없거나 이미 신청되었습니다.';
          ToastUtils.error(msg);
       })
@@ -289,20 +294,20 @@ export function SettlementSection({ user }: SettlementSectionProps) {
             {loading ? <p className={styles.settlementLoading}>로딩 중...</p> : (
               <div style={{ overflowX: 'auto' }}>
                 <div className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableHeader}`}>
-                  <div style={centerStyle}>정산요청일</div>
-                  <div style={centerStyle}>정산승인일</div>
-                  <div style={centerStyle}>변동 수량</div>
-                  <div style={centerStyle}>정산금액</div>
-                  <div style={centerStyle}>정산처리상태</div>
+                  <div>정산요청일</div>
+                  <div>정산승인일</div>
+                  <div>변동 수량</div>
+                  <div>정산금액</div>
+                  <div>정산처리상태</div>
                 </div>
                 {historyList.length === 0 ? <div className={styles.settlementEmpty}>내역이 없습니다.</div> : 
                   historyList.map((item, idx) => (
                     <div key={idx} className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableRow}`}>
-                      <div className={styles.tableCell} style={centerStyle}><SettlementDateCell dt={item.requestedDatetime} /></div>
-                      <div className={styles.tableCell} style={centerStyle}><SettlementDateCell dt={item.approvedDatetime} /></div>
-                      <div className={styles.tableCell} style={centerStyle}>{formatSettlementAmount(item.changeAmount)}</div>
-                      <div className={styles.tableCell} style={centerStyle}>{formatSettlementAmount(item.changeAmount)}</div>
-                      <div className={styles.tableCell} style={centerStyle}>{item.statusLabel ?? '정산신청'}</div>
+                      <div className={styles.tableCell}><SettlementDateCell dt={item.requestedDatetime} /></div>
+                      <div className={styles.tableCell}><SettlementDateCell dt={item.approvedDatetime} /></div>
+                      <div className={styles.tableCell}>{formatSettlementAmount(item.changeAmount)}</div>
+                      <div className={styles.tableCell}>{formatSettlementAmount(item.changeAmount)}</div>
+                      <div className={styles.tableCell}>{item.statusLabel ?? '정산신청'}</div>
                     </div>
                   ))
                 }
@@ -317,21 +322,35 @@ export function SettlementSection({ user }: SettlementSectionProps) {
              <form onSubmit={handleRegisterAccount} className={styles.settlementForm}>
                 <div className={styles.settlementField}>
                   <label>이메일</label>
-                  <input type="email" value={accountForm.email} onChange={handleEmailChange} className={styles.settlementInput} />
+                  <input type="email" value={user.email} readOnly className={styles.settlementInput} />
                 </div>
                 <div className={styles.settlementField}>
                   <label>이름</label>
-                  <input type="text" value={accountForm.name} onChange={e=>setAccountForm({...accountForm, name:e.target.value})} className={styles.settlementInput} />
+                  <input type="text" value={user.name ?? ''} readOnly className={styles.settlementInput} />
                 </div>
                 <div className={styles.settlementField}>
                   <label>연락처</label>
-                  <input type="tel" value={accountForm.phoneNumber} onChange={e=>setAccountForm({...accountForm, phoneNumber:e.target.value})} className={styles.settlementInput} />
+                  <input type="tel" value={user.phoneNumber} readOnly className={styles.settlementInput} />
                 </div>
                 <div className={styles.settlementField}>
                   <label>계좌번호</label>
-                  <input type="text" value={accountForm.accountNumber} onChange={e=>setAccountForm({...accountForm, accountNumber:e.target.value})} className={styles.settlementInput} placeholder="파민 뱅크 계좌만 가능합니다" />
+                  <input type="text" value={accountNumber} onChange={handleAccountNumberChange} className={styles.settlementInput} placeholder="파민 뱅크 계좌만 가능합니다" />
+                  <span className={styles.error} style={{ display: 'block', marginTop: 4, fontSize: '0.875rem', color: '#d32f2f', minHeight: '20px' }}>
+                    {!isAccountNumberTyping && accountNumberError ? accountNumberError : ''}
+                  </span>
                 </div>
-                <button type="submit" className={styles.submitBtn} disabled={accountSubmitting}>등록</button>
+                <button 
+                  type="submit" 
+                  className={styles.submitBtn} 
+                  disabled={
+                    accountSubmitting || 
+                    isAccountNumberTyping || 
+                    !!accountNumberError || 
+                    accountNumber.trim().length === 0
+                  }
+                >
+                  등록
+                </button>
              </form>
            </div>
         )}
@@ -359,27 +378,23 @@ export function SettlementSection({ user }: SettlementSectionProps) {
             <div className={styles.settlementRequestTableWrap}>
               {availableLoading ? <p className={styles.settlementLoading}>로딩 중...</p> : (
                 <div style={{ overflowX: 'auto' }}>
-                  <div className={`${styles.tableGrid} ${styles.settlementGrid3} ${styles.tableHeader}`}>
-                    <div className={styles.settlementGrid3Col1} style={centerStyle}>후원번호</div>
-                    <div className={styles.settlementGrid3Col2} style={centerStyle}>후원금액</div>
-                    <div className={styles.settlementGrid3Col3} style={centerStyle}>후원승인일</div>
+                  <div className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableHeader}`}>
+                    <div style={centerStyle}>후원금액</div>
+                    <div style={centerStyle}>후원승인일</div>
                   </div>
                   {availableRows.length === 0 ? (
-                    <div className={`${styles.tableGrid} ${styles.settlementGrid3} ${styles.settlementGrid3EmptyRow}`}>
-                      <div className={`${styles.settlementEmpty} ${styles.settlementGrid3EmptyCell}`}>
+                    <div className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
+                      <div className={styles.tableCell} style={{ ...centerStyle, gridColumn: '1 / -1' }}>
                         내역이 없습니다.
                       </div>
                     </div>
                   ) : (
                     availableRows.map((row, idx) => (
-                      <div key={row.transactionId ?? idx} className={`${styles.tableGrid} ${styles.settlementGrid3} ${styles.tableRow}`}>
-                        <div className={`${styles.tableCell} ${styles.settlementGrid3Col1}`} style={centerStyle}>
-                          {row.transactionId ?? '-'}
-                        </div>
-                        <div className={`${styles.tableCell} ${styles.settlementGrid3Col2}`} style={centerStyle}>
+                      <div key={row.transactionId ?? idx} className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
+                        <div className={styles.tableCell} style={centerStyle}>
                           {formatSettlementAmount(typeof row.changeAmount === 'number' ? Math.abs(row.changeAmount) : undefined)}
                         </div>
-                        <div className={`${styles.tableCell} ${styles.settlementGrid3Col3}`} style={centerStyle}>
+                        <div className={styles.tableCell} style={centerStyle}>
                           <SettlementDateCell dt={row.approvedDatetime ?? row.createdDatetime} />
                         </div>
                       </div>

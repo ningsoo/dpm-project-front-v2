@@ -209,7 +209,66 @@
   grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) minmax(120px, 0.8fr) minmax(140px, 1fr) minmax(150px, 1fr);
 }
 
-/* 정산 신청: 3컬럼 (정산번호, 정산금액, 정산승인일) - 정산금액이 정산번호·정산승인일 중앙에 위치 */
+.settlementGrid5.tableHeader,
+.settlementGrid5.tableRow {
+  padding: 0;
+}
+
+.settlementGrid5.tableHeader > div {
+  padding: 12px;
+  text-align: center;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settlementGrid5.tableHeader > div:first-child {
+  padding-left: 12px;
+}
+
+.settlementGrid5.tableRow .tableCell {
+  padding: 12px;
+  text-align: center;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 정산 신청: 2컬럼 (후원금액, 후원승인일) */
+.settlementRequestGrid2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.settlementRequestGrid2.tableHeader,
+.settlementRequestGrid2.tableRow {
+  padding: 0;
+}
+
+.settlementRequestGrid2.tableHeader > div {
+  padding: 12px;
+  text-align: center;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settlementRequestGrid2.tableHeader > div:first-child {
+  padding-left: 12px;
+}
+
+.settlementRequestGrid2.tableRow .tableCell {
+  padding: 12px;
+  text-align: center;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 정산 신청: 3컬럼 (legacy, 정산번호·정산금액·정산승인일) - 유지 */
 .settlementGrid3 {
   grid-template-columns: 1fr 1fr 1fr;
 }
