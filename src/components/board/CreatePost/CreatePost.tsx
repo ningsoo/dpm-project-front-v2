@@ -50,6 +50,7 @@ export default function CreatePost({ category }: CreatePostProps) {
 
   const photoInputRef = useRef<HTMLInputElement>(null);
   const attachmentInputRef = useRef<HTMLInputElement>(null);
+  const dragPhotoIndex = useRef<number | null>(null);
 
   const SPOTLIGHT_IMAGE_TYPES = [
     'image/jpeg',
@@ -127,6 +128,34 @@ export default function CreatePost({ category }: CreatePostProps) {
     const list = Array.from(e.target.files || []).filter(isImageFile);
     setPhotos((p) => [...p, ...list].slice(0, 5));
     e.target.value = '';
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSpotlightDragStart = (index: number) => {
+    dragPhotoIndex.current = index;
+  };
+
+  const handleSpotlightDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleSpotlightDrop = (dropIndex: number) => {
+    const from = dragPhotoIndex.current;
+    if (from == null || from === dropIndex) return;
+    setPhotos((prev) => {
+      const arr = [...prev];
+      const [removed] = arr.splice(from, 1);
+      arr.splice(dropIndex, 0, removed);
+      return arr;
+    });
+    dragPhotoIndex.current = null;
+  };
+
+  const handleSpotlightDragEnd = () => {
+    dragPhotoIndex.current = null;
   };
 
   const handleAttachment = (
@@ -259,7 +288,7 @@ export default function CreatePost({ category }: CreatePostProps) {
 
         {/* Playlists: 플레이리스트 선택 + 미리보기 */}
         {category === 'playlists' && (
-          <label className={styles.label}>
+          <div className={styles.label}>
             플레이리스트
             <button
               type="button"
@@ -290,12 +319,12 @@ export default function CreatePost({ category }: CreatePostProps) {
                 </div>
               </div>
             )}
-          </label>
+          </div>
         )}
 
         {/* Spotlight: 파일선택 + 썸네일 미리보기 */}
         {category === 'spotlight' && (
-          <label className={styles.label}>
+          <div className={styles.label}>
             사진 (1~5장)
             <input
               ref={photoInputRef}
@@ -315,21 +344,44 @@ export default function CreatePost({ category }: CreatePostProps) {
             {photos.length > 0 && (
               <div className={styles.spotlightThumbList}>
                 {photos.map((file, i) => (
-                  <div key={i} className={styles.spotlightThumbItem}>
+                  <div
+                    key={i}
+                    className={`${styles.spotlightThumbItem}${i === 0 ? ` ${styles.spotlightThumbItemFirst}` : ''}`}
+                    draggable
+                    onDragStart={() => handleSpotlightDragStart(i)}
+                    onDragOver={handleSpotlightDragOver}
+                    onDrop={() => handleSpotlightDrop(i)}
+                    onDragEnd={handleSpotlightDragEnd}
+                  >
                     <img
                       src={URL.createObjectURL(file)}
                       alt={`미리보기 ${i + 1}`}
+                      draggable={false}
                     />
+                    <button
+                      type="button"
+                      className={styles.spotlightThumbRemove}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removePhoto(i);
+                      }}
+                      aria-label="삭제"
+                    >
+                      ×
+                    </button>
+                    <span className={styles.spotlightThumbOrder}>
+                      {i + 1}
+                    </span>
                   </div>
                 ))}
               </div>
             )}
-          </label>
+          </div>
         )}
 
         {/* Community / Reviews: 첨부 + 미리보기 */}
         {['community', 'reviews'].includes(category) && (
-          <label className={styles.label}>
+          <div className={styles.label}>
             첨부
             <input
               ref={attachmentInputRef}
@@ -361,9 +413,17 @@ export default function CreatePost({ category }: CreatePostProps) {
                 <span className={styles.attachmentName}>
                   {attachmentFile.name}
                 </span>
+                <button
+                  type="button"
+                  className={styles.attachmentRemove}
+                  onClick={() => setAttachmentFile(null)}
+                  aria-label="첨부 삭제"
+                >
+                  ×
+                </button>
               </div>
             )}
-          </label>
+          </div>
         )}
 
         <div className={styles.btnGroup}>

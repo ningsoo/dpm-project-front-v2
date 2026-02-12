@@ -19,6 +19,7 @@ import PlaylistDetailSection from './PlaylistDetailSection';
 import DonationModal from './DonationModal';
 import { PopIcon } from '@/assets/site/paths';
 import styles from '../BoardFormLayout/BoardFormLayout.module.css';
+import postDetailStyles from './PostDetail.module.css';
 
 interface Post extends BoardDetail {
   id?: string;
@@ -70,6 +71,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
   const [attachmentDownloading, setAttachmentDownloading] = useState(false);
+  const [spotlightPhotoIndex, setSpotlightPhotoIndex] = useState(0);
 
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -142,6 +144,11 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
     if (menuOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [menuOpen]);
+
+  // spotlight 사진 인덱스: 게시글/카테고리 바뀔 때 0으로 초기화 (훅 순서 유지를 위해 early return 이전에 호출)
+  useEffect(() => {
+    setSpotlightPhotoIndex(0);
+  }, [boardId, category]);
 
   const handleDeleteConfirm = () => {
     boardApi
@@ -407,11 +414,51 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
           (() => {
             const photos = post.photos ?? post.imageUrls ?? [];
             if (!Array.isArray(photos) || photos.length === 0) return null;
+            const index = Math.min(spotlightPhotoIndex, photos.length - 1);
+            if (photos.length === 1) {
+              return (
+                <div className={`${styles.videoWrap} ${postDetailStyles.heroVideoWrap}`}>
+                  <img
+                    src={photos[0]}
+                    alt=""
+                    className={styles.heroImage}
+                  />
+                </div>
+              );
+            }
             return (
-              <div className={styles.photoList}>
-                {photos.map((url, i) => (
-                  <img key={i} src={url} alt="" />
-                ))}
+              <div className={styles.photoNavWrap}>
+                <div className={`${styles.videoWrap} ${postDetailStyles.heroVideoWrap}`}>
+                  <img
+                    src={photos[index]}
+                    alt=""
+                    className={styles.heroImage}
+                  />
+                </div>
+                <button
+                  type="button"
+                  className={`${styles.photoNavBtn} ${styles.photoNavPrev}`}
+                  onClick={() =>
+                    setSpotlightPhotoIndex((i) =>
+                      i <= 0 ? photos.length - 1 : i - 1
+                    )
+                  }
+                  aria-label="이전 사진"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.photoNavBtn} ${styles.photoNavNext}`}
+                  onClick={() =>
+                    setSpotlightPhotoIndex((i) =>
+                      i >= photos.length - 1 ? 0 : i + 1
+                    )
+                  }
+                  aria-label="다음 사진"
+                >
+                  ›
+                </button>
               </div>
             );
           })()}
@@ -423,10 +470,12 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
             );
             if (urls.length === 0) return null;
             return (
-              <div className={styles.photoList}>
-                {urls.map((url, i) => (
-                  <img key={i} src={url} alt="" />
-                ))}
+              <div className={`${styles.videoWrap} ${postDetailStyles.heroVideoWrap}`}>
+                <img
+                  src={urls[0]}
+                  alt=""
+                  className={styles.heroImage}
+                />
               </div>
             );
           })()}
