@@ -12,6 +12,16 @@ import {
 } from '@/utils/boardThumbnailUtils';
 import styles from './ShowcaseFeaturedSection.module.css';
 
+/** 첫 프레임에 배경만 보이는 flicker 방지: 한 번 그린 뒤 opacity 전환 (스켈레톤/콘텐츠 동일) */
+const useSectionReveal = () => {
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setRevealed(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return revealed;
+};
+
 const TOTAL = 4;
 const HOVER_DELAY = 180;
 const SCALE_X = 1.45;   // 좌우 확대 정도
@@ -26,6 +36,9 @@ export default function ShowcaseFeaturedSection() {
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
 
   const hoverTimer = useRef<number | null>(null);
+
+  /* 첫 프레임 배경 단독 노출 제거 후 스켈레톤/콘텐츠 자연스럽게 등장 */
+  const sectionRevealed = useSectionReveal();
 
   useEffect(() => {
     setIsLoading(true);
@@ -85,7 +98,11 @@ export default function ShowcaseFeaturedSection() {
   /* 로딩 중: 높이 선점 + 스켈레톤 */
   if (isLoading) {
     return (
-      <section className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''}`}>
+      <section
+        className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''} ${
+          sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
+        }`}
+      >
         <div className={styles.container}>
           <div className={styles.cardWrapper}>
             {Array.from({ length: TOTAL }).map((_, i) => (
@@ -106,7 +123,11 @@ export default function ShowcaseFeaturedSection() {
   /* 로드 완료 후 데이터 부족: 높이 유지 + 빈 상태 */
   if (posts.length < TOTAL) {
     return (
-      <section className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''}`}>
+      <section
+        className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''} ${
+          sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
+        }`}
+      >
         <div className={styles.container}>
           <div className={styles.cardWrapper}>
             <div className={styles.emptyState}>등록된 쇼케이스가 없습니다.</div>
@@ -117,7 +138,11 @@ export default function ShowcaseFeaturedSection() {
   }
 
   return (
-    <section className={`${styles.section} ${darkMode ? 'dark' : ''}`}>
+    <section
+      className={`${styles.section} ${darkMode ? 'dark' : ''} ${
+        sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
+      }`}
+    >
       <div className={styles.container}>
         <div className={styles.cardWrapper}>
           {posts.map((post, i) => {

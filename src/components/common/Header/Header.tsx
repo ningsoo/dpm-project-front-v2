@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -13,6 +14,9 @@ import { ToastUtils } from '@/utils/toastUtils';
 import logoImg from '@/assets/site/logo.png';
 import whiteLogoImg from '@/assets/site/whitelogo.png';
 import styles from './Header.module.css';
+
+/** 로그인 시 아이콘 4개 + gap 기준 고정 폭 (레이아웃 밀림 방지) */
+const ACTIONS_WIDTH_PX = 184;
 
 const CATEGORIES = [
   { slug: 'showcase', label: 'Showcase' },
@@ -33,6 +37,17 @@ export default function Header() {
   const authInitialized = useSelector((s: RootState) => s.auth.initialized);
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const unreadCount = useSelector((s: RootState) => s.ui.unreadMessageCount);
+
+  /* 인증 resolve 후 실제 UI를 opacity 전환으로 노출 (깜빡임 제거) */
+  const [contentVisible, setContentVisible] = useState(false);
+  useEffect(() => {
+    if (!authInitialized) {
+      setContentVisible(false);
+      return;
+    }
+    const id = requestAnimationFrame(() => setContentVisible(true));
+    return () => cancelAnimationFrame(id);
+  }, [authInitialized]);
 
   const handleLogout = async () => {
     try {
@@ -89,17 +104,18 @@ export default function Header() {
         ))}
       </nav>
 
-      <div className={styles.actions}>
+      <div
+        className={styles.actions}
+        style={{ width: ACTIONS_WIDTH_PX, minWidth: ACTIONS_WIDTH_PX }}
+        aria-busy={!authInitialized}
+      >
         {!authInitialized ? (
-          /* 인증 상태 확인 전까지 스켈레톤 표시 → 로그인/로그아웃 UI 깜빡임 방지 */
-          <>
-            <span className={styles.actionsSkeleton} aria-hidden />
-            <span className={styles.actionsSkeleton} aria-hidden />
-            <span className={styles.actionsSkeleton} aria-hidden />
-            <span className={styles.actionsSkeleton} aria-hidden />
-          </>
+          /* 인증 확인 전: 고정 폭 투명 placeholder (스켈레톤/쉼머 없음, 레이아웃만 유지) */
+          <span className={styles.actionsPlaceholder} aria-hidden />
         ) : (
-          <>
+          <div
+            className={`${styles.actionsContent} ${contentVisible ? styles.actionsContentVisible : ''}`}
+          >
             <button type="button" className={styles.iconBtn} onClick={handleDarkMode} aria-label="다크 모드">
               <Moon size={20} />
             </button>
@@ -123,7 +139,7 @@ export default function Header() {
                 <LogIn size={20} />
               </Link>
             )}
-          </>
+          </div>
         )}
       </div>
     </header>

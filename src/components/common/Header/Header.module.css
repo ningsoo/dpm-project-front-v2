@@ -70,24 +70,36 @@
   color: #B5B3A7;
 }
 
+/* 우측 영역 고정 폭: 로그인/로그아웃/플레이스홀더 동일 → 레이아웃 밀림 방지 */
 .actions {
   display: flex;
   gap: 8px;
   align-items: center;
-}
-
-/* 인증 확인 전 스켈레톤: 로그인/로그아웃 전환 깜빡임 방지, 동일 폭 유지 */
-.actionsSkeleton {
-  display: block;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.06);
+  justify-content: flex-end;
   flex-shrink: 0;
 }
 
-.dark .actionsSkeleton {
-  background: rgba(255, 255, 255, 0.08);
+/* 인증 확인 전: 투명 placeholder (쉼머/펄스 없음, 고정 폭만 유지) */
+.actionsPlaceholder {
+  display: block;
+  width: 100%;
+  height: 40px;
+  background: transparent;
+  flex-shrink: 0;
+}
+
+/* 인증 resolve 후 실제 UI: opacity 전환으로 등장 (깜빡임 제거) */
+.actionsContent {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.actionsContentVisible {
+  opacity: 1;
 }
 
 .iconBtn {
