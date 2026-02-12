@@ -1120,9 +1120,32 @@ export default function MypagePage() {
             )}
           </div>
         )}
-        {tab === 'pop' && (
-          <PopSection user={user} onChargeClick={() => setShowCreditChargeModal(true)} />
-        )}
+        {tab === 'pop' && (() => {
+          const popSubTabParam = searchParams.get('popSubTab');
+          const validPopSubTab = popSubTabParam === 'usage' || popSubTabParam === 'purchase' ? popSubTabParam : 'usage';
+          return (
+            <PopSection
+              user={user}
+              subTab={validPopSubTab}
+              onChangeSubTab={(next) => {
+                router.replace(`/mypage?tab=pop&popSubTab=${next}`, { scroll: false });
+              }}
+              onPopBalanceRefresh={async () => {
+                try {
+                  const { data } = await mypageApi.getMypage();
+                  const userData = data?.data as UserInfo | undefined;
+                  if (userData) {
+                    setUser(userData);
+                    setProfileImage(userData.profileImage || null);
+                  }
+                } catch (error) {
+                  console.error('Failed to refresh pop balance:', error);
+                }
+              }}
+              onChargeClick={() => setShowCreditChargeModal(true)}
+            />
+          );
+        })()}
       </div>
 
       {showReportCancelModal && (

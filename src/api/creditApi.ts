@@ -25,6 +25,13 @@ export function confirmPayment(orderId: string, paymentKey: string, amount: numb
   });
 }
 
+/** POST /v1/payments/{paymentKey}/cancel - POP 구매 취소 (/api prefix 미사용) */
+export function cancelPayment(paymentKey: string, cancelReason: string) {
+  return fetchClient.post<RestResponse<unknown>>(`${PAYMENT_BASE}/${paymentKey}/cancel`, {
+    cancelReason: cancelReason,
+  });
+}
+
 export const creditApi = {
   /** 결제 준비 - /v1/payments/prepare 사용 (/api prefix 미사용) */
   chargeRequest: (amount: number, payMethod: string) =>

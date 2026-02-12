@@ -4,11 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
-import {
-  loadPaymentWidget,
-  ANONYMOUS,
-  type PaymentWidgetInstance,
-} from '@tosspayments/payment-widget-sdk';
+import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
 import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
@@ -18,6 +14,16 @@ import creditStyles from './credit.module.css';
 interface UserInfo {
   credits?: number;
 }
+
+/** 결제창에서 지원하는 결제수단 */
+const PAYMENT_METHODS = [
+  { id: 'CARD', label: '카드' },
+  { id: 'TRANSFER', label: '계좌이체' },
+  { id: 'VIRTUAL_ACCOUNT', label: '가상계좌' },
+  { id: 'MOBILE_PHONE', label: '휴대폰' },
+] as const;
+
+type PaymentMethodId = (typeof PAYMENT_METHODS)[number]['id'];
 
 function parsePositiveInt(value: string | null): number | null {
   if (value == null || value === '') return null;
@@ -29,8 +35,6 @@ function parsePositiveInt(value: string | null): number | null {
 export default function CreditClient() {
   const router = useRouter();
   const params = useSearchParams();
-  const paymentWidgetRef = useRef<PaymentWidgetInstance | null>(null);
-  const widgetReadyRef = useRef(false);
 
   const orderId = params.get('orderId') ?? '';
   const changeAmount = parsePositiveInt(params.get('changeAmount'));
@@ -40,10 +44,14 @@ export default function CreditClient() {
   const initialized = useSelector((s: RootState) => s.auth.initialized);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [agreed, setAgreed] = useState(false);
   const [queryValid, setQueryValid] = useState<boolean | null>(null);
+  const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>('CARD');
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
-  // 1. Query 검증: orderId 없거나 changeAmount/amount 파싱 실패 시 리다이렉트
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const paymentRef = useRef<any>(null);
+
+  // 1. Query 검증
   useEffect(() => {
     if (!orderId.trim()) {
       ToastUtils.error('잘못된 접근입니다.');
@@ -86,9 +94,9 @@ export default function CreditClient() {
       .finally(() => setLoading(false));
   }, [initialized, isAuthenticated, router]);
 
-  // 3. 토스 결제 위젯 초기화: 위젯 로드 → DOM 준비 대기 → 렌더 (중복 실행 방지)
+  // 3. 토스 결제창 SDK 초기화
   useEffect(() => {
-    if (queryValid !== true || amount == null || amount <= 0) return;
+    if (queryValid !== true) return;
 
     const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
     if (!clientKey) {
@@ -98,50 +106,31 @@ export default function CreditClient() {
     }
 
     let cancelled = false;
-    let rafId: number | null = null;
 
-    const amountNum = amount;
-
-    function tryRender(widget: PaymentWidgetInstance) {
-      if (cancelled) return;
-      if (widgetReadyRef.current) return;
-
-      const paymentEl = document.getElementById('payment-method');
-      const agreementEl = document.getElementById('agreement');
-      if (paymentEl && agreementEl) {
-        widget.renderPaymentMethods('#payment-method', amountNum);
-        widget.renderAgreement('#agreement');
-        widgetReadyRef.current = true;
-        return;
-      }
-      rafId = requestAnimationFrame(() => tryRender(widget));
-    }
-
-    loadPaymentWidget(clientKey, ANONYMOUS)
-      .then((widget) => {
+    loadTossPayments(clientKey)
+      .then((tossPayments) => {
         if (cancelled) return;
-        paymentWidgetRef.current = widget;
-        rafId = requestAnimationFrame(() => tryRender(widget));
+        const payment = tossPayments.payment({ customerKey: 'ANONYMOUS' });
+        paymentRef.current = payment;
       })
       .catch(() => {
-        if (!cancelled) ToastUtils.error('결제 위젯을 불러오지 못했습니다.');
+        if (!cancelled) ToastUtils.error('결제 모듈을 불러오지 못했습니다.');
       });
 
     return () => {
       cancelled = true;
-      if (rafId != null) cancelAnimationFrame(rafId);
-      widgetReadyRef.current = false;
-      paymentWidgetRef.current = null;
+      paymentRef.current = null;
     };
-  }, [queryValid, amount, router]);
+  }, [queryValid, router]);
 
-  const canSubmit = queryValid === true && changeAmount != null && amount != null;
+  const canSubmit = queryValid === true && changeAmount != null && amount != null && !paymentLoading;
+
   const handlePurchase = async () => {
     if (!canSubmit) return;
 
-    const widget = paymentWidgetRef.current;
-    if (!widget) {
-      ToastUtils.error('결제 위젯을 불러오는 중입니다.');
+    const payment = paymentRef.current;
+    if (!payment) {
+      ToastUtils.error('결제 모듈을 불러오는 중입니다.');
       return;
     }
 
@@ -149,8 +138,15 @@ export default function CreditClient() {
     const successUrl = `${origin}/mypage/credit/success?changeAmount=${changeAmount}`;
     const failUrl = `${origin}/mypage/credit/fail`;
 
+    setPaymentLoading(true);
+
     try {
-      await widget.requestPayment({
+      await payment.requestPayment({
+        method: selectedMethod,
+        amount: {
+          value: amount!,
+          currency: 'KRW',
+        },
         orderId,
         orderName: 'POP 충전',
         successUrl,
@@ -158,6 +154,8 @@ export default function CreditClient() {
       });
     } catch (err) {
       ToastUtils.error('결제 요청에 실패했습니다.');
+    } finally {
+      setPaymentLoading(false);
     }
   };
 
@@ -212,11 +210,19 @@ export default function CreditClient() {
 
         <section className={creditStyles.widgetSection}>
           <h2 className={creditStyles.sectionLabel}>결제수단</h2>
-          <div id="payment-method" className={creditStyles.widgetBox} />
-        </section>
-
-        <section className={creditStyles.widgetSection}>
-          <div id="agreement" className={creditStyles.widgetBox} />
+          <ul className={creditStyles.methodList}>
+            {PAYMENT_METHODS.map((m) => (
+              <li key={m.id} className={creditStyles.methodItem}>
+                <button
+                  type="button"
+                  className={`${creditStyles.methodBtn} ${selectedMethod === m.id ? creditStyles.selected : ''}`}
+                  onClick={() => setSelectedMethod(m.id)}
+                >
+                  {m.label}
+                </button>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <button
@@ -225,7 +231,7 @@ export default function CreditClient() {
           disabled={!canSubmit}
           onClick={handlePurchase}
         >
-          구매하기
+          {paymentLoading ? '결제 진행 중...' : '구매하기'}
         </button>
       </div>
     </div>
