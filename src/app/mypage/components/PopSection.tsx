@@ -44,6 +44,7 @@ export type PopPurchaseRow = {
   createdDatetime?: string;
   changeAmount?: number;
   target?: string;
+  popStatus?: string;
   actualAmount?: number | null;
   expiredDatetime?: string;
   canceled?: boolean;
@@ -205,7 +206,14 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
       .then((res) => {
         const rows = parsePopResponse(res.data) as PopPurchaseRow[];
         const list = Array.isArray(rows) ? rows : [];
-        setPurchaseList(list.filter((row) => row.paymentKey != null && row.paymentKey !== ''));
+        setPurchaseList(
+          list.filter(
+            (row) =>
+              row.paymentKey != null &&
+              row.paymentKey !== '' &&
+              row.popStatus === 'COMPLETED'
+          )
+        );
       })
       .catch(handleError)
       .finally(() => setPurchaseLoading(false));
