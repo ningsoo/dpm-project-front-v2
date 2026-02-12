@@ -46,6 +46,7 @@ export type PopPurchaseRow = {
   target?: string;
   actualAmount?: number | null;
   expiredDatetime?: string;
+  canceled?: boolean;
   isCanceled?: boolean;
 };
 
@@ -203,7 +204,8 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
       .getPopPurchaseHistory()
       .then((res) => {
         const rows = parsePopResponse(res.data) as PopPurchaseRow[];
-        setPurchaseList(Array.isArray(rows) ? rows : []);
+        const list = Array.isArray(rows) ? rows : [];
+        setPurchaseList(list.filter((row) => row.paymentKey != null && row.paymentKey !== ''));
       })
       .catch(handleError)
       .finally(() => setPurchaseLoading(false));
@@ -484,8 +486,8 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
                     <PopUsageDateCell dt={row.expiredDatetime} />
                   </div>
                   <div className={styles.tableCell}>
-                    {(row.isCanceled === true) ? (
-                      <span className={styles.popCanceledText}>취소완료</span>
+                    {(row.canceled === true || row.isCanceled === true) ? (
+                      <span className={styles.popStatusPositive}>취소완료</span>
                     ) : (
                       <button
                         type="button"
