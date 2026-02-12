@@ -69,8 +69,9 @@ export const authApi = {
   refresh: () =>
     fetchClient.post<ApiResponse<{ accessToken?: string }>>('/api/auth/refresh', {}),
 
-  findEmail: (email: string) =>
-    fetchClient.post<ApiResponse<null>>('/api/auth/find-email', { email }, { timeout: 30000 }),
+  /** 이름·연락처로 가입 이메일 조회. 성공 시 data.email 반환 */
+  findEmail: (name: string, phoneNumber: string) =>
+    fetchClient.post<ApiResponse<{ email: string }>>('/api/auth/find-email', { name, phoneNumber }, { timeout: 30000 }),
 
   findPassword: (email: string) =>
     fetchClient.patch<ApiResponse<unknown>>('/api/auth/findpassword', { email }),
@@ -99,7 +100,7 @@ export const authApi = {
   }> {
     try {
       const res = await noAuthClient.post<Record<string, unknown> & { data?: Record<string, unknown> }>(
-        '/passwordless/register',
+        '/api/passwordless/register',
         { email },
         { timeout: 15000 }
       );
@@ -151,7 +152,7 @@ export const authApi = {
     sessionId: string;
   }> {
     try {
-      const res = await noAuthClient.post<Record<string, unknown>>('/passwordless/login-trigger', { email }, { timeout: 15000 });
+      const res = await noAuthClient.post<Record<string, unknown>>('/api/passwordless/login-trigger', { email }, { timeout: 15000 });
       const raw = res.data;
       const payload =
         raw &&
@@ -196,7 +197,7 @@ export const authApi = {
   }> {
     const { userId, sessionId } = params;
     try {
-      const res = await noAuthClient.get<Record<string, unknown>>('/passwordless/result', {
+      const res = await noAuthClient.get<Record<string, unknown>>('/api/passwordless/result', {
         params: { userId, sessionId },
         timeout: 10000,
       });
@@ -235,7 +236,7 @@ export const authApi = {
    */
   async getPasswordlessStatus(userId: string): Promise<unknown> {
     try {
-      const res = await noAuthClient.get<Record<string, unknown>>('/passwordless/status', {
+      const res = await noAuthClient.get<Record<string, unknown>>('/api/passwordless/status', {
         params: { userId },
         timeout: 10000,
       });
@@ -266,7 +267,7 @@ export const authApi = {
    */
   async postPasswordlessCancel(body: { email: string; sessionId: string }): Promise<{ ok: boolean }> {
     try {
-      await noAuthClient.post('/passwordless/cancel', body, { timeout: 10000 });
+      await noAuthClient.post('/api/passwordless/cancel', body, { timeout: 10000 });
       return { ok: true };
     } catch (err) {
       const msg = getPasswordlessErrorMessage(err, '취소 요청에 실패했습니다');
@@ -282,7 +283,7 @@ export const authApi = {
    */
   async postPasswordlessWithdrawal(): Promise<{ ok: boolean }> {
     try {
-      await fetchClient.post('/passwordless/withdrawal', {}, { timeout: 10000 });
+      await fetchClient.post('/api/passwordless/withdrawal', {}, { timeout: 10000 });
       return { ok: true };
     } catch (err) {
       throw new Error(getPasswordlessErrorMessage(err, '해지 요청에 실패했습니다'));
