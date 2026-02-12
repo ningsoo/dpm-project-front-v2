@@ -175,8 +175,8 @@ export function SettlementSection({ user }: SettlementSectionProps) {
   };
 
   const handleAccountNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value.length > 11) return;
+    const raw = e.target.value;
+    const value = raw.replace(/\D/g, '').slice(0, 11);
     setAccountNumber(value);
     setIsAccountNumberTyping(true);
     setAccountNumberError('');
