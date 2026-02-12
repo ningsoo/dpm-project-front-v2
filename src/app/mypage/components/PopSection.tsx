@@ -480,10 +480,10 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
                     {mapPurchaseTargetToLabel(row.target)}
                   </div>
                   <div className={styles.tableCell}>
-                     {formatActualAmount(row.actualAmount ?? row.changeAmount)}
+                     {formatActualAmount(row.actualAmount)}
                   </div>
                   <div className={styles.tableCell}>
-                    <PopUsageDateCell dt={row.expiredDatetime} />
+                    <PopUsageDateCell dt={row.canceled === true || row.isCanceled === true ? undefined : row.expiredDatetime} />
                   </div>
                   <div className={styles.tableCell}>
                     {(row.canceled === true || row.isCanceled === true) ? (
