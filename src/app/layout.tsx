@@ -3,6 +3,7 @@ import Providers from './providers/Providers';
 import Header from '@/components/common/Header/Header';
 import Footer from '@/components/common/Footer/Footer';
 import ToastRoot from '@/components/common/Toast/Toast';
+import TopButton from '@/components/common/TopButton/TopButton';
 import ThemeSync from './ThemeSync';
 import './globals.css';
 
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main style={{ paddingTop: 64, minHeight: 'calc(100vh - 64px - 120px)' }}>{children}</main>
           <Footer />
           <ToastRoot />
+          <TopButton />
         </Providers>
       </body>
     </html>

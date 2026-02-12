@@ -8,7 +8,7 @@ import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import { extractYouTubeVideoId, getYouTubeThumbnailUrl } from '@/utils/youtubeUtils';
 import { PlaylistSelectModal, type MyPlaylistItem } from '@/components/board/CreatePost/PlaylistSelectModal';
-import styles from './EditPost.module.css';
+import styles from '../BoardFormLayout/BoardFormLayout.module.css';
 
 interface EditPostProps {
   category: string;
@@ -485,9 +485,17 @@ export default function EditPost({ category, boardId }: EditPostProps) {
 
   if (fetching) return <div className={styles.loading}>로딩 중…</div>;
 
+  const formattedCategory =
+    safeCat.charAt(0).toUpperCase() + safeCat.slice(1);
+
   return (
     <div className={styles.wrap}>
-      <h1 className={styles.h1}>글 수정 · {safeCat}</h1>
+      <Link
+        href={`/boards/category/${safeCat}`}
+        className={styles.categoryLink}
+      >
+        <h1 className={styles.h1}>글 수정 · {formattedCategory}</h1>
+      </Link>
 
       <form onSubmit={handleSubmit}>
         <label className={styles.label}>

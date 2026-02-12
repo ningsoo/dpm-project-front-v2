@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Heart, Eye, MoreVertical } from 'lucide-react';
@@ -18,7 +18,7 @@ import CommentSection from './CommentSection';
 import PlaylistDetailSection from './PlaylistDetailSection';
 import DonationModal from './DonationModal';
 import { PopIcon } from '@/assets/site/paths';
-import styles from './PostDetail.module.css';
+import styles from '../BoardFormLayout/BoardFormLayout.module.css';
 
 interface Post extends BoardDetail {
   id?: string;
@@ -228,11 +228,6 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
     }
   };
 
-  const scrollToTop = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-
   if (loading) return <div className={styles.loading}>로딩 중…</div>;
   if (!post) {
     if (fetchError) {
@@ -270,7 +265,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
           href={`/boards/category/${categorySlug}`}
           className={styles.categoryLink}
         >
-          {getCategoryDisplayName(categoryType)}
+          <h1 className={styles.h1}>{getCategoryDisplayName(categoryType)}</h1>
         </Link>
       </div>
 
@@ -473,18 +468,6 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
         isAuthenticated={isAuthenticated}
         onLoginRequired={() => setShowLoginRequiredModal(true)}
       />
-
-      <div className={styles.topButtonContainer}>
-        <button
-          type="button"
-          className={styles.topButton}
-          onClick={scrollToTop}
-          aria-label="맨 위로 이동"
-          title="맨 위로 이동"
-        >
-          Top
-        </button>
-      </div>
 
       {showLoginRequiredModal && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true">
