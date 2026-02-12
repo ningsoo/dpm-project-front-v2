@@ -13,6 +13,16 @@
   background: #fafafa;
 }
 
+/* 배경만 먼저 보이는 flicker 방지: 준비 후 opacity 전환 (display 미사용) */
+.sectionHidden {
+  opacity: 0;
+}
+
+.sectionRevealed {
+  opacity: 1;
+  transition: opacity 0.22s ease;
+}
+
 :global(.dark) .section {
   background: #1D1D1B;
 }
@@ -195,6 +205,7 @@
   border-radius: 12px;
   overflow: hidden;
   background: #e8e8e8;
+  opacity: 0;
 }
 
 .skeletonCard::after {

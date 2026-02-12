@@ -13,6 +13,21 @@ import {
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './SpotlightCarousel.module.css';
 
+/** 데이터 + 레이아웃 준비 전 배경 flicker 방지: 준비 후 opacity 전환 */
+const useSectionReveal = (isLoading: boolean, hasContent: boolean, layoutReady: boolean) => {
+  const [revealed, setRevealed] = useState(false);
+  const isReady = isLoading || !hasContent || layoutReady;
+  useEffect(() => {
+    if (!isReady) {
+      setRevealed(false);
+      return;
+    }
+    const id = requestAnimationFrame(() => setRevealed(true));
+    return () => cancelAnimationFrame(id);
+  }, [isReady]);
+  return revealed;
+};
+
 const CARD_GAP = 20;
 const TRANSITION_MS = 600;
 
@@ -32,6 +47,8 @@ export default function SpotlightCarousel() {
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const shouldResetWhenReachEndRef = useRef(false);
+
+  const sectionRevealed = useSectionReveal(isLoading, posts.length > 0, layoutReady);
 
   /** 데이터 조회 */
   const fetchSpotlights = useCallback(async () => {
@@ -189,7 +206,7 @@ export default function SpotlightCarousel() {
       <section
         className={`${styles.section} ${styles.sectionPlaceholder} ${
           darkMode ? 'dark' : ''
-        }`}
+        } ${sectionRevealed ? styles.sectionRevealed : styles.sectionHidden}`}
       >
         <div className={styles.wrapper} ref={wrapperRef}>
           <div className={styles.track}>
@@ -208,7 +225,7 @@ export default function SpotlightCarousel() {
       <section
         className={`${styles.section} ${styles.sectionPlaceholder} ${
           darkMode ? 'dark' : ''
-        }`}
+        } ${sectionRevealed ? styles.sectionRevealed : styles.sectionHidden}`}
       >
         <div className={styles.wrapper}>
           <div className={styles.emptyState}>
@@ -220,7 +237,11 @@ export default function SpotlightCarousel() {
   }
 
   return (
-    <section className={`${styles.section} ${darkMode ? 'dark' : ''}`}>
+    <section
+      className={`${styles.section} ${darkMode ? 'dark' : ''} ${
+        sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
+      }`}
+    >
       <div className={styles.wrapper} ref={wrapperRef}>
         <button
           type="button"
