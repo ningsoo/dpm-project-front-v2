@@ -19,8 +19,8 @@ interface PopSectionProps {
 }
 
 const POP_SUB_TABS = [
-  { id: 'usage' as const, label: '사용내역' },
   { id: 'purchase' as const, label: '구매내역' },
+  { id: 'usage' as const, label: '사용내역' },
 ];
 
 const USAGE_COLUMNS = ['사용일시', '사용수량', '사용대상', '사용내용', '사용상태', '사용취소'];
@@ -282,6 +282,9 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
   };
 
   const handleConfirmPurchaseCancel = useCallback(async () => {
+    // 중복 요청 방지 가드
+    if (purchaseCancelSubmitting) return;
+
     const row = purchaseCancelTarget;
     if (!row) return;
     const paymentKey = row.paymentKey;
@@ -308,13 +311,47 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
       // 서버 데이터로 동기화
       fetchPurchase();
     } catch (err: unknown) {
-      const data = (err as { response?: { data?: { message?: string } } })?.response?.data;
-      const msg = typeof data?.message === 'string' ? data.message : undefined;
-      ToastUtils.error(msg || '구매 취소에 실패했습니다.');
+      // AxiosError인 경우 에러 메시지 추출 강화
+      const axiosErr = err as {
+        response?: {
+          status?: number;
+          data?: {
+            message?: string;
+            errorCode?: string;
+          };
+        };
+      };
+
+      const status = axiosErr?.response?.status;
+      const data = axiosErr?.response?.data;
+      const message = typeof data?.message === 'string' ? data.message : undefined;
+      const errorCode = typeof data?.errorCode === 'string' ? data.errorCode : undefined;
+
+      // 401인 경우 로그인으로 이동
+      if (status === 401) {
+        ToastUtils.error('로그인이 필요합니다.');
+        router.push('/auth/login');
+        return;
+      }
+
+      // errorCode가 있으면 표시
+      if (errorCode) {
+        ToastUtils.error(`취소 실패: ${errorCode}`);
+        return;
+      }
+
+      // message가 있으면 그대로 표시
+      if (message) {
+        ToastUtils.error(message);
+        return;
+      }
+
+      // 그 외
+      ToastUtils.error('구매 취소에 실패했습니다.');
     } finally {
       setPurchaseCancelSubmitting(false);
     }
-  }, [purchaseCancelTarget, fetchPurchase, onPopBalanceRefresh]);
+  }, [purchaseCancelTarget, purchaseCancelSubmitting, fetchPurchase, onPopBalanceRefresh]);
 
   const handleSearch = () => {
     if (subTab === 'usage') {

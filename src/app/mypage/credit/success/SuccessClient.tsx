@@ -7,7 +7,7 @@ import { ToastUtils } from '@/utils/toastUtils';
 import styles from '../../mypage.module.css';
 import creditStyles from '../credit.module.css';
 
-const REDIRECT_DELAY_MS = 400;
+const REDIRECT_DELAY_MS = 1500;
 
 function parseAmount(value: string | null): number | null {
   if (value == null || value === '') return null;
@@ -18,15 +18,8 @@ function parseAmount(value: string | null): number | null {
 
 function redirectAfterToast(router: ReturnType<typeof useRouter>) {
   setTimeout(() => {
-    router.replace('/mypage');
+    router.replace('/mypage?tab=pop&popSubTab=purchase');
   }, REDIRECT_DELAY_MS);
-}
-
-function isInvalidAccessError(status?: number, message?: string): boolean {
-  if (status === 400 || status === 404) return true;
-  const msg = message ?? '';
-  const keywords = ['주문', '금액', '요청', '일치'];
-  return keywords.some((k) => msg.includes(k));
 }
 
 /** ISO 문자열 → yyyy.mm.dd hh:mm:ss (로컬, 초 포함) */
@@ -119,7 +112,11 @@ export default function SuccessClient() {
           setConfirmData(body.data ?? null);
           setStatus('success');
         } else {
-          ToastUtils.error('잘못된 접근입니다.');
+          // 백엔드 message 우선 출력
+          const message = typeof body?.message === 'string' && body.message.trim() !== '' 
+            ? body.message.trim() 
+            : '결제 확정에 실패했습니다.';
+          ToastUtils.error(message);
           redirectAfterToast(router);
           setStatus('invalid');
         }
@@ -129,12 +126,23 @@ export default function SuccessClient() {
           response?: { status?: number; data?: { message?: string } };
         };
         const statusCode = ax?.response?.status;
-        const message = ax?.response?.data?.message ?? '';
+        const message = typeof ax?.response?.data?.message === 'string' && ax.response.data.message.trim() !== ''
+          ? ax.response.data.message.trim()
+          : '';
 
-        if (isInvalidAccessError(statusCode, message)) {
-          ToastUtils.error('잘못된 접근입니다.');
+        // 401 최우선 처리
+        if (statusCode === 401) {
+          ToastUtils.error('로그인이 필요합니다.');
+          router.push('/auth/login');
+          setStatus('error');
+          return;
+        }
+
+        // 그 외는 백엔드 message 우선 출력
+        if (message) {
+          ToastUtils.error(message);
         } else {
-          ToastUtils.error('결제 처리에 실패했습니다.');
+          ToastUtils.error('결제 확정에 실패했습니다.');
         }
         redirectAfterToast(router);
         setStatus('error');
@@ -180,7 +188,7 @@ export default function SuccessClient() {
         <button
           type="button"
           className={creditStyles.submitBtn}
-          onClick={() => router.push('/mypage?tab=pop')}
+          onClick={() => router.push('/mypage?tab=pop&popSubTab=purchase')}
         >
           내 재화로 이동
         </button>
