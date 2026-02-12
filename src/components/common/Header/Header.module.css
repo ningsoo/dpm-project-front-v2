@@ -65,13 +65,16 @@
 }
 
 .navLink {
+  font-family: "Monda", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
   padding: 8px 12px;
   font-size: 1.2rem;
-  color: #444;
+  font-weight: 600;
+  color: #080707;
   text-decoration: none;
   border-radius: 8px;
   transition: background 0.2s;
-  font-weight: 600;
 }
 
 .navLink:hover {

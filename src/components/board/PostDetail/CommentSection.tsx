@@ -7,7 +7,7 @@ import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
 import { formatCreatedDateTimeFull } from '@/utils/createdDateTime';
 import { formatCommentCount } from '@/utils/displayFormatters';
-import styles from './PostDetail.module.css';
+import styles from '../BoardFormLayout/BoardFormLayout.module.css';
 
 /** API 응답 댓글 형태 */
 interface CommentFromApi {

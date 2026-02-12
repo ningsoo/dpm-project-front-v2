@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import styles from './HomeTopButton.module.css';
+import { useCallback, useEffect, useState } from 'react';
+import styles from './TopButton.module.css';
 
-export default function HomeTopButton() {
+const SCROLL_THRESHOLD = 200;
+
+export default function TopButton() {
   const [visible, setVisible] = useState(false);
-  const scrollCountRef = useRef(0);
 
   const scrollToTop = useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -16,24 +17,21 @@ export default function HomeTopButton() {
     if (typeof window === 'undefined') return;
 
     const handleScroll = () => {
-      if (visible) return;
-      scrollCountRef.current += 1;
-      if (scrollCountRef.current >= 2) {
-        setVisible(true);
-      }
+      setVisible(window.scrollY >= SCROLL_THRESHOLD);
     };
 
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [visible]);
+  }, []);
 
   if (!visible) return null;
 
   return (
-    <div className={styles.topButtonContainer}>
+    <div className={styles.wrap}>
       <button
         type="button"
-        className={styles.topButton}
+        className={styles.btn}
         onClick={scrollToTop}
         aria-label="맨 위로 이동"
         title="맨 위로 이동"
@@ -43,4 +41,3 @@ export default function HomeTopButton() {
     </div>
   );
 }
-

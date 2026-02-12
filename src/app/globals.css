@@ -1,7 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Monda:wght@400..700&display=swap');
+
 *,
 *::before,
 *::after {
   box-sizing: border-box;
+}
+
+/* 카테고리 타입 영역 공통 폰트 (필요 시 .monda 클래스로 사용) */
+.monda {
+  font-family: "Monda", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
 }
 
 html {
