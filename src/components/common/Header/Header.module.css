@@ -1,3 +1,4 @@
+/* theme: html.dark 단일 소스 → 최초 페인트부터 다크 적용, 전환 시 즉시 반영 */
 .header {
   position: fixed;
   top: 0;
@@ -11,10 +12,9 @@
   padding: 0 24px;
   background: #fff;
   border-bottom: 1px solid #eee;
-  transition: background 0.2s, border-color 0.2s;
 }
 
-.header.dark {
+:global(html.dark) .header {
   background: #1D1D1B;
   border-bottom-color: #3A3A38;
 }
@@ -24,6 +24,7 @@
 }
 
 .logo {
+  position: relative;
   display: flex;
   align-items: center;
   text-decoration: none;
@@ -36,7 +37,24 @@
   object-fit: contain;
 }
 
-.dark .logo {
+/* 로고도 html.dark 단일 소스: 라이트/다크 둘 다 렌더 후 CSS로 전환 → 깜빡임 제거 */
+.logoLight {
+  display: block;
+}
+
+.logoDark {
+  display: none;
+}
+
+:global(html.dark) .logoLight {
+  display: none;
+}
+
+:global(html.dark) .logoDark {
+  display: block;
+}
+
+:global(html.dark) .logo {
   color: #B5B3A7;
 }
 
@@ -52,7 +70,7 @@
   color: #444;
   text-decoration: none;
   border-radius: 8px;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s;
   font-weight: 600;
 }
 
@@ -61,11 +79,11 @@
   color: #111;
 }
 
-.dark .navLink {
+:global(html.dark) .navLink {
   color: #A19E94;
 }
 
-.dark .navLink:hover {
+:global(html.dark) .navLink:hover {
   background: #2E2E2C;
   color: #B5B3A7;
 }
@@ -114,7 +132,7 @@
   border-radius: 8px;
   cursor: pointer;
   color: #555;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s;
 }
 
 .iconBtn:hover {
@@ -122,11 +140,11 @@
   color: #111;
 }
 
-.dark .iconBtn {
+:global(html.dark) .iconBtn {
   color: #8A877D;
 }
 
-.dark .iconBtn:hover {
+:global(html.dark) .iconBtn:hover {
   background: #2E2E2C;
   color: #B5B3A7;
 }

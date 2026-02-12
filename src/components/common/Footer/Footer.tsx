@@ -1,15 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
 import { tokenUtils } from '@/utils/tokenUtils';
 import { ToastUtils } from '@/utils/toastUtils';
 import styles from './Footer.module.css';
 
 export default function Footer() {
   const router = useRouter();
-  const darkMode = useSelector((s: RootState) => s.ui.darkMode);
 
   const handleInquiryClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -22,7 +19,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className={`${styles.footer} ${darkMode ? styles.dark : ''}`}>
+    <footer className={styles.footer}>
       <div className={styles.inner}>
         <div className={styles.brand}>SOUNDOCK</div>
         <div className={styles.inquiryLink}>
