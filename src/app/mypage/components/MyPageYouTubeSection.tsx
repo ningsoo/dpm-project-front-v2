@@ -174,28 +174,28 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                 alignItems: 'center',
                 gap: 8,
                 padding: '12px 24px',
-                background: '#fff',
-                color: !user?.email ? '#aaa' : '#333',
-                border: '1px solid #ddd',
+                background: darkMode ? '#242422' : '#fff',
+                color: !user?.email ? (darkMode ? '#666' : '#aaa') : (darkMode ? '#B5B3A7' : '#333'),
+                border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
                 borderRadius: 8,
                 cursor: !user?.email ? 'not-allowed' : 'pointer',
                 fontSize: 15,
                 fontWeight: 500,
                 transition: 'all 0.2s',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                boxShadow: darkMode ? '0 1px 3px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.08)',
                 opacity: !user?.email ? 0.6 : 1,
               }}
               onMouseEnter={(e) => {
                 if (!user?.email) return;
-                e.currentTarget.style.background = '#f8f8f8';
-                e.currentTarget.style.borderColor = '#999';
-                e.currentTarget.style.boxShadow = '0 2px 6px rgba(0,0,0,0.12)';
+                e.currentTarget.style.background = darkMode ? '#2E2E2C' : '#f8f8f8';
+                e.currentTarget.style.borderColor = darkMode ? '#8A877D' : '#999';
+                e.currentTarget.style.boxShadow = darkMode ? '0 2px 6px rgba(0,0,0,0.25)' : '0 2px 6px rgba(0,0,0,0.12)';
               }}
               onMouseLeave={(e) => {
                 if (!user?.email) return;
-                e.currentTarget.style.background = '#fff';
-                e.currentTarget.style.borderColor = '#ddd';
-                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
+                e.currentTarget.style.background = darkMode ? '#242422' : '#fff';
+                e.currentTarget.style.borderColor = darkMode ? '#3A3A38' : '#ddd';
+                e.currentTarget.style.boxShadow = darkMode ? '0 1px 3px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.08)';
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
@@ -219,7 +219,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                 alignItems: 'center',
                 gap: 4,
                 padding: '8px 16px',
-                background: darkMode ? '#6B7080' : '#1976d2',
+                background: darkMode ? '#3A3934' : '#111',
                 color: '#fff',
                 border: 'none',
                 borderRadius: 8,
@@ -245,7 +245,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                   alignItems: 'center',
                   gap: 4,
                   padding: '8px 16px',
-                  background: isDeleteMode ? '#c62828' : '#666',
+                  background: isDeleteMode ? '#A6534F' : '#666',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 8,
@@ -272,21 +272,22 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                   justifyContent: 'center',
                   width: 36,
                   height: 36,
-                  background: '#fff',
-                  border: '1px solid #ddd',
+                  background: darkMode ? '#242422' : '#fff',
+                  border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
                   borderRadius: '50%',
                   cursor: sliderIndex === 0 ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s',
                   opacity: sliderIndex === 0 ? 0.4 : 1,
+                  color: darkMode ? '#B5B3A7' : undefined,
                 }}
                 onMouseEnter={(e) => {
                   if (sliderIndex === 0) return;
-                  e.currentTarget.style.background = '#f5f5f5';
-                  e.currentTarget.style.borderColor = '#999';
+                  e.currentTarget.style.background = darkMode ? '#2E2E2C' : '#f5f5f5';
+                  e.currentTarget.style.borderColor = darkMode ? '#8A877D' : '#999';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#fff';
-                  e.currentTarget.style.borderColor = '#ddd';
+                  e.currentTarget.style.background = darkMode ? '#242422' : '#fff';
+                  e.currentTarget.style.borderColor = darkMode ? '#3A3A38' : '#ddd';
                 }}
               >
                 <ChevronLeft size={20} />
@@ -301,20 +302,21 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                   justifyContent: 'center',
                   width: 36,
                   height: 36,
-                  background: '#fff',
-                  border: '1px solid #ddd',
+                  background: darkMode ? '#242422' : '#fff',
+                  border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
                   borderRadius: '50%',
                   cursor: sliderIndex >= maxSliderIndex ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s',
                   opacity: sliderIndex >= maxSliderIndex ? 0.4 : 1,
+                  color: darkMode ? '#B5B3A7' : undefined,
                 }}
                 onMouseEnter={(e) => {
                   if (sliderIndex >= maxSliderIndex) return;
-                  e.currentTarget.style.background = '#f5f5f5';
-                  e.currentTarget.style.borderColor = '#999';
+                  e.currentTarget.style.background = darkMode ? '#2E2E2C' : '#f5f5f5';
+                  e.currentTarget.style.borderColor = darkMode ? '#8A877D' : '#999';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#fff';
+                  e.currentTarget.style.background = darkMode ? '#242422' : '#fff';
                   e.currentTarget.style.borderColor = '#ddd';
                 }}
               >
@@ -330,7 +332,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                 width: 48,
                 height: 48,
                 border: `4px solid ${darkMode ? '#333' : '#f0f0f0'}`,
-                borderTop: `4px solid ${darkMode ? '#7B7F9E' : '#1976d2'}`,
+                borderTop: `4px solid ${darkMode ? '#3A3934' : '#111'}`,
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite',
               }}
@@ -361,10 +363,10 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                 key={playlist.youtubeListId}
                 style={{
                   position: 'relative',
-                  background: 'white',
+                  background: darkMode ? '#242422' : 'white',
                   borderRadius: 12,
                   overflow: 'hidden',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.1)',
                   transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                   cursor: isDeleteMode ? 'default' : 'pointer',
                   width: `calc((100% - ${CARD_GAP * (CARDS_PER_VIEW - 1)}px) / ${CARDS_PER_VIEW})`,
@@ -374,13 +376,13 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                 onMouseEnter={(e) => {
                   if (!isDeleteMode) {
                     e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+                    e.currentTarget.style.boxShadow = darkMode ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.15)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isDeleteMode) {
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                    e.currentTarget.style.boxShadow = darkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.1)';
                   }
                 }}
                 onClick={() => {
@@ -403,7 +405,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                       width: 32,
                       height: 32,
                       borderRadius: '50%',
-                      background: '#c62828',
+                      background: '#A6534F',
                       border: '2px solid #fff',
                       color: '#fff',
                       display: 'flex',
@@ -415,11 +417,11 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                       transition: 'all 0.2s',
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#b71c1c';
+                      e.currentTarget.style.background = '#954A47';
                       e.currentTarget.style.transform = 'scale(1.1)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = '#c62828';
+                      e.currentTarget.style.background = '#A6534F';
                       e.currentTarget.style.transform = 'scale(1)';
                     }}
                   >
@@ -434,7 +436,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                     height: 180,
                     borderRadius: '12px 12px 0 0',
                     overflow: 'hidden',
-                    background: '#f0f0f0',
+                    background: darkMode ? '#2E2E2C' : '#f0f0f0',
                   }}
                 >
                   {playlist.thumbnailUrl ? (
@@ -484,7 +486,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                     style={{
                       fontSize: 16,
                       fontWeight: 600,
-                      color: '#333',
+                      color: darkMode ? '#B5B3A7' : '#333',
                       marginBottom: 8,
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
@@ -497,7 +499,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                   >
                     {playlist.title}
                   </div>
-                  <div style={{ fontSize: 14, color: '#666', marginTop: 'auto' }}>
+                  <div style={{ fontSize: 14, color: darkMode ? '#8A877D' : '#666', marginTop: 'auto' }}>
                     {playlist.itemCount}곡
                   </div>
                 </div>
@@ -548,18 +550,18 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
           <div
             style={{
               padding: 32,
-              background: '#fff',
+              background: darkMode ? '#2E2E2C' : '#fff',
               borderRadius: 12,
               maxWidth: 400,
               width: '90%',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+              boxShadow: darkMode ? '0 4px 24px rgba(0,0,0,0.4)' : '0 4px 24px rgba(0,0,0,0.2)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ margin: '0 0 16px', fontSize: 20, fontWeight: 600, color: '#333', textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 16px', fontSize: 20, fontWeight: 600, color: darkMode ? '#B5B3A7' : '#333', textAlign: 'center' }}>
               플레이리스트 삭제
             </h3>
-            <p style={{ margin: '0 0 24px', fontSize: 15, color: '#666', lineHeight: 1.6, textAlign: 'center' }}>
+            <p style={{ margin: '0 0 24px', fontSize: 15, color: darkMode ? '#8A877D' : '#666', lineHeight: 1.6, textAlign: 'center' }}>
               <strong>{playlistToDelete.title}</strong>
               <br />
               정말로 삭제하시겠습니까?
@@ -570,7 +572,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                 onClick={handleDeletePlaylist}
                 style={{
                   padding: '10px 24px',
-                  background: '#c62828',
+                  background: '#A6534F',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 8,
@@ -580,10 +582,10 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                   transition: 'all 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#b71c1c';
+                  e.currentTarget.style.background = '#954A47';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#c62828';
+                  e.currentTarget.style.background = '#A6534F';
                 }}
               >
                 삭제
@@ -593,9 +595,9 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                 onClick={() => setPlaylistToDelete(null)}
                 style={{
                   padding: '10px 24px',
-                  background: '#fff',
-                  color: '#666',
-                  border: '1px solid #ddd',
+                  background: darkMode ? '#3A3A38' : '#fff',
+                  color: darkMode ? '#A19E94' : '#666',
+                  border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
                   borderRadius: 8,
                   cursor: 'pointer',
                   fontSize: 15,
@@ -603,12 +605,12 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
                   transition: 'all 0.2s',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#f5f5f5';
-                  e.currentTarget.style.borderColor = '#999';
+                  e.currentTarget.style.background = darkMode ? '#4A4A48' : '#f5f5f5';
+                  e.currentTarget.style.borderColor = darkMode ? '#8A877D' : '#999';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#fff';
-                  e.currentTarget.style.borderColor = '#ddd';
+                  e.currentTarget.style.background = darkMode ? '#3A3A38' : '#fff';
+                  e.currentTarget.style.borderColor = darkMode ? '#3A3A38' : '#ddd';
                 }}
               >
                 취소
@@ -637,11 +639,11 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
           <div
             style={{
               padding: 32,
-              background: '#fff',
+              background: darkMode ? '#2E2E2C' : '#fff',
               borderRadius: 12,
               maxWidth: 400,
               width: '90%',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
+              boxShadow: darkMode ? '0 4px 24px rgba(0,0,0,0.4)' : '0 4px 24px rgba(0,0,0,0.2)',
               textAlign: 'center',
             }}
             onClick={(e) => e.stopPropagation()}
@@ -650,7 +652,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
               width: 56,
               height: 56,
               borderRadius: '50%',
-              background: oauthResultModal.type === 'success' ? '#e8f5e9' : '#fbe9e7',
+              background: oauthResultModal.type === 'success' ? (darkMode ? '#1a2e1a' : '#e8f5e9') : (darkMode ? '#3a1f1f' : '#fbe9e7'),
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -659,13 +661,13 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
               {oauthResultModal.type === 'success' ? (
                 <Check size={28} color="#2e7d32" />
               ) : (
-                <X size={28} color="#c62828" />
+                <X size={28} color="#A6534F" />
               )}
             </div>
             <p style={{
               margin: '0 0 24px',
               fontSize: 16,
-              color: '#333',
+              color: darkMode ? '#B5B3A7' : '#333',
               lineHeight: 1.6,
               whiteSpace: 'pre-line',
             }}>
@@ -679,7 +681,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
               }}
               style={{
                 padding: '10px 32px',
-                background: oauthResultModal.type === 'success' ? '#1976d2' : '#666',
+                background: oauthResultModal.type === 'success' ? '#111' : '#666',
                 color: '#fff',
                 border: 'none',
                 borderRadius: 8,

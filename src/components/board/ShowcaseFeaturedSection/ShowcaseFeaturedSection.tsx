@@ -24,8 +24,7 @@ const useSectionReveal = () => {
 
 const TOTAL = 4;
 const HOVER_DELAY = 180;
-const SCALE_X = 1.45;   // 좌우 확대 정도
-const SCALE_Y = 1.05;   // 세로 살짝
+const SCALE = 1.25;     // 균일 확대 (비율 유지)
 
 export default function ShowcaseFeaturedSection() {
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
@@ -83,16 +82,16 @@ export default function ShowcaseFeaturedSection() {
   const getTransform = (index: number) => {
     if (index !== activeIndex) return 'translateY(-50%)';
 
-    // 좌우 확장 방향 제어
+    // 균일 scale → 비율 유지 + 좌우 확장 방향 제어
     if (index === 0) {
-      return `translateY(-50%) scaleX(${SCALE_X}) scaleY(${SCALE_Y}) translateX(10%)`;
+      return `translateY(-50%) scale(${SCALE}) translateX(5%)`;
     }
 
     if (index === TOTAL - 1) {
-      return `translateY(-50%) scaleX(${SCALE_X}) scaleY(${SCALE_Y}) translateX(-10%)`;
+      return `translateY(-50%) scale(${SCALE}) translateX(-5%)`;
     }
 
-    return `translateY(-50%) scaleX(${SCALE_X}) scaleY(${SCALE_Y})`;
+    return `translateY(-50%) scale(${SCALE})`;
   };
 
   /* 로딩 중: 높이 선점 + 스켈레톤 */

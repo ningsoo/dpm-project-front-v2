@@ -259,6 +259,28 @@
   color: #b5b3a7;
 }
 
+/* 카드(그리드) 영역 */
+:global(.dark) .card {
+  background: #242422;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+
+:global(.dark) .thumbWrap {
+  background: #2E2E2C;
+}
+
+:global(.dark) .cardTitle {
+  color: #B5B3A7;
+}
+
+:global(.dark) .meta {
+  color: #8A877D;
+}
+
 /* 테이블 영역 */
 :global(.dark) .tableWrap {
   background: #242422;
@@ -268,10 +290,17 @@
 :global(.dark) .table th {
   background: #2e2e2c;
   color: #b5b3a7;
+  border-bottom-color: #3A3A38;
 }
 
 :global(.dark) .table td {
   color: #b5b3a7;
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .empty,
+:global(.dark) .loading {
+  color: #8A877D;
 }
 
 :global(.dark) .table a {

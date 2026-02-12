@@ -83,9 +83,9 @@
 }
 
 .selected {
-  border-color: #1976d2;
-  background: #e3f2fd;
-  color: #1565c0;
+  border-color: #111;
+  background: #f0f0f0;
+  color: #000;
 }
 
 .summaryBox {
@@ -169,7 +169,7 @@
   font-size: 1rem;
   font-weight: 600;
   color: #fff;
-  background: #1976d2;
+  background: #111;
   border: none;
   border-radius: 10px;
   cursor: pointer;
@@ -178,7 +178,7 @@
 }
 
 .submitBtn:hover:not(:disabled) {
-  background: #1565c0;
+  background: #000;
 }
 
 .submitBtn:disabled {
@@ -210,9 +210,9 @@
 }
 
 :global(.dark) .selected {
-  border-color: #1976d2;
-  background: #1B2838;
-  color: #64B5F6;
+  border-color: #B5B3A7;
+  background: #2E2E2C;
+  color: #B5B3A7;
 }
 
 :global(.dark) .summaryBox {
@@ -232,15 +232,9 @@
 }
 
 :global(.dark) .submitBtn {
-  background: #7B7F9E;
+  background: #3A3934;
 }
 
 :global(.dark) .submitBtn:hover:not(:disabled) {
-  background: #6B6F8E;
-}
-
-:global(.dark) .selected {
-  border-color: #7B7F9E;
-  background: #2A2840;
-  color: #9EA2B8;
+  background: #42413B;
 }

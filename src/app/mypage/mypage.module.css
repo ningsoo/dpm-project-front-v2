@@ -46,7 +46,7 @@
 .credits {
   margin-top: 4px;
   font-weight: 600;
-  color: #1976d2;
+  color: #111;
 }
 
 .profileActions {
@@ -90,8 +90,8 @@
 }
 
 .iconLinkActive {
-  border-color: #1976d2;
-  color: #1976d2;
+  border-color: #111;
+  color: #111;
 }
 
 .tabs {
@@ -121,7 +121,7 @@
 }
 
 .tabActive {
-  background: #1976d2;
+  background: #111;
   color: #fff;
 }
 
@@ -319,7 +319,7 @@
 
 /* 결제 완료 화면: 내려온 값 강조 (파란색 + 굵게) */
 .successHighlight {
-  color: #1976d2;
+  color: #111;
   font-weight: 700;
 }
 
@@ -330,7 +330,7 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: #fff;
-  background: #1976d2;
+  background: #111;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -338,7 +338,7 @@
 }
 
 .popSection .settlementRequestSummaryBox .submitBtn:hover:not(:disabled) {
-  background: #1565c0;
+  background: #000;
 }
 
 .popSection .settlementRequestSummaryBox .submitBtn:disabled {
@@ -543,9 +543,9 @@
 .donationCancelBtn {
   padding: 5px 14px;
   font-size: 13px;
-  color: #c62828;
+  color: #A6534F;
   background: transparent;
-  border: 1px solid #c62828;
+  border: 1px solid #A6534F;
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
@@ -553,7 +553,7 @@
 }
 
 .donationCancelBtn:hover {
-  background: #c62828;
+  background: #A6534F;
   color: #fff;
 }
 
@@ -582,7 +582,7 @@
 }
 
 .settlementSubTabActive {
-  color: #1976d2;
+  color: #111;
   font-weight: 600;
 }
 
@@ -593,7 +593,7 @@
   bottom: -1px;
   height: 2px;
   width: 100%;
-  background: #1976d2;
+  background: #111;
 }
 
 .settlementSummaryBlock {
@@ -615,7 +615,7 @@
 .settlementTotalAmount {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1976d2;
+  color: #111;
 }
 
 .settlementHistoryTitle {
@@ -641,7 +641,7 @@
 
 .settlementSearchBtn {
   padding: 8px 16px;
-  background: #1976d2;
+  background: #111;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -651,7 +651,7 @@
 }
 
 .settlementSearchBtn:hover:not(:disabled) {
-  background: #1565c0;
+  background: #000;
 }
 
 .settlementSearchBtn:disabled {
@@ -704,7 +704,7 @@
 }
 
 .settlementInput:focus {
-  border-color: #1976d2;
+  border-color: #111;
 }
 
 .settlementRequestBlock {
@@ -751,7 +751,7 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: #fff;
-  background: #1976d2;
+  background: #111;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -759,7 +759,7 @@
 }
 
 .settlementConfirmBtn:hover:not(:disabled) {
-  background: #1565c0;
+  background: #000;
 }
 
 .settlementConfirmBtn:disabled {
@@ -796,7 +796,7 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: #fff;
-  background: #1976d2;
+  background: #111;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -804,7 +804,7 @@
 }
 
 .settlementSection .submitBtn:hover:not(:disabled) {
-  background: #1565c0;
+  background: #000;
 }
 
 .settlementSection .submitBtn:disabled {
@@ -858,13 +858,13 @@
 .popStatusPositive {
   composes: popStatusBadge;
   background: #e3f2fd;
-  color: #1565c0;
+  color: #000;
 }
 
 .popStatusNegative {
   composes: popStatusBadge;
   background: #fce4ec;
-  color: #c62828;
+  color: #A6534F;
 }
 
 .popStatusNeutral {
@@ -884,7 +884,7 @@
 
 :global(.dark) .popStatusNegative {
   background: #2c1a1a;
-  color: #ef9a9a;
+  color: #C4605C;
 }
 
 :global(.dark) .popStatusNeutral {
@@ -914,8 +914,8 @@
 }
 
 .pageBtn:hover:not(:disabled) {
-  border-color: #1976d2;
-  color: #1976d2;
+  border-color: #111;
+  color: #111;
 }
 
 .pageBtn:disabled {
@@ -924,9 +924,9 @@
 }
 
 .pageBtnActive {
-  background: #1976d2;
+  background: #111;
   color: #fff;
-  border-color: #1976d2;
+  border-color: #111;
 }
 
 /* 모달 스타일 */
@@ -1014,7 +1014,7 @@
 }
 
 .settlementConfirmCancelBtn:focus-visible {
-  outline: 2px solid #1976d2;
+  outline: 2px solid #111;
   outline-offset: 2px;
 }
 
@@ -1030,17 +1030,17 @@
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.2s;
-  background: #1976d2;
+  background: #111;
   border: none;
   color: #fff;
 }
 
 .settlementConfirmBtn:hover:not(:disabled) {
-  background: #1565c0;
+  background: #000;
 }
 
 .settlementConfirmBtn:focus-visible {
-  outline: 2px solid #1976d2;
+  outline: 2px solid #111;
   outline-offset: 2px;
 }
 
@@ -1085,14 +1085,14 @@
 
 .errorText {
   font-size: 0.875rem;
-  color: #c62828;
+  color: #A6534F;
 }
 
 .error {
   display: block;
   margin-top: 4px;
   font-size: 0.875rem;
-  color: #c62828;
+  color: #A6534F;
 }
 
 .totalRow {
@@ -1112,13 +1112,13 @@
 .totalRow > div:last-child {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1976d2;
+  color: #111;
 }
 
 .primaryButton {
   width: 100%;
   padding: 16px;
-  background: #1976d2;
+  background: #111;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -1130,7 +1130,7 @@
 }
 
 .primaryButton:hover:not(:disabled) {
-  background: #1565c0;
+  background: #000;
 }
 
 .primaryButton:disabled {
@@ -1147,7 +1147,7 @@
 .helperLink {
   background: none;
   border: none;
-  color: #1976d2;
+  color: #111;
   text-decoration: underline;
   cursor: pointer;
   padding: 0;
@@ -1194,7 +1194,7 @@
 }
 
 .inquiryTitleLink:hover {
-  color: #1976d2;
+  color: #111;
   text-decoration: underline;
 }
 
@@ -1260,7 +1260,7 @@
 }
 
 .inquiryDetailAttachmentLink {
-  color: #1976d2;
+  color: #111;
   text-decoration: underline;
 }
 
@@ -1421,8 +1421,8 @@
 }
 
 :global(.dark) .donationCancelBtn {
-  color: #c62828;
-  border-color: #c62828;
+  color: #A6534F;
+  border-color: #A6534F;
 }
 
 :global(.dark) .modalCard {

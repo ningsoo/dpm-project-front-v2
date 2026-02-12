@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { X } from 'lucide-react';
+import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 
@@ -26,6 +28,7 @@ declare global {
 }
 
 export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle }: PlaylistDetailModalProps) {
+  const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const [tracks, setTracks] = useState<TrackItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number | null>(null);
@@ -203,10 +206,10 @@ export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle
         <div
           style={{
             position: 'relative',
-            background: 'white',
+            background: darkMode ? '#2E2E2C' : 'white',
             borderRadius: 12,
             overflow: 'hidden',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+            boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 8px rgba(0,0,0,0.1)',
             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
             display: 'flex',
             flexDirection: 'column',
@@ -222,7 +225,7 @@ export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle
               top: 16,
               right: 16,
               zIndex: 20,
-              background: 'rgba(255,255,255,0.9)',
+              background: darkMode ? 'rgba(30,30,28,0.9)' : 'rgba(255,255,255,0.9)',
               border: 'none',
               borderRadius: '50%',
               width: 32,
@@ -234,7 +237,7 @@ export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle
               boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
             }}
           >
-            <X size={20} color="#333" />
+            <X size={20} color={darkMode ? '#8A877D' : '#333'} />
           </button>
 
           {loading ? (
@@ -385,13 +388,13 @@ export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle
                     style={{
                       fontSize: 18,
                       fontWeight: 700,
-                      color: '#333',
+                      color: darkMode ? '#B5B3A7' : '#333',
                       marginBottom: 6,
                     }}
                   >
                     {playlistTitle}
                   </div>
-                  <div style={{ fontSize: 14, color: '#666' }}>
+                  <div style={{ fontSize: 14, color: darkMode ? '#8A877D' : '#666' }}>
                     {tracks.length}곡
                   </div>
                 </div>
@@ -439,7 +442,9 @@ export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle
                         onClick={() => handleTrackClick(index)}
                         style={{
                           padding: 12,
-                          color: currentTrackIndex === index ? '#1a73e8' : '#555',
+                          color: currentTrackIndex === index
+                            ? (darkMode ? '#B5B3A7' : '#111')
+                            : (darkMode ? '#A19E94' : '#555'),
                           fontSize: 14,
                           cursor: 'pointer',
                           transition: 'background 0.2s ease',
@@ -448,12 +453,14 @@ export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle
                           gap: 12,
                           borderRadius: 6,
                           marginBottom: 4,
-                          background: currentTrackIndex === index ? '#e8f0fe' : 'transparent',
+                          background: currentTrackIndex === index
+                            ? (darkMode ? '#3A3A38' : '#f0f0f0')
+                            : 'transparent',
                           fontWeight: currentTrackIndex === index ? 500 : 400,
                         }}
                         onMouseEnter={(e) => {
                           if (currentTrackIndex !== index) {
-                            e.currentTarget.style.background = '#f9f9f9';
+                            e.currentTarget.style.background = darkMode ? '#2E2E2C' : '#f9f9f9';
                           }
                         }}
                         onMouseLeave={(e) => {
@@ -464,7 +471,9 @@ export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle
                       >
                         <span
                           style={{
-                            color: currentTrackIndex === index ? '#1a73e8' : '#999',
+                            color: currentTrackIndex === index
+                              ? (darkMode ? '#B5B3A7' : '#111')
+                              : (darkMode ? '#8A877D' : '#999'),
                             minWidth: 24,
                             fontSize: 13,
                           }}
@@ -485,7 +494,7 @@ export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle
                               style={{
                                 width: 3,
                                 height: 14,
-                                background: '#1a73e8',
+                                background: darkMode ? '#B5B3A7' : '#111',
                                 borderRadius: 2,
                                 animation: 'wave 1.2s ease-in-out infinite',
                               }}
@@ -494,7 +503,7 @@ export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle
                               style={{
                                 width: 3,
                                 height: 14,
-                                background: '#1a73e8',
+                                background: darkMode ? '#B5B3A7' : '#111',
                                 borderRadius: 2,
                                 animation: 'wave 1.2s ease-in-out infinite 0.1s',
                               }}
@@ -503,7 +512,7 @@ export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle
                               style={{
                                 width: 3,
                                 height: 14,
-                                background: '#1a73e8',
+                                background: darkMode ? '#B5B3A7' : '#111',
                                 borderRadius: 2,
                                 animation: 'wave 1.2s ease-in-out infinite 0.2s',
                               }}

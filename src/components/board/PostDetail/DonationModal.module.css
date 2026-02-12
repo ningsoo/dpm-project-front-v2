@@ -76,9 +76,9 @@
 
 .amountInput:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #111;
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
 }
 
 .unit {
@@ -101,9 +101,9 @@
 
 .messageInput:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: #111;
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
 }
 
 .messageCount {
@@ -128,8 +128,8 @@
   padding: 12px 16px;
   font-size: 0.95rem;
   font-weight: 500;
-  color: #3b82f6;
-  background: #eff6ff;
+  color: #111;
+  background: #f5f5f5;
   border-radius: 8px;
   flex: 1;
   text-align: left;
@@ -140,7 +140,7 @@
   padding: 12px 16px;
   font-size: 0.95rem;
   font-weight: 500;
-  color: #dc2626;
+  color: #B85450;
   background: #fef2f2;
   border-radius: 8px;
   flex: 1;
@@ -155,17 +155,17 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: #fff;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: #111;
   border: none;
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .chargeBtn:hover {
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  background: #000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transform: translateY(-1px);
 }
 
@@ -183,7 +183,7 @@
   padding: 10px 14px;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #dc2626;
+  color: #B85450;
   background: #fef2f2;
   border-radius: 8px;
   text-align: center;
@@ -220,17 +220,17 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: #fff;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: #111;
   border: none;
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .submitBtn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  background: #000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   transform: translateY(-1px);
 }
 
@@ -290,14 +290,14 @@
   font-size: 0.95rem;
   font-weight: 600;
   color: #fff;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  background: #111;
   border: none;
   border-radius: 8px;
   cursor: pointer;
 }
 
 .confirmSubmitBtn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+  background: #000;
 }
 
 .confirmSubmitBtn:disabled {
@@ -308,7 +308,7 @@
 .submitBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background: #94a3b8;
+  background: #888;
   box-shadow: none;
 }
 
@@ -345,7 +345,7 @@
 :global(.dark) .amountInput:focus,
 :global(.dark) .messageInput:focus {
   background: #252523;
-  border-color: #3b82f6;
+  border-color: #B5B3A7;
 }
 
 :global(.dark) .unit {
@@ -353,13 +353,13 @@
 }
 
 :global(.dark) .balanceText {
-  background: #1e3a5f;
-  color: #60a5fa;
+  background: #2e2e2c;
+  color: #b5b3a7;
 }
 
 :global(.dark) .balanceError {
   background: #3a1f1f;
-  color: #f87171;
+  color: #C4605C;
 }
 
 :global(.dark) .chargeNotice {
@@ -392,4 +392,32 @@
 :global(.dark) .confirmCancelBtn:hover {
   background: #4a4a48;
   color: #b5b3a7;
+}
+
+:global(.dark) .chargeBtn {
+  background: #3A3934;
+  box-shadow: none;
+}
+
+:global(.dark) .chargeBtn:hover {
+  background: #42413B;
+  box-shadow: none;
+}
+
+:global(.dark) .submitBtn {
+  background: #3A3934;
+  box-shadow: none;
+}
+
+:global(.dark) .submitBtn:hover:not(:disabled) {
+  background: #42413B;
+  box-shadow: none;
+}
+
+:global(.dark) .confirmSubmitBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .confirmSubmitBtn:hover:not(:disabled) {
+  background: #42413B;
 }
