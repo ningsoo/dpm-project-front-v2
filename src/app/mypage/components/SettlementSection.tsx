@@ -238,18 +238,16 @@ export function SettlementSection({ user }: SettlementSectionProps) {
       .then((res: any) => {
         setShowRequestConfirm(false);
         
-        // 서버가 200 OK를 줬지만 success: false인 경우
-        if (res.data?.success == true) {
-          ToastUtils.error(res.data.message || '정산 신청에 실패했습니다.');
+        if (res.data?.success === false) {
+          ToastUtils.error(res.data?.message || '정산 신청에 실패했습니다.');
           return;
         }
         
         ToastUtils.success('정산 신청이 완료되었습니다.');
-        fetchAvailable();
+        setSubTab('history');
       })
       .catch((err: any) => {
-         setShowRequestConfirm(false); // 실패해도 모달 닫기
-         
+         setShowRequestConfirm(false);
          const msg = err.response?.data?.message || '정산 가능한 금액이 없거나 이미 신청되었습니다.';
          ToastUtils.error(msg);
       })
