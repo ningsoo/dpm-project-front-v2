@@ -84,7 +84,7 @@ export const authApi = {
   // 실패 시 throw Error(message) + (err as Error & { status?: number }).status 부착.
 
   /**
-   * POST /passwordless/register  body: { email }
+   * POST /api/passwordless/register  body: { email }
    * 200: A) res.data.qr  또는 B) res.data.data.qr (ApiResponse 래핑). qr base64면 data:image/png;base64, 프리픽스 부여.
    * 200인데 qr 비어있으면 throw "QR 응답이 비어 있습니다". 400/404/500: 공통 실패 JSON message.
    */
@@ -139,7 +139,7 @@ export const authApi = {
   },
 
   /**
-   * POST /passwordless/login-trigger  body: { email }
+   * POST /api/passwordless/login-trigger  body: { email }
    * 200 성공 응답은 래핑: { result, msg, code, data: { term, pushConnectorUrl, pushConnectorToken, servicePassword, userId, sessionId } }.
    * res.data.data가 객체면 payload로 사용, 아니면 res.data를 payload로 사용(하위호환). userId는 이메일 문자열.
    */
@@ -185,7 +185,7 @@ export const authApi = {
   },
 
   /**
-   * GET /passwordless/result  query: { userId, sessionId }
+   * GET /api/passwordless/result  query: { userId, sessionId }
    * 200: 래핑 { result, msg, code, data: { auth, userId, hash, accessToken } } 또는 flat. data가 객체면 payload=res.data.data, 아니면 payload=res.data.
    * 실패: 공통 JSON message → throw Error(message) + status
    */
@@ -230,7 +230,7 @@ export const authApi = {
   },
 
   /**
-   * GET /passwordless/status  query: { userId } (이메일 문자열)
+   * GET /api/passwordless/status  query: { userId } (이메일 문자열)
    * 200: 래핑 구조 { result, msg, code, data } 에서 data 값만 반환. data는 { exist: boolean } 또는 legacy boolean.
    * 실패: throw Error(message) + status
    */
@@ -262,7 +262,7 @@ export const authApi = {
   },
 
   /**
-   * POST /passwordless/cancel  body: { email, sessionId }
+   * POST /api/passwordless/cancel  body: { email, sessionId }
    * 200: { ok: true }. 실패: throw Error(message) + status
    */
   async postPasswordlessCancel(body: { email: string; sessionId: string }): Promise<{ ok: boolean }> {
@@ -279,7 +279,7 @@ export const authApi = {
   },
 
   /**
-   * POST /passwordless/withdrawal (인증 필요, fetchClient)
+   * POST /api/passwordless/withdrawal (인증 필요, fetchClient)
    */
   async postPasswordlessWithdrawal(): Promise<{ ok: boolean }> {
     try {

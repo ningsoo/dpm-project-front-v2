@@ -28,6 +28,7 @@ interface UserInfo {
   profileImage?: string;
   popBalance?: number;
   youtubeConnected?: boolean;
+  isPasswordless?: boolean;
 }
 
 const TABS = [
@@ -612,15 +613,17 @@ export default function MypagePage() {
           >
             <User size={22} />
           </button>
-          <button
-            type="button"
-            className={styles.iconLink}
-            title="패스워드리스 해지"
-            disabled={pwlsWithdrawalLoading}
-            onClick={() => setShowPwlsWithdrawalModal(true)}
-          >
-            <Unplug size={22} />
-          </button>
+          {user?.isPasswordless === true && (
+            <button
+              type="button"
+              className={styles.iconLink}
+              title="패스워드리스 해지"
+              disabled={pwlsWithdrawalLoading}
+              onClick={() => setShowPwlsWithdrawalModal(true)}
+            >
+              <Unplug size={22} />
+            </button>
+          )}
         </div>
       </section>
 
