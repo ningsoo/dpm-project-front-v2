@@ -76,6 +76,20 @@
   align-items: center;
 }
 
+/* 인증 확인 전 스켈레톤: 로그인/로그아웃 전환 깜빡임 방지, 동일 폭 유지 */
+.actionsSkeleton {
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.06);
+  flex-shrink: 0;
+}
+
+.dark .actionsSkeleton {
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .iconBtn {
   display: flex;
   align-items: center;
