@@ -27,8 +27,8 @@ interface UserInfo {
   phoneNumber: string;
   profileImage?: string;
   popBalance?: number;
+  passwordless?: boolean;
   youtubeConnected?: boolean;
-  isPasswordless?: boolean;
 }
 
 const TABS = [
@@ -613,7 +613,7 @@ export default function MypagePage() {
           >
             <User size={22} />
           </button>
-          {user?.isPasswordless === true && (
+          {user?.passwordless === true && (
             <button
               type="button"
               className={styles.iconLink}
