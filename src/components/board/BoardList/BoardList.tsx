@@ -20,6 +20,7 @@ import type { BoardCategorySlug } from '@/utils/boardThumbnailUtils';
 import YouTubeHoverThumbnail from '@/components/board/YouTubeHoverThumbnail';
 import ShowcaseFeaturedSection from '@/components/board/ShowcaseFeaturedSection';
 import CommonBoardCarousel from '@/components/board/CommonBoardCarousel';
+import { BoardCard } from '@/components/board/BoardCard';
 import styles from './BoardList.module.css';
 
 interface BoardListProps {
@@ -228,53 +229,28 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
             const isShowcase = category === 'showcase';
             const videoId = isShowcase ? getShowcaseVideoId(p) : '';
 
-            const handleCardClick = () => {
-              router.push(`/boards/${p.boardId}`);
-            };
+            const thumbnail =
+              isShowcase && videoId ? (
+                <YouTubeHoverThumbnail
+                  thumbnailUrl={thumbnailUrl}
+                  videoId={videoId}
+                  alt={p.title}
+                />
+              ) : (
+                <img src={thumbnailUrl} alt="" className={styles.thumb} />
+              );
 
             return (
-              <div
+              <BoardCard
                 key={`${p.boardId}-${idx}`}
-                className={styles.card}
-                onClick={handleCardClick}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleCardClick();
-                  }
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                <div className={styles.thumbWrap}>
-                  {isShowcase && videoId ? (
-                    <YouTubeHoverThumbnail
-                      thumbnailUrl={thumbnailUrl}
-                      videoId={videoId}
-                      alt={p.title}
-                    />
-                  ) : (
-                    <img src={thumbnailUrl} alt="" className={styles.thumb} />
-                  )}
-                </div>
-                <div className={styles.cardBody}>
-                  <div className={styles.cardTitle}>
-                    {/* community, reviews 카테고리일 때만 번호 표시 */}
-                    {shouldShowNumbers && p.displayNumber && (
-                      <span style={{ marginRight: '8px', fontWeight: 'bold' }}>
-                        {p.displayNumber}.
-                      </span>
-                    )}
-                    {p.title}
-                  </div>
-                  <div className={styles.meta}>
-                    {p.nickname || '—'} · ♥{p.likes ?? 0}
-                    {shouldShowNumbers && ` · 댓글 ${formatCommentCount(p.countComment)}`}
-                    {` · views ${formatViews(p.views)}`}
-                  </div>
-                </div>
-              </div>
+                thumbnail={thumbnail}
+                title={p.title}
+                nickname={p.nickname}
+                likeCount={p.likes}
+                viewCount={p.views}
+                displayNumber={shouldShowNumbers ? p.displayNumber : undefined}
+                onClick={() => router.push(`/boards/${p.boardId}`)}
+              />
             );
           })}
         </div>
