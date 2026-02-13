@@ -1,0 +1,133 @@
+.section {
+  padding: 18px 0;
+  background: #fafafa;
+}
+
+:global(.dark) .section {
+  background: #1D1D1B;
+}
+
+.wrapper {
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+  overflow: visible;
+  display: flex;
+  justify-content: flex-start;
+  padding: 0 24px;
+}
+
+.track {
+  display: flex;
+  gap: 0;
+  align-items: center;
+  justify-content: flex-start;
+  transition: all 0.5s ease;
+}
+
+.card {
+  flex-shrink: 0;
+  height: 400px;
+  position: relative;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: all 0.5s ease;
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+:global(.dark) .card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.card.center {
+  height: 400px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  transition: width 0.3s ease, transform 0.3s ease;
+}
+
+:global(.dark) .card.center {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* Playlists/Spotlight 호버 확장 */
+.playlists .card.center:hover,
+.spotlight .card.center:hover {
+  transform: scale(1.05);
+}
+
+/* Showcase 호버 효과 */
+.showcase .card.center:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+}
+
+.thumb {
+  width: 100%;
+  height: 100%;
+  background: #eee;
+  border-radius: 12px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+
+:global(.dark) .thumb {
+  background: #2E2E2C;
+}
+
+.video {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 12px;
+}
+
+.overlay {
+  width: 100%;
+  padding: 20px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
+  border-radius: 0 0 12px 12px;
+}
+
+.card.center .overlay {
+  padding: 30px;
+}
+
+.cardTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.card.center .cardTitle {
+  font-size: 1.3rem;
+}
+
+.desc {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.card.center .desc {
+  font-size: 1rem;
+  margin-top: 10px;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

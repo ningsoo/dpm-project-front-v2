@@ -1,0 +1,214 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store';
+import { boardApi } from '@/api/boardApi';
+import type { BoardListItem } from '@/api/boardTypes';
+import {
+  extractBoardListFromResponse,
+  getBoardThumbnailUrl,
+  getShowcaseVideoId,
+} from '@/utils/boardThumbnailUtils';
+import styles from './ShowcaseFeaturedSection.module.css';
+
+/** 첫 프레임에 배경만 보이는 flicker 방지: 한 번 그린 뒤 opacity 전환 (스켈레톤/콘텐츠 동일) */
+const useSectionReveal = () => {
+  const [revealed, setRevealed] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setRevealed(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return revealed;
+};
+
+const TOTAL = 4;
+const HOVER_DELAY = 180;
+const SCALE = 1.25;     // 균일 확대 (비율 유지)
+
+export default function ShowcaseFeaturedSection() {
+  const darkMode = useSelector((s: RootState) => s.ui.darkMode);
+
+  const [posts, setPosts] = useState<BoardListItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [playingIndex, setPlayingIndex] = useState<number | null>(null);
+
+  const hoverTimer = useRef<number | null>(null);
+
+  /* 첫 프레임 배경 단독 노출 제거 후 스켈레톤/콘텐츠 자연스럽게 등장 */
+  const sectionRevealed = useSectionReveal();
+
+  useEffect(() => {
+    setIsLoading(true);
+    boardApi
+      .getBoardByCategory('SHOWCASE')
+      .then(({ data }) => {
+        const list = extractBoardListFromResponse(data);
+        setPosts(list.slice(0, TOTAL));
+      })
+      .catch(() => setPosts([]))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const getEmbedUrl = (videoId: string) => {
+    if (!videoId) return '';
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0`;
+  };
+
+  const clearHoverTimer = () => {
+    if (hoverTimer.current) {
+      window.clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+  };
+
+  const onEnter = (index: number) => {
+    clearHoverTimer();
+    hoverTimer.current = window.setTimeout(() => {
+      setActiveIndex(index);
+      setPlayingIndex(index);
+    }, HOVER_DELAY);
+  };
+
+  const onLeave = (index: number) => {
+    clearHoverTimer();
+    setPlayingIndex((prev) => (prev === index ? null : prev));
+    setActiveIndex(null);
+  };
+
+  const getLeftPercent = (index: number) => `${index * 25}%`;
+
+  const getTransform = (index: number) => {
+    if (index !== activeIndex) return 'translateY(-50%)';
+
+    // 균일 scale → 비율 유지 + 좌우 확장 방향 제어
+    if (index === 0) {
+      return `translateY(-50%) scale(${SCALE}) translateX(5%)`;
+    }
+
+    if (index === TOTAL - 1) {
+      return `translateY(-50%) scale(${SCALE}) translateX(-5%)`;
+    }
+
+    return `translateY(-50%) scale(${SCALE})`;
+  };
+
+  /* 로딩 중: 높이 선점 + 스켈레톤 */
+  if (isLoading) {
+    return (
+      <section
+        className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''} ${
+          sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
+        }`}
+      >
+        <div className={styles.container}>
+          <div className={styles.cardWrapper}>
+            {Array.from({ length: TOTAL }).map((_, i) => (
+              <div
+                key={`skeleton-${i}`}
+                className={styles.skeletonCard}
+                style={{ left: `${i * 25}%` }}
+              >
+                <div className={styles.skeletonThumb} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  /* 로드 완료 후 데이터 부족: 높이 유지 + 빈 상태 */
+  if (posts.length < TOTAL) {
+    return (
+      <section
+        className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''} ${
+          sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
+        }`}
+      >
+        <div className={styles.container}>
+          <div className={styles.cardWrapper}>
+            <div className={styles.emptyState}>등록된 쇼케이스가 없습니다.</div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section
+      className={`${styles.section} ${darkMode ? 'dark' : ''} ${
+        sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
+      }`}
+    >
+      <div className={styles.container}>
+        <div className={styles.cardWrapper}>
+          {posts.map((post, i) => {
+            const isActive = i === activeIndex;
+            const isPlaying = i === playingIndex && isActive;
+
+            const videoId = getShowcaseVideoId(post);
+            const hasVideo = !!videoId;
+            const thumb = getBoardThumbnailUrl(post, 'showcase');
+
+            return (
+              <div
+                key={post.boardId}
+                className={`${styles.card} ${isActive ? styles.active : ''}`}
+                style={{
+                  left: getLeftPercent(i),
+                  transform: getTransform(i),
+                }}
+                onMouseEnter={() => onEnter(i)}
+                onMouseLeave={() => onLeave(i)}
+                onClick={() =>
+                  (window.location.href = `/boards/${post.boardId}`)
+                }
+              >
+                <div className={styles.mediaContainer}>
+                  {thumb && (
+                    <img
+                      src={thumb}
+                      alt={post.title}
+                      className={`${styles.thumbnail} ${
+                        isPlaying ? styles.hidden : ''
+                      }`}
+                    />
+                  )}
+
+                  {hasVideo && isPlaying && (() => {
+                    const embedUrl = getEmbedUrl(videoId);
+                    return embedUrl ? (
+                      <iframe
+                        key={`${post.boardId}-play`}
+                        className={`${styles.video} ${styles.visible}`}
+                        src={embedUrl}
+                        allow="autoplay; encrypted-media"
+                        allowFullScreen
+                        title={post.title}
+                      />
+                    ) : null;
+                  })()}
+
+                  <div
+                    className={`${styles.overlay} ${
+                      isPlaying ? styles.visible : ''
+                    }`}
+                  >
+                    <div className={styles.overlayContent}>
+                      <div className={styles.author}>
+                        {post.nickname || '—'}
+                      </div>
+                      <div className={styles.title}>{post.title}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}

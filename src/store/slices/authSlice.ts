@@ -1,45 +1,39 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
-export interface UserInfo {
-  id: string;
-  email: string;
-  nickname: string;
-  phone?: string;
-  profileImage?: string;
-  role?: string;
-  credits?: number;
-}
+import { tokenUtils } from '@/utils/tokenUtils';
 
 interface AuthState {
-  user: UserInfo | null;
   isAuthenticated: boolean;
-  tokenStatus: 'idle' | 'valid' | 'expired';
+  initialized: boolean;
 }
 
 const initialState: AuthState = {
-  user: null,
   isAuthenticated: false,
-  tokenStatus: 'idle',
+  initialized: false,
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    setUser: (state, action: PayloadAction<UserInfo | null>) => {
-      state.user = action.payload;
-      state.isAuthenticated = !!action.payload;
+    // accessToken 존재 여부로 isAuthenticated 업데이트
+    checkAuth: (state) => {
+      const token = tokenUtils.getAccessToken();
+      state.isAuthenticated = !!token;
     },
-    setTokenStatus: (state, action: PayloadAction<AuthState['tokenStatus']>) => {
-      state.tokenStatus = action.payload;
+    // 초기화 완료 플래그 설정
+    setInitialized: (state) => {
+      state.initialized = true;
     },
     logout: (state) => {
-      state.user = null;
       state.isAuthenticated = false;
-      state.tokenStatus = 'idle';
+      tokenUtils.clearTokens();
+    },
+    clearAuth: (state) => {
+      state.isAuthenticated = false;
+      tokenUtils.clearTokens();
     },
   },
 });
 
-export const { setUser, setTokenStatus, logout } = authSlice.actions;
+export const { checkAuth, setInitialized, logout, clearAuth } = authSlice.actions;
 export default authSlice.reducer;

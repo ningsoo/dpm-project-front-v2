@@ -1,36 +1,67 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
-import type { BoardCategory } from '@/api/boardApi';
+import type { BoardListItem } from '@/api/boardTypes';
+import {
+  extractBoardListFromResponse,
+  getBoardThumbnailUrl,
+} from '@/utils/boardThumbnailUtils';
+import { ChevronLeft, ChevronRight, Heart, Eye } from 'lucide-react';
+import { formatViews } from '@/utils/displayFormatters';
 import styles from './SpotlightCarousel.module.css';
 
-const CARD_WIDTH = 200;
-const VISIBLE = 5;
-const CENTER_INDEX = Math.floor(VISIBLE / 2);
+/** 데이터 + 레이아웃 준비 전 배경 flicker 방지: 준비 후 opacity 전환 */
+const useSectionReveal = (isLoading: boolean, hasContent: boolean, layoutReady: boolean) => {
+  const [revealed, setRevealed] = useState(false);
+  const isReady = isLoading || !hasContent || layoutReady;
+  useEffect(() => {
+    if (!isReady) {
+      setRevealed(false);
+      return;
+    }
+    const id = requestAnimationFrame(() => setRevealed(true));
+    return () => cancelAnimationFrame(id);
+  }, [isReady]);
+  return revealed;
+};
 
-interface SpotlightPost {
-  id: string;
-  title: string;
-  description?: string;
-  image?: string;
-  category: string;
-}
+const CARD_GAP = 20;
+const TRANSITION_MS = 650;
 
 export default function SpotlightCarousel() {
+  const router = useRouter();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
-  const [posts, setPosts] = useState<SpotlightPost[]>([]);
-  const [center, setCenter] = useState(CENTER_INDEX);
 
+  const [posts, setPosts] = useState<BoardListItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const [center, setCenter] = useState(0);
+  const [transitionEnabled, setTransitionEnabled] = useState(false);
+  const [layoutReady, setLayoutReady] = useState(false);
+
+  const [cardWidth, setCardWidth] = useState(0);
+  const [wrapperWidth, setWrapperWidth] = useState(0);
+
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const shouldResetWhenReachEndRef = useRef(false);
+  const isTransitingRef = useRef(false);
+
+  const sectionRevealed = useSectionReveal(isLoading, posts.length > 0, layoutReady);
+
+  /** 데이터 조회 */
   const fetchSpotlights = useCallback(async () => {
     try {
-      const { data } = await boardApi.getBoards();
-      const list = (data?.data as { spotlights?: SpotlightPost[] })?.spotlights ?? [];
-      setPosts(Array.isArray(list) ? list : []);
+      const { data } = await boardApi.getBoardByCategory('SPOTLIGHT');
+      const list = extractBoardListFromResponse(data);
+      setPosts(list);
     } catch {
       setPosts([]);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -38,53 +69,263 @@ export default function SpotlightCarousel() {
     fetchSpotlights();
   }, [fetchSpotlights]);
 
-  // Auto-slide: every 4s move right
+  const N = Math.min(posts.length, 10);
+
+  /** width 계산 */
   useEffect(() => {
-    if (posts.length <= 1) return;
-    const t = setInterval(() => {
-      setCenter((c) => (c + 1) % posts.length);
-    }, 4000);
-    return () => clearInterval(t);
+    const el = wrapperRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const w = el.clientWidth;
+      if (w <= 0) return;
+      setWrapperWidth(w);
+      const base = Math.max(200, Math.floor((w - CARD_GAP * 2) / 3));
+      setCardWidth(base);
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    window.addEventListener('resize', update);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', update);
+    };
   }, [posts.length]);
 
-  const onCardClick = (index: number) => {
-    if (index === center && posts[index]) {
-      const p = posts[index];
-      window.location.href = `/boards/${(p.category as BoardCategory) || 'spotlight'}/${p.id}`;
+  /** layout 준비 후 center=N, layoutReady 세팅 (흔들림 방지) */
+  useEffect(() => {
+    if (N === 0 || wrapperWidth <= 0 || layoutReady) return;
+    setTransitionEnabled(false);
+    setCenter(N);
+    requestAnimationFrame(() => {
+      setLayoutReady(true);
+      requestAnimationFrame(() => {
+        setTransitionEnabled(true);
+      });
+    });
+  }, [N, wrapperWidth, layoutReady]);
+
+  /** 끝 도달 시 점프 애니메이션 제거 (2N → N 리셋) */
+  useEffect(() => {
+    if (!layoutReady) return;
+    if (center !== 2 * N) return;
+    if (!shouldResetWhenReachEndRef.current) return;
+
+    isTransitingRef.current = true;
+    const t = setTimeout(() => {
+      setTransitionEnabled(false);
+      setCenter(N);
+      shouldResetWhenReachEndRef.current = false;
+      requestAnimationFrame(() => {
+        setTransitionEnabled(true);
+        isTransitingRef.current = false;
+      });
+    }, TRANSITION_MS);
+
+    return () => clearTimeout(t);
+  }, [N, center, layoutReady]);
+
+  /** center 안정화 가드 */
+  useEffect(() => {
+    if (!layoutReady) return;
+    if (center < N - 1 || center > 2 * N) {
+      setTransitionEnabled(false);
+      setCenter(N);
+      requestAnimationFrame(() => {
+        setTransitionEnabled(true);
+      });
+    }
+  }, [center, N, layoutReady]);
+
+  /** autoplay */
+  useEffect(() => {
+    if (!layoutReady || N === 0) return;
+
+    const t = setInterval(() => {
+      if (isTransitingRef.current) return;       // 전환 중이면 건너뜀
+      setCenter((c) => {
+        if (c >= 2 * N - 1) {
+          isTransitingRef.current = true;
+          shouldResetWhenReachEndRef.current = true;
+          return 2 * N;
+        }
+        return c + 1;
+      });
+    }, 4000);
+
+    return () => clearInterval(t);
+  }, [N, layoutReady]);
+
+  /** 이동 */
+  const movePrev = () => {
+    if (N === 0 || isTransitingRef.current) return;
+
+    if (center === N) {
+      isTransitingRef.current = true;
+      setTransitionEnabled(false);
+      setCenter(2 * N);
+      requestAnimationFrame(() => {
+        setCenter(2 * N - 1);
+        requestAnimationFrame(() => {
+          setTransitionEnabled(true);
+          setTimeout(() => { isTransitingRef.current = false; }, TRANSITION_MS);
+        });
+      });
     } else {
-      setCenter(index);
+      setCenter((c) => c - 1);
     }
   };
 
-  if (posts.length === 0) return null;
+  const moveNext = () => {
+    if (N === 0 || isTransitingRef.current) return;
 
-  const offset = -center * CARD_WIDTH + (typeof document !== 'undefined' ? (document.documentElement.clientWidth || 1200) / 2 - CARD_WIDTH / 2 : 0);
+    if (center >= 2 * N - 1) {
+      isTransitingRef.current = true;          // 즉시 잠금 — 리셋 완료 전 추가 클릭 차단
+      shouldResetWhenReachEndRef.current = true;
+      setCenter(2 * N);
+    } else {
+      setCenter((c) => c + 1);
+    }
+  };
+
+  const goToPost = (postId: number) => {
+    router.push(`/boards/${postId}`);
+  };
+
+  /** 데이터 구성 */
+  const originalPosts = posts.slice(0, 10);
+  const displayPosts = [...originalPosts, ...originalPosts, ...originalPosts];
+  const len = displayPosts.length;
+
+  /** translate 계산 (layoutReady 전에는 0으로 흔들림 방지) */
+  const translateX =
+    !layoutReady || !cardWidth || !wrapperWidth || len === 0
+      ? 0
+      : wrapperWidth / 2 -
+        cardWidth / 2 -
+        center * (cardWidth + CARD_GAP);
+
+  const trackTransform = layoutReady
+    ? `translateX(${translateX}px)`
+    : 'translateX(0px)';
+
+  /** skeleton */
+  if (isLoading) {
+    return (
+      <section
+        className={`${styles.section} ${styles.sectionPlaceholder} ${
+          darkMode ? 'dark' : ''
+        } ${sectionRevealed ? styles.sectionRevealed : styles.sectionHidden}`}
+      >
+        <div className={styles.wrapper} ref={wrapperRef}>
+          <div className={styles.track}>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className={styles.skeletonCard} />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  /** empty */
+  if (posts.length === 0) {
+    return (
+      <section
+        className={`${styles.section} ${styles.sectionPlaceholder} ${
+          darkMode ? 'dark' : ''
+        } ${sectionRevealed ? styles.sectionRevealed : styles.sectionHidden}`}
+      >
+        <div className={styles.wrapper}>
+          <div className={styles.emptyState}>
+            등록된 스팟라이트가 없습니다.
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className={`${styles.section} ${darkMode ? 'dark' : ''}`}>
-      <h2 className={styles.title}>Spotlight</h2>
-      <div className={styles.wrapper}>
+    <section
+      className={`${styles.section} ${darkMode ? 'dark' : ''} ${
+        sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
+      }`}
+    >
+      <div className={styles.wrapper} ref={wrapperRef}>
+        <button
+          type="button"
+          className={styles.prevBtn}
+          onClick={movePrev}
+        >
+          <ChevronLeft size={48} />
+        </button>
+
+        <button
+          type="button"
+          className={styles.nextBtn}
+          onClick={moveNext}
+        >
+          <ChevronRight size={48} />
+        </button>
+
         <div
           className={styles.track}
-          style={{ transform: `translateX(calc(50% - ${CARD_WIDTH / 2}px + ${offset}px))` }}
+          style={{
+            transform: trackTransform,
+            transition:
+              !transitionEnabled || !layoutReady
+                ? 'none'
+                : `transform ${TRANSITION_MS}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
+          }}
         >
-          {posts.slice(0, 10).map((p, i) => (
-            <div
-              key={p.id}
-              role="button"
-              tabIndex={0}
-              className={`${styles.card} ${i === center ? styles.center : ''}`}
-              onClick={() => onCardClick(i)}
-              onKeyDown={(e) => (e.key === 'Enter' ? onCardClick(i) : null)}
-            >
+          {displayPosts.map((post, index) => {
+            const isCenter = index === center;
+
+            return (
               <div
-                className={styles.thumb}
-                style={p.image ? { backgroundImage: `url(${p.image})`, backgroundSize: 'cover' } : {}}
-              />
-              <div className={styles.cardTitle}>{p.title}</div>
-              <div className={styles.desc}>{p.description || ''}</div>
-            </div>
-          ))}
+                key={`${post.boardId}-${index}`}
+                className={`${styles.card} ${
+                  isCenter ? styles.center : ''
+                }`}
+                style={{ width: cardWidth, minWidth: cardWidth }}
+                onClick={() => goToPost(post.boardId)}
+              >
+                <div
+                  className={styles.thumb}
+                  style={{
+                    backgroundImage: `url(${getBoardThumbnailUrl(
+                      post,
+                      'spotlight'
+                    )})`,
+                  }}
+                >
+                  <div className={styles.overlay}>
+                    <div className={styles.cardTitle}>
+                      {post.title}
+                    </div>
+                    <div className={styles.overlayMetaRow}>
+                      <div className={styles.author}>{post.nickname || '—'}</div>
+                      <div className={styles.meta}>
+                        <span className={styles.metaItem}>
+                          <Heart size={14} strokeWidth={2} />
+                          {post.likes ?? 0}
+                        </span>
+                        <span className={styles.metaItem}>
+                          <Eye size={14} strokeWidth={2} />
+                          {formatViews(post.views)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={styles.desc}>
+                      {post.content || ''}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>

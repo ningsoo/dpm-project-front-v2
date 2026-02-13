@@ -19,10 +19,10 @@
 }
 
 .avatar {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
-  background: #e0e0e0;
+  background: #070707;
 }
 
 .profileText {
@@ -46,7 +46,7 @@
 .credits {
   margin-top: 4px;
   font-weight: 600;
-  color: #1976d2;
+  color: #111;
 }
 
 .profileActions {
@@ -65,10 +65,32 @@
   border: 1px solid #eee;
   border-radius: 10px;
   transition: background 0.2s, color 0.2s;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.iconLink button {
+  border: none;
+  padding: 0;
+  margin: 0;
+  background: none;
+  font: inherit;
 }
 
 .iconLink:hover {
   background: #f0f0f0;
+  color: #111;
+}
+
+.iconLink:focus,
+.iconLink:focus-visible,
+.iconLink:active {
+  outline: none;
+  box-shadow: none;
+}
+
+.iconLinkActive {
+  border-color: #111;
   color: #111;
 }
 
@@ -99,7 +121,7 @@
 }
 
 .tabActive {
-  background: #1976d2;
+  background: #111;
   color: #fff;
 }
 
@@ -108,4 +130,1449 @@
   padding: 16px 0;
   font-size: 0.95rem;
   color: #444;
+}
+
+/* Grid 테이블 공통 스타일 */
+.tableGrid {
+  display: grid;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+}
+
+.tableHeader {
+  background: #f5f5f5;
+  border-bottom: 2px solid #ddd;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 12px;
+  text-align: center;
+}
+
+.tableHeader > div {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tableRow {
+  border-bottom: 1px solid #eee;
+}
+
+.tableCell {
+  padding: 12px;
+  font-size: 14px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tableCell button {
+  display: inline-block;
+}
+
+.tableHeader > div:first-child {
+  padding-left: 20px;
+}
+
+/* 신고 내역: 체크박스와 신고일시 간격 띄우기 */
+.reportsGrid.tableHeader > div:first-child,
+.reportsGrid.tableRow > div:first-child {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+/* 내 게시글 */
+.postsGrid {
+  grid-template-columns: 140px 1fr 160px 100px 100px;
+}
+
+/* 내 댓글 */
+.commentsGrid {
+  grid-template-columns: 140px 1fr 1fr 160px;
+}
+
+/* 좋아요 한 게시글 */
+.likedGrid {
+  grid-template-columns: 140px 1fr 140px 160px 100px 100px;
+}
+
+/* 결제 내역 */
+.paymentGrid {
+  grid-template-columns: minmax(150px, 1fr) minmax(100px, 0.8fr) minmax(100px, 0.8fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(150px, 1.2fr) minmax(100px, 0.8fr);
+}
+
+/* 크레딧 사용 내역 */
+.creditUsageGrid {
+  grid-template-columns: 180px 120px 1fr 140px;
+}
+
+/* 정산 내역: 5컬럼 (정산요청일, 정산승인일, change amount, 정산금액, 정산처리상태) - tableGrid/tableHeader/tableRow와 조합 */
+.settlementGrid5 {
+  grid-template-columns: minmax(150px, 1fr) minmax(150px, 1fr) minmax(120px, 0.8fr) minmax(140px, 1fr) minmax(150px, 1fr);
+}
+
+.settlementGrid5.tableHeader,
+.settlementGrid5.tableRow {
+  padding: 0;
+}
+
+.settlementGrid5.tableHeader > div {
+  padding: 12px;
+  text-align: center;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settlementGrid5.tableHeader > div:first-child {
+  padding-left: 12px;
+}
+
+.settlementGrid5.tableRow .tableCell {
+  padding: 12px;
+  text-align: center;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 정산 신청: 2컬럼 (후원금액, 후원승인일) */
+.settlementRequestGrid2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.settlementRequestGrid2.tableHeader,
+.settlementRequestGrid2.tableRow {
+  padding: 0;
+}
+
+.settlementRequestGrid2.tableHeader > div {
+  padding: 12px;
+  text-align: center;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.settlementRequestGrid2.tableHeader > div:first-child {
+  padding-left: 12px;
+}
+
+.settlementRequestGrid2.tableRow .tableCell {
+  padding: 12px;
+  text-align: center;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 정산 신청: 3컬럼 (legacy, 정산번호·정산금액·정산승인일) - 유지 */
+.settlementGrid3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.settlementGrid3Col1 {
+  text-align: center;
+}
+
+.settlementGrid3Col2 {
+  text-align: center;
+}
+
+.settlementGrid3Col3 {
+  text-align: center;
+}
+
+.settlementGrid3EmptyCell {
+  grid-column: 1 / -1;
+  text-align: center;
+}
+
+.settlementGrid3EmptyRow {
+  border-bottom: none;
+}
+
+/* 정산 신청 상단: 회색 박스 내부에 요약 + 버튼, 세로 중앙 정렬 */
+.settlementRequestSummaryBox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  min-width: 0;
+}
+
+.settlementRequestSummaryBox .settlementSummaryRow {
+  flex: 1;
+  min-width: 0;
+}
+
+.settlementRequestSummaryBox .submitBtn {
+  flex-shrink: 0;
+}
+
+/* 결제 완료 화면: 내려온 값 강조 (파란색 + 굵게) */
+.successHighlight {
+  color: #111;
+  font-weight: 700;
+}
+
+/* POP 탭 충전하기 = 정산요청 버튼과 동일 스타일 */
+.popSection .settlementRequestSummaryBox .submitBtn {
+  align-self: center;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: #111;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.popSection .settlementRequestSummaryBox .submitBtn:hover:not(:disabled) {
+  background: #000;
+}
+
+.popSection .settlementRequestSummaryBox .submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settlementRequestTableWrap {
+  margin-top: 20px;
+}
+
+/* POP 섹션 */
+.popSection {
+  width: 100%;
+}
+
+.popTableWrap {
+  margin-top: 16px;
+}
+
+/* 사용내역: 사용일시·사용대상 넓게, 수량·내용·상태·취소 좁게 */
+.popUsageGrid6 {
+  width: 100%;
+  grid-template-columns:
+    18%   /* 사용일시 */
+    12%   /* 사용수량 */
+    20%   /* 사용대상 */
+    16%   /* 사용내용 */
+    14%   /* 사용상태 */
+    14%;  /* 사용취소 */
+}
+
+/* 구매내역: 사용내역과 동일한 그리드 비율 */
+.popPurchaseGrid6 {
+  width: 100%;
+  grid-template-columns:
+    18%   /* 충전일시 */
+    12%   /* 충전수량 */
+    20%   /* 팝타겟 */
+    16%   /* 결제금액 */
+    18%   /* 유효기간 */
+    14%;  /* 구매취소 */
+}
+
+/* POP 테이블 헤더·셀 패딩 통일 */
+.popUsageGrid6.tableHeader,
+.popPurchaseGrid6.tableHeader {
+  padding: 0;
+}
+
+.popUsageGrid6.tableHeader > div,
+.popPurchaseGrid6.tableHeader > div {
+  padding: 10px 6px;
+}
+
+.popUsageGrid6 .tableCell,
+.popPurchaseGrid6 .tableCell {
+  padding: 10px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popGridEmptyCell {
+  grid-column: 1 / -1;
+  text-align: center;
+}
+
+/* 후원 섹션 */
+.donationSection {
+  width: 100%;
+}
+
+.donationSentGrid {
+  grid-template-columns: minmax(140px, 1fr) minmax(120px, 1fr) minmax(100px, 0.8fr) minmax(80px, 0.6fr) minmax(100px, 0.8fr);
+}
+
+.donationReceivedGrid {
+  grid-template-columns: minmax(140px, 1fr) minmax(120px, 1fr) minmax(100px, 0.8fr) minmax(80px, 0.6fr);
+}
+
+/* 보낸내역: 9컬럼 — % 고정 너비 */
+.donationSentGrid9 {
+  width: 100%;
+  grid-template-columns:
+    5%    /* No. */
+    13%   /* 후원일 */
+    13%   /* 요청일 */
+    13%   /* 승인일 */
+    13%   /* 취소일 */
+    9%    /* 금액 */
+    8%    /* 상태 */
+    10%   /* 취소 */
+    8%;   /* 수혜자 */
+}
+
+/* 받은내역: 8컬럼 — % 고정 너비 */
+.donationReceivedGrid8 {
+  width: 100%;
+  grid-template-columns:
+    5%    /* No. */
+    14%   /* 후원일 */
+    14%   /* 요청일 */
+    14%   /* 확정일 */
+    14%   /* 취소일 */
+    10%   /* 금액 */
+    10%   /* 상태 */
+    10%;  /* 후원자 */
+}
+
+/* 보낸내역: 8컬럼 (No. 제거) */
+.donationSentGrid8 {
+  width: 100%;
+  grid-template-columns:
+    14%   /* 후원일 */
+    14%   /* 요청일 */
+    14%   /* 승인일 */
+    14%   /* 취소일 */
+    10%   /* 금액 */
+    10%   /* 상태 */
+    12%   /* 취소 */
+    12%;  /* 수혜자 */
+}
+
+/* 받은내역: 7컬럼 (No. 제거) */
+.donationReceivedGrid7 {
+  width: 100%;
+  grid-template-columns:
+    16%   /* 후원일 */
+    16%   /* 요청일 */
+    16%   /* 확정일 */
+    16%   /* 취소일 */
+    12%   /* 금액 */
+    12%   /* 상태 */
+    12%;  /* 후원자 */
+}
+
+/* 후원 테이블: 헤더·셀 패딩 통일 */
+.donationSentGrid9.tableHeader,
+.donationReceivedGrid8.tableHeader,
+.donationSentGrid8.tableHeader,
+.donationReceivedGrid7.tableHeader {
+  padding: 0;
+}
+
+.donationSentGrid9.tableHeader > div,
+.donationReceivedGrid8.tableHeader > div,
+.donationSentGrid8.tableHeader > div,
+.donationReceivedGrid7.tableHeader > div {
+  padding: 10px 6px;
+}
+
+.donationSentGrid9 .tableCell,
+.donationReceivedGrid8 .tableCell,
+.donationSentGrid8 .tableCell,
+.donationReceivedGrid7 .tableCell {
+  padding: 10px 6px;
+}
+
+.donationSentGrid9.tableRow,
+.donationReceivedGrid8.tableRow,
+.donationSentGrid8.tableRow,
+.donationReceivedGrid7.tableRow {
+  padding: 0;
+}
+
+.donationSentGrid8.tableHeader > div:first-child,
+.donationReceivedGrid7.tableHeader > div:first-child {
+  padding-left: 6px;
+}
+
+.donationDateCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.donationDateCell span:first-child {
+  font-weight: 500;
+}
+
+.donationScrollArea {
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+/* 후원 취소 확인 모달 메시지 */
+.donationConfirmMessage {
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+  color: #444;
+  line-height: 1.6;
+}
+
+:global(.dark) .donationConfirmMessage {
+  color: #A19E94;
+}
+
+.donationCancelBtn {
+  padding: 5px 14px;
+  font-size: 13px;
+  color: #A6534F;
+  background: transparent;
+  border: 1px solid #A6534F;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+}
+
+.donationCancelBtn:hover {
+  background: #A6534F;
+  color: #fff;
+}
+
+/* 정산 서브탭: 밑줄 인디케이터 포커싱 */
+.settlementSubTabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 24px;
+  padding-bottom: 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.settlementSubTab,
+.settlementSubTabActive {
+  position: relative;
+  padding: 12px 20px;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: #666;
+}
+
+.settlementSubTab:hover {
+  color: #333;
+}
+
+.settlementSubTabActive {
+  color: #111;
+  font-weight: 600;
+}
+
+.settlementSubTabIndicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  width: 100%;
+  background: #111;
+}
+
+.settlementSummaryBlock {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.settlementSummaryRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.settlementTotalAmount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.settlementHistoryTitle {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #111;
+}
+
+.settlementDateRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.settlementDateInput {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.settlementSearchBtn {
+  padding: 8px 16px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.settlementSearchBtn:hover:not(:disabled) {
+  background: #000;
+}
+
+.settlementSearchBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 정산 섹션 래퍼 */
+.settlementSection {
+  width: 100%;
+}
+
+.settlementInnerContent {
+  min-height: 120px;
+}
+
+.settlementLoading,
+.settlementEmpty {
+  padding: 24px;
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+}
+
+.settlementForm {
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settlementField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settlementField label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.settlementInput {
+  padding: 10px 14px;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  outline: none;
+}
+
+.settlementInput:focus {
+  border-color: #111;
+}
+
+.settlementRequestBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 400px;
+}
+
+.settlementRequestHint {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.settlementRequestInfoBox {
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #333;
+  line-height: 1.6;
+}
+
+.settlementRequestInfoBox p {
+  margin: 0 0 6px;
+}
+
+.settlementRequestInfoBox p:last-child {
+  margin-bottom: 0;
+}
+
+.settlementConfirmActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.settlementConfirmBtn {
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: #111;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.settlementConfirmBtn:hover:not(:disabled) {
+  background: #000;
+}
+
+.settlementConfirmBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settlementConfirmCancelBtn {
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #666;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.settlementConfirmCancelBtn:hover:not(:disabled) {
+  background: #eee;
+  border-color: #ccc;
+  color: #333;
+}
+
+.settlementConfirmCancelBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settlementSection .submitBtn {
+  align-self: flex-start;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: #111;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.settlementSection .submitBtn:hover:not(:disabled) {
+  background: #000;
+}
+
+.settlementSection .submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 신고 내역 */
+.reportsGrid {
+  grid-template-columns: minmax(50px, 60px) minmax(150px, 1.2fr) minmax(200px, 1.5fr) minmax(100px, 1fr) minmax(140px, 1.2fr) minmax(120px, 1fr);
+}
+
+/* 문의 내역: 4컬럼 (문의일시, 문의유형, 제목, 상태) */
+.inquiryGrid {
+  grid-template-columns: minmax(150px, 1fr) minmax(120px, 0.8fr) minmax(200px, 2fr) minmax(100px, 0.8fr);
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.statusPending {
+  background: #f5f5f5;
+  color: #757575;
+}
+
+.statusProcessing {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.statusCompleted {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* POP 사용 상태 배지 */
+.popStatusBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.popStatusPositive {
+  composes: popStatusBadge;
+  background: #e3f2fd;
+  color: #000;
+}
+
+.popStatusNegative {
+  composes: popStatusBadge;
+  background: #fce4ec;
+  color: #A6534F;
+}
+
+.popStatusNeutral {
+  composes: popStatusBadge;
+  background: #f5f5f5;
+  color: #757575;
+}
+
+.popCanceledText {
+  color: #999;
+}
+
+:global(.dark) .popStatusPositive {
+  background: #1a2733;
+  color: #64b5f6;
+}
+
+:global(.dark) .popStatusNegative {
+  background: #2c1a1a;
+  color: #C4605C;
+}
+
+:global(.dark) .popStatusNeutral {
+  background: #2a2a28;
+  color: #b0b0b0;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin-top: 20px;
+  padding: 12px 0;
+}
+
+.pageBtn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.pageBtn:hover:not(:disabled) {
+  border-color: #111;
+  color: #111;
+}
+
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageBtnActive {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+
+/* 모달 스타일 */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalCard {
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.closeBtn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: background 0.2s, color 0.2s;
+}
+
+.closeBtn:hover {
+  background: #f5f5f5;
+  color: #111;
+}
+
+.modalTitle {
+  margin: 0 0 24px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.pwlsWithdrawalConfirmText {
+  margin: 0 0 24px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: #333;
+}
+
+/* 모달 하단 버튼 영역: 취소(secondary) / 확인(primary) */
+.settlementConfirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+}
+
+.settlementConfirmCancelBtn {
+  padding: 12px 20px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  background: #fff;
+  border: 1px solid #ddd;
+  color: #333;
+}
+
+.settlementConfirmCancelBtn:hover:not(:disabled) {
+  background: #f5f5f5;
+  border-color: #ccc;
+  color: #111;
+}
+
+.settlementConfirmCancelBtn:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 2px;
+}
+
+.settlementConfirmCancelBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.settlementConfirmBtn {
+  padding: 12px 20px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  background: #111;
+  border: none;
+  color: #fff;
+}
+
+.settlementConfirmBtn:hover:not(:disabled) {
+  background: #000;
+}
+
+.settlementConfirmBtn:focus-visible {
+  outline: 2px solid #111;
+  outline-offset: 2px;
+}
+
+.settlementConfirmBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.inputRow {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.amountInput {
+  width: 100%;
+  padding: 12px 40px 12px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+.clearButton {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
+.errorSlot {
+  min-height: 18px;
+  margin-top: 4px;
+}
+
+.errorText {
+  font-size: 0.875rem;
+  color: #A6534F;
+}
+
+.error {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.875rem;
+  color: #A6534F;
+}
+
+.totalRow {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.totalRow > div:first-child {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.totalRow > div:last-child {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.primaryButton {
+  width: 100%;
+  padding: 16px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: background 0.2s;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: #000;
+}
+
+.primaryButton:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.helperText {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.helperLink {
+  background: none;
+  border: none;
+  color: #111;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+.quickAmountRow {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  overflow: hidden;
+  flex-wrap: nowrap;
+}
+
+.quickAmountBtn {
+  height: 32px;
+  padding: 0 6px;
+  font-size: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  cursor: pointer;
+  flex: 1 1 0;
+  min-width: 0;
+  width: 0;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.quickAmountBtn:hover {
+  background: #f5f5f5;
+  border-color: rgba(0, 0, 0, 0.24);
+}
+
+/* 문의 제목 링크 스타일 */
+.inquiryTitleLink {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  text-align: center;
+  font-family: inherit;
+}
+
+.inquiryTitleLink:hover {
+  color: #111;
+  text-decoration: underline;
+}
+
+/* 문의 상세 모달 */
+.inquiryDetailCard {
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 640px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.inquiryDetailBody {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.inquiryDetailSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inquiryDetailSectionTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.inquiryDetailRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 14px;
+}
+
+.inquiryDetailLabel {
+  flex-shrink: 0;
+  width: 72px;
+  font-weight: 500;
+  color: #666;
+}
+
+.inquiryDetailValue {
+  flex: 1;
+  color: #333;
+  word-break: break-word;
+}
+
+.inquiryDetailAttachmentImg {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+}
+
+.inquiryDetailAttachmentLink {
+  color: #111;
+  text-decoration: underline;
+}
+
+.inquiryDetailPending {
+  padding: 16px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  background: #f9f9f9;
+  border-radius: 8px;
+}
+
+/* Dark mode */
+:global(.dark) .profile {
+  background: #242422;
+}
+
+:global(.dark) .avatar {
+  background: #3A3A38;
+}
+
+:global(.dark) .nickname {
+  color: #B5B3A7;
+}
+
+:global(.dark) .email,
+:global(.dark) .phone {
+  color: #8A877D;
+}
+
+:global(.dark) .iconLink {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #8A877D;
+}
+
+:global(.dark) .iconLink:hover {
+  background: #2E2E2C;
+  color: #B5B3A7;
+}
+
+:global(.dark) .tabs {
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .tab {
+  background: #242422;
+  color: #8A877D;
+}
+
+:global(.dark) .tab:hover {
+  background: #2E2E2C;
+  color: #A19E94;
+}
+
+:global(.dark) .content {
+  color: #A19E94;
+}
+
+:global(.dark) .tableGrid {
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .tableHeader {
+  background: #242422;
+  border-bottom-color: #3A3A38;
+  color: #A19E94;
+}
+
+:global(.dark) .tableRow {
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .tableCell {
+  color: #A19E94;
+}
+
+:global(.dark) .pageBtn {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #A19E94;
+}
+
+:global(.dark) .pageBtn:hover:not(:disabled) {
+  border-color: #B5B3A7;
+  color: #B5B3A7;
+}
+
+:global(.dark) .settlementSubTab {
+  color: #8A877D;
+}
+
+:global(.dark) .settlementSubTab:hover {
+  color: #A19E94;
+}
+
+:global(.dark) .settlementSubTabs {
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .settlementSummaryBlock,
+:global(.dark) .settlementRequestSummaryBox,
+:global(.dark) .settlementRequestInfoBox {
+  background: #242422;
+  border-color: #3A3A38;
+}
+
+:global(.dark) .settlementSummaryRow {
+  color: #A19E94;
+}
+
+:global(.dark) .settlementHistoryTitle {
+  color: #B5B3A7;
+}
+
+:global(.dark) .settlementDateInput {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .settlementInput {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .settlementInput:focus {
+  border-color: #B5B3A7;
+}
+
+:global(.dark) .settlementField label {
+  color: #A19E94;
+}
+
+:global(.dark) .settlementRequestHint {
+  color: #8A877D;
+}
+
+:global(.dark) .settlementRequestInfoBox {
+  color: #A19E94;
+}
+
+:global(.dark) .settlementLoading,
+:global(.dark) .settlementEmpty {
+  color: #8A877D;
+}
+
+:global(.dark) .settlementConfirmCancelBtn {
+  background: #2E2E2C;
+  border-color: #3A3A38;
+  color: #A19E94;
+}
+
+:global(.dark) .settlementConfirmCancelBtn:hover:not(:disabled) {
+  background: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .donationCancelBtn {
+  color: #A6534F;
+  border-color: #A6534F;
+}
+
+:global(.dark) .modalCard {
+  background: #242422;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark) .modalTitle {
+  color: #B5B3A7;
+}
+
+:global(.dark) .closeBtn {
+  color: #8A877D;
+}
+
+:global(.dark) .closeBtn:hover {
+  background: #2E2E2C;
+  color: #B5B3A7;
+}
+
+:global(.dark) .amountInput {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .clearButton {
+  color: #8A877D;
+}
+
+:global(.dark) .totalRow {
+  background: #2E2E2C;
+}
+
+:global(.dark) .totalRow > div:first-child {
+  color: #8A877D;
+}
+
+:global(.dark) .helperText {
+  color: #8A877D;
+}
+
+:global(.dark) .quickAmountBtn {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #A19E94;
+}
+
+:global(.dark) .quickAmountBtn:hover {
+  background: #2E2E2C;
+}
+
+:global(.dark) .inquiryDetailCard {
+  background: #242422;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark) .inquiryDetailSectionTitle {
+  color: #B5B3A7;
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .inquiryDetailLabel {
+  color: #8A877D;
+}
+
+:global(.dark) .inquiryDetailValue {
+  color: #A19E94;
+}
+
+:global(.dark) .inquiryDetailAttachmentImg {
+  border-color: #3A3A38;
+}
+
+:global(.dark) .inquiryDetailPending {
+  color: #8A877D;
+  background: #2E2E2C;
+}
+
+:global(.dark) .credits {
+  color: #B5B3A7;
+}
+
+:global(.dark) .iconLinkActive {
+  border-color: #B5B3A7;
+  color: #B5B3A7;
+}
+
+:global(.dark) .tabActive {
+  background: #3A3934;
+}
+
+:global(.dark) .pageBtnActive {
+  background: #3A3934;
+  border-color: #3A3934;
+}
+
+:global(.dark) .pageBtn:hover:not(:disabled) {
+  border-color: #B5B3A7;
+  color: #B5B3A7;
+}
+
+:global(.dark) .settlementSubTabActive {
+  color: #B5B3A7;
+}
+
+:global(.dark) .settlementSubTabIndicator {
+  background: #B5B3A7;
+}
+
+:global(.dark) .settlementTotalAmount {
+  color: #B5B3A7;
+}
+
+:global(.dark) .settlementSearchBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .settlementSearchBtn:hover:not(:disabled) {
+  background: #42413B;
+}
+
+:global(.dark) .settlementConfirmBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .settlementConfirmBtn:hover:not(:disabled) {
+  background: #42413B;
+}
+
+:global(.dark) .primaryButton {
+  background: #3A3934;
+}
+
+:global(.dark) .primaryButton:hover:not(:disabled) {
+  background: #42413B;
+}
+
+:global(.dark) .helperLink {
+  color: #B5B3A7;
+}
+
+:global(.dark) .inquiryTitleLink:hover {
+  color: #B5B3A7;
+}
+
+:global(.dark) .inquiryDetailAttachmentLink {
+  color: #B5B3A7;
+}
+
+:global(.dark) .totalRow > div:last-child {
+  color: #B5B3A7;
 }

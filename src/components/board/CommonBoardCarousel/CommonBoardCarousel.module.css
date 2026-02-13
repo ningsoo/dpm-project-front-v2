@@ -1,0 +1,359 @@
+/* ============================= */
+/* Section Layout */
+/* ============================= */
+
+/* 부모 max-width 1200 기준 내부 full */
+.section {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+/* 배경만 먼저 보이는 flicker 방지: 준비 후 opacity 전환 (display 미사용) */
+.sectionHidden {
+  opacity: 0;
+}
+
+.sectionRevealed {
+  opacity: 1;
+  transition: opacity 0.22s ease;
+}
+
+:global(.dark) .section {
+  background: #1D1D1B;
+}
+
+/* CLS 방지 (렌더 전 높이 확보) */
+.sectionPlaceholder {
+  min-height: 420px;
+}
+
+/* ============================= */
+/* Wrapper */
+/* ============================= */
+
+.wrapper {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ============================= */
+/* Track */
+/* ============================= */
+
+.track {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: max-content;
+  height: 420px;
+  transition: transform 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+}
+
+/* Skeleton / CLS 방지 */
+.sectionPlaceholder .track {
+  min-height: 420px;
+}
+
+/* ============================= */
+/* Card */
+/* ============================= */
+
+.card {
+  position: relative;
+  flex-shrink: 0;
+  height: 380px;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  /* hover 흔들림 방지 */
+  transform: translateZ(0);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+:global(.dark) .card {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transform: translateZ(0);
+}
+
+/* ============================= */
+/* Center Card */
+/* ============================= */
+
+.card.center {
+  z-index: 2;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.card.center.expanded {
+  transform: scale(1.1) translateZ(0);
+  transform-origin: center;
+}
+
+:global(.dark) .card.center {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+:global(.dark) .card.center.expanded {
+  transform: scale(1.1) translateZ(0);
+}
+
+/* ============================= */
+/* Thumbnail */
+/* ============================= */
+
+.thumb {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+
+  display: flex;
+  align-items: flex-end;
+
+  background: #eee;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+:global(.dark) .thumb {
+  background-color: #2E2E2C;
+}
+
+/* ============================= */
+/* Overlay */
+/* ============================= */
+
+.overlay {
+  width: 100%;
+  padding: 20px;
+  border-radius: 0 0 12px 12px;
+
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.7),
+    rgba(0, 0, 0, 0)
+  );
+}
+
+.card.center .overlay {
+  padding: 30px;
+}
+
+/* ============================= */
+/* Overlay: 제목 → 닉네임 라인(닉네임 좌측, 좋아요/조회수 우측) */
+/* ============================= */
+
+.overlayMetaRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.card.center .overlayMetaRow {
+  margin-top: 6px;
+}
+
+/* ============================= */
+/* Text */
+/* ============================= */
+
+.cardTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.card.center .cardTitle {
+  font-size: 1.3rem;
+}
+
+.author {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.85);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.card.center .author {
+  font-size: 0.9rem;
+}
+
+.desc {
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.card.center .desc {
+  font-size: 1rem;
+  margin-top: 10px;
+
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 좋아요/조회수: 닉네임 라인과 맞춰 우측 정렬 */
+.meta {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.card.center .meta {
+  font-size: 0.9rem;
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.metaItem svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  opacity: 0.95;
+}
+
+/* ============================= */
+/* Skeleton */
+/* ============================= */
+
+.skeletonCard {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  height: 380px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #e8e8e8;
+  opacity: 0;
+}
+
+.skeletonCard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: carouselShimmer 1.2s ease-in-out infinite;
+}
+
+:global(.dark) .skeletonCard {
+  background: #2E2E2C;
+}
+
+:global(.dark) .skeletonCard::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes carouselShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ============================= */
+/* Empty */
+/* ============================= */
+
+.emptyState {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.95rem;
+  color: #666;
+}
+
+:global(.dark) .emptyState {
+  color: #8A877D;
+}
+
+/* ============================= */
+/* Navigation Buttons */
+/* ============================= */
+
+.prevBtn,
+.nextBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+
+  backdrop-filter: blur(4px);
+  transition: background 0.2s ease;
+}
+
+.prevBtn { left: 10px; }
+.nextBtn { right: 10px; }
+
+.prevBtn:hover,
+.nextBtn:hover {
+  background: rgba(0, 0, 0, 0.8);
+}

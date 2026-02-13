@@ -1,144 +1,157 @@
 import { fetchClient } from './fetchClient';
 import type { ApiResponse } from './authApi';
-import type { BoardCategory } from './boardTypes';
-import { mockBoardData } from './mockBoardData';
+import type {
+  BoardCategory,
+  BoardListItem,
+  BoardDetail,
+  BoardLikeResponse,
+  CommentItem,
+  CommentLikeResponse,
+  CreateBoardRequest,
+  UpdateBoardRequest,
+  CreateCommentRequest,
+  PageableBoardResponse,
+} from './boardTypes';
 
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === 'true';
-
-function wrapMock<T>(data: ApiResponse<T>) {
-  return Promise.resolve({ data }) as Promise<{ data: ApiResponse<T> }>;
-}
-
-async function withMock<T>(real: () => Promise<T>, fallback: () => Promise<T> | T) {
-  if (USE_MOCK) return Promise.resolve(fallback());
-  try {
-    return await real();
-  } catch (error) {
-    console.warn('[boardApi] falling back to mock data', error);
-    return Promise.resolve(fallback());
-  }
-}
-
+/**
+ * Board API
+ * 1. GET  /api/boards/category/[categoryType] - 카테고리 게시글 목록 조회
+ * 2. POST /api/boards/category/[categoryType] - 카테고리 내 게시글 작성
+ * 3. GET  /api/boards/[boardId] - 게시글 상세 조회
+ * 4. PUT  /api/boards/[boardId] - 게시글 수정
+ * 5. DELETE /api/boards/[boardId] - 게시글 삭제
+ */
 export const boardApi = {
-  getBoards: () =>
-    withMock(
-      () => fetchClient.get<ApiResponse<{ spotlights: unknown[] }>>('/boards'),
-      () => wrapMock(mockBoardData.getBoards())
+  /** 1. 카테고리 게시글 목록 조회 - GET /api/boards/category/[categoryType]?page={page} */
+  getBoardByCategory: (categoryType: BoardCategory, page = 0) =>
+    fetchClient.get<ApiResponse<PageableBoardResponse>>(
+      `/api/boards/category/${categoryType}`,
+      { params: { page } }
     ),
 
-  getBoardByCategory: (category: BoardCategory, params?: { page?: number; search?: string }) =>
-    withMock(
-      () => fetchClient.get<ApiResponse<{ posts: unknown[]; total: number }>>(`/boards/${category}`, { params }),
-      () => wrapMock(mockBoardData.getBoardByCategory(category, params))
+  /** 2. 카테고리 내 게시글 작성 - POST /api/boards/category/[categoryType] (JSON) */
+  createPost: (categoryType: BoardCategory, body: CreateBoardRequest) =>
+    fetchClient.post<ApiResponse<string>>(
+      `/api/boards/category/${categoryType}`,
+      body
     ),
 
-  createPost: (category: BoardCategory, body: Record<string, unknown>) =>
-    withMock(
-      () => fetchClient.post<ApiResponse<{ boardId: string }>>(`/boards/${category}`, body),
-      () => wrapMock(mockBoardData.createPost(category, body))
+  /** 2-1. SHOWCASE 게시글 작성 - POST /api/boards/category/SHOWCASE (multipart) */
+  createPostShowcase: (formData: FormData) =>
+    fetchClient.post<ApiResponse<string>>('/api/boards/category/SHOWCASE', formData),
+
+  /** 2-2. PLAYLISTS 게시글 작성 - POST /api/boards/category/PLAYLISTS (multipart) */
+  createPostPlaylists: (formData: FormData) =>
+    fetchClient.post<ApiResponse<string>>('/api/boards/category/PLAYLISTS', formData),
+
+  /** 2-3. SPOTLIGHT 게시글 작성 - POST /api/boards/category/SPOTLIGHT (multipart) */
+  createPostSpotlight: (formData: FormData) =>
+    fetchClient.post<ApiResponse<string>>('/api/boards/category/SPOTLIGHT', formData),
+
+  /** 2-4. COMMUNITY/REVIEWS 게시글 작성 - POST /api/boards/category/{categoryType} (multipart) */
+  createPostWithFile: (categoryType: BoardCategory, formData: FormData) =>
+    fetchClient.post<ApiResponse<string>>(
+      `/api/boards/category/${categoryType}`,
+      formData
     ),
 
-  getPost: (category: BoardCategory, boardId: string) =>
-    withMock(
-      () => fetchClient.get<ApiResponse<unknown>>(`/boards/${category}/${boardId}`),
-      () => wrapMock(mockBoardData.getPost(category, boardId))
+  /** 3. 게시글 상세 조회 - GET /api/boards/[boardId] (signal: AbortController 취소용) */
+  getPost: (boardId: string, options?: { signal?: AbortSignal }) =>
+    fetchClient.get<ApiResponse<BoardDetail>>(
+      `/api/boards/${boardId}`,
     ),
 
-  updatePost: (category: BoardCategory, boardId: string, body: Record<string, unknown>) =>
-    withMock(
-      () => fetchClient.patch<ApiResponse<unknown>>(`/boards/${category}/${boardId}`, body),
-      () => wrapMock(mockBoardData.updatePost(category, boardId, body))
+  /** 4. 게시글 수정 - PATCH /api/boards/[boardId] (JSON) */
+  updatePost: (boardId: string, body: UpdateBoardRequest) =>
+    fetchClient.patch<ApiResponse<string>>(
+      `/api/boards/${boardId}`,
+      body
     ),
 
-  deletePost: (category: BoardCategory, boardId: string) =>
-    withMock(
-      () => fetchClient.delete<ApiResponse<unknown>>(`/boards/${category}/${boardId}`),
-      () => wrapMock(mockBoardData.deletePost(category, boardId))
+  /** 4-1. SHOWCASE 게시글 수정 - PATCH /api/boards/[boardId] (multipart, data: { title, content, youtubeUrl }) */
+  updatePostShowcase: (boardId: string, formData: FormData) =>
+    fetchClient.patch<ApiResponse<string>>(`/api/boards/${boardId}`, formData),
+
+  /** 4-2. PLAYLISTS 게시글 수정 - PATCH /api/boards/[boardId] (multipart, data: { title, content, playlistId }) */
+  updatePostPlaylists: (boardId: string, formData: FormData) =>
+    fetchClient.patch<ApiResponse<string>>(`/api/boards/${boardId}`, formData),
+
+  /** 4-3. SPOTLIGHT 게시글 수정 - PATCH /api/boards/[boardId] (multipart, data: { title, content, deleteAttachmentIds, imageOrder }, files) */
+  updatePostSpotlight: (boardId: string, formData: FormData) =>
+    fetchClient.patch<ApiResponse<string>>(`/api/boards/${boardId}`, formData),
+
+  /** 4-4. COMMUNITY/REVIEWS 게시글 수정 - PATCH /api/boards/[boardId] (multipart, data: { title, content }, deleteIds, files) */
+  updatePostCommunityReviews: (boardId: string, formData: FormData) =>
+    fetchClient.patch<ApiResponse<string>>(`/api/boards/${boardId}`, formData),
+
+  /** 5. 게시글 삭제 - DELETE /api/boards/[boardId] */
+  deletePost: (boardId: string) =>
+    fetchClient.delete<ApiResponse<string>>(
+      `/api/boards/${boardId}`
     ),
 
-  pinPost: (category: BoardCategory, boardId: string) =>
-    withMock(
-      () => fetchClient.post<ApiResponse<unknown>>(`/boards/${category}/${boardId}/pin`),
-      () => wrapMock(mockBoardData.pinPost())
+  /**
+   * 댓글 전체 조회
+   * GET /api/boards/{boardId}/comments
+   */
+  getComments: (boardId: string) =>
+    fetchClient.get<ApiResponse<CommentItem[]>>(
+      `/api/boards/${boardId}/comments`
     ),
 
-  likePost: (category: BoardCategory, boardId: string) =>
-    withMock(
-      () => fetchClient.post<ApiResponse<unknown>>(`/boards/${category}/${boardId}/like`),
-      () => wrapMock(mockBoardData.likePost(category, boardId))
+  /**
+   * 댓글 등록
+   * POST /api/boards/{boardId}/comments
+   */
+  createComment: (boardId: string, body: CreateCommentRequest) =>
+    fetchClient.post<ApiResponse<CommentItem>>(
+      `/api/boards/${boardId}/comments`,
+      body
     ),
 
-  reportPost: (category: BoardCategory, boardId: string, reason: string) =>
-    withMock(
-      () => fetchClient.post<ApiResponse<unknown>>(`/boards/${category}/${boardId}/report`, { reason }),
-      () => wrapMock(mockBoardData.reportPost())
+  /**
+   * 댓글 삭제
+   * DELETE /api/boards/{boardId}/comments/{commentId}
+   */
+  deleteComment: (boardId: string, commentId: string) =>
+    fetchClient.delete<ApiResponse<string>>(
+      `/api/boards/${boardId}/comments/${commentId}`
     ),
 
-  // Comments
-  createComment: (category: BoardCategory, boardId: string, content: string) =>
-    withMock(
-      () => fetchClient.post<ApiResponse<unknown>>(`/boards/${category}/${boardId}/comments`, { content }),
-      () => wrapMock(mockBoardData.createComment(category, boardId, content))
+  /**
+   * 댓글 수정
+   * PATCH /api/boards/{boardId}/comments/{commentId}
+   */
+  updateComment: (boardId: string, commentId: string, body: { content: string }) =>
+    fetchClient.patch<ApiResponse<unknown>>(
+      `/api/boards/${boardId}/comments/${commentId}`,
+      body
     ),
 
-  updateComment: (category: BoardCategory, boardId: string, commentId: string, content: string) =>
-    withMock(
-      () => fetchClient.patch<ApiResponse<unknown>>(`/boards/${category}/${boardId}/comments/${commentId}`, { content }),
-      () => wrapMock(mockBoardData.updateComment(category, boardId, commentId, content))
+  /**
+   * 게시글 좋아요
+   * POST /api/boards/{boardId}/like
+   */
+  likePost: (boardId: string) =>
+    fetchClient.post<ApiResponse<BoardLikeResponse>>(
+      `/api/boards/${boardId}/like`
     ),
 
-  deleteComment: (category: BoardCategory, boardId: string, commentId: string) =>
-    withMock(
-      () => fetchClient.delete<ApiResponse<unknown>>(`/boards/${category}/${boardId}/comments/${commentId}`),
-      () => wrapMock(mockBoardData.deleteComment(category, boardId, commentId))
-    ),
-
-  likeComment: (category: BoardCategory, boardId: string, commentId: string) =>
-    withMock(
-      () => fetchClient.post<ApiResponse<unknown>>(`/boards/${category}/${boardId}/comments/${commentId}/like`),
-      () => wrapMock(mockBoardData.likeComment(category, boardId, commentId))
-    ),
-
-  reportComment: (category: BoardCategory, boardId: string, commentId: string, reason: string) =>
-    withMock(
-      () => fetchClient.post<ApiResponse<unknown>>(`/boards/${category}/${boardId}/comments/${commentId}/report`, { reason }),
-      () => wrapMock(mockBoardData.reportComment())
-    ),
-
-  createReply: (category: BoardCategory, boardId: string, commentId: string, replyId: string, content: string) =>
-    withMock(
-      () =>
-        fetchClient.post<ApiResponse<unknown>>(
-          `/boards/${category}/${boardId}/comments/${commentId}/${replyId}`,
-          { content }
-        ),
-      () => wrapMock(mockBoardData.createReply(category, boardId, commentId, replyId, content))
-    ),
-
-  deleteReply: (category: BoardCategory, boardId: string, commentId: string, replyId: string) =>
-    withMock(
-      () =>
-        fetchClient.delete<ApiResponse<unknown>>(
-          `/boards/${category}/${boardId}/comments/${commentId}/${replyId}`
-        ),
-      () => wrapMock(mockBoardData.deleteReply(category, boardId, commentId, replyId))
-    ),
-
-  reportReply: (
-    category: BoardCategory,
-    boardId: string,
-    commentId: string,
-    replyId: string,
-    reason: string
-  ) =>
-    withMock(
-      () =>
-        fetchClient.post<ApiResponse<unknown>>(
-          `/boards/${category}/${boardId}/comments/${commentId}/${replyId}/report`,
-          { reason }
-        ),
-      () => wrapMock(mockBoardData.reportReply())
+  /**
+   * 댓글 좋아요
+   * POST /api/boards/{boardId}/comments/{commentId}/like
+   */
+  likeComment: (boardId: string, commentId: string) =>
+    fetchClient.post<ApiResponse<CommentLikeResponse>>(
+      `/api/boards/${boardId}/comments/${commentId}/like`
     ),
 };
 
-export type { BoardCategory };
+export type {
+  BoardCategory,
+  BoardListItem,
+  BoardDetail,
+  BoardLikeResponse,
+  CommentItem,
+  CommentLikeResponse,
+};

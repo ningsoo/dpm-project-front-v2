@@ -1,32 +1,31 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
-import type { BoardCategory } from '@/api/boardApi';
+import type { BoardListItem } from '@/api/boardTypes';
+import {
+  extractBoardListFromResponse,
+  getBoardThumbnailUrl,
+  getShowcaseVideoId,
+} from '@/utils/boardThumbnailUtils';
+import YouTubeHoverThumbnail from '@/components/board/YouTubeHoverThumbnail';
+import { BoardCard } from '@/components/board/BoardCard';
 import styles from './TopShowcase.module.css';
 
-interface ShowcasePost {
-  id: string;
-  title: string;
-  authorNickname?: string;
-  likeCount?: number;
-  thumbnail?: string;
-  youtubeUrl?: string;
-}
-
 export default function TopShowcase() {
+  const router = useRouter();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
-  const [posts, setPosts] = useState<ShowcasePost[]>([]);
+  const [posts, setPosts] = useState<BoardListItem[]>([]);
 
   useEffect(() => {
     boardApi
-      .getBoardByCategory('showcase' as BoardCategory, {})
+      .getBoardByCategory('SHOWCASE')
       .then(({ data }) => {
-        const d = data?.data as { posts?: ShowcasePost[] };
-        setPosts(Array.isArray(d?.posts) ? d.posts.slice(0, 8) : []);
+        const list = extractBoardListFromResponse(data);
+        setPosts(list.slice(0, 8));
       })
       .catch(() => setPosts([]));
   }, []);
@@ -37,33 +36,32 @@ export default function TopShowcase() {
     <section className={`${styles.section} ${darkMode ? 'dark' : ''}`}>
       <h2 className={styles.title}>TOP Showcase</h2>
       <div className={styles.grid}>
-        {posts.map((p) => (
-          <Link
-            key={p.id}
-            href={`/boards/showcase/${p.id}`}
-            className={styles.card}
-          >
-            <div className={styles.thumbWrap}>
-              <img
-                src={p.thumbnail || `https://img.youtube.com/vi/${extractYoutubeId(p.youtubeUrl)}/mqdefault.jpg`}
-                alt=""
-                className={styles.thumb}
-              />
-            </div>
-            <div className={styles.body}>
-              <div className={styles.author}>{p.authorNickname || '—'}</div>
-              <div className={styles.cardTitle}>{p.title}</div>
-              <div className={styles.likes}>♥ {p.likeCount ?? 0}</div>
-            </div>
-          </Link>
-        ))}
+        {posts.map((p) => {
+          const thumbnailUrl = getBoardThumbnailUrl(p, 'showcase');
+          const videoId = getShowcaseVideoId(p);
+          const thumbnail = videoId ? (
+            <YouTubeHoverThumbnail
+              thumbnailUrl={thumbnailUrl}
+              videoId={videoId}
+              alt={p.title}
+            />
+          ) : (
+            <img src={thumbnailUrl} alt="" className={styles.thumb} />
+          );
+
+          return (
+            <BoardCard
+              key={p.boardId}
+              thumbnail={thumbnail}
+              title={p.title}
+              nickname={p.nickname}
+              likeCount={p.likes}
+              viewCount={p.views}
+              onClick={() => router.push(`/boards/${p.boardId}`)}
+            />
+          );
+        })}
       </div>
     </section>
   );
-}
-
-function extractYoutubeId(url?: string): string {
-  if (!url) return '';
-  const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/);
-  return m ? m[1] : '';
 }

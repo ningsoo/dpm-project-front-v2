@@ -1,54 +1,93 @@
-import { fetchClient } from './fetchClient';
+import { fetchClient, PAYMENT_BASE } from './fetchClient';
 import type { ApiResponse } from './authApi';
 
+/** 결제 API 공통 응답 타입 */
+export interface RestResponse<T> {
+  success: boolean;
+  message: string | null;
+  data: T;
+}
+
+/** POST {PAYMENT_BASE}/prepare - 결제 준비 (응답 data에 orderId 포함) */
+export function preparePayment(changeAmount: number, amount: number) {
+  return fetchClient.post<RestResponse<{ orderId: string }>>(`${PAYMENT_BASE}/prepare`, {
+    changeAmount,
+    amount,
+  });
+}
+
+/** POST /v1/payments/confirm - 결제 확정 (/api prefix 미사용, baseURL만 사용) */
+export function confirmPayment(orderId: string, paymentKey: string, amount: number, changeAmount?: number) {
+  const body: Record<string, unknown> = { orderId, paymentKey, amount };
+  if (changeAmount != null) body.changeAmount = changeAmount;
+  return fetchClient.post<RestResponse<unknown>>(`${PAYMENT_BASE}/confirm`, body);
+}
+
+/** POST /v1/payments/{paymentKey}/cancel - POP 구매 취소 (/api prefix 미사용, body: { cancelReason }만) */
+export function cancelPayment(paymentKey: string, cancelReason: string) {
+  return fetchClient.post<RestResponse<unknown>>(`${PAYMENT_BASE}/${paymentKey}/cancel`, {
+    cancelReason: cancelReason,
+  });
+}
+
 export const creditApi = {
+  /** 결제 준비 - /v1/payments/prepare 사용 (/api prefix 미사용) 
+   * @deprecated 현재 결제창 흐름은 orderId를 쿼리로 받아 결제창을 띄우는 구조이므로, preparePayment 함수 사용 권장
+   */
   chargeRequest: (amount: number, payMethod: string) =>
     fetchClient.post<ApiResponse<{ orderId: string; redirectUrl?: string }>>(
-      '/mypage/credits/charge/request',
+      `${PAYMENT_BASE}/prepare`,
       { amount, payMethod }
     ),
 
+  /** 결제 확정 - /v1/payments/confirm 사용 (/api prefix 미사용)
+   * 현재 결제창 흐름에서는 confirmPayment 함수 사용 권장
+   */
   chargeConfirm: (orderId: string, paymentKey: string, amount: number) =>
-    fetchClient.post<ApiResponse<unknown>>('/mypage/credits/charge/confirm', {
+    fetchClient.post<ApiResponse<unknown>>(`${PAYMENT_BASE}/confirm`, {
       orderId,
       paymentKey,
       amount,
     }),
 
   chargeCancelRequest: (orderId: string) =>
-    fetchClient.post<ApiResponse<unknown>>('/mypage/credits/charge/cancel/request', { orderId }),
+    fetchClient.post<ApiResponse<unknown>>('/api/mypage/credit/charge/cancel/request', { orderId }),
 
   chargeCancelConfirm: (orderId: string, cancelReason: string) =>
-    fetchClient.post<ApiResponse<unknown>>('/mypage/credits/charge/cancel/confirm', {
+    fetchClient.post<ApiResponse<unknown>>('/api/mypage/credit/charge/cancel/confirm', {
       orderId,
       cancelReason,
     }),
 
   donate: (userId: string, amount: number, message?: string) =>
-    fetchClient.post<ApiResponse<unknown>>(`/users/${userId}/donations`, { amount, message }),
+    fetchClient.post<ApiResponse<unknown>>(`/api/users/${userId}/donations`, { amount, message }),
+
+  /** 게시글 작성자에게 POP 선물 (요청 body: changeAmount, message) */
+  sendDonation: (targetUserId: number, body: { changeAmount: number; message: string }) =>
+    fetchClient.post<ApiResponse<unknown>>(`/api/users/donations/${targetUserId}`, body),
 
   cancelDonation: (userId: string, donationId: string) =>
-    fetchClient.delete<ApiResponse<unknown>>(`/users/${userId}/donations/${donationId}`),
+    fetchClient.delete<ApiResponse<unknown>>(`/api/users/${userId}/donations/${donationId}`),
 
   getBalance: () =>
-    fetchClient.get<ApiResponse<{ charged: number; used: number; remaining: number }>>('/mypage/balance'),
+    fetchClient.get<ApiResponse<{ charged: number; used: number; remaining: number }>>('/api/mypage/balance'),
 
   cancelCreditUsage: (usageId: string) =>
-    fetchClient.post<ApiResponse<unknown>>('/mypage/balance/cancel', { usageId }),
+    fetchClient.post<ApiResponse<unknown>>('/api/mypage/balance/cancel', { usageId }),
 
   // Settlements
   registerSettlement: (body: { bankCode: string; accountNumber: string; holderName: string }) =>
-    fetchClient.post<ApiResponse<unknown>>('/mypage/settlements', body),
+    fetchClient.post<ApiResponse<unknown>>('/api/mypage/settlements', body),
 
   getSettlementsAvailable: () =>
-    fetchClient.get<ApiResponse<unknown>>('/mypage/settlements/available'),
+    fetchClient.get<ApiResponse<unknown>>('/api/mypage/settlements/available'),
 
   requestSettlement: (amount: number) =>
-    fetchClient.post<ApiResponse<unknown>>('/mypage/settlements/request', { amount }),
+    fetchClient.post<ApiResponse<unknown>>('/api/mypage/settlements/request', { amount }),
 
   verifySettlementAccount: (body: { bankCode: string; accountNumber: string; holderName: string }) =>
-    fetchClient.post<ApiResponse<unknown>>('/mypage/settlements/verification', body),
+    fetchClient.post<ApiResponse<unknown>>('/api/mypage/settlements/verification', body),
 
   cancelSettlementRequest: (requestId: string) =>
-    fetchClient.post<ApiResponse<unknown>>('/mypage/settlements/cancel/request', { requestId }),
+    fetchClient.post<ApiResponse<unknown>>('/api/mypage/settlements/cancel/request', { requestId }),
 };
