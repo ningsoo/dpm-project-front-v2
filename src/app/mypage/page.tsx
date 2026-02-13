@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { Suspense, useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
@@ -61,7 +61,7 @@ function getValidTab(tabParam: string | null): string {
 const PWLS_WITHDRAWAL_GUIDE =
   '패스워드리스 해지가 완료되었습니다.';
 
-export default function MypagePage() {
+function MypagePageContent() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const searchParams = useSearchParams();
@@ -1715,5 +1715,19 @@ export default function MypagePage() {
       )}
 
     </div>
+  );
+}
+
+export default function MypagePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className={styles.wrap}>
+          <p>로딩 중...</p>
+        </div>
+      }
+    >
+      <MypagePageContent />
+    </Suspense>
   );
 }
