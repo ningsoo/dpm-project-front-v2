@@ -55,13 +55,13 @@ export default function CreditClient() {
   useEffect(() => {
     if (!orderId.trim()) {
       ToastUtils.error('잘못된 접근입니다.');
-      router.replace('/mypage');
+      router.replace('/mypage?tab=pop&popSubTab=purchase');
       setQueryValid(false);
       return;
     }
     if (changeAmount == null || amount == null) {
       ToastUtils.error('잘못된 접근입니다.');
-      router.replace('/mypage');
+      router.replace('/mypage?tab=pop&popSubTab=purchase');
       setQueryValid(false);
       return;
     }
@@ -100,8 +100,8 @@ export default function CreditClient() {
 
     const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
     if (!clientKey) {
-      ToastUtils.error('결제 환경 설정이 없습니다.');
-      router.replace('/mypage');
+      ToastUtils.error('결제 설정이 누락되었습니다. 관리자에게 문의해주세요.');
+      router.replace('/mypage?tab=pop&popSubTab=purchase');
       return;
     }
 
@@ -114,7 +114,7 @@ export default function CreditClient() {
         paymentRef.current = payment;
       })
       .catch(() => {
-        if (!cancelled) ToastUtils.error('결제 모듈을 불러오지 못했습니다.');
+        if (!cancelled) ToastUtils.error('결제 모듈 로딩에 실패했습니다. 잠시 후 다시 시도해주세요.');
       });
 
     return () => {
@@ -126,11 +126,13 @@ export default function CreditClient() {
   const canSubmit = queryValid === true && changeAmount != null && amount != null && !paymentLoading;
 
   const handlePurchase = async () => {
+    // 중복 요청 방지 가드
+    if (paymentLoading) return;
     if (!canSubmit) return;
 
     const payment = paymentRef.current;
     if (!payment) {
-      ToastUtils.error('결제 모듈을 불러오는 중입니다.');
+      ToastUtils.error('결제 모듈을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
       return;
     }
 
@@ -138,7 +140,32 @@ export default function CreditClient() {
     const successUrl = `${origin}/mypage/credit/success?changeAmount=${changeAmount}`;
     const failUrl = `${origin}/mypage/credit/fail`;
 
+    // 결제 시도 정보를 sessionStorage에 저장 (failUrl에서 사용)
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem(
+          'lastPaymentAttempt',
+          JSON.stringify({
+            orderId,
+            amount: amount!,
+            changeAmount: changeAmount!,
+            selectedMethod,
+            timestamp: Date.now(),
+          })
+        );
+      } catch {
+        // sessionStorage 실패는 무시 (선택적 기능)
+      }
+    }
+
     setPaymentLoading(true);
+
+    // 결제 실패 시 공통 리다이렉트 헬퍼
+    const redirectToPurchase = () => {
+      setTimeout(() => {
+        router.replace('/mypage?tab=pop&popSubTab=purchase');
+      }, 300);
+    };
 
     try {
       await payment.requestPayment({
@@ -152,8 +179,43 @@ export default function CreditClient() {
         successUrl,
         failUrl,
       });
-    } catch (err) {
-      ToastUtils.error('결제 요청에 실패했습니다.');
+    } catch (err: unknown) {
+      // 에러 코드/메시지 추출
+      const errAny = err as any;
+      const code = errAny?.code;
+      const message = errAny?.message;
+      const errStr = String(err);
+
+      // 사용자가 결제창을 닫았거나 취소한 경우
+      if (
+        code === 'USER_CANCEL' ||
+        code === 'CANCELED' ||
+        message?.toLowerCase().includes('cancel') ||
+        errStr.toLowerCase().includes('cancel')
+      ) {
+        ToastUtils.error('결제가 취소되었습니다.');
+        redirectToPurchase();
+        return;
+      }
+
+      // 네트워크/일시 장애 추정
+      if (
+        code === 'NETWORK_ERROR' ||
+        code === 'TIMEOUT' ||
+        message?.toLowerCase().includes('network') ||
+        message?.toLowerCase().includes('timeout') ||
+        message?.toLowerCase().includes('failed') ||
+        errStr.toLowerCase().includes('network') ||
+        errStr.toLowerCase().includes('timeout')
+      ) {
+        ToastUtils.error('네트워크 문제로 결제 요청에 실패했습니다. 다시 시도해주세요.');
+        redirectToPurchase();
+        return;
+      }
+
+      // 그 외
+      ToastUtils.error('결제 요청에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      redirectToPurchase();
     } finally {
       setPaymentLoading(false);
     }

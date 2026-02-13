@@ -23,7 +23,7 @@ export function confirmPayment(orderId: string, paymentKey: string, amount: numb
   return fetchClient.post<RestResponse<unknown>>(`${PAYMENT_BASE}/confirm`, body);
 }
 
-/** POST /v1/payments/{paymentKey}/cancel - POP 구매 취소 (/api prefix 미사용) */
+/** POST /v1/payments/{paymentKey}/cancel - POP 구매 취소 (/api prefix 미사용, body: { cancelReason }만) */
 export function cancelPayment(paymentKey: string, cancelReason: string) {
   return fetchClient.post<RestResponse<unknown>>(`${PAYMENT_BASE}/${paymentKey}/cancel`, {
     cancelReason: cancelReason,
@@ -31,14 +31,18 @@ export function cancelPayment(paymentKey: string, cancelReason: string) {
 }
 
 export const creditApi = {
-  /** 결제 준비 - /v1/payments/prepare 사용 (/api prefix 미사용) */
+  /** 결제 준비 - /v1/payments/prepare 사용 (/api prefix 미사용) 
+   * @deprecated 현재 결제창 흐름은 orderId를 쿼리로 받아 결제창을 띄우는 구조이므로, preparePayment 함수 사용 권장
+   */
   chargeRequest: (amount: number, payMethod: string) =>
     fetchClient.post<ApiResponse<{ orderId: string; redirectUrl?: string }>>(
       `${PAYMENT_BASE}/prepare`,
       { amount, payMethod }
     ),
 
-  /** 결제 확정 - /v1/payments/confirm 사용 (/api prefix 미사용) */
+  /** 결제 확정 - /v1/payments/confirm 사용 (/api prefix 미사용)
+   * 현재 결제창 흐름에서는 confirmPayment 함수 사용 권장
+   */
   chargeConfirm: (orderId: string, paymentKey: string, amount: number) =>
     fetchClient.post<ApiResponse<unknown>>(`${PAYMENT_BASE}/confirm`, {
       orderId,

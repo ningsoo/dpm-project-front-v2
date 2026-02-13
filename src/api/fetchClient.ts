@@ -3,7 +3,7 @@ import { tokenUtils } from '@/utils/tokenUtils';
 import { store } from '@/store';
 import { clearAuth } from '@/store/slices/authSlice';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://soundock-alb-se1-75264038.ap-northeast-2.elb.amazonaws.com/';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
 
 /** 결제 API 전용 경로 prefix (백엔드는 /v1/payments 로 라우팅, /api 붙이면 404) */
 export const PAYMENT_BASE = '/v1/payments';

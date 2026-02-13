@@ -1131,7 +1131,7 @@ export default function MypagePage() {
         )}
         {tab === 'pop' && (() => {
           const popSubTabParam = searchParams.get('popSubTab');
-          const validPopSubTab = popSubTabParam === 'usage' || popSubTabParam === 'purchase' ? popSubTabParam : 'usage';
+          const validPopSubTab = popSubTabParam === 'usage' || popSubTabParam === 'purchase' ? popSubTabParam : 'purchase';
           return (
             <PopSection
               user={user}

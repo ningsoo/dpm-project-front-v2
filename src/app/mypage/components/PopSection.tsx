@@ -7,6 +7,7 @@ import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
 import { mypageApi } from '@/api/mypageApi';
 import { cancelPayment } from '@/api/creditApi';
+import { toUserFriendlyTossMessage } from '@/utils/tossErrorMessage';
 import styles from '../mypage.module.css';
 import type { AxiosError } from 'axios';
 
@@ -19,8 +20,8 @@ interface PopSectionProps {
 }
 
 const POP_SUB_TABS = [
-  { id: 'usage' as const, label: '사용내역' },
   { id: 'purchase' as const, label: '구매내역' },
+  { id: 'usage' as const, label: '사용내역' },
 ];
 
 const USAGE_COLUMNS = ['사용일시', '사용수량', '사용대상', '사용내용', '사용상태', '사용취소'];
@@ -44,8 +45,10 @@ export type PopPurchaseRow = {
   createdDatetime?: string;
   changeAmount?: number;
   target?: string;
+  popStatus?: string;
   actualAmount?: number | null;
   expiredDatetime?: string;
+  canceled?: boolean;
   isCanceled?: boolean;
 };
 
@@ -203,7 +206,15 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
       .getPopPurchaseHistory()
       .then((res) => {
         const rows = parsePopResponse(res.data) as PopPurchaseRow[];
-        setPurchaseList(Array.isArray(rows) ? rows : []);
+        const list = Array.isArray(rows) ? rows : [];
+        setPurchaseList(
+          list.filter(
+            (row) =>
+              row.paymentKey != null &&
+              row.paymentKey !== '' &&
+              (row.popStatus === 'COMPLETED' || row.popStatus === 'CANCELED')
+          )
+        );
       })
       .catch(handleError)
       .finally(() => setPurchaseLoading(false));
@@ -280,6 +291,9 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
   };
 
   const handleConfirmPurchaseCancel = useCallback(async () => {
+    // 중복 요청 방지 가드
+    if (purchaseCancelSubmitting) return;
+
     const row = purchaseCancelTarget;
     if (!row) return;
     const paymentKey = row.paymentKey;
@@ -306,13 +320,36 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
       // 서버 데이터로 동기화
       fetchPurchase();
     } catch (err: unknown) {
-      const data = (err as { response?: { data?: { message?: string } } })?.response?.data;
-      const msg = typeof data?.message === 'string' ? data.message : undefined;
-      ToastUtils.error(msg || '구매 취소에 실패했습니다.');
+      // AxiosError인 경우 에러 메시지 추출 강화
+      const axiosErr = err as {
+        response?: {
+          status?: number;
+          data?: {
+            message?: string;
+            errorCode?: string;
+          };
+        };
+      };
+
+      const status = axiosErr?.response?.status;
+      const data = axiosErr?.response?.data;
+
+      // 401인 경우 로그인으로 이동
+      if (status === 401) {
+        ToastUtils.error('로그인이 필요합니다.');
+        router.push('/auth/login');
+        return;
+      }
+
+      // 그 외 실패: data.message → 토스 변환 시도 → 변환 성공 시 tossFriendly, 아니면 rawMessage, 없으면 기본 문구 (errorCode는 노출하지 않음)
+      const rawMessage = typeof data?.message === 'string' ? data.message.trim() : '';
+      const tossFriendly = toUserFriendlyTossMessage(rawMessage || undefined);
+      const displayMessage = tossFriendly ?? (rawMessage || '구매 취소에 실패했습니다.');
+      ToastUtils.error(displayMessage);
     } finally {
       setPurchaseCancelSubmitting(false);
     }
-  }, [purchaseCancelTarget, fetchPurchase, onPopBalanceRefresh]);
+  }, [purchaseCancelTarget, purchaseCancelSubmitting, fetchPurchase, onPopBalanceRefresh]);
 
   const handleSearch = () => {
     if (subTab === 'usage') {
@@ -478,15 +515,15 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
                     {mapPurchaseTargetToLabel(row.target)}
                   </div>
                   <div className={styles.tableCell}>
-                     {formatActualAmount(row.actualAmount ?? row.changeAmount)}
+                     {formatActualAmount(row.actualAmount)}
                   </div>
                   <div className={styles.tableCell}>
-                    <PopUsageDateCell dt={row.expiredDatetime} />
+                    <PopUsageDateCell dt={row.popStatus === 'CANCELED' ? undefined : row.expiredDatetime} />
                   </div>
                   <div className={styles.tableCell}>
-                    {(row.isCanceled === true) ? (
-                      <span className={styles.popCanceledText}>취소완료</span>
-                    ) : (
+                    {row.popStatus === 'CANCELED' ? (
+                      <span className={styles.popStatusNeutral}>취소완료</span>
+                    ) : row.popStatus === 'COMPLETED' ? (
                       <button
                         type="button"
                         className={styles.donationCancelBtn}
@@ -494,7 +531,7 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
                       >
                         구매취소
                       </button>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               ))
