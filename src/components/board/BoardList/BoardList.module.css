@@ -286,3 +286,108 @@
 :global(.dark) .table tr:hover td {
   background: #2e2e2c;
 }
+
+/* ================= 로그인 유도 모달 (BoardFormLayout = 글 조회 좋아요 모달과 동일) ================= */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modalContent {
+  padding: 24px;
+  background: #fff;
+  border-radius: 20px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modalMessage {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modalButton {
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modalButtonCancel {
+  background: #f2f2f2;
+  color: #333;
+}
+
+.modalButtonCancel:hover {
+  background: #e6e6e6;
+}
+
+.modalButtonConfirm {
+  background: #111;
+  color: #fff;
+}
+
+.modalButtonConfirm:hover {
+  background: #000;
+}
+
+.modalButtonDelete {
+  background: #d32f2f;
+  color: #fff;
+}
+
+.modalButtonDelete:hover {
+  background: #b71c1c;
+}
+
+:global(.dark) .modalContent {
+  background: #242422;
+}
+
+:global(.dark) .modalMessage {
+  color: #b5b3a7;
+}
+
+:global(.dark) .modalButtonCancel {
+  background: #2e2e2c;
+  color: #a19e94;
+}
+
+:global(.dark) .modalButtonCancel:hover {
+  background: #3a3a38;
+}
+
+:global(.dark) .modalButtonConfirm {
+  background: #3a3934;
+}
+
+:global(.dark) .modalButtonConfirm:hover {
+  background: #42413b;
+}
+
+:global(.dark) .modalButtonDelete {
+  background: #c62828;
+}
+
+:global(.dark) .modalButtonDelete:hover {
+  background: #b71c1c;
+}
