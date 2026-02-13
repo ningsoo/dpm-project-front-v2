@@ -214,7 +214,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
           className={styles.writeBtn}
           onClick={handleWriteClick}
         >
-          글작성
+          작성
         </button>
       </div>
 

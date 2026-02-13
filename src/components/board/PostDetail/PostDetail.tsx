@@ -582,6 +582,13 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
               maxLength={200}
             />
             <div className={styles.modalButtons}>
+            <button
+                type="button"
+                className={`${styles.modalButton} ${styles.modalButtonConfirm}`}
+                onClick={handleReportSubmit}
+              >
+                신고
+              </button>
               <button
                 type="button"
                 className={`${styles.modalButton} ${styles.modalButtonCancel}`}
@@ -592,13 +599,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
               >
                 취소
               </button>
-              <button
-                type="button"
-                className={`${styles.modalButton} ${styles.modalButtonConfirm}`}
-                onClick={handleReportSubmit}
-              >
-                신고
-              </button>
+
             </div>
           </div>
         </div>
