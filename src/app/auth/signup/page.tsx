@@ -195,8 +195,13 @@ export default function SignupPage() {
               setEmailAvailable(true);
             }
           }
-        } catch {
+        } catch (err: unknown) {
           if (currentSequence === emailCheckSequenceRef.current) {
+            const errData = (err as { response?: { data?: { message?: string; data?: { message?: string } } } })?.response?.data;
+            const msg = errData?.data?.message || errData?.message || '';
+            if (msg) {
+              setErrors((prev) => ({ ...prev, email: msg }));
+            }
             setEmailAvailable(false);
           }
         } finally {
