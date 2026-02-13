@@ -174,35 +174,111 @@ export default function CreatePost({ category }: CreatePostProps) {
 
   /* ---------------- Submit ---------------- */
 
+  /** 공통: createRequest Blob을 FormData에 붙이는 헬퍼 */
+  const appendCreateRequest = (formData: FormData, payload: object) => {
+    formData.append(
+      'createRequest',
+      new Blob([JSON.stringify(payload)], { type: 'application/json' })
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const trimmedTitle = title.trim();
+    const trimmedContent = content.trim();
+
+    // 1. 공통 유효성: title, content 필수
+    if (!trimmedTitle || !trimmedContent) {
+      setErrors((prev) => ({
+        ...prev,
+        title: !trimmedTitle ? '제목을 입력해주세요.' : '',
+        content: !trimmedContent ? '내용을 입력해주세요.' : '',
+      }));
+      ToastUtils.error('제목과 내용을 입력해주세요.');
+      return;
+    }
+    setErrors({});
     setLoading(true);
 
     try {
       const categoryType = toBoardCategory(category);
 
-      if (category === 'showcase') {
-        const formData = new FormData();
-
-        formData.append(
-          'createRequest',
-          new Blob(
-            [
-              JSON.stringify({
-                title: title.trim(),
-                content: content.trim(),
-                youtubeUrl: youtubeUrl.trim(),
-              }),
-            ],
-            { type: 'application/json' }
-          )
-        );
-
-        const { data } =
+      switch (category) {
+        case 'showcase': {
+          if (!youtubeUrlOk) {
+            ToastUtils.error('유효한 YouTube URL을 입력해주세요.');
+            setLoading(false);
+            return;
+          }
+          const formData = new FormData();
+          appendCreateRequest(formData, {
+            title: trimmedTitle,
+            content: trimmedContent,
+            youtubeUrl: youtubeUrl.trim(),
+          });
           await boardApi.createPostShowcase(formData);
+          break;
+        }
 
-        router.push(`/boards/${data?.data}`);
+        case 'playlists': {
+          if (!playlistIdOk) {
+            ToastUtils.error('플레이리스트를 선택해주세요.');
+            setLoading(false);
+            return;
+          }
+          const formData = new FormData();
+          appendCreateRequest(formData, {
+            title: trimmedTitle,
+            content: trimmedContent,
+            playlistId: selectedPlaylist!.playlistId,
+          });
+          await boardApi.createPostPlaylists(formData);
+          break;
+        }
+
+        case 'spotlight': {
+          if (!spotlightPhotosOk) {
+            ToastUtils.error('사진을 1~5장 선택해주세요.');
+            setLoading(false);
+            return;
+          }
+          const formData = new FormData();
+          appendCreateRequest(formData, {
+            title: trimmedTitle,
+            content: trimmedContent,
+          });
+          photos.forEach((file) => formData.append('files', file));
+          await boardApi.createPostSpotlight(formData);
+          break;
+        }
+
+        case 'community':
+        case 'reviews': {
+          const formData = new FormData();
+          appendCreateRequest(formData, {
+            title: trimmedTitle,
+            content: trimmedContent,
+          });
+          if (attachmentFile) {
+            formData.append('files', attachmentFile);
+          }
+          await boardApi.createPostWithFile(categoryType, formData);
+          break;
+        }
+
+        default: {
+          ToastUtils.error('지원하지 않는 카테고리입니다.');
+          setLoading(false);
+          return;
+        }
       }
+
+      // 201 Created 성공 시 해당 카테고리 목록으로 이동
+      const listSlug = ['showcase', 'playlists', 'spotlight', 'community', 'reviews'].includes(category)
+        ? category
+        : 'showcase';
+      router.push(`/boards/category/${listSlug}`);
     } catch {
       ToastUtils.error('글 등록 실패');
     } finally {
