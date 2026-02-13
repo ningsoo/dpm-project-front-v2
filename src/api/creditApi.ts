@@ -17,12 +17,10 @@ export function preparePayment(changeAmount: number, amount: number) {
 }
 
 /** POST /v1/payments/confirm - 결제 확정 (/api prefix 미사용, baseURL만 사용) */
-export function confirmPayment(orderId: string, paymentKey: string, amount: number) {
-  return fetchClient.post<RestResponse<unknown>>('/v1/payments/confirm', {
-    orderId,
-    paymentKey,
-    amount,
-  });
+export function confirmPayment(orderId: string, paymentKey: string, amount: number, changeAmount?: number) {
+  const body: Record<string, unknown> = { orderId, paymentKey, amount };
+  if (changeAmount != null) body.changeAmount = changeAmount;
+  return fetchClient.post<RestResponse<unknown>>(`${PAYMENT_BASE}/confirm`, body);
 }
 
 /** POST /v1/payments/{paymentKey}/cancel - POP 구매 취소 (/api prefix 미사용, body: { cancelReason }만) */

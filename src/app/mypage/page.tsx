@@ -27,6 +27,7 @@ interface UserInfo {
   phoneNumber: string;
   profileImage?: string;
   popBalance?: number;
+  passwordless?: boolean;
   youtubeConnected?: boolean;
 }
 
@@ -612,15 +613,17 @@ export default function MypagePage() {
           >
             <User size={22} />
           </button>
-          <button
-            type="button"
-            className={styles.iconLink}
-            title="패스워드리스 해지"
-            disabled={pwlsWithdrawalLoading}
-            onClick={() => setShowPwlsWithdrawalModal(true)}
-          >
-            <Unplug size={22} />
-          </button>
+          {user?.passwordless === true && (
+            <button
+              type="button"
+              className={styles.iconLink}
+              title="패스워드리스 해지"
+              disabled={pwlsWithdrawalLoading}
+              onClick={() => setShowPwlsWithdrawalModal(true)}
+            >
+              <Unplug size={22} />
+            </button>
+          )}
         </div>
       </section>
 
@@ -656,15 +659,17 @@ export default function MypagePage() {
                 style={{
                   width: '100%',
                   padding: '8px 40px 8px 12px',
-                  border: '1px solid #ddd',
+                  border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
                   borderRadius: 8,
                   fontSize: 14,
+                  background: darkMode ? '#242422' : '#fff',
+                  color: darkMode ? '#B5B3A7' : '#333',
                 }}
               />
               <button
                 type="button"
                 onClick={() => handleSearch('posts')}
-                onMouseEnter={(e) => { e.currentTarget.style.color = darkMode ? '#3A3934' : '#1976d2'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = darkMode ? '#3A3934' : '#111'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; }}
                 style={{
                   position: 'absolute',
@@ -713,15 +718,17 @@ export default function MypagePage() {
                 style={{
                   width: '100%',
                   padding: '8px 40px 8px 12px',
-                  border: '1px solid #ddd',
+                  border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
                   borderRadius: 8,
                   fontSize: 14,
+                  background: darkMode ? '#242422' : '#fff',
+                  color: darkMode ? '#B5B3A7' : '#333',
                 }}
               />
               <button
                 type="button"
                 onClick={() => handleSearch('comments')}
-                onMouseEnter={(e) => { e.currentTarget.style.color = darkMode ? '#3A3934' : '#1976d2'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = darkMode ? '#3A3934' : '#111'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; }}
                 style={{
                   position: 'absolute',
@@ -769,15 +776,17 @@ export default function MypagePage() {
                 style={{
                   width: '100%',
                   padding: '8px 40px 8px 12px',
-                  border: '1px solid #ddd',
+                  border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
                   borderRadius: 8,
                   fontSize: 14,
+                  background: darkMode ? '#242422' : '#fff',
+                  color: darkMode ? '#B5B3A7' : '#333',
                 }}
               />
               <button
                 type="button"
                 onClick={() => handleSearch('liked')}
-                onMouseEnter={(e) => { e.currentTarget.style.color = darkMode ? '#3A3934' : '#1976d2'; }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = darkMode ? '#3A3934' : '#111'; }}
                 onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; }}
                 style={{
                   position: 'absolute',
@@ -822,21 +831,21 @@ export default function MypagePage() {
                 type="date"
                 value={dateRange.reports.start}
                 onChange={(e) => setDateRange({ ...dateRange, reports: { ...dateRange.reports, start: e.target.value } })}
-                style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14 }}
+                style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
               />
-              <span>~</span>
+              <span style={{ color: darkMode ? '#8A877D' : undefined }}>~</span>
               <input
                 type="date"
                 value={dateRange.reports.end}
                 onChange={(e) => setDateRange({ ...dateRange, reports: { ...dateRange.reports, end: e.target.value } })}
-                style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14 }}
+                style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
               />
               <button
                 type="button"
                 onClick={() => handleDateRangeSearch('reports')}
                 style={{
                   padding: '8px 16px',
-                  background: darkMode ? '#6B7080' : '#1976d2',
+                  background: darkMode ? '#3A3934' : '#111',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 8,
@@ -852,7 +861,7 @@ export default function MypagePage() {
                   onClick={handleReportCancel}
                   style={{
                     padding: '8px 16px',
-                    background: '#c62828',
+                    background: '#A6534F',
                     color: '#fff',
                     border: 'none',
                     borderRadius: 8,
@@ -907,14 +916,14 @@ export default function MypagePage() {
                 type="date"
                 value={dateRange.inquiries.start}
                 onChange={(e) => setDateRange({ ...dateRange, inquiries: { ...dateRange.inquiries, start: e.target.value } })}
-                style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14 }}
+                style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
               />
-              <span>~</span>
+              <span style={{ color: darkMode ? '#8A877D' : undefined }}>~</span>
               <input
                 type="date"
                 value={dateRange.inquiries.end}
                 onChange={(e) => setDateRange({ ...dateRange, inquiries: { ...dateRange.inquiries, end: e.target.value } })}
-                style={{ padding: '8px 12px', border: '1px solid #ddd', borderRadius: 8, fontSize: 14 }}
+                style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
               />
               <button
                 type="button"
@@ -951,7 +960,7 @@ export default function MypagePage() {
                   padding: '8px 16px',
                   background: (inquiryLoading || (!!dateRange.inquiries.start !== !!dateRange.inquiries.end))
                     ? '#b0b0b0'
-                    : darkMode ? '#6B7080' : '#1976d2',
+                    : darkMode ? '#3A3934' : '#111',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 8,
@@ -1165,13 +1174,13 @@ export default function MypagePage() {
           <div
             style={{
               padding: 24,
-              background: '#fff',
+              background: darkMode ? '#2E2E2C' : '#fff',
               borderRadius: 12,
               maxWidth: 360,
               textAlign: 'center',
             }}
           >
-            <p style={{ margin: '0 0 16px' }}>이 신고를 취소하시겠어요?</p>
+            <p style={{ margin: '0 0 16px', color: darkMode ? '#B5B3A7' : undefined }}>이 신고를 취소하시겠어요?</p>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
               <button
                 type="button"
@@ -1193,7 +1202,7 @@ export default function MypagePage() {
                 onClick={handleReportCancelConfirm}
                 style={{
                   padding: '8px 16px',
-                  background: darkMode ? '#6B7080' : '#1976d2',
+                  background: darkMode ? '#3A3934' : '#111',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 8,
@@ -1263,13 +1272,13 @@ export default function MypagePage() {
           <div
             style={{
               padding: 24,
-              background: '#fff',
+              background: darkMode ? '#2E2E2C' : '#fff',
               borderRadius: 12,
               maxWidth: 500,
               width: '90%',
             }}
           >
-            <h2 style={{ margin: '0 0 16px', fontSize: 18 }}>프로필 사진 영역 선택</h2>
+            <h2 style={{ margin: '0 0 16px', fontSize: 18, color: darkMode ? '#B5B3A7' : undefined }}>프로필 사진 영역 선택</h2>
             <div
               style={{
                 position: 'relative',
@@ -1347,7 +1356,7 @@ export default function MypagePage() {
                   top: cropArea.y,
                   width: cropArea.size,
                   height: cropArea.size,
-                  border: `3px solid ${darkMode ? '#3A3934' : '#1976d2'}`,
+                  border: `3px solid ${darkMode ? '#3A3934' : '#111'}`,
                   borderRadius: '50%',
                   cursor: isDragging ? 'grabbing' : 'grab',
                   boxSizing: 'border-box',
@@ -1370,7 +1379,7 @@ export default function MypagePage() {
                     width: 20,
                     height: 20,
                     borderRadius: '50%',
-                    background: darkMode ? '#3A3934' : '#1976d2',
+                    background: darkMode ? '#3A3934' : '#111',
                     border: '2px solid #fff',
                     cursor: 'nwse-resize',
                     boxSizing: 'border-box',
@@ -1403,7 +1412,7 @@ export default function MypagePage() {
                 onClick={handleCropConfirm}
                 style={{
                   padding: '8px 16px',
-                  background: darkMode ? '#6B7080' : '#1976d2',
+                  background: darkMode ? '#3A3934' : '#111',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 8,

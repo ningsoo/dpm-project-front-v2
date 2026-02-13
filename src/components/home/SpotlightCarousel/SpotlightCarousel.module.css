@@ -7,6 +7,17 @@
   background: #fafafa;
 }
 
+/* ===== Reveal ===== */
+
+.sectionHidden {
+  opacity: 0;
+}
+
+.sectionRevealed {
+  opacity: 1;
+  transition: opacity 0.22s ease;
+}
+
 .sectionPlaceholder .track {
   min-height: 420px;
 }
@@ -15,7 +26,10 @@
   background: #1D1D1B;
 }
 
+/* ===== Title ===== */
+
 .title {
+  font-family: "Monda", sans-serif;
   margin: 0 0 24px;
   font-size: 1.5rem;
   font-weight: 700;
@@ -27,15 +41,19 @@
   color: #B5B3A7;
 }
 
+/* ===== Wrapper (핵심 수정) ===== */
+
 .wrapper {
   overflow: hidden;
   position: relative;
   width: 100%;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0;                 /* ← padding 제거 */
+  box-sizing: border-box;
 }
 
-/* 트랙: flex + translateX 슬라이드 (CommonBoardCarousel과 동일) */
+/* ===== Track ===== */
+
 .track {
   display: flex;
   align-items: center;
@@ -46,10 +64,13 @@
   will-change: transform;
 }
 
+/* ===== Card (핵심 수정) ===== */
+
 .card {
   position: relative;
   flex-shrink: 0;
-  height: 380px;
+  width: 360px;               /* ← width 명시 */
+  height: 400px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   cursor: pointer;
@@ -65,6 +86,8 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
+/* ===== Center Card ===== */
+
 .card.center {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   z-index: 2;
@@ -73,6 +96,8 @@
 :global(.dark) .card.center {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
 }
+
+/* ===== Thumb ===== */
 
 .thumb {
   width: 100%;
@@ -88,19 +113,27 @@
 }
 
 :global(.dark) .thumb {
-  background: #2E2E2C;
+  background-color: #2E2E2C;
 }
+
+/* ===== Overlay ===== */
 
 .overlay {
   width: 100%;
   padding: 20px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.7),
+    rgba(0, 0, 0, 0)
+  );
   border-radius: 0 0 12px 12px;
 }
 
 .card.center .overlay {
   padding: 30px;
 }
+
+/* ===== Text ===== */
 
 .cardTitle {
   font-size: 1rem;
@@ -137,7 +170,8 @@
   overflow: hidden;
 }
 
-/* ===== Skeleton / Empty (CommonBoardCarousel과 동일 패턴) ===== */
+/* ===== Skeleton ===== */
+
 .sectionPlaceholder .track {
   display: flex;
   align-items: center;
@@ -146,13 +180,12 @@
 }
 
 .skeletonCard {
-  position: relative;
-  flex: 1;
-  min-width: 200px;
+  flex: 0 0 360px;            /* 카드와 동일폭 */
   height: 380px;
   border-radius: 12px;
-  overflow: hidden;
   background: #e8e8e8;
+  position: relative;
+  overflow: hidden;
 }
 
 .skeletonCard::after {
@@ -161,32 +194,23 @@
   inset: 0;
   background: linear-gradient(
     90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.4) 50%,
-    transparent 100%
+    transparent,
+    rgba(255,255,255,0.4),
+    transparent
   );
-  background-size: 200% 100%;
-  animation: spotlightShimmer 1.2s ease-in-out infinite;
+  animation: spotlightShimmer 1.2s infinite;
 }
 
 :global(.dark) .skeletonCard {
   background: #2E2E2C;
 }
 
-:global(.dark) .skeletonCard::after {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.06) 50%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
+@keyframes spotlightShimmer {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
 }
 
-@keyframes spotlightShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
+/* ===== Empty ===== */
 
 .emptyState {
   position: absolute;
@@ -201,7 +225,8 @@
   color: #8A877D;
 }
 
-/* ===== 좌우 버튼 (CommonBoardCarousel과 동일) ===== */
+/* ===== Nav Buttons ===== */
+
 .prevBtn,
 .nextBtn {
   position: absolute;

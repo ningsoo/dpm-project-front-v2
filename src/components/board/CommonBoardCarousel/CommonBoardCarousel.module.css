@@ -13,6 +13,16 @@
   background: #fafafa;
 }
 
+/* 배경만 먼저 보이는 flicker 방지: 준비 후 opacity 전환 (display 미사용) */
+.sectionHidden {
+  opacity: 0;
+}
+
+.sectionRevealed {
+  opacity: 1;
+  transition: opacity 0.22s ease;
+}
+
 :global(.dark) .section {
   background: #1D1D1B;
 }
@@ -43,7 +53,7 @@
   gap: 20px;
   width: max-content;
   height: 420px;
-  transition: transform 0.6s ease-in-out;
+  transition: transform 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   will-change: transform;
 }
 
@@ -77,6 +87,7 @@
 
 :global(.dark) .card {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transform: translateZ(0);
 }
 
 /* ============================= */
@@ -95,6 +106,10 @@
 
 :global(.dark) .card.center {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+:global(.dark) .card.center.expanded {
+  transform: scale(1.1) translateZ(0);
 }
 
 /* ============================= */
@@ -116,7 +131,7 @@
 }
 
 :global(.dark) .thumb {
-  background: #2E2E2C;
+  background-color: #2E2E2C;
 }
 
 /* ============================= */
@@ -195,6 +210,7 @@
   border-radius: 12px;
   overflow: hidden;
   background: #e8e8e8;
+  opacity: 0;
 }
 
 .skeletonCard::after {

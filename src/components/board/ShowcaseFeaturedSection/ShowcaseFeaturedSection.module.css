@@ -3,6 +3,16 @@
   background: transparent; /* ← 전역 배경 따라감 */
 }
 
+/* 배경만 먼저 보이는 flicker 방지: 준비 후 opacity 전환 (display 미사용) */
+.sectionHidden {
+  opacity: 0;
+}
+
+.sectionRevealed {
+  opacity: 1;
+  transition: opacity 0.22s ease;
+}
+
 /* CLS 방지: 로딩/빈 상태에서도 동일 높이 유지 */
 .sectionPlaceholder .cardWrapper {
   min-height: 420px;
@@ -50,6 +60,10 @@
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
   z-index: 1;
   will-change: transform;
+
+  /* scale() 확대 시에도 둥근 모서리 강제 — overflow:hidden 만으로는 iframe 클리핑 불가 */
+  clip-path: inset(0 round 14px);
+  -webkit-clip-path: inset(0 round 14px);
 }
 
 .card.active {
@@ -63,6 +77,8 @@
   position: relative;
   width: 100%;
   height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
 }
 
 .thumbnail {
@@ -147,6 +163,7 @@
   border-radius: 14px;
   overflow: hidden;
   background: #e8e8e8;
+  opacity: 0;
 }
 
 :global(.dark) .skeletonCard {

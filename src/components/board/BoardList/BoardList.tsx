@@ -128,12 +128,6 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, [categoryType]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const showTopButton = page >= 1;
-
-  const scrollToTop = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
@@ -220,7 +214,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
           className={styles.writeBtn}
           onClick={handleWriteClick}
         >
-          글작성
+          작성
         </button>
       </div>
 
@@ -331,20 +325,6 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
 
       {!loading && posts.length === 0 && (
         <div className={styles.empty}>등록된 게시글이 없습니다.</div>
-      )}
-
-      {showTopButton && (
-        <div className={styles.topButtonContainer}>
-          <button
-            type="button"
-            className={styles.topButton}
-            onClick={scrollToTop}
-            aria-label="맨 위로 이동"
-            title="맨 위로 이동"
-          >
-            Top
-          </button>
-        </div>
       )}
 
       {showLoginRequiredModal && (

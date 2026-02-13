@@ -1,0 +1,1418 @@
+/* =========================
+   Layout (CreatePost 기준 단일 소스)
+========================= */
+
+.wrap {
+  max-width: 720px;
+  margin: 40px auto;
+  padding: 40px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+}
+
+/* =========================
+   Header / Category
+========================= */
+
+.categoryRow {
+  margin-bottom: 8px;
+}
+
+.categoryLink {
+  font-family: "Monda", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  display: inline-block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #111;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.categoryLink:hover {
+  color: #000;
+}
+
+.h1 {
+  font-family: "Monda", sans-serif;
+  margin: 0 0 32px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #111;
+}
+
+/* =========================
+   PostDetail 전용: 제목/액션/작성자
+========================= */
+
+.titleRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.title {
+  flex: 1;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: #111;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: #666;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.iconBtn:hover {
+  background: #f0f0f0;
+  color: #111;
+}
+
+.iconBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.iconBtn:disabled:hover {
+  background: none;
+  color: #666;
+}
+
+.likeBtnLiked {
+  color: #A6534F;
+}
+
+.likeBtnLiked:hover {
+  color: #954A47;
+}
+
+.authorRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.author {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.author:hover {
+  color: #111;
+  text-decoration: underline;
+}
+
+.donateBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.donateBtn:hover,
+.donateBtn:focus,
+.donateBtn:focus-visible {
+  outline: none;
+}
+
+.donateBtn:hover {
+  transform: scale(1.08);
+  opacity: 0.9;
+}
+
+.donateBtn:active {
+  transform: scale(0.98);
+}
+
+/* =========================
+   Label
+========================= */
+
+.label {
+  display: block;
+  margin-bottom: 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #444;
+}
+
+/* =========================
+   Input / Textarea
+========================= */
+
+.input,
+.textarea {
+  width: 100%;
+  margin-top: 8px;
+  padding: 14px 16px;
+  font-size: 0.95rem;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  background: #fafafa;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.input:focus,
+.textarea:focus {
+  border-color: #111;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+
+.textarea {
+  min-height: 280px;
+  resize: none;
+}
+
+/* =========================
+   Helper / Error
+========================= */
+
+.helper {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.error {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #B85450;
+}
+
+/* =========================
+   Buttons
+========================= */
+
+.btnGroup {
+  margin-top: 40px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.btn {
+  padding: 12px 26px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cancel {
+  background: #f2f2f2;
+  color: #333;
+  border: none;
+}
+
+.cancel:hover {
+  background: #e6e6e6;
+}
+
+.submit {
+  background: #111;
+  color: #fff;
+  border: none;
+}
+
+.submit:hover:not(:disabled) {
+  background: #000;
+  transform: translateY(-1px);
+}
+
+.submit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* =========================
+   Add Button (Playlist / 파일선택)
+========================= */
+
+.addBtn {
+  margin-left: 12px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  border-radius: 999px;
+  border: none;
+  background: #111;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+
+.addBtn:hover {
+  background: #000;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.fileInputHidden {
+  position: absolute;
+  width: 0.1px;
+  height: 0.1px;
+  opacity: 0;
+  overflow: hidden;
+  z-index: -1;
+}
+
+.fileSelectBtn {
+  display: inline-block;
+  margin-left: 12px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fileSelectBtn:hover {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+
+/* =========================
+   Preview Boxes
+========================= */
+
+.thumbPreview,
+.playlistPreview,
+.attachmentPreview {
+  margin-top: 12px;
+  margin-bottom: 20px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fafafa;
+  border: 1px solid #eee;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+}
+
+.thumbPreview img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.playlistPreview {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  gap: 16px;
+}
+
+.playlistPreviewThumb {
+  width: 120px;
+  height: 80px;
+  border-radius: 10px;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+.playlistPreviewInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.playlistPreviewTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #222;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playlistPreviewCount {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.attachmentPreview {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  gap: 14px;
+  position: relative;
+}
+
+.attachmentThumb {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.attachmentIcon {
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  background: #eee;
+  border-radius: 10px;
+}
+
+.attachmentName {
+  font-size: 0.85rem;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachmentRemove {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: #111;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.attachmentRemove:hover {
+  background: #B85450;
+}
+
+/* =========================
+   Spotlight Thumbnails
+========================= */
+
+.spotlightThumbList {
+  margin-top: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.spotlightThumbItem {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #eee;
+  transition: transform 0.2s ease;
+}
+
+.spotlightThumbItem:hover {
+  transform: scale(1.05);
+}
+
+
+.spotlightThumbItemFirst {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* 썸네일 강조 테두리 */
+.spotlightThumbItemFirst::before {
+  content: '';
+  position: absolute;
+  inset: -4px; /* 더 넓게 */
+  border-radius: 18px;
+  background: linear-gradient(
+    135deg,
+    #C4605C,
+    #B85450,
+    #C4605C
+  );
+  z-index: -1;
+}
+
+/* 썸네일 뱃지 */
+.spotlightThumbItemFirst::after {
+  content: '대표사진 ';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 999px;
+}
+
+.spotlightThumbItem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.spotlightThumbRemove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spotlightThumbRemove:hover {
+  background: rgba(211, 47, 47, 0.9);
+}
+
+.spotlightThumbOrder {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 6px;
+}
+
+/* =========================
+   PostDetail: 본문 영역
+========================= */
+
+.contentBlock {
+  margin-bottom: 24px;
+}
+
+.videoWrap {
+  position: relative;
+  padding-top: 56.25%;
+  margin-bottom: 20px;
+  background: #000;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.videoWrap iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* PostDetail: spotlight/community/reviews 메인 사진 (쇼케이스 영역과 동일 크기) */
+.videoWrap img.heroImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+.photoNavWrap {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.photoNavBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.photoNavBtn:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.photoNavPrev {
+  left: 12px;
+}
+
+.photoNavNext {
+  right: 12px;
+}
+
+.thumbLink {
+  display: block;
+  max-width: 100%;
+  margin-bottom: 20px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.thumbLink img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.photoList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.photoList img {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 1px solid #eee;
+}
+
+.attachmentBlock {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.attachmentBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111;
+  background: #f2f2f2;
+  border: 1px solid #e5e5e5;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.attachmentBtn:hover:not(:disabled) {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+
+.attachmentBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.fileList {
+  margin-bottom: 16px;
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #eee;
+}
+
+.fileItem a {
+  color: #111;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.fileItem a:hover {
+  text-decoration: underline;
+}
+
+.text {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #333;
+  white-space: pre-wrap;
+}
+
+/* =========================
+   Comment Section
+========================= */
+
+.commentSection {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid #eee;
+}
+
+.commentTitle {
+  margin: 0 0 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.commentTitle .iconBtn {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.commentForm {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.commentInput {
+  flex: 1;
+  padding: 5px 10px;
+  font-size: 0.9rem;
+  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+  background: #fafafa;
+  outline: none;
+  resize: none;
+  min-height: 40px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.commentInput:focus {
+  border-color: #111;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+
+.commentSubmit {
+  padding: 6px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  background: #111;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.commentSubmit:hover:not(:disabled) {
+  background: #000;
+}
+
+.commentSubmit:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.commentItem {
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.commentHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  min-height: 1.5em;
+}
+
+.commentAuthor {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #333;
+}
+
+.commentDate {
+  margin-left: auto;
+  font-size: 0.75rem;
+  line-height: 1;
+  color: #888;
+  white-space: nowrap;
+}
+
+.commentBody {
+  font-size: 0.9rem;
+  color: #444;
+  line-height: 1.5;
+}
+
+.commentEditBlock {
+  margin-top: 8px;
+}
+
+.commentEditInput {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 0.9rem;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  background: #fafafa;
+  outline: none;
+  resize: none;
+  min-height: 56px;
+  box-sizing: border-box;
+}
+
+.commentEditInput:focus {
+  border-color: #111;
+}
+
+.commentEditActions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.commentEditCancel {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+  background: #f2f2f2;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.commentEditCancel:hover:not(:disabled) {
+  background: #e6e6e6;
+}
+
+.commentEditSubmit {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fff;
+  background: #111;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.commentEditSubmit:hover:not(:disabled) {
+  background: #000;
+}
+
+.commentEditSubmit:disabled,
+.commentEditCancel:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.commentFooter {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.commentLikeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  line-height: 1;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: #666;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.commentLikeBtn svg {
+  display: block;
+  flex-shrink: 0;
+}
+
+.commentLikeBtn:hover {
+  background: #f0f0f0;
+  color: #A6534F;
+}
+
+/* 댓글 좋아요 눌림 상태: 게시글 좋아요와 동일한 빨간색 */
+.commentLikeBtn.likeBtnLiked {
+  color: #A6534F;
+}
+
+.commentLikeBtn.likeBtnLiked:hover {
+  color: #954A47;
+  background: #f0f0f0;
+}
+
+.replyBtn {
+  margin-top: 8px;
+  padding: 4px 0;
+  font-size: 0.85rem;
+  color: #111;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.replyBtn:hover {
+  text-decoration: underline;
+}
+
+.menuBtn {
+  padding: 2px 6px;
+  font-size: 0.85rem;
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+}
+
+.menuBtn:hover {
+  color: #333;
+}
+
+/* =========================
+   Menu Dropdown
+========================= */
+
+.menuWrapper {
+  position: relative;
+}
+
+.menuDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  z-index: 10;
+  min-width: 120px;
+  overflow: hidden;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #333;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.menuItem:hover {
+  background: #f5f5f5;
+}
+
+/* =========================
+   Loading / Retry
+========================= */
+
+.loading {
+  padding: 48px 40px;
+  text-align: center;
+  color: #666;
+  max-width: 720px;
+  margin: 40px auto;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+}
+
+.retryBtn {
+  padding: 12px 26px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  background: #111;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retryBtn:hover {
+  background: #000;
+  transform: translateY(-1px);
+}
+
+/* =========================
+   Modals
+========================= */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modalContent {
+  padding: 24px;
+  background: #fff;
+  border-radius: 20px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modalMessage {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modalButton {
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modalButtonCancel {
+  background: #f2f2f2;
+  color: #333;
+}
+
+.modalButtonCancel:hover {
+  background: #e6e6e6;
+}
+
+.modalButtonConfirm {
+  background: #111;
+  color: #fff;
+}
+
+.modalButtonConfirm:hover {
+  background: #000;
+}
+
+.modalButtonDelete {
+  background: #B85450;
+  color: #fff;
+}
+
+.modalButtonDelete:hover {
+  background: #954A47;
+}
+
+.reportTextarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  border-radius: 12px;
+  border: 1px solid #e5e5e5;
+  background: #fafafa;
+  resize: none;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.reportTextarea:focus {
+  outline: none;
+  border-color: #111;
+  background: #fff;
+}
+
+/* =========================
+   Dark Mode
+========================= */
+
+:global(.dark) .wrap {
+  background: #1e1e1c;
+  box-shadow: none;
+}
+
+:global(.dark) .loading {
+  background: #1e1e1c;
+  color: #b5b3a7;
+}
+
+:global(.dark) .h1,
+:global(.dark) .categoryLink {
+  color: #e0dfd7;
+}
+
+:global(.dark) .label {
+  color: #b5b3a7;
+}
+
+:global(.dark) .input,
+:global(.dark) .textarea {
+  background: #2a2a27;
+  border-color: #3a3a38;
+  color: #ddd;
+}
+
+:global(.dark) .input:focus,
+:global(.dark) .textarea:focus {
+  border-color: #888;
+  box-shadow: none;
+}
+
+:global(.dark) .thumbPreview,
+:global(.dark) .playlistPreview,
+:global(.dark) .attachmentPreview {
+  background: #2a2a27;
+  border-color: #3a3a38;
+}
+
+:global(.dark) .cancel {
+  background: #2e2e2c;
+  color: #ccc;
+}
+
+:global(.dark) .cancel:hover {
+  background: #3a3a38;
+}
+
+:global(.dark) .addBtn {
+  background: #3a3934;
+  color: #fff;
+  border: none;
+}
+
+:global(.dark) .addBtn:hover {
+  background: #42413b;
+}
+
+:global(.dark) .submit {
+  background: #3a3934;
+  color: #fff;
+}
+
+:global(.dark) .submit:hover:not(:disabled) {
+  background: #42413b;
+}
+
+:global(.dark) .titleRow {
+  border-bottom-color: #3a3a38;
+}
+
+:global(.dark) .title {
+  color: #e0dfd7;
+}
+
+:global(.dark) .iconBtn {
+  color: #8a877d;
+}
+
+:global(.dark) .iconBtn:hover {
+  background: #2e2e2c;
+  color: #b5b3a7;
+}
+
+:global(.dark) .iconBtn.likeBtnLiked {
+  color: #A6534F;
+}
+
+:global(.dark) .iconBtn.likeBtnLiked:hover {
+  color: #954A47;
+}
+
+:global(.dark) .author {
+  color: #a19e94;
+}
+
+:global(.dark) .author:hover {
+  color: #9ea2b8;
+}
+
+:global(.dark) .text {
+  color: #a19e94;
+}
+
+:global(.dark) .contentBlock .photoList img {
+  border-color: #3a3a38;
+}
+
+:global(.dark) .attachmentBtn {
+  background: #2e2e2c;
+  border-color: #3a3a38;
+  color: #b5b3a7;
+}
+
+:global(.dark) .attachmentBtn:hover:not(:disabled) {
+  background: #3a3934;
+  color: #fff;
+  border-color: #3a3934;
+}
+
+:global(.dark) .commentSection {
+  border-top-color: #3a3a38;
+}
+
+:global(.dark) .commentTitle,
+:global(.dark) .commentTitle .iconBtn {
+  color: #b5b3a7;
+}
+
+:global(.dark) .commentInput {
+  background: #2a2a27;
+  border-color: #3a3a38;
+  color: #b5b3a7;
+}
+
+:global(.dark) .commentInput:focus {
+  border-color: #888;
+}
+
+:global(.dark) .commentSubmit {
+  background: #3a3934;
+  color: #fff;
+}
+
+:global(.dark) .commentSubmit:hover:not(:disabled) {
+  background: #42413b;
+}
+
+:global(.dark) .commentItem {
+  border-bottom-color: #2e2e2c;
+}
+
+:global(.dark) .commentAuthor {
+  color: #b5b3a7;
+}
+
+:global(.dark) .commentDate {
+  color: #8a877d;
+}
+
+:global(.dark) .commentBody {
+  color: #a19e94;
+}
+
+:global(.dark) .commentEditInput {
+  background: #2a2a27;
+  border-color: #3a3a38;
+  color: #e8e6dc;
+}
+
+:global(.dark) .commentEditInput:focus {
+  border-color: #888;
+}
+
+:global(.dark) .commentEditCancel {
+  background: #2e2e2c;
+  color: #a19e94;
+}
+
+:global(.dark) .commentEditCancel:hover:not(:disabled) {
+  background: #3a3a38;
+  color: #b5b3a7;
+}
+
+:global(.dark) .commentLikeBtn {
+  color: #8a877d;
+}
+
+:global(.dark) .commentLikeBtn:hover {
+  background: #2e2e2c;
+  color: #A6534F;
+}
+
+:global(.dark) .commentLikeBtn.likeBtnLiked {
+  color: #A6534F;
+}
+
+:global(.dark) .commentLikeBtn.likeBtnLiked:hover {
+  color: #954A47;
+  background: #2e2e2c;
+}
+
+:global(.dark) .menuBtn {
+  color: #8a877d;
+}
+
+:global(.dark) .menuBtn:hover {
+  color: #b5b3a7;
+}
+
+:global(.dark) .retryBtn {
+  background: #3a3934;
+  color: #fff;
+}
+
+:global(.dark) .retryBtn:hover {
+  background: #42413b;
+}
+
+:global(.dark) .menuDropdown {
+  background: #242422;
+  border-color: #3a3a38;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .menuItem {
+  color: #a19e94;
+}
+
+:global(.dark) .menuItem:hover {
+  background: #2e2e2c;
+}
+
+:global(.dark) .fileItem {
+  border-bottom-color: #3a3a38;
+}
+
+:global(.dark) .fileItem a {
+  color: #9ea2b8;
+}
+
+:global(.dark) .modalContent {
+  background: #242422;
+}
+
+:global(.dark) .modalMessage {
+  color: #b5b3a7;
+}
+
+:global(.dark) .modalButtonCancel {
+  background: #2e2e2c;
+  color: #a19e94;
+}
+
+:global(.dark) .modalButtonCancel:hover {
+  background: #3a3a38;
+}
+
+:global(.dark) .modalButtonConfirm {
+  background: #3a3934;
+}
+
+:global(.dark) .modalButtonConfirm:hover {
+  background: #42413b;
+}
+
+:global(.dark) .modalButtonDelete {
+  background: #A6534F;
+}
+
+:global(.dark) .modalButtonDelete:hover {
+  background: #954A47;
+}
+
+:global(.dark) .reportTextarea {
+  background: #2a2a27;
+  border-color: #3a3a38;
+  color: #b5b3a7;
+}
+
+:global(.dark) .reportTextarea:focus {
+  border-color: #888;
+}
+
+:global(.dark) .replyBtn {
+  color: #9ea2b8;
+}
+
+:global(.dark) .spotlightThumbItem {
+  border-color: #3a3a38;
+}
+
+:global(.dark) .fileSelectBtn {
+  background: #2e2e2c;
+  border-color: #3a3a38;
+  color: #b5b3a7;
+}
+
+:global(.dark) .fileSelectBtn:hover {
+  background: #3a3934;
+  color: #fff;
+  border-color: #3a3934;
+}
+
+:global(.dark) .attachmentRemove {
+  background: #3a3934;
+  color: #fff;
+}
+
+:global(.dark) .attachmentRemove:hover {
+  background: #A6534F;
+}

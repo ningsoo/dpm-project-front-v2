@@ -41,15 +41,18 @@ function formatApprovedAt(iso: string | null | undefined): string {
   }
 }
 
-/** 결제수단 한글화 */
+/** 결제수단 한글화 (TossPayments는 한글로 반환, 백엔드는 영문 enum일 수 있음) */
 function formatMethod(method: string | null | undefined): string {
-  if (method == null || typeof method !== 'string') return '-';
-  const m = method.toUpperCase();
-  if (m === 'CARD') return '카드';
-  if (m === 'TRANSFER') return '계좌이체';
-  if (m === 'VIRTUAL_ACCOUNT') return '가상계좌';
-  if (m === 'MOBILE_PHONE') return '휴대폰';
-  return method;
+  if (method == null || typeof method !== 'string' || !method.trim()) return '-';
+  const m = method.trim();
+  // 영문 enum → 한글 변환
+  const upper = m.toUpperCase();
+  if (upper === 'CARD') return '카드';
+  if (upper === 'TRANSFER') return '계좌이체';
+  if (upper === 'VIRTUAL_ACCOUNT') return '가상계좌';
+  if (upper === 'MOBILE_PHONE') return '휴대폰';
+  // 이미 한글이거나 알 수 없는 값이면 그대로 반환
+  return m;
 }
 
 /** confirm 응답 data에서 approvedAt, method 추출 */
@@ -61,10 +64,12 @@ function getConfirmDisplayValues(data: unknown): {
   const approvedAt =
     (raw.approvedAt as string) ??
     (raw.approved_at as string) ??
+    (raw.approvedDateTime as string) ??
     '';
   const method =
     (raw.method as string) ??
     (raw.paymentMethod as string) ??
+    (raw.pay_method as string) ??
     '';
   return {
     approvedAt: formatApprovedAt(approvedAt),
@@ -106,7 +111,7 @@ export default function SuccessClient() {
 
     setStatus('loading');
 
-    confirmPayment(orderId, paymentKey, amount)
+    confirmPayment(orderId, paymentKey, amount, changeAmount)
       .then((res) => {
         const body = res.data;
         if (body?.success === true) {
@@ -143,7 +148,7 @@ export default function SuccessClient() {
         redirectAfterToast(router);
         setStatus('error');
       });
-  }, [paymentKey, orderId, amount, router]);
+  }, [paymentKey, orderId, amount, changeAmount, router]);
 
   if (status === 'invalid' || status === 'error') {
     return (

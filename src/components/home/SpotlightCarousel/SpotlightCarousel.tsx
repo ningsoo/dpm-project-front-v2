@@ -13,8 +13,23 @@ import {
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import styles from './SpotlightCarousel.module.css';
 
+/** 데이터 + 레이아웃 준비 전 배경 flicker 방지: 준비 후 opacity 전환 */
+const useSectionReveal = (isLoading: boolean, hasContent: boolean, layoutReady: boolean) => {
+  const [revealed, setRevealed] = useState(false);
+  const isReady = isLoading || !hasContent || layoutReady;
+  useEffect(() => {
+    if (!isReady) {
+      setRevealed(false);
+      return;
+    }
+    const id = requestAnimationFrame(() => setRevealed(true));
+    return () => cancelAnimationFrame(id);
+  }, [isReady]);
+  return revealed;
+};
+
 const CARD_GAP = 20;
-const TRANSITION_MS = 600;
+const TRANSITION_MS = 650;
 
 export default function SpotlightCarousel() {
   const router = useRouter();
@@ -32,6 +47,9 @@ export default function SpotlightCarousel() {
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const shouldResetWhenReachEndRef = useRef(false);
+  const isTransitingRef = useRef(false);
+
+  const sectionRevealed = useSectionReveal(isLoading, posts.length > 0, layoutReady);
 
   /** 데이터 조회 */
   const fetchSpotlights = useCallback(async () => {
@@ -94,12 +112,14 @@ export default function SpotlightCarousel() {
     if (center !== 2 * N) return;
     if (!shouldResetWhenReachEndRef.current) return;
 
+    isTransitingRef.current = true;
     const t = setTimeout(() => {
       setTransitionEnabled(false);
       setCenter(N);
       shouldResetWhenReachEndRef.current = false;
       requestAnimationFrame(() => {
         setTransitionEnabled(true);
+        isTransitingRef.current = false;
       });
     }, TRANSITION_MS);
 
@@ -123,8 +143,10 @@ export default function SpotlightCarousel() {
     if (!layoutReady || N === 0) return;
 
     const t = setInterval(() => {
+      if (isTransitingRef.current) return;       // 전환 중이면 건너뜀
       setCenter((c) => {
         if (c >= 2 * N - 1) {
+          isTransitingRef.current = true;
           shouldResetWhenReachEndRef.current = true;
           return 2 * N;
         }
@@ -137,14 +159,18 @@ export default function SpotlightCarousel() {
 
   /** 이동 */
   const movePrev = () => {
-    if (N === 0) return;
+    if (N === 0 || isTransitingRef.current) return;
 
     if (center === N) {
+      isTransitingRef.current = true;
       setTransitionEnabled(false);
       setCenter(2 * N);
       requestAnimationFrame(() => {
         setCenter(2 * N - 1);
-        requestAnimationFrame(() => setTransitionEnabled(true));
+        requestAnimationFrame(() => {
+          setTransitionEnabled(true);
+          setTimeout(() => { isTransitingRef.current = false; }, TRANSITION_MS);
+        });
       });
     } else {
       setCenter((c) => c - 1);
@@ -152,9 +178,10 @@ export default function SpotlightCarousel() {
   };
 
   const moveNext = () => {
-    if (N === 0) return;
+    if (N === 0 || isTransitingRef.current) return;
 
     if (center >= 2 * N - 1) {
+      isTransitingRef.current = true;          // 즉시 잠금 — 리셋 완료 전 추가 클릭 차단
       shouldResetWhenReachEndRef.current = true;
       setCenter(2 * N);
     } else {
@@ -189,7 +216,7 @@ export default function SpotlightCarousel() {
       <section
         className={`${styles.section} ${styles.sectionPlaceholder} ${
           darkMode ? 'dark' : ''
-        }`}
+        } ${sectionRevealed ? styles.sectionRevealed : styles.sectionHidden}`}
       >
         <div className={styles.wrapper} ref={wrapperRef}>
           <div className={styles.track}>
@@ -208,7 +235,7 @@ export default function SpotlightCarousel() {
       <section
         className={`${styles.section} ${styles.sectionPlaceholder} ${
           darkMode ? 'dark' : ''
-        }`}
+        } ${sectionRevealed ? styles.sectionRevealed : styles.sectionHidden}`}
       >
         <div className={styles.wrapper}>
           <div className={styles.emptyState}>
@@ -220,7 +247,11 @@ export default function SpotlightCarousel() {
   }
 
   return (
-    <section className={`${styles.section} ${darkMode ? 'dark' : ''}`}>
+    <section
+      className={`${styles.section} ${darkMode ? 'dark' : ''} ${
+        sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
+      }`}
+    >
       <div className={styles.wrapper} ref={wrapperRef}>
         <button
           type="button"
@@ -245,7 +276,7 @@ export default function SpotlightCarousel() {
             transition:
               !transitionEnabled || !layoutReady
                 ? 'none'
-                : `transform ${TRANSITION_MS}ms ease`,
+                : `transform ${TRANSITION_MS}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
           }}
         >
           {displayPosts.map((post, index) => {

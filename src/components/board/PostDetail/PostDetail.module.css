@@ -46,11 +46,11 @@
 }
 
 .likeBtnLiked {
-  color: #c62828;
+  color: #A6534F;
 }
 
 .likeBtnLiked:hover {
-  color: #b71c1c;
+  color: #954A47;
 }
 
 .authorRow {
@@ -69,7 +69,7 @@
 }
 
 .author:hover {
-  color: #1976d2;
+  color: #111;
   text-decoration: underline;
 }
 
@@ -112,6 +112,27 @@
   background: #000;
   border-radius: 8px;
   overflow: hidden;
+}
+
+/* 이미지 letterbox 영역을 페이지 배경과 통일 (spotlight / community / reviews)
+   - 라이트: wrap 배경과 동일
+   - 다크: BoardFormLayout .wrap과 동일한 #1e1e1c 사용 (다르면 톤 차이로 보임)
+   - overlay/pseudo/filter 없음 유지으로 색상 불일치 방지 */
+.heroVideoWrap.heroVideoWrap {
+  background: #ffffff;
+  box-shadow: none;
+  opacity: 1;
+}
+
+.heroVideoWrap.heroVideoWrap::before,
+.heroVideoWrap.heroVideoWrap::after {
+  display: none !important;
+}
+
+:global(.dark) .heroVideoWrap.heroVideoWrap {
+  background: #1e1e1c;
+  box-shadow: none;
+  opacity: 1;
 }
 
 .videoWrap iframe {
@@ -161,7 +182,7 @@
   padding: 8px 14px;
   font-size: 0.9rem;
   font-weight: 500;
-  color: #1976d2;
+  color: #111;
   background: #f5f5f5;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -171,7 +192,7 @@
 
 .attachmentBtn:hover:not(:disabled) {
   background: #eee;
-  border-color: #1976d2;
+  border-color: #111;
 }
 
 .attachmentBtn:disabled {
@@ -193,7 +214,7 @@
 }
 
 .fileItem a {
-  color: #1976d2;
+  color: #111;
   text-decoration: none;
 }
 
@@ -237,7 +258,7 @@
 }
 
 .commentInput:focus {
-  border-color: #1976d2;
+  border-color: #111;
 }
 
 .commentSubmit {
@@ -245,7 +266,7 @@
   font-size: 0.95rem;
   font-weight: 500;
   color: #fff;
-  background: #1976d2;
+  background: #111;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -289,13 +310,13 @@
   border: 1px solid #ddd;
   border-radius: 8px;
   outline: none;
-  resize: vertical;
+  resize: none;
   min-height: 56px;
   box-sizing: border-box;
 }
 
 .commentEditInput:focus {
-  border-color: #1976d2;
+  border-color: #111;
 }
 
 .commentEditActions {
@@ -324,14 +345,14 @@
   font-size: 0.85rem;
   font-weight: 500;
   color: #fff;
-  background: #1976d2;
+  background: #111;
   border: none;
   border-radius: 6px;
   cursor: pointer;
 }
 
 .commentEditSubmit:hover:not(:disabled) {
-  background: #1565c0;
+  background: #000;
 }
 
 .commentEditSubmit:disabled,
@@ -361,14 +382,14 @@
 
 .commentLikeBtn:hover {
   background: #f0f0f0;
-  color: #c62828;
+  color: #A6534F;
 }
 
 .replyBtn {
   margin-top: 8px;
   padding: 4px 0;
   font-size: 0.85rem;
-  color: #1976d2;
+  color: #111;
   background: none;
   border: none;
   cursor: pointer;
@@ -398,14 +419,14 @@
   font-size: 0.95rem;
   font-weight: 500;
   color: #fff;
-  background: #1976d2;
+  background: #111;
   border: none;
   border-radius: 8px;
   cursor: pointer;
 }
 
 .retryBtn:hover {
-  background: #1565c0;
+  background: #000;
 }
 
 .menuWrapper {
@@ -514,19 +535,19 @@
 }
 
 .modalButtonConfirm {
-  background: #1976d2;
+  background: #111;
 }
 
 .modalButtonConfirm:hover {
-  background: #1565c0;
+  background: #000;
 }
 
 .modalButtonDelete {
-  background: #c62828;
+  background: #A6534F;
 }
 
 .modalButtonDelete:hover {
-  background: #b71c1c;
+  background: #954A47;
 }
 
 .reportTextarea {
@@ -537,13 +558,13 @@
   font-size: 0.9rem;
   border: 1px solid #ddd;
   border-radius: 8px;
-  resize: vertical;
+  resize: none;
   font-family: inherit;
 }
 
 .reportTextarea:focus {
   outline: none;
-  border-color: #1976d2;
+  border-color: #111;
 }
 
 .categoryRow {
@@ -585,7 +606,7 @@
   font-size: 0.85rem;
   font-weight: 600;
   color: #fff;
-  background: #1976d2;
+  background: #111;
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -595,7 +616,7 @@
 }
 
 .topButton:hover {
-  background: #1565c0;
+  background: #000;
   transform: translateY(-2px);
 }
 
@@ -701,12 +722,12 @@
 }
 
 :global(.dark) .retryBtn {
-  background: #3b82f6;
+  background: #3A3934;
   color: #fff;
 }
 
 :global(.dark) .retryBtn:hover {
-  background: #2563eb;
+  background: #42413B;
 }
 
 :global(.dark) .menuDropdown {

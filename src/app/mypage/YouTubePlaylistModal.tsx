@@ -114,7 +114,7 @@ export function YouTubePlaylistModal({ isOpen, onClose, onSuccess }: YouTubePlay
       <div
         style={{
           padding: 24,
-          background: '#fff',
+          background: darkMode ? '#2E2E2C' : '#fff',
           borderRadius: 12,
           maxWidth: 800,
           width: '90%',
@@ -125,7 +125,7 @@ export function YouTubePlaylistModal({ isOpen, onClose, onSuccess }: YouTubePlay
         onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: '#333' }}>YouTube 플레이리스트 선택</h2>
+          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: darkMode ? '#B5B3A7' : '#333' }}>YouTube 플레이리스트 선택</h2>
           <button
             type="button"
             onClick={onClose}
@@ -134,7 +134,7 @@ export function YouTubePlaylistModal({ isOpen, onClose, onSuccess }: YouTubePlay
               border: 'none',
               cursor: 'pointer',
               padding: 4,
-              color: '#666',
+              color: darkMode ? '#8A877D' : '#666',
               display: 'flex',
               alignItems: 'center',
             }}
@@ -150,7 +150,7 @@ export function YouTubePlaylistModal({ isOpen, onClose, onSuccess }: YouTubePlay
                 width: 48,
                 height: 48,
                 border: `4px solid ${darkMode ? '#333' : '#f0f0f0'}`,
-                borderTop: `4px solid ${darkMode ? '#3A3934' : '#1976d2'}`,
+                borderTop: `4px solid ${darkMode ? '#3A3934' : '#111'}`,
                 borderRadius: '50%',
                 animation: 'spin 1s linear infinite',
               }}
@@ -198,10 +198,10 @@ export function YouTubePlaylistModal({ isOpen, onClose, onSuccess }: YouTubePlay
                   key={playlist.youtubeListId}
                   onClick={() => handlePlaylistSelect(playlist)}
                   style={{
-                    background: 'white',
+                    background: darkMode ? '#242422' : 'white',
                     borderRadius: 12,
                     overflow: 'hidden',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.1)',
                     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                     cursor: registering ? 'not-allowed' : 'pointer',
                     opacity: registering ? 0.6 : 1,
@@ -209,13 +209,13 @@ export function YouTubePlaylistModal({ isOpen, onClose, onSuccess }: YouTubePlay
                   onMouseEnter={(e) => {
                     if (!registering) {
                       e.currentTarget.style.transform = 'translateY(-4px)';
-                      e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+                      e.currentTarget.style.boxShadow = darkMode ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.15)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!registering) {
                       e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                      e.currentTarget.style.boxShadow = darkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.1)';
                     }
                   }}
                 >
@@ -267,7 +267,7 @@ export function YouTubePlaylistModal({ isOpen, onClose, onSuccess }: YouTubePlay
                       style={{
                         fontSize: 16,
                         fontWeight: 600,
-                        color: '#333',
+                        color: darkMode ? '#B5B3A7' : '#333',
                         marginBottom: 8,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -280,7 +280,7 @@ export function YouTubePlaylistModal({ isOpen, onClose, onSuccess }: YouTubePlay
                     >
                       {playlist.title}
                     </div>
-                    <div style={{ fontSize: 14, color: '#666', marginTop: 'auto' }}>
+                    <div style={{ fontSize: 14, color: darkMode ? '#8A877D' : '#666', marginTop: 'auto' }}>
                       {playlist.itemCount}곡
                     </div>
                   </div>

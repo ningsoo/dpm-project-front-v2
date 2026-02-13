@@ -207,7 +207,7 @@ export default function UpdateProfilePage() {
               disabled={!nicknameFormatOk}
               className={styles.actionBtn}
               style={{
-                background: nicknameFormatOk ? (darkMode ? '#3A3934' : '#1976d2') : '#ccc',
+                background: nicknameFormatOk ? (darkMode ? '#3A3934' : '#111') : '#ccc',
                 cursor: nicknameFormatOk ? 'pointer' : 'not-allowed',
               }}
             >

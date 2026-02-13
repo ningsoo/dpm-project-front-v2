@@ -26,11 +26,11 @@
 }
 
 .toast.error {
-  background: #c62828;
+  background: #A6534F;
 }
 
 .toast.info {
-  background: #1565c0;
+  background: #111;
 }
 
 @keyframes slideUp {

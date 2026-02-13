@@ -1,10 +1,13 @@
 .section {
-  padding: 24px;
+  padding: 30px;
   max-width: 1200px;
   margin: 0 auto;
 }
 
+/* ================= 검색 ================= */
+
 .searchRow {
+  padding-top: 20px;
   display: flex;
   gap: 12px;
   align-items: center;
@@ -34,28 +37,20 @@
   border-radius: 8px;
 }
 
-.searchBtn {
-  padding: 10px 18px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #fff;
-  background: #1976d2;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-}
-
+.searchBtn,
 .writeBtn {
   padding: 10px 18px;
   font-size: 0.9rem;
   font-weight: 500;
   color: #fff;
-  background: #1976d2;
+  background: #111;
   border: none;
   border-radius: 8px;
   cursor: pointer;
   text-decoration: none;
 }
+
+/* ================= 카드 ================= */
 
 .grid {
   display: grid;
@@ -86,8 +81,7 @@
 
 .thumb {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -112,39 +106,62 @@
   color: #666;
 }
 
+/* ================= 테이블 ================= */
+
 .tableWrap {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 32px 24px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
   overflow-x: auto;
 }
 
+/* 핵심 추가 */
 .table {
   width: 100%;
+  min-width: 1000px;
   border-collapse: collapse;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  font-family: "Monda", sans-serif;
+  overflow: hidden; /* ← 헤더 라운드 적용 필수 */
 }
 
-/* ===== 테이블 공통 ===== */
+/* ===== 공통 ===== */
+
 .table th,
 .table td {
-  padding: 12px;
-  border-bottom: 1px solid #eee;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e5e5;
   vertical-align: middle;
 }
 
-/* ===== 번호 ===== */
+/* ===== 헤더 모서리 라운드 ===== */
+
+.table th:first-child {
+  border-top-left-radius: 20px;
+}
+
+.table th:last-child {
+  border-top-right-radius: 20px;
+}
+
+/* ===== 컬럼 ===== */
+
 .table th:first-child,
 .table td:first-child {
-  width: 100px;
+  width: 80px;
   text-align: center;
 }
 
-/* ===== 제목 (그대로 왼쪽) ===== */
 .table th:nth-child(2),
 .table td:nth-child(2) {
-  width: 300px;
+  width: auto;
   text-align: center;
 }
 
-/* ===== 작성자 (컬럼 정중앙) ===== */
 .table th:nth-child(3),
 .table td:nth-child(3) {
   width: 120px;
@@ -152,28 +169,16 @@
   white-space: nowrap;
 }
 
-/* ===== 좋아요 (컬럼 정중앙) ===== */
 .table th:nth-child(4),
-.table td:nth-child(4) {
-  width: 100px;
-  text-align: center;
-}
-
-/* ===== 조회 (컬럼 정중앙) ===== */
+.table td:nth-child(4),
 .table th:nth-child(5),
 .table td:nth-child(5) {
-  width: 100px;
+  width: 90px;
   text-align: center;
 }
 
-/* ===== 날짜 (컬럼 정중앙) ===== */
 .table th:nth-child(6),
-.table td:nth-child(6) {
-  width: 140px;
-  text-align: center;
-  white-space: nowrap;
-}
-
+.table td:nth-child(6),
 .table th:nth-child(7),
 .table td:nth-child(7) {
   width: 140px;
@@ -181,188 +186,87 @@
   white-space: nowrap;
 }
 
+/* ===== 헤더 스타일 ===== */
+
 .table th {
-  font-weight: 600;
-  color: #444;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #111;
   background: #fafafa;
 }
 
 .table tr:hover td {
-  background: #f9f9f9;
+  background: #fafafa;
+}
+
+.table td {
+  color: #333;
 }
 
 .table a {
-  color: #1976d2;
+  color: #333;
   text-decoration: none;
+  font-weight: 500;
 }
 
 .table a:hover {
-  text-decoration: underline;
+  color: #333;
+  text-decoration: none;
 }
 
-.empty {
-  padding: 48px 24px;
-  font-size: 1rem;
-  color: #666;
-  text-align: center;
-}
+/* ================= 기타 ================= */
 
-.infiniteScrollSentinel {
-  height: 20px;
-  min-height: 20px;
-  pointer-events: none;
-}
-
-.topButtonContainer {
-  position: sticky;
-  bottom: 24px;
-  display: flex;
-  justify-content: flex-end;
-  pointer-events: none;
-}
-
-.topButton {
-  position: relative;
-  right: -96px;
-  bottom: 0;
-  z-index: 1;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #fff;
-  background: #1976d2;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-  transition: background 0.2s, transform 0.2s;
-  pointer-events: auto;
-}
-
-.topButton:hover {
-  background: #1565c0;
-  transform: translateY(-2px);
-}
-
-.topButton:active {
-  transform: translateY(0);
-}
-
+.empty,
 .loading {
-  padding: 24px;
+  padding: 48px 24px;
   text-align: center;
   color: #666;
 }
 
-/* CLS 방지: Featured/Carousel 영역 높이 선점(420px) → 검색 영역 고정 */
 .carouselSection {
   margin-bottom: 32px;
   min-height: 420px;
 }
 
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.5);
-}
+/* ================= Dark Mode ================= */
 
-.modalContent {
-  padding: 24px;
-  background: #fff;
-  border-radius: 12px;
-  max-width: 360px;
-  width: 90%;
-  text-align: center;
-}
-
-.modalMessage {
-  margin: 0 0 16px;
-  font-size: 1rem;
-  color: #333;
-}
-
-.modalButtons {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-}
-
-.modalButton {
-  padding: 8px 16px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.modalButtonCancel {
-  background: #999;
-}
-
-.modalButtonCancel:hover {
-  background: #777;
-}
-
-.modalButtonConfirm {
-  background: #1976d2;
-}
-
-.modalButtonConfirm:hover {
-  background: #1565c0;
-}
-
-.categoryHeader {
-  margin-bottom: 24px;
-  padding: 0 16px;
-}
-
-.categoryTitle {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1a1a1a;
-  cursor: pointer;
-  display: inline-block;
-  transition: all 0.2s ease;
-  user-select: none;
-}
-
-.categoryTitle:hover {
-  color: #0066ff;
-  transform: translateY(-1px);
-}
-
-.categoryTitle:active {
-  transform: translateY(0);
-  opacity: 0.8;
-}
-
-/* Dark mode */
+/* 검색 필터, 입력, 검색/글작성 버튼 */
 :global(.dark) .filter {
   background: #242422;
-  border-color: #3A3A38;
-  color: #B5B3A7;
+  border-color: #3a3a38;
+  color: #b5b3a7;
 }
 
 :global(.dark) .input {
   background: #242422;
-  border-color: #3A3A38;
-  color: #B5B3A7;
+  border-color: #3a3a38;
+  color: #b5b3a7;
 }
 
+:global(.dark) .input::placeholder {
+  color: #8a877d;
+}
+
+:global(.dark) .searchBtn,
+:global(.dark) .writeBtn {
+  background: #3a3934;
+  color: #b5b3a7;
+}
+
+:global(.dark) .searchBtn:hover,
+:global(.dark) .writeBtn:hover {
+  background: #42413b;
+  color: #b5b3a7;
+}
+
+/* 카드(그리드) 영역 */
 :global(.dark) .card {
   background: #242422;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
 }
 
 :global(.dark) .thumbWrap {
@@ -377,26 +281,111 @@
   color: #8A877D;
 }
 
-:global(.dark) .table th {
-  color: #A19E94;
+/* 테이블 영역 */
+:global(.dark) .tableWrap {
   background: #242422;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
-:global(.dark) .table th,
-:global(.dark) .table td {
+:global(.dark) .table th {
+  background: #2e2e2c;
+  color: #b5b3a7;
   border-bottom-color: #3A3A38;
 }
 
-:global(.dark) .table tr:hover td {
-  background: #2E2E2C;
+:global(.dark) .table td {
+  color: #b5b3a7;
+  border-bottom-color: #3A3A38;
 }
 
-:global(.dark) .empty {
-  color: #8A877D;
-}
-
+:global(.dark) .empty,
 :global(.dark) .loading {
   color: #8A877D;
+}
+
+:global(.dark) .table a {
+  color: #b5b3a7;
+}
+
+:global(.dark) .table a:hover {
+  color: #b5b3a7;
+  text-decoration: none;
+}
+
+:global(.dark) .table tr:hover td {
+  background: #2e2e2c;
+}
+
+/* ================= 로그인 유도 모달 (BoardFormLayout = 글 조회 좋아요 모달과 동일) ================= */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modalContent {
+  padding: 24px;
+  background: #fff;
+  border-radius: 20px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modalMessage {
+  margin: 0 0 16px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modalButton {
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modalButtonCancel {
+  background: #f2f2f2;
+  color: #333;
+}
+
+.modalButtonCancel:hover {
+  background: #e6e6e6;
+}
+
+.modalButtonConfirm {
+  background: #111;
+  color: #fff;
+}
+
+.modalButtonConfirm:hover {
+  background: #000;
+}
+
+.modalButtonDelete {
+  background: #d32f2f;
+  color: #fff;
+}
+
+.modalButtonDelete:hover {
+  background: #b71c1c;
 }
 
 :global(.dark) .modalContent {
@@ -404,41 +393,30 @@
 }
 
 :global(.dark) .modalMessage {
-  color: #B5B3A7;
+  color: #b5b3a7;
 }
 
-:global(.dark) .categoryTitle {
-  color: #B5B3A7;
+:global(.dark) .modalButtonCancel {
+  background: #2e2e2c;
+  color: #a19e94;
 }
 
-:global(.dark) .categoryTitle:hover {
-  color: #A19E94;
+:global(.dark) .modalButtonCancel:hover {
+  background: #3a3a38;
 }
 
-:global(.dark) .table a {
-  color: #B5B3A7;
+:global(.dark) .modalButtonConfirm {
+  background: #3a3934;
 }
 
-:global(.dark) .searchBtn {
-  background: #3A3934;
+:global(.dark) .modalButtonConfirm:hover {
+  background: #42413b;
 }
 
-:global(.dark) .searchBtn:hover {
-  background: #42413B;
+:global(.dark) .modalButtonDelete {
+  background: #c62828;
 }
 
-:global(.dark) .writeBtn {
-  background: #3A3934;
-}
-
-:global(.dark) .writeBtn:hover {
-  background: #42413B;
-}
-
-:global(.dark) .topButton {
-  background: #3A3934;
-}
-
-:global(.dark) .topButton:hover {
-  background: #42413B;
+:global(.dark) .modalButtonDelete:hover {
+  background: #b71c1c;
 }
