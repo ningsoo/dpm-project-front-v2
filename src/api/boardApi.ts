@@ -56,7 +56,7 @@ export const boardApi = {
     ),
 
   /** 3. 게시글 상세 조회 - GET /api/boards/[boardId] (signal: AbortController 취소용) */
-  getPost: (boardId: string, options?: { signal?: AbortSignal }) =>
+  getPost: (boardId: string, _options?: { signal?: AbortSignal }) =>
     fetchClient.get<ApiResponse<BoardDetail>>(
       `/api/boards/${boardId}`,
     ),
