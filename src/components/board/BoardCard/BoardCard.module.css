@@ -1,0 +1,159 @@
+/* 공통 카드: BoardList / TopShowcase / TopPlaylists 동일 구조 */
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+:global(.dark) .card {
+  background: #242422;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+}
+
+/* 썸네일 ratio 56.25% */
+.thumbWrap {
+  position: relative;
+  padding-top: 56.25%;
+  background: #eee;
+  overflow: hidden;
+}
+
+:global(.dark) .thumbWrap {
+  background: #2e2e2c;
+}
+
+.thumbImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cardBody {
+  padding: 12px;
+}
+
+.cardTitle {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #222;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global(.dark) .cardTitle {
+  color: #b5b3a7;
+}
+
+/* 닉네임 라인: 닉네임 좌측, 좋아요/조회수 우측 끝 */
+.authorMetaRow {
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.author {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8rem;
+  color: #666;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global(.dark) .author {
+  color: #8a877d;
+}
+
+/* Heart / Eye 아이콘 + 숫자: 닉네임과 같은 라인 우측 */
+.meta {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+:global(.dark) .meta {
+  color: #8a877d;
+}
+
+.card:hover .metaItem {
+  color: #333;
+}
+
+:global(.dark) .card:hover .metaItem {
+  color: #b5b3a7;
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s ease;
+}
+
+.metaItemIcon {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  opacity: 0.9;
+}
+
+.card:hover .metaItemIcon {
+  opacity: 1;
+}
+
+.metaItemHeart {
+  color: #c62828;
+}
+
+:global(.dark) .metaItemHeart {
+  color: #ef5350;
+}
+
+.card:hover .metaItemHeart {
+  color: #b71c1c;
+}
+
+:global(.dark) .card:hover .metaItemHeart {
+  color: #ff7043;
+}
+
+.metaItemEye {
+  color: #555;
+}
+
+:global(.dark) .metaItemEye {
+  color: #8a877d;
+}
+
+.card:hover .metaItemEye {
+  color: #111;
+}
+
+:global(.dark) .card:hover .metaItemEye {
+  color: #b5b3a7;
+}

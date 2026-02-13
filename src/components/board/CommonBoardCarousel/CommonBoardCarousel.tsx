@@ -12,7 +12,8 @@ import {
   getBoardThumbnailUrl,
 } from '@/utils/boardThumbnailUtils';
 import type { BoardCategorySlug } from '@/utils/boardThumbnailUtils';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Heart, Eye } from 'lucide-react';
+import { formatViews } from '@/utils/displayFormatters';
 import styles from './CommonBoardCarousel.module.css';
 
 /** 데이터 + 레이아웃 준비 전 배경 flicker 방지: 준비 후 opacity 전환 */
@@ -278,6 +279,19 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
                 <div className={styles.thumb} style={{ backgroundImage: `url(${imageUrl})` }}>
                   <div className={styles.overlay}>
                     <div className={styles.cardTitle}>{post.title}</div>
+                    <div className={styles.overlayMetaRow}>
+                      <div className={styles.author}>{post.nickname || '—'}</div>
+                      <div className={styles.meta}>
+                        <span className={styles.metaItem}>
+                          <Heart size={14} strokeWidth={2} />
+                          {post.likes ?? 0}
+                        </span>
+                        <span className={styles.metaItem}>
+                          <Eye size={14} strokeWidth={2} />
+                          {formatViews(post.views)}
+                        </span>
+                      </div>
+                    </div>
                     <div className={styles.desc}>{post.content || ''}</div>
                   </div>
                 </div>

@@ -12,7 +12,7 @@ import {
   getShowcaseVideoId,
 } from '@/utils/boardThumbnailUtils';
 import YouTubeHoverThumbnail from '@/components/board/YouTubeHoverThumbnail';
-import { formatViews } from '@/utils/displayFormatters';
+import { BoardCard } from '@/components/board/BoardCard';
 import styles from './TopShowcase.module.css';
 
 export default function TopShowcase() {
@@ -39,44 +39,26 @@ export default function TopShowcase() {
         {posts.map((p) => {
           const thumbnailUrl = getBoardThumbnailUrl(p, 'showcase');
           const videoId = getShowcaseVideoId(p);
-
-          const handleCardClick = () => {
-            router.push(`/boards/${p.boardId}`);
-          };
+          const thumbnail = videoId ? (
+            <YouTubeHoverThumbnail
+              thumbnailUrl={thumbnailUrl}
+              videoId={videoId}
+              alt={p.title}
+            />
+          ) : (
+            <img src={thumbnailUrl} alt="" className={styles.thumb} />
+          );
 
           return (
-            <div
+            <BoardCard
               key={p.boardId}
-              className={styles.card}
-              onClick={handleCardClick}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  handleCardClick();
-                }
-              }}
-              style={{ cursor: 'pointer' }}
-            >
-              <div className={styles.thumbWrap}>
-                {videoId ? (
-                  <YouTubeHoverThumbnail
-                    thumbnailUrl={thumbnailUrl}
-                    videoId={videoId}
-                    alt={p.title}
-                  />
-                ) : (
-                  <img src={thumbnailUrl} alt="" className={styles.thumb} />
-                )}
-              </div>
-              <div className={styles.body}>
-                <div className={styles.cardTitle}>{p.title}</div>
-                <div className={styles.author}>{p.nickname || '—'}</div>
-                <div className={styles.likes}>♥ {p.likes ?? 0}</div>
-                <div className={styles.likes}>♥ {formatViews(p.views)}</div>
-              </div>
-            </div>
+              thumbnail={thumbnail}
+              title={p.title}
+              nickname={p.nickname}
+              likeCount={p.likes}
+              viewCount={p.views}
+              onClick={() => router.push(`/boards/${p.boardId}`)}
+            />
           );
         })}
       </div>
