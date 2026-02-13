@@ -7,6 +7,7 @@ import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
 import { mypageApi } from '@/api/mypageApi';
 import { cancelPayment } from '@/api/creditApi';
+import { toUserFriendlyTossMessage } from '@/utils/tossErrorMessage';
 import styles from '../mypage.module.css';
 import type { AxiosError } from 'axios';
 
@@ -332,8 +333,6 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
 
       const status = axiosErr?.response?.status;
       const data = axiosErr?.response?.data;
-      const message = typeof data?.message === 'string' ? data.message : undefined;
-      const errorCode = typeof data?.errorCode === 'string' ? data.errorCode : undefined;
 
       // 401인 경우 로그인으로 이동
       if (status === 401) {
@@ -342,20 +341,11 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
         return;
       }
 
-      // errorCode가 있으면 표시
-      if (errorCode) {
-        ToastUtils.error(`취소 실패: ${errorCode}`);
-        return;
-      }
-
-      // message가 있으면 그대로 표시
-      if (message) {
-        ToastUtils.error(message);
-        return;
-      }
-
-      // 그 외
-      ToastUtils.error('구매 취소에 실패했습니다.');
+      // 그 외 실패: data.message → 토스 변환 시도 → 변환 성공 시 tossFriendly, 아니면 rawMessage, 없으면 기본 문구 (errorCode는 노출하지 않음)
+      const rawMessage = typeof data?.message === 'string' ? data.message.trim() : '';
+      const tossFriendly = toUserFriendlyTossMessage(rawMessage || undefined);
+      const displayMessage = tossFriendly ?? (rawMessage || '구매 취소에 실패했습니다.');
+      ToastUtils.error(displayMessage);
     } finally {
       setPurchaseCancelSubmitting(false);
     }

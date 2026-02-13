@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { confirmPayment } from '@/api/creditApi';
 import { ToastUtils } from '@/utils/toastUtils';
+import { toUserFriendlyTossMessage } from '@/utils/tossErrorMessage';
 import styles from '../../mypage.module.css';
 import creditStyles from '../credit.module.css';
 
@@ -112,10 +113,9 @@ export default function SuccessClient() {
           setConfirmData(body.data ?? null);
           setStatus('success');
         } else {
-          // 백엔드 message 우선 출력
-          const message = typeof body?.message === 'string' && body.message.trim() !== '' 
-            ? body.message.trim() 
-            : '결제 확정에 실패했습니다.';
+          const rawMessage = typeof body?.message === 'string' ? body.message.trim() : '';
+          const tossFriendly = toUserFriendlyTossMessage(rawMessage || undefined);
+          const message = tossFriendly ?? (rawMessage || '결제 확정에 실패했습니다.');
           ToastUtils.error(message);
           redirectAfterToast(router);
           setStatus('invalid');
@@ -126,9 +126,6 @@ export default function SuccessClient() {
           response?: { status?: number; data?: { message?: string } };
         };
         const statusCode = ax?.response?.status;
-        const message = typeof ax?.response?.data?.message === 'string' && ax.response.data.message.trim() !== ''
-          ? ax.response.data.message.trim()
-          : '';
 
         // 401 최우선 처리
         if (statusCode === 401) {
@@ -138,12 +135,11 @@ export default function SuccessClient() {
           return;
         }
 
-        // 그 외는 백엔드 message 우선 출력
-        if (message) {
-          ToastUtils.error(message);
-        } else {
-          ToastUtils.error('결제 확정에 실패했습니다.');
-        }
+        // 그 외: 토스 구조면 사용자 문구로 변환, 아니면 rawMessage 또는 기본 문구
+        const rawMessage = typeof ax?.response?.data?.message === 'string' ? ax.response.data.message.trim() : '';
+        const tossFriendly = toUserFriendlyTossMessage(rawMessage || undefined);
+        const displayMessage = tossFriendly ?? (rawMessage || '결제 확정에 실패했습니다.');
+        ToastUtils.error(displayMessage);
         redirectAfterToast(router);
         setStatus('error');
       });
