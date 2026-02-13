@@ -350,7 +350,7 @@ export default function FindEmailPage() {
               {successMessage}
             </p>
             <p style={{ margin: '0 0 8px', lineHeight: 1.6 }}>
-              <strong style={{ color: '#1976d2', fontWeight: 700 }}>{foundEmail}</strong>
+              <strong style={{ color: '#111', fontWeight: 700 }}>{foundEmail}</strong>
             </p>
             <p style={{ margin: '0 0 16px', lineHeight: 1.6 }}>
               확인 클릭시 로그인 페이지로 이동합니다.

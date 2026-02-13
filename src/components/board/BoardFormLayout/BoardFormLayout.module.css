@@ -102,11 +102,11 @@
 }
 
 .likeBtnLiked {
-  color: #c62828;
+  color: #A6534F;
 }
 
 .likeBtnLiked:hover {
-  color: #b71c1c;
+  color: #954A47;
 }
 
 .authorRow {
@@ -125,7 +125,7 @@
 }
 
 .author:hover {
-  color: #1976d2;
+  color: #111;
   text-decoration: underline;
 }
 
@@ -214,7 +214,7 @@
   margin-top: 6px;
   font-size: 0.75rem;
   font-weight: 500;
-  color: #d32f2f;
+  color: #B85450;
 }
 
 /* =========================
@@ -427,7 +427,7 @@
 }
 
 .attachmentRemove:hover {
-  background: #d32f2f;
+  background: #B85450;
 }
 
 /* =========================
@@ -472,9 +472,9 @@
   border-radius: 18px;
   background: linear-gradient(
     135deg,
-    #ff2a2a,
-    #ff0000,
-    #ff3b3b
+    #C4605C,
+    #B85450,
+    #C4605C
   );
   z-index: -1;
 }
@@ -892,16 +892,16 @@
 
 .commentLikeBtn:hover {
   background: #f0f0f0;
-  color: #c62828;
+  color: #A6534F;
 }
 
 /* 댓글 좋아요 눌림 상태: 게시글 좋아요와 동일한 빨간색 */
 .commentLikeBtn.likeBtnLiked {
-  color: #c62828;
+  color: #A6534F;
 }
 
 .commentLikeBtn.likeBtnLiked:hover {
-  color: #b71c1c;
+  color: #954A47;
   background: #f0f0f0;
 }
 
@@ -1072,12 +1072,12 @@
 }
 
 .modalButtonDelete {
-  background: #d32f2f;
+  background: #B85450;
   color: #fff;
 }
 
 .modalButtonDelete:hover {
-  background: #b71c1c;
+  background: #954A47;
 }
 
 .reportTextarea {
@@ -1189,11 +1189,11 @@
 }
 
 :global(.dark) .iconBtn.likeBtnLiked {
-  color: #c62828;
+  color: #A6534F;
 }
 
 :global(.dark) .iconBtn.likeBtnLiked:hover {
-  color: #b71c1c;
+  color: #954A47;
 }
 
 :global(.dark) .author {
@@ -1294,15 +1294,15 @@
 
 :global(.dark) .commentLikeBtn:hover {
   background: #2e2e2c;
-  color: #c62828;
+  color: #A6534F;
 }
 
 :global(.dark) .commentLikeBtn.likeBtnLiked {
-  color: #c62828;
+  color: #A6534F;
 }
 
 :global(.dark) .commentLikeBtn.likeBtnLiked:hover {
-  color: #b71c1c;
+  color: #954A47;
   background: #2e2e2c;
 }
 
@@ -1371,11 +1371,11 @@
 }
 
 :global(.dark) .modalButtonDelete {
-  background: #c62828;
+  background: #A6534F;
 }
 
 :global(.dark) .modalButtonDelete:hover {
-  background: #b71c1c;
+  background: #954A47;
 }
 
 :global(.dark) .reportTextarea {
@@ -1414,5 +1414,5 @@
 }
 
 :global(.dark) .attachmentRemove:hover {
-  background: #c62828;
+  background: #A6534F;
 }

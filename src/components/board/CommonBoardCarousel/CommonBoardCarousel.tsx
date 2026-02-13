@@ -31,7 +31,7 @@ const useSectionReveal = (isLoading: boolean, hasContent: boolean, layoutReady: 
 };
 
 const CARD_GAP = 20;
-const TRANSITION_MS = 600;
+const TRANSITION_MS = 650;
 
 interface CommonBoardCarouselProps {
   category: BoardCategory;
@@ -52,6 +52,7 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const shouldResetWhenReachEndRef = useRef(false);
+  const isTransitingRef = useRef(false);
 
   const sectionRevealed = useSectionReveal(isLoading, posts.length > 0, layoutReady);
 
@@ -93,12 +94,14 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
     if (!layoutReady) return;
     if (center !== 2 * N) return;
     if (!shouldResetWhenReachEndRef.current) return;
+    isTransitingRef.current = true;
     const t = setTimeout(() => {
       setTransitionEnabled(false);
       setCenter(N);
       shouldResetWhenReachEndRef.current = false;
       requestAnimationFrame(() => {
         setTransitionEnabled(true);
+        isTransitingRef.current = false;
       });
     }, TRANSITION_MS);
     return () => clearTimeout(t);
@@ -120,8 +123,10 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
   useEffect(() => {
     if (!layoutReady || N === 0) return;
     const t = setInterval(() => {
+      if (isTransitingRef.current) return;       // 전환 중이면 건너뜀
       setCenter((c) => {
         if (c >= 2 * N - 1) {
+          isTransitingRef.current = true;
           shouldResetWhenReachEndRef.current = true;
           return 2 * N;
         }
@@ -152,13 +157,17 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
   }, [posts.length]);
 
   const movePrev = () => {
-    if (N === 0) return;
+    if (N === 0 || isTransitingRef.current) return;
     if (center === N) {
+      isTransitingRef.current = true;
       setTransitionEnabled(false);
       setCenter(2 * N);
       requestAnimationFrame(() => {
         setCenter(2 * N - 1);
-        requestAnimationFrame(() => setTransitionEnabled(true));
+        requestAnimationFrame(() => {
+          setTransitionEnabled(true);
+          setTimeout(() => { isTransitingRef.current = false; }, TRANSITION_MS);
+        });
       });
     } else {
       setCenter((c) => c - 1);
@@ -166,8 +175,9 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
   };
 
   const moveNext = () => {
-    if (N === 0) return;
+    if (N === 0 || isTransitingRef.current) return;
     if (center >= 2 * N - 1) {
+      isTransitingRef.current = true;          // 즉시 잠금 — 리셋 완료 전 추가 클릭 차단
       shouldResetWhenReachEndRef.current = true;
       setCenter(2 * N);
     } else {
