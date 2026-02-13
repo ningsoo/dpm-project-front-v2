@@ -470,7 +470,7 @@ export default function CreatePost({ category }: CreatePostProps) {
               className={styles.addBtn}
               onClick={() => attachmentInputRef.current?.click()}
             >
-              파일 선택
+              선택
             </button>
             {attachmentFile && (
               <div className={styles.attachmentPreview}>
