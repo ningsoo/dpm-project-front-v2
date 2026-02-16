@@ -200,6 +200,46 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
       .finally(() => setUsageLoading(false));
   }, []);
 
+  /**
+   * 구매내역 필터링 함수
+   * - paymentKey가 있고 COMPLETED 또는 CANCELED 상태인 것만 필터링
+   * - 같은 orderId 그룹에서 CANCELED가 있으면 COMPLETED는 제외하고 CANCELED만 표시
+   */
+  const filterPurchaseList = useCallback((rows: PopPurchaseRow[]): PopPurchaseRow[] => {
+    // 1단계: 기본 필터링 (paymentKey가 있고 COMPLETED 또는 CANCELED인 것만)
+    const basicFiltered = rows.filter(
+      (row) =>
+        row.paymentKey != null &&
+        row.paymentKey !== '' &&
+        (row.popStatus === 'COMPLETED' || row.popStatus === 'CANCELED')
+    );
+
+    // 2단계: orderId로 그룹화
+    const orderIdGroups = new Map<string, PopPurchaseRow[]>();
+    basicFiltered.forEach((row) => {
+      const orderId = row.orderId || '';
+      if (!orderIdGroups.has(orderId)) {
+        orderIdGroups.set(orderId, []);
+      }
+      orderIdGroups.get(orderId)!.push(row);
+    });
+
+    // 3단계: 각 그룹에서 CANCELED가 있으면 COMPLETED 제거
+    const result: PopPurchaseRow[] = [];
+    orderIdGroups.forEach((groupRows) => {
+      const hasCanceled = groupRows.some((row) => row.popStatus === 'CANCELED');
+      if (hasCanceled) {
+        // CANCELED가 있으면 CANCELED만 추가
+        result.push(...groupRows.filter((row) => row.popStatus === 'CANCELED'));
+      } else {
+        // CANCELED가 없으면 COMPLETED만 추가
+        result.push(...groupRows.filter((row) => row.popStatus === 'COMPLETED'));
+      }
+    });
+
+    return result;
+  }, []);
+
   const fetchPurchase = useCallback(() => {
     setPurchaseLoading(true);
     mypageApi
@@ -207,18 +247,12 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
       .then((res) => {
         const rows = parsePopResponse(res.data) as PopPurchaseRow[];
         const list = Array.isArray(rows) ? rows : [];
-        setPurchaseList(
-          list.filter(
-            (row) =>
-              row.paymentKey != null &&
-              row.paymentKey !== '' &&
-              (row.popStatus === 'COMPLETED' || row.popStatus === 'CANCELED')
-          )
-        );
+        // 필터링 함수 적용
+        setPurchaseList(filterPurchaseList(list));
       })
       .catch(handleError)
       .finally(() => setPurchaseLoading(false));
-  }, [handleError]);
+  }, [handleError, filterPurchaseList]);
 
   useEffect(() => {
     fetchUsage();
