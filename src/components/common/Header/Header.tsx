@@ -79,7 +79,7 @@ export default function Header() {
     }
     // 로그아웃 토스트는 페이지 리로드 후에도 표시되도록 localStorage에 저장
     // persistAfterReload: true로 설정하여 페이지 이동 후에도 토스트가 유지되도록 함
-    ToastUtils.success('로그아웃 되었습니다', 5000, true);
+    ToastUtils.success('로그아웃 되었습니다');
     // Redux 상태 초기화 및 토큰 제거 (logout 액션에서 토큰 제거 처리)
     dispatch(authLogout());
     // 토스트가 표시된 후 충분한 딜레이를 두고 리다이렉트 (토스트가 보이도록)
