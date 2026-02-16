@@ -7,6 +7,7 @@ import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
 import { formatCreatedDateTimeFull } from '@/utils/createdDateTime';
 import { formatCommentCount } from '@/utils/displayFormatters';
+import MessageSendModal from './MessageSendModal';
 import styles from '../BoardFormLayout/BoardFormLayout.module.css';
 
 /** API 응답 댓글 형태 */
@@ -100,6 +101,10 @@ export default function CommentSection({
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const [commentEditLoading, setCommentEditLoading] = useState<string | null>(null);
+  const [messageModalTarget, setMessageModalTarget] = useState<{
+    userId: number;
+    nickname: string;
+  } | null>(null);
 
   const commentMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const currentUserId =
@@ -346,7 +351,23 @@ export default function CommentSection({
               return (
                 <div key={c.commentId ?? c.id} className={styles.commentItem}>
                   <div className={styles.commentHead}>
-                    <span className={styles.commentAuthor}>{c.nickname}</span>
+                    {isCommentAuthor ? (
+                      <span className={styles.commentAuthor}>{c.nickname}</span>
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.commentAuthorBtn}
+                        onClick={() => {
+                          if (!isAuthenticated) {
+                            onLoginRequired();
+                            return;
+                          }
+                          setCommentMenuOpen(commentMenuOpen === c.id ? null : c.id);
+                        }}
+                      >
+                        {c.nickname}
+                      </button>
+                    )}
                     <button
                       type="button"
                       className={`${styles.commentLikeBtn} ${c.toggledLike ? styles.likeBtnLiked : ''}`}
@@ -396,12 +417,28 @@ export default function CommentSection({
                               </button>
                             </>
                           ) : (
-                            <button
-                              className={styles.menuItem}
-                              onClick={() => handleCommentReportClick(c.id)}
-                            >
-                              신고
-                            </button>
+                            <>
+                              {c.userId != null && (
+                                <button
+                                  className={styles.menuItem}
+                                  onClick={() => {
+                                    setCommentMenuOpen(null);
+                                    setMessageModalTarget({
+                                      userId: c.userId!,
+                                      nickname: c.nickname,
+                                    });
+                                  }}
+                                >
+                                  쪽지
+                                </button>
+                              )}
+                              <button
+                                className={styles.menuItem}
+                                onClick={() => handleCommentReportClick(c.id)}
+                              >
+                                신고
+                              </button>
+                            </>
                           )}
                         </div>
                       )}
@@ -454,6 +491,16 @@ export default function CommentSection({
           </>
         )}
       </section>
+
+      {messageModalTarget && (
+        <MessageSendModal
+          open={!!messageModalTarget}
+          onClose={() => setMessageModalTarget(null)}
+          targetUserId={messageModalTarget.userId}
+          targetNickname={messageModalTarget.nickname}
+          onLoginRequired={onLoginRequired}
+        />
+      )}
 
       {/* 댓글 삭제 확인 모달 */}
       {showCommentDeleteModal && (
