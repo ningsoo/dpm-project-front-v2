@@ -419,6 +419,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
           onClose={() => setShowDonationModal(false)}
           targetUserId={Number(post.userId)}
           targetNickname={post.nickname || '—'}
+          boardId={boardId ? Number(boardId) : undefined}
           onSuccess={() => {
             setShowDonationModal(false);
             boardApi.getPost(boardId).then(({ data }) => {
