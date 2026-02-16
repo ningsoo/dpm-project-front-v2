@@ -238,3 +238,38 @@
 :global(.dark) .submitBtn:hover:not(:disabled) {
   background: #42413B;
 }
+
+/* 결제 확정 로딩: 화면 정가운데 스피너 */
+.spinnerWrap {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #eee;
+  border-top-color: #111;
+  border-radius: 50%;
+  animation: creditSpin 0.8s linear infinite;
+}
+
+@keyframes creditSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+:global(.dark) .spinnerWrap {
+  background: rgba(42, 41, 36, 0.9);
+}
+
+:global(.dark) .spinner {
+  border-color: #3A3934;
+  border-top-color: #fff;
+}
