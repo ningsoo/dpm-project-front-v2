@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useDispatch, useSelector } from 'react-redux';
@@ -11,16 +11,8 @@ import { ToastUtils } from '@/utils/toastUtils';
 import styles from '@/app/auth/auth.module.css';
 
 const TERMS = `동일한 이메일 주소로는 1달 이내에 재가입할 수 없습니다.
-재가입 제한을 위해 개인정보는 30일간 보관 후 파기됩니다.
+재가입 제한을 위해 개인정보는 30일간 보관 후 파기됩니다.`;
 
-구매하신 POP에 대한 안내
-
-- 구매 시점으로 7일 이내
-    POP을 사용하지 않으셨다면 전액 환불
-    사용 내역이 있으시면 사용분 제외한 잔여 POP 환불
-
-- 구매 시점으로 7일 초과
-    환불 수수료를 공제하고 환불 (공제율 총 비용의 10%)`;
 
 export default function WithdrawPage() {
   const router = useRouter();
@@ -30,12 +22,17 @@ export default function WithdrawPage() {
   const [checked, setChecked] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const withdrewSuccessRef = useRef(false);
 
   useEffect(() => {
     if (!initialized) return;
-    
     if (!isAuthenticated) {
-      router.push('/auth/login');
+      if (withdrewSuccessRef.current) {
+        withdrewSuccessRef.current = false;
+        router.replace('/');
+      } else {
+        router.push('/auth/login');
+      }
     }
   }, [initialized, isAuthenticated, router]);
 
@@ -65,10 +62,11 @@ export default function WithdrawPage() {
     setLoading(true);
     try {
       await authApi.withdraw();
+      ToastUtils.success('탈퇴가 완료되었습니다');
+      setShowModal(false);
+      withdrewSuccessRef.current = true;
       authApi.logout().catch(() => {});
       dispatch(logout());
-      setShowModal(false);
-      router.push('/');
     } catch {
       ToastUtils.error('탈퇴 처리에 실패했습니다.');
     } finally {
@@ -103,7 +101,6 @@ export default function WithdrawPage() {
         <button
           type="button"
           className={styles.submit}
-          style={{ background: '#c62828' }}
           onClick={handleWithdraw}
           disabled={!checked}
         >
@@ -151,7 +148,6 @@ export default function WithdrawPage() {
               <button
                 type="button"
                 className={styles.submit}
-                style={{ background: '#c62828' }}
                 onClick={handleConfirm}
                 disabled={loading}
               >
