@@ -10,7 +10,7 @@ import { authApi } from '@/api/authApi';
 import { checkAuth } from '@/store/slices/authSlice';
 import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
-import { sanitizeEmailInput, validateEmailForUX, normalizePasswordInput, validatePasswordBySignupRule } from '@/utils/authValidation';
+import { sanitizeEmailInput, validateEmailForUX, normalizePasswordInput } from '@/utils/authValidation';
 import styles from '../auth.module.css';
 
 export default function LoginClient() {
@@ -560,6 +560,7 @@ export default function LoginClient() {
     const raw = e.target.value;
     const { value, hadKorean } = sanitizeEmailInput(raw);
     setEmail(value);
+    setErrors((prev) => ({ ...prev, email: '' }));
     setEmailHangulError(hadKorean ? '한글은 입력할 수 없습니다' : '');
     setEmailFormatError('');
 
@@ -622,10 +623,8 @@ export default function LoginClient() {
     }
 
     const next: Record<string, string> = {};
-    if (!email) next.email = '이메일을 입력하세요';
-    if (!password) next.password = '비밀번호를 입력하세요';
-    const pwdErr = validatePasswordBySignupRule(password);
-    if (pwdErr.length > 0) next.password = pwdErr.join(' / ');
+    if (!email.trim()) next.email = '이메일을 입력하세요.';
+    if (!password.trim()) next.password = '비밀번호를 입력하세요.';
     if (Object.keys(next).length) {
       setErrors(next);
       return;
@@ -684,17 +683,22 @@ export default function LoginClient() {
         !redirect.startsWith('//');
       router.push(isSafeRedirect ? redirect : '/');
     } catch (err: unknown) {
-      const res = err as { response?: { data?: { message?: string; code?: string } } };
-      const msg = res?.response?.data?.message;
-      const code = res?.response?.data?.code;
-      if (msg?.includes('password') || msg?.includes(' incorrect')) {
-        ToastUtils.error('이메일 또는 비밀번호가 올바르지 않습니다');
-      } else if (code === 'DELETED') {
-        ToastUtils.error('Deleted account');
-      } else if (code === 'BANNED') {
-        ToastUtils.error('No login permission');
-      } else if (code === 'BLOCKED' && msg) {
-        ToastUtils.error(`Access restricted until ${msg}`);
+      const res = err as { response?: { status?: number; data?: { message?: string } } };
+      const status = res?.response?.status;
+      const msg = typeof res?.response?.data?.message === 'string' ? res.response.data.message : undefined;
+      if (status === 401) {
+        if (msg?.includes('패스워드리스 서비스를 사용 중입니다')) {
+          ToastUtils.error(msg);
+        } else if (
+          msg === '가입되지 않은 계정입니다.' ||
+          msg === '비밀번호가 일치하지 않습니다.'
+        ) {
+          ToastUtils.error('이메일 또는 비밀번호가 일치하지 않습니다.');
+        } else if (msg?.includes('사용할 수 없는 아이디')) {
+          ToastUtils.error('사용할 수 없는 이메일입니다');
+        } else {
+          ToastUtils.error('이메일 또는 비밀번호가 일치하지 않습니다.');
+        }
       } else {
         ToastUtils.error(msg || '로그인에 실패했습니다');
       }
@@ -754,7 +758,10 @@ export default function LoginClient() {
                   type={showPwd ? 'text' : 'password'}
                   placeholder={loginMode === 'passwordless' ? '' : '비밀번호 입력'}
                   value={password}
-                  onChange={(e) => setPassword(normalizePasswordInput(e.target.value))}
+                  onChange={(e) => {
+                    setPassword(normalizePasswordInput(e.target.value));
+                    setErrors((prev) => ({ ...prev, password: '' }));
+                  }}
                   className={loginMode === 'passwordless' ? `${styles.input} ${styles.inputPwlsDisabled}` : styles.input}
                   disabled={loading || loginMode === 'passwordless'}
                   readOnly={loginMode === 'passwordless'}
