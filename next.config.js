@@ -5,11 +5,19 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   async rewrites() {
-    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
     return [
       {
         source: '/api/:path*',
-        destination: `${apiBase}/api/:path*`,
+        destination: `${backendUrl}/api/:path*`,
+      },
+      {
+        source: '/v1/:path*',
+        destination: `${backendUrl}/v1/:path*`,
+      },
+      {
+        source: '/oauth2/:path*',
+        destination: `${backendUrl}/oauth2/:path*`,
       },
     ];
   },
