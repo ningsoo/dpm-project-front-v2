@@ -135,6 +135,11 @@ fetchClient.interceptors.response.use(
       return Promise.reject(err);
     }
 
+    // 로그인 요청에서 401은 "아이디/비밀번호 불일치"이므로 refresh 시도하지 않고 즉시 reject
+    if (config.url?.includes('/api/auth/login')) {
+      return Promise.reject(err);
+    }
+
     // 비밀번호 검증 401은 "틀린 비밀번호"이므로 refresh 시도하지 않고 즉시 reject
     if (config.url?.includes('/password/verify')) {
       return Promise.reject(err);
