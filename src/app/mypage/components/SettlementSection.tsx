@@ -63,10 +63,9 @@ function SettlementDateCell({ dt }: { dt?: string }) {
 function mapPopStatusToLabel(popStatus: unknown): '정산신청' | '정산완료' {
   const s = popStatus != null ? String(popStatus).toUpperCase() : '';
   switch (s) {
-    case 'APPROVED':
-    case 'COMPLETED':
-    case 'DONE':
+    case 'SETTLEMENT_COMPLETED':
       return '정산완료';
+    case 'SETTLEMENT_REQUEST':
     default:
       return '정산신청';
   }
