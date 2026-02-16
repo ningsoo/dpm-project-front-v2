@@ -129,6 +129,14 @@
   text-decoration: underline;
 }
 
+.authorAsButton {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
 .donateBtn {
   display: inline-flex;
   align-items: center;
@@ -785,6 +793,23 @@
   color: #333;
 }
 
+.commentAuthorBtn {
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1;
+  color: #333;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.commentAuthorBtn:hover {
+  color: #111;
+  text-decoration: underline;
+}
+
 .commentDate {
   margin-left: auto;
   font-size: 0.75rem;
@@ -944,7 +969,7 @@
 .menuDropdown {
   position: absolute;
   top: 100%;
-  right: 0;
+  left: 0;
   margin-top: 4px;
   background: #fff;
   border: 1px solid #e5e5e5;
@@ -1256,8 +1281,13 @@
   border-bottom-color: #2e2e2c;
 }
 
-:global(.dark) .commentAuthor {
+:global(.dark) .commentAuthor,
+:global(.dark) .commentAuthorBtn {
   color: #b5b3a7;
+}
+
+:global(.dark) .commentAuthorBtn:hover {
+  color: #e8e6dc;
 }
 
 :global(.dark) .commentDate {

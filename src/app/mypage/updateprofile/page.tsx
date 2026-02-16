@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { authApi } from '@/api/authApi';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import { validateNicknameFormatBySignupRule, validatePhoneParts } from '@/utils/authValidation';
@@ -104,23 +105,28 @@ export default function UpdateProfilePage() {
 
   const handleNicknameCheck = useCallback(async () => {
     if (!nickname) {
-      setErrors((e) => ({ ...e, nickname: '닉네임을 입력해주세요' }));
+      ToastUtils.error('닉네임을 입력해주세요');
       return;
     }
     if (nicknameFormatError) {
-      setErrors((e) => ({ ...e, nickname: nicknameFormatError }));
+      ToastUtils.error(nicknameFormatError);
       return;
     }
     try {
-      // TODO: 닉네임 중복 확인 API 호출
-      // const { data } = await authApi.checkNickname(nickname);
-      // const available = (data?.data as { available?: boolean })?.available;
-      // setErrors((e) => ({ ...e, nickname: available === false ? '이미 사용 중인 닉네임입니다' : '' }));
+      await authApi.checkNickname(nickname);
       ToastUtils.success('사용 가능한 닉네임입니다');
       setErrors((e) => ({ ...e, nickname: '' }));
       setNicknameVerified(true);
-    } catch {
-      setErrors((e) => ({ ...e, nickname: '확인할 수 없습니다' }));
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 409) {
+        ToastUtils.error('이미 사용 중인 닉네임입니다');
+      } else if (status === 400) {
+        ToastUtils.error('유효하지 않은 닉네임 형식입니다');
+      } else {
+        ToastUtils.error('확인할 수 없습니다');
+      }
+      setNicknameVerified(false);
     }
   }, [nickname, nicknameFormatError]);
 

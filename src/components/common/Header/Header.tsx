@@ -3,11 +3,14 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
-import { Moon, Mail, User, LogIn, LogOut } from 'lucide-react';
+import { Moon, User, LogIn, LogOut } from 'lucide-react';
+import { MailIcon } from '@/assets/site/MailIcon';
+import MessageListModal from '@/components/common/MessageListModal/MessageListModal';
+import { messageApi } from '@/api/messageApi';
 import { RootState, AppDispatch } from '@/store';
-import { toggleDarkMode } from '@/store/slices/uiSlice';
+import { toggleDarkMode, setUnreadMessageCount } from '@/store/slices/uiSlice';
 import { logout as authLogout } from '@/store/slices/authSlice';
 import { authApi } from '@/api/authApi';
 import { ToastUtils } from '@/utils/toastUtils';
@@ -28,6 +31,7 @@ const CATEGORIES = [
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const variant =
     pathname?.startsWith('/auth') || pathname?.startsWith('/mypage/credit')
       ? 'auth'
@@ -36,6 +40,8 @@ export default function Header() {
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const authInitialized = useSelector((s: RootState) => s.auth.initialized);
   const unreadCount = useSelector((s: RootState) => s.ui.unreadMessageCount);
+
+  const [showMessageListModal, setShowMessageListModal] = useState(false);
 
   /* 인증 resolve 후 실제 UI를 opacity 전환으로 노출 (깜빡임 제거) */
   const [contentVisible, setContentVisible] = useState(false);
@@ -48,17 +54,39 @@ export default function Header() {
     return () => cancelAnimationFrame(id);
   }, [authInitialized]);
 
+  /* 로그인 시에만 unread 메시지 개수 조회 (중복 호출 방지: isAuthenticated true일 때 1회) */
+  useEffect(() => {
+    if (!authInitialized || !isAuthenticated) return;
+
+    messageApi
+      .getUnreadCount()
+      .then(({ data }) => {
+        const count = data?.data;
+        if (typeof count === 'number') {
+          dispatch(setUnreadMessageCount(count));
+        }
+      })
+      .catch((err) => {
+        console.error('[unread message count]', err);
+      });
+  }, [authInitialized, isAuthenticated, dispatch]);
+
   const handleLogout = async () => {
     try {
       await authApi.logout();
-      ToastUtils.success('Logged out');
     } catch {
       // 로그아웃 API 실패해도 클라이언트에서 토큰 제거
-    } finally {
-      // Redux 상태 초기화 및 토큰 제거 (logout 액션에서 토큰 제거 처리)
-      dispatch(authLogout());
-      window.location.href = '/';
     }
+    // 로그아웃 토스트는 페이지 리로드 후에도 표시되도록 localStorage에 저장
+    // persistAfterReload: true로 설정하여 페이지 이동 후에도 토스트가 유지되도록 함
+    ToastUtils.success('로그아웃 되었습니다', 5000, true);
+    // Redux 상태 초기화 및 토큰 제거 (logout 액션에서 토큰 제거 처리)
+    dispatch(authLogout());
+    // 토스트가 표시된 후 충분한 딜레이를 두고 리다이렉트 (토스트가 보이도록)
+    // 500ms 정도 지연시켜서 현재 페이지에서 토스트가 보이도록 함
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 500);
   };
 
   const handleDarkMode = () => {
@@ -116,12 +144,14 @@ export default function Header() {
             </button>
             {isAuthenticated ? (
               <>
-                <Link href="#" className={styles.msgWrapper} aria-label="메시지">
-                  <button type="button" className={styles.iconBtn}>
-                    <Mail size={20} />
-                    {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
-                  </button>
-                </Link>
+                <button
+                  type="button"
+                  className={`${styles.msgWrapper} ${styles.iconBtn}`}
+                  onClick={() => setShowMessageListModal(true)}
+                  aria-label="메시지"
+                >
+                  <MailIcon size={20} unreadCount={unreadCount} />
+                </button>
                 <Link href="/mypage" className={styles.iconBtn} aria-label="마이페이지">
                   <User size={20} />
                 </Link>
@@ -137,6 +167,17 @@ export default function Header() {
           </div>
         )}
       </div>
+
+      {showMessageListModal && (
+        <MessageListModal
+          open={showMessageListModal}
+          onClose={() => setShowMessageListModal(false)}
+          onLoginRequired={() => {
+            setShowMessageListModal(false);
+            router.push(`/auth/login?redirect=${encodeURIComponent(pathname ?? '/')}`);
+          }}
+        />
+      )}
     </header>
   );
 }

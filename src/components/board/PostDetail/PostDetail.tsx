@@ -17,6 +17,7 @@ import type { BoardDetail } from '@/api/boardApi';
 import CommentSection from './CommentSection';
 import PlaylistDetailSection from './PlaylistDetailSection';
 import DonationModal from './DonationModal';
+import MessageSendModal from './MessageSendModal';
 import { PopIcon } from '@/assets/site/paths';
 import styles from '../BoardFormLayout/BoardFormLayout.module.css';
 import postDetailStyles from './PostDetail.module.css';
@@ -68,12 +69,15 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [showDonationModal, setShowDonationModal] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
+  const [nicknameMenuOpen, setNicknameMenuOpen] = useState(false);
   const [likeLoading, setLikeLoading] = useState(false);
   const [attachmentDownloading, setAttachmentDownloading] = useState(false);
   const [spotlightPhotoIndex, setSpotlightPhotoIndex] = useState(0);
 
   const menuRef = useRef<HTMLDivElement>(null);
+  const nicknameMenuRef = useRef<HTMLDivElement>(null);
 
   const currentUserId =
     typeof window !== 'undefined' ? tokenUtils.getUserIdFromToken() : null;
@@ -140,10 +144,13 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setMenuOpen(false);
       }
+      if (nicknameMenuRef.current && !nicknameMenuRef.current.contains(event.target as Node)) {
+        setNicknameMenuOpen(false);
+      }
     };
-    if (menuOpen) document.addEventListener('mousedown', handleClickOutside);
+    if (menuOpen || nicknameMenuOpen) document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [menuOpen]);
+  }, [menuOpen, nicknameMenuOpen]);
 
   // spotlight 사진 인덱스: 게시글/카테고리 바뀔 때 0으로 초기화 (훅 순서 유지를 위해 early return 이전에 호출)
   useEffect(() => {
@@ -344,7 +351,40 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
       </div>
 
       <div className={styles.authorRow}>
-        <span className={styles.author}>{post.nickname || '—'}</span>
+        <div className={styles.menuWrapper} ref={nicknameMenuRef}>
+          {isAuthor ? (
+            <span className={styles.author}>{post.nickname || '—'}</span>
+          ) : (
+            <>
+              <button
+                type="button"
+                className={`${styles.author} ${styles.authorAsButton}`}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    setShowLoginRequiredModal(true);
+                    return;
+                  }
+                  setNicknameMenuOpen((p) => !p);
+                }}
+              >
+                {post.nickname || '—'}
+              </button>
+              {nicknameMenuOpen && isAuthenticated && post.userId != null && (
+                <div className={styles.menuDropdown}>
+                  <button
+                    className={styles.menuItem}
+                    onClick={() => {
+                      setNicknameMenuOpen(false);
+                      setShowMessageModal(true);
+                    }}
+                  >
+                    쪽지
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
         {!isAuthor && post.userId != null && (
           <button
             type="button"
@@ -363,12 +403,23 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
         )}
       </div>
 
+      {showMessageModal && post.userId != null && (
+        <MessageSendModal
+          open={showMessageModal}
+          onClose={() => setShowMessageModal(false)}
+          targetUserId={Number(post.userId)}
+          targetNickname={post.nickname || '—'}
+          onLoginRequired={() => setShowLoginRequiredModal(true)}
+        />
+      )}
+
       {showDonationModal && post.userId != null && (
         <DonationModal
           open={showDonationModal}
           onClose={() => setShowDonationModal(false)}
           targetUserId={Number(post.userId)}
           targetNickname={post.nickname || '—'}
+          boardId={boardId ? Number(boardId) : undefined}
           onSuccess={() => {
             setShowDonationModal(false);
             boardApi.getPost(boardId).then(({ data }) => {

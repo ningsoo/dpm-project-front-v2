@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchClient } from '@/api/fetchClient';
 import { ToastUtils } from '@/utils/toastUtils';
@@ -163,9 +163,29 @@ function mapPurchaseTargetToLabel(target?: string): string {
   return String(target).toUpperCase() === 'CHARGE' ? '충전' : '-';
 }
 
+/** 오늘 날짜를 YYYY-MM-DD 형식으로 반환 */
+function getTodayDateString(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/** 30일 전 날짜를 YYYY-MM-DD 형식으로 반환 */
+function getDate30DaysAgo(): string {
+  const today = new Date();
+  const past = new Date(today);
+  past.setDate(today.getDate() - 30);
+  const year = past.getFullYear();
+  const month = String(past.getMonth() + 1).padStart(2, '0');
+  const day = String(past.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onChargeClick }: PopSectionProps) {
   const router = useRouter();
-  const [inputRange, setInputRange] = useState({ start: '', end: '' });
+  const [inputRange, setInputRange] = useState({ start: getDate30DaysAgo(), end: getTodayDateString() });
   const [usageList, setUsageList] = useState<PopUsageRow[]>([]);
   const [purchaseList, setPurchaseList] = useState<PopPurchaseRow[]>([]);
   const [usageLoading, setUsageLoading] = useState(false);
@@ -200,6 +220,46 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
       .finally(() => setUsageLoading(false));
   }, []);
 
+  /**
+   * 구매내역 필터링 함수
+   * - paymentKey가 있고 COMPLETED 또는 CANCELED 상태인 것만 필터링
+   * - 같은 orderId 그룹에서 CANCELED가 있으면 COMPLETED는 제외하고 CANCELED만 표시
+   */
+  const filterPurchaseList = useCallback((rows: PopPurchaseRow[]): PopPurchaseRow[] => {
+    // 1단계: 기본 필터링 (paymentKey가 있고 COMPLETED 또는 CANCELED인 것만)
+    const basicFiltered = rows.filter(
+      (row) =>
+        row.paymentKey != null &&
+        row.paymentKey !== '' &&
+        (row.popStatus === 'COMPLETED' || row.popStatus === 'CANCELED')
+    );
+
+    // 2단계: orderId로 그룹화
+    const orderIdGroups = new Map<string, PopPurchaseRow[]>();
+    basicFiltered.forEach((row) => {
+      const orderId = row.orderId || '';
+      if (!orderIdGroups.has(orderId)) {
+        orderIdGroups.set(orderId, []);
+      }
+      orderIdGroups.get(orderId)!.push(row);
+    });
+
+    // 3단계: 각 그룹에서 CANCELED가 있으면 COMPLETED 제거
+    const result: PopPurchaseRow[] = [];
+    orderIdGroups.forEach((groupRows) => {
+      const hasCanceled = groupRows.some((row) => row.popStatus === 'CANCELED');
+      if (hasCanceled) {
+        // CANCELED가 있으면 CANCELED만 추가
+        result.push(...groupRows.filter((row) => row.popStatus === 'CANCELED'));
+      } else {
+        // CANCELED가 없으면 COMPLETED만 추가
+        result.push(...groupRows.filter((row) => row.popStatus === 'COMPLETED'));
+      }
+    });
+
+    return result;
+  }, []);
+
   const fetchPurchase = useCallback(() => {
     setPurchaseLoading(true);
     mypageApi
@@ -207,18 +267,12 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
       .then((res) => {
         const rows = parsePopResponse(res.data) as PopPurchaseRow[];
         const list = Array.isArray(rows) ? rows : [];
-        setPurchaseList(
-          list.filter(
-            (row) =>
-              row.paymentKey != null &&
-              row.paymentKey !== '' &&
-              (row.popStatus === 'COMPLETED' || row.popStatus === 'CANCELED')
-          )
-        );
+        // 필터링 함수 적용
+        setPurchaseList(filterPurchaseList(list));
       })
       .catch(handleError)
       .finally(() => setPurchaseLoading(false));
-  }, [handleError]);
+  }, [handleError, filterPurchaseList]);
 
   useEffect(() => {
     fetchUsage();
@@ -229,6 +283,20 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
       fetchPurchase();
     }
   }, [subTab, fetchPurchase]);
+
+  // 날짜가 바뀌면 종료일을 오늘로 자동 업데이트
+  useEffect(() => {
+    const updateEndDate = () => {
+      const today = getTodayDateString();
+      setInputRange((prev) => ({ ...prev, end: today }));
+    };
+    updateEndDate();
+    // 매일 자정에 업데이트하기 위한 interval (1분마다 확인)
+    const interval = setInterval(() => {
+      updateEndDate();
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleCancelUsageClick = (row: PopUsageRow) => {
     setCancelTarget(row);
@@ -351,12 +419,36 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
     }
   }, [purchaseCancelTarget, purchaseCancelSubmitting, fetchPurchase, onPopBalanceRefresh]);
 
+  /** 날짜 범위로 필터링 */
+  const filterUsageByDateRange = useCallback((rows: PopUsageRow[], range: { start: string; end: string }): PopUsageRow[] => {
+    if (!range.start || !range.end) return rows;
+    return rows.filter((row) => {
+      const dateStr = (row.requestedDatetime || row.createdDatetime || '').slice(0, 10);
+      if (!dateStr) return false;
+      return dateStr >= range.start && dateStr <= range.end;
+    });
+  }, []);
+
+  const filterPurchaseByDateRange = useCallback((rows: PopPurchaseRow[], range: { start: string; end: string }): PopPurchaseRow[] => {
+    if (!range.start || !range.end) return rows;
+    return rows.filter((row) => {
+      const dateStr = (row.createdDatetime || '').slice(0, 10);
+      if (!dateStr) return false;
+      return dateStr >= range.start && dateStr <= range.end;
+    });
+  }, []);
+
+  const filteredUsageList = useMemo(() => {
+    return filterUsageByDateRange(usageList, inputRange);
+  }, [usageList, inputRange, filterUsageByDateRange]);
+
+  const filteredPurchaseList = useMemo(() => {
+    return filterPurchaseByDateRange(purchaseList, inputRange);
+  }, [purchaseList, inputRange, filterPurchaseByDateRange]);
+
   const handleSearch = () => {
-    if (subTab === 'usage') {
-      fetchUsage();
-    } else {
-      fetchPurchase();
-    }
+    // 날짜 필터링은 useMemo에서 자동으로 적용됨
+    // 필요시 여기서 추가 작업 가능
   };
 
   return (
@@ -396,6 +488,7 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
           type="date"
           value={inputRange.start}
           onChange={(e) => setInputRange((r) => ({ ...r, start: e.target.value }))}
+          max={getTodayDateString()}
           className={styles.settlementDateInput}
           aria-label="시작일"
         />
@@ -404,6 +497,7 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
           type="date"
           value={inputRange.end}
           onChange={(e) => setInputRange((r) => ({ ...r, end: e.target.value }))}
+          max={getTodayDateString()}
           className={styles.settlementDateInput}
           aria-label="종료일"
         />
@@ -431,14 +525,14 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
                   로딩 중...
                 </div>
               </div>
-            ) : usageList.length === 0 ? (
+            ) : filteredUsageList.length === 0 ? (
               <div className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.settlementGrid3EmptyRow}`}>
                 <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
                   내역이 없습니다.
                 </div>
               </div>
             ) : (
-              usageList.map((row, idx) => {
+              filteredUsageList.map((row, idx) => {
                 const usageDatetime = row.requestedDatetime ?? row.createdDatetime;
                 return (
                   <div
@@ -493,14 +587,14 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
                   로딩 중...
                 </div>
               </div>
-            ) : purchaseList.length === 0 ? (
+            ) : filteredPurchaseList.length === 0 ? (
               <div className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.settlementGrid3EmptyRow}`}>
                 <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
                   내역이 없습니다.
                 </div>
               </div>
             ) : (
-              purchaseList.map((row, idx) => (
+              filteredPurchaseList.map((row, idx) => (
                 <div
                   key={idx}
                   className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableRow}`}

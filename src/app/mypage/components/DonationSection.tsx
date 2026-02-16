@@ -154,11 +154,31 @@ function filterByDateRange(rows: PopHistoryResponseRow[], range: { start: string
 
 const showedUserIdNullToastRef = { current: false };
 
+/** 오늘 날짜를 YYYY-MM-DD 형식으로 반환 */
+function getTodayDateString(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/** 30일 전 날짜를 YYYY-MM-DD 형식으로 반환 */
+function getDate30DaysAgo(): string {
+  const today = new Date();
+  const past = new Date(today);
+  past.setDate(today.getDate() - 30);
+  const year = past.getFullYear();
+  const month = String(past.getMonth() + 1).padStart(2, '0');
+  const day = String(past.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function DonationSection() {
   const userId = tokenUtils.getUserIdFromAccessToken();
   if (userId !== null) showedUserIdNullToastRef.current = false;
   const [subTab, setSubTab] = useState<'sent' | 'received'>('sent');
-  const [inputRange, setInputRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
+  const [inputRange, setInputRange] = useState<{ start: string; end: string }>({ start: getDate30DaysAgo(), end: getTodayDateString() });
   const [appliedRange, setAppliedRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
   const [sentRaw, setSentRaw] = useState<PopHistoryResponseRow[]>([]);
   const [receivedRaw, setReceivedRaw] = useState<PopHistoryResponseRow[]>([]);
@@ -245,6 +265,20 @@ export function DonationSection() {
       fetchReceived();
     }
   }, [subTab, fetchSent, fetchReceived]);
+
+  // 날짜가 바뀌면 종료일을 오늘로 자동 업데이트
+  useEffect(() => {
+    const updateEndDate = () => {
+      const today = getTodayDateString();
+      setInputRange((prev) => ({ ...prev, end: today }));
+    };
+    updateEndDate();
+    // 매일 자정에 업데이트하기 위한 interval (1분마다 확인)
+    const interval = setInterval(() => {
+      updateEndDate();
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const sentFiltered = useMemo(
     () => filterByDateRange(sortByCreatedDatetimeDesc(sentRaw), appliedRange),
@@ -348,6 +382,7 @@ export function DonationSection() {
             type="date"
             value={inputRange.start}
             onChange={(e) => setInputRange((r) => ({ ...r, start: e.target.value }))}
+            max={getTodayDateString()}
             className={styles.settlementDateInput}
             aria-label="시작일"
           />
@@ -356,6 +391,7 @@ export function DonationSection() {
             type="date"
             value={inputRange.end}
             onChange={(e) => setInputRange((r) => ({ ...r, end: e.target.value }))}
+            max={getTodayDateString()}
             className={styles.settlementDateInput}
             aria-label="종료일"
           />
