@@ -12,7 +12,7 @@ import {
 } from '@/utils/boardThumbnailUtils';
 import styles from './ShowcaseFeaturedSection.module.css';
 
-/** 첫 프레임에 배경만 보이는 flicker 방지: 한 번 그린 뒤 opacity 전환 (스켈레톤/콘텐츠 동일) */
+/** 마운트 후 1프레임 뒤 reveal → 배경 단독 노출(flicker) 방지 */
 const useSectionReveal = () => {
   const [revealed, setRevealed] = useState(false);
   useEffect(() => {
@@ -24,7 +24,6 @@ const useSectionReveal = () => {
 
 const TOTAL = 4;
 const HOVER_DELAY = 180;
-const SCALE = 1.25;     // 균일 확대 (비율 유지)
 
 export default function ShowcaseFeaturedSection() {
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
@@ -77,33 +76,58 @@ export default function ShowcaseFeaturedSection() {
     setActiveIndex(null);
   };
 
-  const getLeftPercent = (index: number) => `${index * 25}%`;
+  /**
+   * active 카드: 50% 너비 + 16:9 비율로 확장, 좌우 카드 위에 겹침
+   * 비활성 카드: 기본 25% 너비
+   */
+  const getCardStyle = (index: number): React.CSSProperties => {
+    const isActive = index === activeIndex;
 
-  const getTransform = (index: number) => {
-    if (index !== activeIndex) return 'translateY(-50%)';
-
-    // 균일 scale → 비율 유지 + 좌우 확장 방향 제어
-    if (index === 0) {
-      return `translateY(-50%) scale(${SCALE}) translateX(5%)`;
+    if (!isActive) {
+      return {
+        left: `${index * 25}%`,
+        width: '25%',
+        height: 380,
+        transform: 'translateY(-50%)',
+      };
     }
 
-    if (index === TOTAL - 1) {
-      return `translateY(-50%) scale(${SCALE}) translateX(-5%)`;
-    }
+    // active: 50% 너비, 16:9 비율 높이
+    // left를 재계산해서 카드 중심이 원래 위치에 유지되도록
+    const originalCenterPercent = index * 25 + 12.5; // 원래 중심(%)
+    let leftPercent = originalCenterPercent - 25;     // 50%의 절반 = 25
 
-    return `translateY(-50%) scale(${SCALE})`;
+    // 좌측/우측 끝 클램프
+    if (leftPercent < 0) leftPercent = 0;
+    if (leftPercent + 50 > 100) leftPercent = 50;
+
+    return {
+      left: `${leftPercent}%`,
+      width: '50%',
+      height: 380,
+      transform: 'translateY(-50%)',
+    };
   };
 
-  /* 로딩 중: 높이 선점 + 스켈레톤 */
-  if (isLoading) {
-    return (
-      <section
-        className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''} ${
-          sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
-        }`}
-      >
-        <div className={styles.container}>
-          <div className={styles.cardWrapper}>
+  const hasEnoughPosts = posts.length >= TOTAL;
+
+  return (
+    <section
+      className={`${styles.section} ${!hasEnoughPosts ? styles.sectionPlaceholder : ''} ${darkMode ? 'dark' : ''} ${
+        sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
+      }`}
+    >
+      <div className={styles.container}>
+        <div className={styles.cardWrapper}>
+          {/* 스켈레톤: 로딩 중에만 표시, crossfade */}
+          <div
+            className={styles.skeletonLayer}
+            style={{
+              opacity: isLoading ? 1 : 0,
+              pointerEvents: isLoading ? 'auto' : 'none',
+              transition: 'opacity 0.25s ease',
+            }}
+          >
             {Array.from({ length: TOTAL }).map((_, i) => (
               <div
                 key={`skeleton-${i}`}
@@ -114,37 +138,9 @@ export default function ShowcaseFeaturedSection() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-    );
-  }
 
-  /* 로드 완료 후 데이터 부족: 높이 유지 + 빈 상태 */
-  if (posts.length < TOTAL) {
-    return (
-      <section
-        className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''} ${
-          sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
-        }`}
-      >
-        <div className={styles.container}>
-          <div className={styles.cardWrapper}>
-            <div className={styles.emptyState}>등록된 쇼케이스가 없습니다.</div>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section
-      className={`${styles.section} ${darkMode ? 'dark' : ''} ${
-        sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
-      }`}
-    >
-      <div className={styles.container}>
-        <div className={styles.cardWrapper}>
-          {posts.map((post, i) => {
+          {/* 실제 콘텐츠: 로딩 완료 후 표시, crossfade */}
+          {!isLoading && hasEnoughPosts && posts.map((post, i) => {
             const isActive = i === activeIndex;
             const isPlaying = i === playingIndex && isActive;
 
@@ -156,10 +152,7 @@ export default function ShowcaseFeaturedSection() {
               <div
                 key={post.boardId}
                 className={`${styles.card} ${isActive ? styles.active : ''}`}
-                style={{
-                  left: getLeftPercent(i),
-                  transform: getTransform(i),
-                }}
+                style={getCardStyle(i)}
                 onMouseEnter={() => onEnter(i)}
                 onMouseLeave={() => onLeave(i)}
                 onClick={() =>
@@ -207,6 +200,11 @@ export default function ShowcaseFeaturedSection() {
               </div>
             );
           })}
+
+          {/* 빈 상태 */}
+          {!isLoading && !hasEnoughPosts && (
+            <div className={styles.emptyState}>등록된 쇼케이스가 없습니다.</div>
+          )}
         </div>
       </div>
     </section>
