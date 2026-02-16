@@ -1,0 +1,356 @@
+/* 기존 모달 디자인 시스템 유지 */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+}
+
+/* 답장 모달 오픈 시 배경 겹침 방지 - 오버레이 배경 제거 */
+.overlayReplyOpen {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+.card {
+  position: relative;
+  padding: 32px;
+  background: #fff;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.18);
+}
+
+.closeBtn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 6px;
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeBtn:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.title {
+  margin: 0 0 24px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #666;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  background: #eee;
+  color: #333;
+}
+
+.tabActive {
+  background: #111;
+  color: #fff;
+}
+
+.tabActive:hover {
+  background: #000;
+  color: #fff;
+}
+
+.listArea {
+  flex: 1;
+  min-height: 200px;
+  overflow-y: auto;
+}
+
+.loading,
+.empty {
+  padding: 40px 24px;
+  text-align: center;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.listItem {
+  padding: 14px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.listItem:last-child {
+  border-bottom: none;
+}
+
+.listItemClickable {
+  cursor: pointer;
+}
+
+.listItemClickable:hover {
+  background: #f9f9f9;
+}
+
+.listItemRead {
+  opacity: 0.65;
+}
+
+.listItemRead .itemNickname,
+.listItemRead .itemDate,
+.listItemRead .itemContent {
+  color: #999;
+}
+
+.itemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.itemNickname {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.itemDate {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.itemContent {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #555;
+  line-height: 1.4;
+}
+
+/* 상세 화면 */
+.detailArea {
+  flex: 1;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+}
+
+.detailHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.detailLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #888;
+}
+
+.detailNickname {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.detailDate {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.detailBody {
+  flex: 1;
+  font-size: 0.95rem;
+  color: #333;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-y: auto;
+  margin-bottom: 24px;
+}
+
+.detailActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: auto;
+}
+
+.backBtn {
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #666;
+  background: #f5f5f5;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.backBtn:hover {
+  background: #e5e5e5;
+  color: #333;
+}
+
+.replyBtn {
+  padding: 10px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: #111;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.replyBtn:hover {
+  background: #000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 다크모드 */
+:global(.dark) .card {
+  background: #2e2e2c;
+}
+
+:global(.dark) .title {
+  color: #e8e6dc;
+}
+
+:global(.dark) .closeBtn:hover {
+  background: #3a3a38;
+  color: #b5b3a7;
+}
+
+:global(.dark) .tab {
+  background: #3a3a38;
+  color: #a19e94;
+}
+
+:global(.dark) .tab:hover {
+  background: #4a4a48;
+  color: #b5b3a7;
+}
+
+:global(.dark) .tabActive {
+  background: #3a3934;
+  color: #e8e6dc;
+}
+
+:global(.dark) .tabActive:hover {
+  background: #42413b;
+  color: #e8e6dc;
+}
+
+:global(.dark) .loading,
+:global(.dark) .empty {
+  color: #8a877d;
+}
+
+:global(.dark) .listItem {
+  border-bottom-color: #3a3a38;
+}
+
+:global(.dark) .itemNickname {
+  color: #e8e6dc;
+}
+
+:global(.dark) .itemDate {
+  color: #8a877d;
+}
+
+:global(.dark) .itemContent {
+  color: #b5b3a7;
+}
+
+:global(.dark) .listItemRead .itemNickname,
+:global(.dark) .listItemRead .itemDate,
+:global(.dark) .listItemRead .itemContent {
+  color: #6a6860;
+}
+
+:global(.dark) .listItemClickable:hover {
+  background: #2e2e2c;
+}
+
+:global(.dark) .detailHeader {
+  border-bottom-color: #3a3a38;
+}
+
+:global(.dark) .detailLabel {
+  color: #8a877d;
+}
+
+:global(.dark) .detailNickname {
+  color: #e8e6dc;
+}
+
+:global(.dark) .detailDate {
+  color: #a19e94;
+}
+
+:global(.dark) .detailBody {
+  color: #b5b3a7;
+}
+
+:global(.dark) .backBtn {
+  background: #3a3a38;
+  color: #a19e94;
+}
+
+:global(.dark) .backBtn:hover {
+  background: #4a4a48;
+  color: #b5b3a7;
+}
+
+:global(.dark) .replyBtn {
+  background: #3a3934;
+  box-shadow: none;
+}
+
+:global(.dark) .replyBtn:hover {
+  background: #42413b;
+  box-shadow: none;
+}

@@ -62,9 +62,15 @@ export const creditApi = {
   donate: (userId: string, amount: number, message?: string) =>
     fetchClient.post<ApiResponse<unknown>>(`/api/users/${userId}/donations`, { amount, message }),
 
-  /** 게시글 작성자에게 POP 선물 (요청 body: changeAmount, message) */
-  sendDonation: (targetUserId: number, body: { changeAmount: number; message: string }) =>
-    fetchClient.post<ApiResponse<unknown>>(`/api/users/donations/${targetUserId}`, body),
+  /** 게시글 작성자에게 POP 선물 (요청 body: changeAmount, message, 쿼리: boardId) */
+  sendDonation: (
+    targetUserId: number,
+    body: { changeAmount: number; message: string },
+    params?: { boardId?: number }
+  ) =>
+    fetchClient.post<ApiResponse<unknown>>(`/api/users/donations/${targetUserId}`, body, {
+      params: params?.boardId != null ? { boardId: params.boardId } : undefined,
+    }),
 
   cancelDonation: (userId: string, donationId: string) =>
     fetchClient.delete<ApiResponse<unknown>>(`/api/users/${userId}/donations/${donationId}`),

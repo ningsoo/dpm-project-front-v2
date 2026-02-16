@@ -12,6 +12,8 @@ interface DonationModalProps {
   onClose: () => void;
   targetUserId: number;
   targetNickname: string;
+  /** 게시글 ID (후원 시 쿼리 파라미터로 전달) */
+  boardId?: number;
   onSuccess?: () => void;
   onOpenCharge?: () => void;
 }
@@ -23,6 +25,7 @@ export default function DonationModal({
   onClose,
   targetUserId,
   targetNickname,
+  boardId,
   onSuccess,
   onOpenCharge,
 }: DonationModalProps) {
@@ -123,10 +126,11 @@ export default function DonationModal({
     setSubmitError('');
 
     try {
-      await creditApi.sendDonation(targetUserId, {
-        changeAmount: num,
-        message: message.trim(),
-      });
+      await creditApi.sendDonation(
+        targetUserId,
+        { changeAmount: num, message: message.trim() },
+        boardId != null ? { boardId } : undefined
+      );
 
       ToastUtils.success('선물 완료');
       onClose();
