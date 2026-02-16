@@ -104,12 +104,32 @@ interface SettlementSectionProps {
   user: SettlementUser;
 }
 
+/** 오늘 날짜를 YYYY-MM-DD 형식으로 반환 */
+function getTodayDateString(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/** 30일 전 날짜를 YYYY-MM-DD 형식으로 반환 */
+function getDate30DaysAgo(): string {
+  const today = new Date();
+  const past = new Date(today);
+  past.setDate(today.getDate() - 30);
+  const year = past.getFullYear();
+  const month = String(past.getMonth() + 1).padStart(2, '0');
+  const day = String(past.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function SettlementSection({ user }: SettlementSectionProps) {
   const [subTab, setSubTab] = useState<'history' | 'register' | 'request'>('history');
   
   const [historyList, setHistoryList] = useState<SettlementHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [historyRange, setHistoryRange] = useState({ start: '', end: '' });
+  const [historyRange, setHistoryRange] = useState({ start: getDate30DaysAgo(), end: getTodayDateString() });
   
   const [accountNumber, setAccountNumber] = useState('');
   const [accountNumberError, setAccountNumberError] = useState('');
@@ -164,6 +184,20 @@ export function SettlementSection({ user }: SettlementSectionProps) {
       fetchAvailable();
     }
   }, [subTab, fetchHistory, fetchAvailable]);
+
+  // 날짜가 바뀌면 종료일을 오늘로 자동 업데이트
+  useEffect(() => {
+    const updateEndDate = () => {
+      const today = getTodayDateString();
+      setHistoryRange((prev) => ({ ...prev, end: today }));
+    };
+    updateEndDate();
+    // 매일 자정에 업데이트하기 위한 interval (1분마다 확인)
+    const interval = setInterval(() => {
+      updateEndDate();
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const validateAccountNumber = (value: string): string => {
     if (!value) return '';
@@ -286,9 +320,9 @@ export function SettlementSection({ user }: SettlementSectionProps) {
         {subTab === 'history' && (
           <div>
             <div className={styles.settlementDateRow}>
-               <input type="date" value={historyRange.start} onChange={e=>setHistoryRange(r=>({...r, start:e.target.value}))} className={styles.settlementDateInput}/>
+               <input type="date" value={historyRange.start} onChange={e=>setHistoryRange(r=>({...r, start:e.target.value}))} max={getTodayDateString()} className={styles.settlementDateInput}/>
                <span>~</span>
-               <input type="date" value={historyRange.end} onChange={e=>setHistoryRange(r=>({...r, end:e.target.value}))} className={styles.settlementDateInput}/>
+               <input type="date" value={historyRange.end} onChange={e=>setHistoryRange(r=>({...r, end:e.target.value}))} max={getTodayDateString()} className={styles.settlementDateInput}/>
                <button className={styles.settlementSearchBtn} onClick={fetchHistory}>조회</button>
             </div>
             {loading ? <p className={styles.settlementLoading}>로딩 중...</p> : (

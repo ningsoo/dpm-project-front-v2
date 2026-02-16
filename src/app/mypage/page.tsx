@@ -37,9 +37,9 @@ const TABS = [
   { id: 'comments', label: '내 댓글' },
   { id: 'liked', label: '좋아요 한 게시글' },
   { id: 'reports', label: '신고 내역' },
-  { id: 'settlement', label: '정산' },
-  { id: 'donation', label: '후원' },
   { id: 'inquiries', label: '문의내역' },
+  { id: 'donation', label: '후원' },
+  { id: 'settlement', label: '정산' },
   { id: 'pop', label: 'POP' },
 ] as const;
 
@@ -61,6 +61,26 @@ function getValidTab(tabParam: string | null): string {
 const PWLS_WITHDRAWAL_GUIDE =
   '패스워드리스 해지가 완료되었습니다.';
 
+/** 오늘 날짜를 YYYY-MM-DD 형식으로 반환 */
+function getTodayDateString(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/** 30일 전 날짜를 YYYY-MM-DD 형식으로 반환 */
+function getDate30DaysAgo(): string {
+  const today = new Date();
+  const past = new Date(today);
+  past.setDate(today.getDate() - 30);
+  const year = past.getFullYear();
+  const month = String(past.getMonth() + 1).padStart(2, '0');
+  const day = String(past.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function MypagePageContent() {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -74,10 +94,12 @@ function MypagePageContent() {
   const [tab, setTab] = useState<string>(() => getValidTab(tabParam));
   const [searchQuery, setSearchQuery] = useState({ posts: '', comments: '', liked: '' });
   const [dateRange, setDateRange] = useState({
-    settlement: { start: '', end: '' },
-    reports: { start: '', end: '' },
-    inquiries: { start: '', end: '' },
+    settlement: { start: getDate30DaysAgo(), end: getTodayDateString() },
+    reports: { start: getDate30DaysAgo(), end: getTodayDateString() },
+    inquiries: { start: getDate30DaysAgo(), end: getTodayDateString() },
   });
+  const [reportsList, setReportsList] = useState<any[]>([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
   const [selectedReports, setSelectedReports] = useState<number[]>([]);
   const [showReportCancelModal, setShowReportCancelModal] = useState(false);
   const [showPencilIcon, setShowPencilIcon] = useState(false);
@@ -129,6 +151,24 @@ function MypagePageContent() {
     const next = getValidTab(searchParams.get('tab'));
     setTab(next);
   }, [searchParams]);
+
+  // 날짜가 바뀌면 종료일을 오늘로 자동 업데이트
+  useEffect(() => {
+    const updateEndDates = () => {
+      const today = getTodayDateString();
+      setDateRange((prev) => ({
+        settlement: { ...prev.settlement, end: today },
+        reports: { ...prev.reports, end: today },
+        inquiries: { ...prev.inquiries, end: today },
+      }));
+    };
+    updateEndDates();
+    // 매일 자정에 업데이트하기 위한 interval (1분마다 확인)
+    const interval = setInterval(() => {
+      updateEndDates();
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // 초기화 완료 후 사용자 정보 로드
   useEffect(() => {
@@ -259,11 +299,28 @@ function MypagePageContent() {
     }
   };
 
-  const handleDateRangeSearch = (type: 'settlement' | 'reports') => {
+  const handleDateRangeSearch = async (type: 'settlement' | 'reports') => {
     const range = dateRange[type];
-    if (range.start && range.end) {
-      // TODO: 실제 API 호출
-      console.log(`Searching ${type} from ${range.start} to ${range.end}`);
+    if (!range.start || !range.end) {
+      ToastUtils.error('시작일과 종료일을 모두 선택해 주세요.');
+      return;
+    }
+    if (range.start > range.end) {
+      ToastUtils.error('종료일이 시작일보다 빠를 수 없습니다.');
+      return;
+    }
+    if (type === 'reports') {
+      setReportsLoading(true);
+      try {
+        const res = await mypageApi.getReports({ start: range.start, end: range.end });
+        const data = res.data?.data;
+        setReportsList(Array.isArray(data) ? data : []);
+      } catch {
+        ToastUtils.error('신고 내역을 불러올 수 없습니다.');
+        setReportsList([]);
+      } finally {
+        setReportsLoading(false);
+      }
     }
   };
 
@@ -831,6 +888,7 @@ function MypagePageContent() {
                 type="date"
                 value={dateRange.reports.start}
                 onChange={(e) => setDateRange({ ...dateRange, reports: { ...dateRange.reports, start: e.target.value } })}
+                max={getTodayDateString()}
                 style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
               />
               <span style={{ color: darkMode ? '#8A877D' : undefined }}>~</span>
@@ -838,6 +896,7 @@ function MypagePageContent() {
                 type="date"
                 value={dateRange.reports.end}
                 onChange={(e) => setDateRange({ ...dateRange, reports: { ...dateRange.reports, end: e.target.value } })}
+                max={getTodayDateString()}
                 style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
               />
               <button
@@ -874,33 +933,70 @@ function MypagePageContent() {
                 </button>
               )}
             </div>
-            <div style={{ overflowX: 'auto' }}>
-              <div>
-                <div className={styles.tableGrid + ' ' + styles.reportsGrid + ' ' + styles.tableHeader}>
-                  <div>
-                    <input
-                      type="checkbox"
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          // TODO: 모든 신고 ID 선택
-                          setSelectedReports([]);
-                        } else {
-                          setSelectedReports([]);
-                        }
-                      }}
-                    />
+            {reportsLoading ? (
+              <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+                불러오는 중...
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <div>
+                  <div className={styles.tableGrid + ' ' + styles.reportsGrid + ' ' + styles.tableHeader}>
+                    <div>
+                      <input
+                        type="checkbox"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            // TODO: 모든 신고 ID 선택
+                            setSelectedReports([]);
+                          } else {
+                            setSelectedReports([]);
+                          }
+                        }}
+                      />
+                    </div>
+                    <div>신고일시</div>
+                    <div>신고사유</div>
+                    <div>상태</div>
+                    <div>글 바로가기</div>
+                    <div>신고 취소</div>
                   </div>
-                  <div>신고일시</div>
-                  <div>신고사유</div>
-                  <div>상태</div>
-                  <div>글 바로가기</div>
-                  <div>신고 취소</div>
-                </div>
-                <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                  신고 내역이 없습니다.
+                  {reportsList.length === 0 ? (
+                    <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+                      신고 내역이 없습니다.
+                    </div>
+                  ) : (
+                    reportsList.map((report, idx) => (
+                      <div key={idx} className={styles.tableGrid + ' ' + styles.reportsGrid + ' ' + styles.tableRow}>
+                        <div className={styles.tableCell}>
+                          <input
+                            type="checkbox"
+                            checked={selectedReports.includes(report.id || idx)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedReports([...selectedReports, report.id || idx]);
+                              } else {
+                                setSelectedReports(selectedReports.filter((id) => id !== (report.id || idx)));
+                              }
+                            }}
+                          />
+                        </div>
+                        <div className={styles.tableCell}>{report.createdAt || '-'}</div>
+                        <div className={styles.tableCell}>{report.reason || '-'}</div>
+                        <div className={styles.tableCell}>{report.status || '-'}</div>
+                        <div className={styles.tableCell}>
+                          {report.boardId ? (
+                            <Link href={`/boards/${report.boardId}`}>바로가기</Link>
+                          ) : (
+                            '-'
+                          )}
+                        </div>
+                        <div className={styles.tableCell}>-</div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
-            </div>
+            )}
           </div>
         )}
         {tab === 'settlement' && (
@@ -916,6 +1012,7 @@ function MypagePageContent() {
                 type="date"
                 value={dateRange.inquiries.start}
                 onChange={(e) => setDateRange({ ...dateRange, inquiries: { ...dateRange.inquiries, start: e.target.value } })}
+                max={getTodayDateString()}
                 style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
               />
               <span style={{ color: darkMode ? '#8A877D' : undefined }}>~</span>
@@ -923,6 +1020,7 @@ function MypagePageContent() {
                 type="date"
                 value={dateRange.inquiries.end}
                 onChange={(e) => setDateRange({ ...dateRange, inquiries: { ...dateRange.inquiries, end: e.target.value } })}
+                max={getTodayDateString()}
                 style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
               />
               <button

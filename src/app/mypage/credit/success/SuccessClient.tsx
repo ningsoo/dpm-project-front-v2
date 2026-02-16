@@ -160,8 +160,8 @@ export default function SuccessClient() {
 
   if (status === 'loading' || status === 'idle') {
     return (
-      <div className={styles.wrap}>
-        <p>결제 확정 처리 중...</p>
+      <div className={creditStyles.spinnerWrap}>
+        <div className={creditStyles.spinner} />
       </div>
     );
   }
