@@ -130,7 +130,8 @@ export default function WithdrawPage() {
               padding: 24,
               background: '#fff',
               borderRadius: 12,
-              maxWidth: 360,
+              maxWidth: 480,
+              width: '90%',
               textAlign: 'center',
             }}
           >

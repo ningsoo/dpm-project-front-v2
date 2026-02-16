@@ -832,7 +832,7 @@ export default function SignupPage() {
           role="dialog"
           aria-modal="true"
         >
-          <div style={{ padding: 24, background: '#fff', borderRadius: 12, maxWidth: 360, textAlign: 'center' }}>
+          <div style={{ padding: 24, background: '#fff', borderRadius: 12, maxWidth: 480, width: '90%', textAlign: 'center' }}>
             <p style={{ margin: '0 0 16px' }}>가입이 완료되었습니다.</p>
             <button type="button" className={styles.submit} onClick={handleSuccessModalConfirm}>
               확인
