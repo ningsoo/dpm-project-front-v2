@@ -441,7 +441,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
           const embedUrl = getYouTubeEmbedUrl(videoId);
           if (!videoId || !embedUrl) return null;
           return (
-            <div className={styles.videoWrap}>
+            <div className={`${styles.videoWrap} ${postDetailStyles.heroVideoWrap}`}>
               <iframe
                 title="YouTube"
                 src={embedUrl}
