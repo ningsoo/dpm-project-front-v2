@@ -186,7 +186,6 @@ export default function NotificationDropdown({
   }, [open, onClose, anchorRef]);
 
   const isEmpty = initialLoaded && notifications.length === 0;
-  const showEndMessage = isEmpty || (!hasNext && notifications.length > 0);
 
   return (
     <>
@@ -223,8 +222,11 @@ export default function NotificationDropdown({
               <div className={styles.loadingMore}>로딩 중…</div>
             )}
             <div ref={sentinelRef} className={styles.sentinel} aria-hidden />
-            {showEndMessage && (
+            {isEmpty && (
               <div className={styles.empty}>확인 할 알림이 없습니다</div>
+            )}
+            {!isEmpty && !hasNext && (
+              <div className={styles.endMessage}>마지막 알림입니다</div>
             )}
           </>
         )}

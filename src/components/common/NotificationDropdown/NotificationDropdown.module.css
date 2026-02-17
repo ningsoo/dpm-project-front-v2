@@ -31,6 +31,33 @@
 .scrollArea {
   max-height: 380px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 스크롤바 스타일링 (Webkit) */
+.scrollArea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollArea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollArea::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+.scrollArea::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+:global(.dark) .scrollArea::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+:global(.dark) .scrollArea::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .loading,
@@ -108,6 +135,13 @@
   pointer-events: none;
 }
 
+.endMessage {
+  padding: 14px 16px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
 /* 다크모드 */
 :global(.dark) .dropdown {
   background: #2e2e2c;
@@ -142,5 +176,9 @@
 
 :global(.dark) .itemRead .itemText,
 :global(.dark) .itemRead .itemDate {
+  color: #6a6860;
+}
+
+:global(.dark) .endMessage {
   color: #6a6860;
 }

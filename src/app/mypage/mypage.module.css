@@ -130,6 +130,17 @@
   padding: 16px 0;
   font-size: 0.95rem;
   color: #444;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.contentVisible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.contentHidden {
+  opacity: 0;
+  transform: translateY(6px);
 }
 
 /* Grid 테이블 공통 스타일 */
@@ -182,6 +193,32 @@
 /* 내 게시글 */
 .postsGrid {
   grid-template-columns: 140px 1fr 160px 100px 100px;
+}
+
+/* 내 게시글 (POP 스타일 적용) */
+.postsGrid5 {
+  width: 100%;
+  grid-template-columns:
+    18%   /* 게시판 종류 */
+    32%   /* 제목 */
+    20%   /* 날짜 */
+    15%   /* 조회 */
+    15%;  /* 추천 */
+}
+
+.postsGrid5.tableHeader {
+  padding: 0;
+}
+
+.postsGrid5.tableHeader > div {
+  padding: 10px 6px;
+}
+
+.postsGrid5 .tableCell {
+  padding: 10px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 내 댓글 */
@@ -1578,4 +1615,20 @@
 
 :global(.dark) .totalRow > div:last-child {
   color: #B5B3A7;
+}
+
+:global(.dark) .popSection .settlementRequestSummaryBox .submitBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .popSection .settlementRequestSummaryBox .submitBtn:hover:not(:disabled) {
+  background: #42413B;
+}
+
+:global(.dark) .settlementSection .submitBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .settlementSection .submitBtn:hover:not(:disabled) {
+  background: #42413B;
 }
