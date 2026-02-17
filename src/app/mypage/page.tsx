@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useRef, useEffect } from 'react';
+import { Suspense, useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
@@ -93,6 +93,35 @@ function MypagePageContent() {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<string>(() => getValidTab(tabParam));
+
+  /* ── 탭 전환 페이드 애니메이션 ── */
+  const [displayedTab, setDisplayedTab] = useState<string>(tab);
+  const [tabVisible, setTabVisible] = useState(true);
+  const tabTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const TAB_FADE_MS = 150;
+
+  const switchTab = useCallback((nextTab: string) => {
+    if (nextTab === displayedTab) return;
+    setTabVisible(false);
+    if (tabTimeoutRef.current) clearTimeout(tabTimeoutRef.current);
+    tabTimeoutRef.current = setTimeout(() => {
+      setDisplayedTab(nextTab);
+      requestAnimationFrame(() => {
+        setTabVisible(true);
+      });
+    }, TAB_FADE_MS);
+  }, [displayedTab]);
+
+  useEffect(() => {
+    switchTab(tab);
+  }, [tab, switchTab]);
+
+  useEffect(() => {
+    return () => {
+      if (tabTimeoutRef.current) clearTimeout(tabTimeoutRef.current);
+    };
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState({ posts: '', comments: '', liked: '' });
   const [dateRange, setDateRange] = useState({
     settlement: { start: getDate30DaysAgo(), end: getTodayDateString() },
@@ -701,12 +730,12 @@ function MypagePageContent() {
         ))}
       </div>
 
-      <div className={styles.content}>
-        {tab === 'playlists' && (
+      <div className={`${styles.content} ${tabVisible ? styles.contentVisible : styles.contentHidden}`}>
+        {displayedTab === 'playlists' && (
           <MyPageYouTubeSection user={user} isAuthenticated={isAuthenticated} />
         )}
-        {tab === 'posts' && <MyPostsSection />}
-        {tab === 'comments' && (
+        {displayedTab === 'posts' && <MyPostsSection />}
+        {displayedTab === 'comments' && (
           <div>
             <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>
               <input
@@ -764,7 +793,7 @@ function MypagePageContent() {
             </div>
           </div>
         )}
-        {tab === 'liked' && (
+        {displayedTab === 'liked' && (
           <div>
             <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>
               <input
@@ -824,7 +853,7 @@ function MypagePageContent() {
             </div>
           </div>
         )}
-        {tab === 'reports' && (
+        {displayedTab === 'reports' && (
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
               <input
@@ -942,13 +971,13 @@ function MypagePageContent() {
             )}
           </div>
         )}
-        {tab === 'settlement' && (
+        {displayedTab === 'settlement' && (
           <SettlementSection user={user} />
         )}
-        {tab === 'donation' && (
+        {displayedTab === 'donation' && (
           <DonationSection />
         )}
-        {tab === 'inquiries' && (
+        {displayedTab === 'inquiries' && (
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
               <input
@@ -1170,7 +1199,7 @@ function MypagePageContent() {
             )}
           </div>
         )}
-        {tab === 'pop' && (() => {
+        {displayedTab === 'pop' && (() => {
           const popSubTabParam = searchParams.get('popSubTab');
           const validPopSubTab = popSubTabParam === 'usage' || popSubTabParam === 'purchase' ? popSubTabParam : 'purchase';
           return (
