@@ -124,4 +124,8 @@ export const mypageApi = {
   /** 문의 상세 조회 - GET /mypage/inquiry/{userInquiryId} */
   getInquiryDetail: (userInquiryId: number) =>
     fetchClient.get<ApiResponse<unknown>>(`/api/mypage/inquiry/${userInquiryId}`),
+
+  /** 내가 쓴 게시글 조회 - GET /mypage/my-posts */
+  getMyPosts: () =>
+    fetchClient.get<ApiResponse<unknown>>('/api/mypage/my-posts'),
 };
