@@ -3,7 +3,9 @@ import { tokenUtils } from '@/utils/tokenUtils';
 import { store } from '@/store';
 import { clearAuth } from '@/store/slices/authSlice';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL
+/** 클라이언트(브라우저)에서는 상대경로로 요청 → Next.js rewrites가 백엔드로 프록시 */
+const API_BASE = '';
+
 /** 결제 API 전용 경로 prefix (백엔드는 /v1/payments 로 라우팅, /api 붙이면 404) */
 export const PAYMENT_BASE = '/v1/payments';
 
