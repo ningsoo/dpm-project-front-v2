@@ -31,9 +31,6 @@ export default function SpotlightCarousel() {
   const [cardWidth, setCardWidth] = useState(0);
   const [wrapperWidth, setWrapperWidth] = useState(0);
 
-  /** 최초 콘텐츠 표시 후 true — 이후 재진입 시 skeleton 없이 바로 표시 */
-  const [hasRevealed, setHasRevealed] = useState(false);
-
   const wrapperRef = useRef<HTMLDivElement>(null);
   const shouldResetWhenReachEndRef = useRef(false);
   const isTransitingRef = useRef(false);
@@ -92,13 +89,6 @@ export default function SpotlightCarousel() {
       });
     });
   }, [N, wrapperWidth, layoutReady]);
-
-  /** layoutReady 되면 reveal 확정 */
-  useEffect(() => {
-    if (layoutReady && !hasRevealed) {
-      setHasRevealed(true);
-    }
-  }, [layoutReady, hasRevealed]);
 
   /** 끝 도달 시 점프 애니메이션 제거 (2N → N 리셋) */
   useEffect(() => {
@@ -211,27 +201,11 @@ export default function SpotlightCarousel() {
     ? `translateX(${translateX}px)`
     : 'translateX(0px)';
 
-  /* ── skeleton ── */
-  if (isLoading) {
-    return (
-      <section
-        className={`${styles.section} ${styles.sectionPlaceholder} ${
-          darkMode ? 'dark' : ''
-        } ${styles.sectionRevealed}`}
-      >
-        <div className={styles.wrapper} ref={wrapperRef}>
-          <div className={styles.skeletonTrack}>
-            {[0, 1, 2].map((i) => (
-              <div key={i} className={styles.skeletonCard} />
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
+  /** 스켈레톤: 데이터 로딩 중이거나, 데이터가 있지만 아직 레이아웃 준비 안 된 경우 표시 */
+  const showSkeleton = isLoading || (posts.length > 0 && !layoutReady);
 
   /* ── empty ── */
-  if (posts.length === 0) {
+  if (!isLoading && posts.length === 0) {
     return (
       <section
         className={`${styles.section} ${styles.sectionPlaceholder} ${
@@ -247,87 +221,99 @@ export default function SpotlightCarousel() {
     );
   }
 
-  /* ── content ── */
+  /* ── content (skeleton overlay until layoutReady) ── */
   return (
     <section
-      className={`${styles.section} ${darkMode ? 'dark' : ''} ${
-        hasRevealed ? styles.sectionRevealed : styles.sectionHidden
-      }`}
+      className={`${styles.section} ${darkMode ? 'dark' : ''} ${styles.sectionRevealed}`}
     >
       <div className={styles.wrapper} ref={wrapperRef}>
-        <button
-          type="button"
-          className={styles.prevBtn}
-          onClick={movePrev}
-        >
-          <ChevronLeft size={48} />
-        </button>
+        {/* 스켈레톤: layoutReady 전까지 표시 */}
+        {showSkeleton && (
+          <div className={styles.skeletonTrack}>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className={styles.skeletonCard} />
+            ))}
+          </div>
+        )}
 
-        <button
-          type="button"
-          className={styles.nextBtn}
-          onClick={moveNext}
-        >
-          <ChevronRight size={48} />
-        </button>
+        {/* 실제 캐러셀: layoutReady 후 표시 */}
+        {!showSkeleton && (
+          <>
+            <button
+              type="button"
+              className={styles.prevBtn}
+              onClick={movePrev}
+            >
+              <ChevronLeft size={48} />
+            </button>
 
-        <div
-          className={styles.track}
-          style={{
-            transform: trackTransform,
-            transition:
-              !transitionEnabled || !layoutReady
-                ? 'none'
-                : `transform ${TRANSITION_MS}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
-          }}
-        >
-          {displayPosts.map((post, index) => {
-            const isCenter = index === center;
+            <button
+              type="button"
+              className={styles.nextBtn}
+              onClick={moveNext}
+            >
+              <ChevronRight size={48} />
+            </button>
 
-            return (
-              <div
-                key={`${post.boardId}-${index}`}
-                className={`${styles.card} ${
-                  isCenter ? styles.center : ''
-                }`}
-                style={{ width: cardWidth, minWidth: cardWidth }}
-                onClick={() => goToPost(post.boardId)}
-              >
-                <div
-                  className={styles.thumb}
-                  style={{
-                    backgroundImage: `url(${getBoardThumbnailUrl(
-                      post,
-                      'spotlight'
-                    )})`,
-                  }}
-                >
-                  <div className={styles.overlay}>
-                    <div className={styles.cardTitle}>
-                      {post.title}
-                    </div>
-                    <div className={styles.overlayMetaRow}>
-                      <div className={styles.author}>{post.nickname || '—'}</div>
-                      <div className={styles.meta}>
-                        <span className={styles.metaItem}>
-                          <Heart size={14} strokeWidth={2} />
-                          {post.likes ?? 0}
-                        </span>
-                        <span className={styles.metaItem}>
-                          <Eye size={14} strokeWidth={2} />
-                          {formatViews(post.views)}
-                        </span>
+            <div
+              className={styles.track}
+              style={{
+                transform: trackTransform,
+                transition:
+                  !transitionEnabled || !layoutReady
+                    ? 'none'
+                    : `transform ${TRANSITION_MS}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
+              }}
+            >
+              {displayPosts.map((post, index) => {
+                const isCenter = index === center;
+
+                return (
+                  <div
+                    key={`${post.boardId}-${index}`}
+                    className={`${styles.card} ${
+                      isCenter ? styles.center : ''
+                    }`}
+                    style={{ width: cardWidth, minWidth: cardWidth }}
+                    onClick={() => goToPost(post.boardId)}
+                  >
+                    <div
+                      className={styles.thumb}
+                      style={{
+                        backgroundImage: `url(${getBoardThumbnailUrl(
+                          post,
+                          'spotlight'
+                        )})`,
+                      }}
+                    >
+                      <div className={styles.overlay}>
+                        <div className={styles.cardTitle}>
+                          {post.title}
+                        </div>
+                        <div className={styles.overlayMetaRow}>
+                          <div className={styles.author}>{post.nickname || '—'}</div>
+                          <div className={styles.meta}>
+                            <span className={styles.metaItem}>
+                              <Heart size={14} strokeWidth={2} />
+                              {post.likes ?? 0}
+                            </span>
+                            <span className={styles.metaItem}>
+                              <Eye size={14} strokeWidth={2} />
+                              {formatViews(post.views)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className={styles.desc}>
+                          {post.content || ''}
+                        </div>
                       </div>
                     </div>
-                    <div className={styles.desc}>
-                      {post.content || ''}
-                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

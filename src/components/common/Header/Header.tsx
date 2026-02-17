@@ -51,6 +51,7 @@ export default function Header() {
 
   const [showMessageListModal, setShowMessageListModal] = useState(false);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const messageBtnRef = useRef<HTMLButtonElement>(null);
   const notificationBtnRef = useRef<HTMLButtonElement>(null);
 
   /* 인증 resolve 후 실제 UI를 opacity 전환으로 노출 (깜빡임 제거) */
@@ -165,6 +166,7 @@ export default function Header() {
             {isAuthenticated ? (
               <>
                 <button
+                  ref={messageBtnRef}
                   type="button"
                   className={`${styles.msgWrapper} ${styles.iconBtn}`}
                   onClick={() => setShowMessageListModal(true)}
@@ -204,16 +206,15 @@ export default function Header() {
         )}
       </div>
 
-      {showMessageListModal && (
-        <MessageListModal
-          open={showMessageListModal}
-          onClose={() => setShowMessageListModal(false)}
-          onLoginRequired={() => {
-            setShowMessageListModal(false);
-            router.push(`/auth/login?redirect=${encodeURIComponent(pathname ?? '/')}`);
-          }}
-        />
-      )}
+      <MessageListModal
+        open={showMessageListModal}
+        onClose={() => setShowMessageListModal(false)}
+        anchorRef={messageBtnRef}
+        onLoginRequired={() => {
+          setShowMessageListModal(false);
+          router.push(`/auth/login?redirect=${encodeURIComponent(pathname ?? '/')}`);
+        }}
+      />
     </header>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
@@ -22,15 +22,55 @@ type ViewMode = 'list' | 'detail';
 interface MessageListModalProps {
   open: boolean;
   onClose: () => void;
+  anchorRef?: React.RefObject<HTMLButtonElement | null>;
   onLoginRequired?: () => void;
 }
+
+const ANIM_DURATION = 280;
 
 export default function MessageListModal({
   open,
   onClose,
+  anchorRef,
   onLoginRequired,
 }: MessageListModalProps) {
   const router = useRouter();
+
+  /* ── 열기/닫기 애니메이션 ── */
+  const [mounted, setMounted] = useState(false);
+  const [animateIn, setAnimateIn] = useState(false);
+  const [origin, setOrigin] = useState<{ x: string; y: string } | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      // 아이콘 버튼 위치 → transform-origin 계산
+      if (anchorRef?.current) {
+        const rect = anchorRef.current.getBoundingClientRect();
+        setOrigin({
+          x: `${rect.left + rect.width / 2}px`,
+          y: `${rect.top + rect.height / 2}px`,
+        });
+      } else {
+        setOrigin(null);
+      }
+      setMounted(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setAnimateIn(true);
+        });
+      });
+    } else {
+      // 닫을 때는 origin 제거 → 제자리(center)에서 페이드아웃
+      setOrigin(null);
+      setAnimateIn(false);
+      const t = setTimeout(() => {
+        setMounted(false);
+      }, ANIM_DURATION);
+      return () => clearTimeout(t);
+    }
+  }, [open, anchorRef]);
+
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [activeTab, setActiveTab] = useState<MessageType>('RECEIVED');
   const [messages, setMessages] = useState<MessageItem[]>([]);
@@ -38,6 +78,32 @@ export default function MessageListModal({
   const [detailData, setDetailData] = useState<MessageItem | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [showReplyModal, setShowReplyModal] = useState(false);
+
+  // ESC 키로 모달 닫기
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        // 답장 모달이 열려있으면 답장 모달만 닫기
+        if (showReplyModal) {
+          setShowReplyModal(false);
+          return;
+        }
+        // 상세 화면이면 목록으로 돌아가기
+        if (viewMode === 'detail') {
+          setViewMode('list');
+          setDetailData(null);
+          return;
+        }
+        // 목록 화면이면 모달 닫기
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, showReplyModal, viewMode, onClose]);
 
   // 모달 닫힐 때 view 초기화
   useEffect(() => {
@@ -143,7 +209,7 @@ export default function MessageListModal({
   const getNickname = (item: MessageItem) =>
     activeTab === 'RECEIVED' ? item.sendingUserNickname : item.receivedUserNickname;
 
-  if (!open) return null;
+  if (!mounted) return null;
 
   const isReceived = activeTab === 'RECEIVED';
   const detailLabel = isReceived ? '보낸 회원' : '받은 회원';
@@ -153,13 +219,18 @@ export default function MessageListModal({
 
   const modalContent = (
     <div
-      className={`${styles.overlay} ${showReplyModal ? styles.overlayReplyOpen : ''}`}
+      className={`${styles.overlay} ${animateIn ? styles.overlayOpen : styles.overlayClosed} ${showReplyModal ? styles.overlayReplyOpen : ''}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby={viewMode === 'list' ? 'message-list-modal-title' : 'message-detail-modal-title'}
       onClick={handleBackdropClick}
     >
-      <div className={styles.card} onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={cardRef}
+        className={`${styles.card} ${animateIn ? styles.cardOpen : styles.cardClosed}`}
+        style={origin ? { transformOrigin: `${origin.x} ${origin.y}` } : undefined}
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
           type="button"
           className={styles.closeBtn}

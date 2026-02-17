@@ -46,6 +46,27 @@ export default function NotificationDropdown({
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [selectedBoardId, setSelectedBoardId] = useState<number | null>(null);
   const [clickingId, setClickingId] = useState<number | null>(null);
+  /** 열기/닫기 애니메이션 제어 */
+  const [mounted, setMounted] = useState(false);
+  const [animateIn, setAnimateIn] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      // 마운트 직후 다음 프레임에서 animate-in 클래스 적용
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setAnimateIn(true);
+        });
+      });
+    } else {
+      setAnimateIn(false);
+      // 닫기 애니메이션 완료 후 언마운트
+      const t = setTimeout(() => setMounted(false), 200);
+      return () => clearTimeout(t);
+    }
+  }, [open]);
+
   const loadingRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -165,12 +186,14 @@ export default function NotificationDropdown({
   }, [open, onClose, anchorRef]);
 
   const isEmpty = initialLoaded && notifications.length === 0;
-  const showEndMessage = isEmpty || (!hasNext && notifications.length > 0);
 
   return (
     <>
-    {open && (
-    <div ref={dropdownRef} className={styles.dropdown}>
+    {mounted && (
+    <div
+      ref={dropdownRef}
+      className={`${styles.dropdown} ${animateIn ? styles.dropdownOpen : styles.dropdownClosed}`}
+    >
       <div
         ref={scrollRef}
         className={styles.scrollArea}
@@ -199,8 +222,11 @@ export default function NotificationDropdown({
               <div className={styles.loadingMore}>로딩 중…</div>
             )}
             <div ref={sentinelRef} className={styles.sentinel} aria-hidden />
-            {showEndMessage && (
+            {isEmpty && (
               <div className={styles.empty}>확인 할 알림이 없습니다</div>
+            )}
+            {!isEmpty && !hasNext && (
+              <div className={styles.endMessage}>마지막 알림입니다</div>
             )}
           </>
         )}

@@ -630,6 +630,7 @@
   gap: 8px;
   margin-bottom: 16px;
   align-items: center;
+  flex-wrap: nowrap;
 }
 
 .settlementDateInput {
@@ -648,6 +649,8 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .settlementSearchBtn:hover:not(:disabled) {
@@ -1575,4 +1578,20 @@
 
 :global(.dark) .totalRow > div:last-child {
   color: #B5B3A7;
+}
+
+:global(.dark) .popSection .settlementRequestSummaryBox .submitBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .popSection .settlementRequestSummaryBox .submitBtn:hover:not(:disabled) {
+  background: #42413B;
+}
+
+:global(.dark) .settlementSection .submitBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .settlementSection .submitBtn:hover:not(:disabled) {
+  background: #42413B;
 }

@@ -507,7 +507,7 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
           disabled={subTab === 'usage' ? usageLoading : purchaseLoading}
           onClick={handleSearch}
         >
-          {(subTab === 'usage' ? usageLoading : purchaseLoading) ? '조회 중…' : '조회'}
+          조회
         </button>
       </div>
 
