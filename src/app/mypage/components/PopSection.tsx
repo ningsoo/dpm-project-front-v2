@@ -25,7 +25,7 @@ const POP_SUB_TABS = [
 ];
 
 const USAGE_COLUMNS = ['사용일시', '사용수량', '사용대상', '사용내용', '사용상태', '사용취소'];
-const PURCHASE_COLUMNS = ['충전일시', '충전수량', '팝타겟', '결제금액', '유효기간', '구매취소'];
+const PURCHASE_COLUMNS = ['충전일시', '충전수량', '상세내역', '결제금액', '유효기간', '구매취소'];
 
 export type PopUsageRow = {
   popHistoryId?: number;
@@ -651,7 +651,7 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
             </h3>
             <p className={styles.donationConfirmMessage}>
               {cancelTarget.popTarget === 'DONATION'
-                ? '정말 이 음악인에 대한 후원을 취소하시겠습니까?'
+                ? '정말 이 사용자에 대한 후원을 취소하시겠습니까?'
                 : '이 게시글 홍보를 취소하고 재화를 환불받으시겠습니까?'}
             </p>
             <div className={styles.settlementConfirmActions}>

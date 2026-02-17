@@ -86,10 +86,10 @@ export default function DonationModal({
   const isValidAmount =
     amountNum > 0 && amountNum <= popBalance;
 
-  /** 선물하기 버튼 클릭: 검증 후 확인 모달 오픈 */
+  /** 후원하기 버튼 클릭: 검증 후 확인 모달 오픈 */
   const handleSubmit = () => {
     if (!donationAmount.trim()) {
-      setSubmitError('선물할 POP을 입력해주세요.');
+      setSubmitError('후원할 POP을 입력해주세요.');
       return;
     }
 
@@ -132,7 +132,7 @@ export default function DonationModal({
         boardId != null ? { boardId } : undefined
       );
 
-      ToastUtils.success('선물 완료');
+      ToastUtils.success('후원 완료');
       onClose();
       onSuccess?.();
     } catch (err: unknown) {
@@ -142,8 +142,8 @@ export default function DonationModal({
         ToastUtils.error('보유한 POP이 부족합니다');
         setSubmitError('보유한 POP이 부족합니다.');
       } else {
-        ToastUtils.error('선물에 실패했습니다.');
-        setSubmitError('선물에 실패했습니다.');
+        ToastUtils.error('후원에 실패했습니다.');
+        setSubmitError('후원에 실패했습니다.');
       }
     } finally {
       setLoading(false);
@@ -178,7 +178,7 @@ export default function DonationModal({
 
         {/* 타이틀 */}
         <h2 className={styles.title}>
-          {targetNickname} 님에게 선물
+          {targetNickname} 님에게 후원
         </h2>
 
         {meLoading ? (
@@ -189,7 +189,7 @@ export default function DonationModal({
           <>
             {/* 금액 */}
             <label className={styles.label}>
-              선물할 POP
+              후원할 POP
             </label>
 
             <div className={styles.inputRow}>
@@ -198,7 +198,7 @@ export default function DonationModal({
                 inputMode="numeric"
                 value={donationAmountDisplay}
                 onChange={handleAmountChange}
-                placeholder="얼마보낼지"
+                placeholder="ex) 1,000"
                 className={styles.amountInput}
               />
               <span className={styles.unit}>
@@ -279,14 +279,14 @@ export default function DonationModal({
                   !isValidAmount
                 }
               >
-                {loading ? '처리 중…' : '선물하기'}
+                {loading ? '처리 중…' : '후원하기'}
               </button>
             </div>
           </>
         )}
       </div>
 
-      {/* 선물 확인 모달 */}
+      {/* 후원 확인 모달 */}
       {showConfirmModal && (
         <div
           className={styles.confirmOverlay}
@@ -297,7 +297,7 @@ export default function DonationModal({
         >
           <div className={styles.confirmCard} onClick={(e) => e.stopPropagation()}>
             <p id="donation-confirm-title" className={styles.confirmMessage}>
-              {targetNickname}님에게 {donationAmountDisplay}POP을 선물 하시겠습니까?
+              {targetNickname}님에게 {donationAmountDisplay}POP으로 후원하시겠습니까?
             </p>
             <div className={styles.confirmActions}>
               <button
