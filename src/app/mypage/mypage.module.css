@@ -184,6 +184,32 @@
   grid-template-columns: 140px 1fr 160px 100px 100px;
 }
 
+/* 내 게시글 (POP 스타일 적용) */
+.postsGrid5 {
+  width: 100%;
+  grid-template-columns:
+    18%   /* 게시판 종류 */
+    32%   /* 제목 */
+    20%   /* 날짜 */
+    15%   /* 조회 */
+    15%;  /* 추천 */
+}
+
+.postsGrid5.tableHeader {
+  padding: 0;
+}
+
+.postsGrid5.tableHeader > div {
+  padding: 10px 6px;
+}
+
+.postsGrid5 .tableCell {
+  padding: 10px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* 내 댓글 */
 .commentsGrid {
   grid-template-columns: 140px 1fr 1fr 160px;

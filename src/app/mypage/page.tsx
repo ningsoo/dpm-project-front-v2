@@ -17,6 +17,7 @@ import { SettlementSection } from './components/SettlementSection';
 import { DonationSection } from './components/DonationSection';
 import PopSection from './components/PopSection';
 import { MyPageYouTubeSection } from './components/MyPageYouTubeSection';
+import { MyPostsSection } from './components/MyPostsSection';
 import defaultProfileImg from '@/assets/site/profile.png';
 import styles from './mypage.module.css';
 
@@ -704,65 +705,7 @@ function MypagePageContent() {
         {tab === 'playlists' && (
           <MyPageYouTubeSection user={user} isAuthenticated={isAuthenticated} />
         )}
-        {tab === 'posts' && (
-          <div>
-            <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>
-              <input
-                type="text"
-                placeholder="검색어 입력"
-                value={searchQuery.posts}
-                onChange={(e) => setSearchQuery({ ...searchQuery, posts: e.target.value })}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch('posts')}
-                style={{
-                  width: '100%',
-                  padding: '8px 40px 8px 12px',
-                  border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
-                  borderRadius: 8,
-                  fontSize: 14,
-                  background: darkMode ? '#242422' : '#fff',
-                  color: darkMode ? '#B5B3A7' : '#333',
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => handleSearch('posts')}
-                onMouseEnter={(e) => { e.currentTarget.style.color = darkMode ? '#3A3934' : '#111'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; }}
-                style={{
-                  position: 'absolute',
-                  right: 8,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 4,
-                  color: '#666',
-                  transition: 'color 0.2s',
-                }}
-              >
-                <Search size={18} />
-              </button>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <div>
-                <div className={styles.tableGrid + ' ' + styles.postsGrid + ' ' + styles.tableHeader}>
-                  <div>게시판 종류</div>
-                  <div>제목</div>
-                  <div>날짜</div>
-                  <div>조회</div>
-                  <div>추천</div>
-                </div>
-                <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                  게시글이 없습니다.
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {tab === 'posts' && <MyPostsSection />}
         {tab === 'comments' && (
           <div>
             <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>
