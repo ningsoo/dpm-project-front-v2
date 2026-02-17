@@ -1579,3 +1579,19 @@
 :global(.dark) .totalRow > div:last-child {
   color: #B5B3A7;
 }
+
+:global(.dark) .popSection .settlementRequestSummaryBox .submitBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .popSection .settlementRequestSummaryBox .submitBtn:hover:not(:disabled) {
+  background: #42413B;
+}
+
+:global(.dark) .settlementSection .submitBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .settlementSection .submitBtn:hover:not(:disabled) {
+  background: #42413B;
+}
