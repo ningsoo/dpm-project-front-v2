@@ -31,3 +31,26 @@ export function formatCreatedDateTimeFull(createdDateTime: number[] | null | und
   });
 }
 
+/** ISO 문자열 또는 number[]를 YYYY.MM.DD HH:mm 형식으로 변환 (알림 등) */
+export function formatNotificationDate(
+  value: string | number[] | null | undefined
+): string {
+  if (value == null) return '—';
+  let d: Date | null;
+  if (Array.isArray(value)) {
+    d = toDate(value);
+  } else if (typeof value === 'string') {
+    d = new Date(value);
+    if (Number.isNaN(d.getTime())) d = null;
+  } else {
+    return '—';
+  }
+  if (!d) return '—';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${y}.${m}.${day} ${hh}:${mm}`;
+}
+

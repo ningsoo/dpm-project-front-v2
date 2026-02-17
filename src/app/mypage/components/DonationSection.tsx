@@ -401,7 +401,7 @@ export function DonationSection() {
             disabled={subTab === 'sent' ? sentLoading : receivedLoading}
             onClick={handleSearch}
           >
-            {(subTab === 'sent' ? sentLoading : receivedLoading) ? '조회 중…' : '조회'}
+            조회
           </button>
         </div>
 

@@ -1,0 +1,92 @@
+/* 후원 모달 확인 영역과 동일한 디자인 (다크모드 포함) */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 101;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.card {
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  max-width: 360px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.message {
+  margin: 0 0 20px;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #333;
+  text-align: center;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.cancelBtn {
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #666;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.cancelBtn:hover {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.confirmBtn {
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  background: #111;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.confirmBtn:hover:not(:disabled) {
+  background: #000;
+}
+
+/* 다크모드 */
+:global(.dark) .card {
+  background: #2e2e2c;
+}
+
+:global(.dark) .message {
+  color: #e8e6dc;
+}
+
+:global(.dark) .cancelBtn {
+  background: #3a3a38;
+  color: #a19e94;
+}
+
+:global(.dark) .cancelBtn:hover {
+  background: #4a4a48;
+  color: #b5b3a7;
+}
+
+:global(.dark) .confirmBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .confirmBtn:hover:not(:disabled) {
+  background: #42413B;
+}

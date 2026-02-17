@@ -54,14 +54,14 @@
   background: #000; /* 영상/썸네일 바탕 */
 
   transition:
-    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    left 0.45s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.25s ease;
 
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
   z-index: 1;
-  will-change: transform;
+  will-change: width, left;
 
-  /* scale() 확대 시에도 둥근 모서리 강제 — overflow:hidden 만으로는 iframe 클리핑 불가 */
   clip-path: inset(0 round 14px);
   -webkit-clip-path: inset(0 round 14px);
 }
@@ -153,6 +153,13 @@
   overflow: hidden;
 }
 
+/* ===== Skeleton Layer (crossfade용 래퍼) ===== */
+.skeletonLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
 /* ===== Skeleton (로딩 UI) ===== */
 .skeletonCard {
   position: absolute;
@@ -163,7 +170,6 @@
   border-radius: 14px;
   overflow: hidden;
   background: #e8e8e8;
-  opacity: 0;
 }
 
 :global(.dark) .skeletonCard {

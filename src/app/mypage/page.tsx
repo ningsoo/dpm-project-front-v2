@@ -1066,7 +1066,7 @@ function MypagePageContent() {
                   fontSize: 14,
                 }}
               >
-                {inquiryLoading ? '조회 중…' : '조회'}
+                조회
               </button>
             </div>
             {inquiryLoading ? (

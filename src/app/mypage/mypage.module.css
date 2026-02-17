@@ -630,6 +630,7 @@
   gap: 8px;
   margin-bottom: 16px;
   align-items: center;
+  flex-wrap: nowrap;
 }
 
 .settlementDateInput {
@@ -648,6 +649,8 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .settlementSearchBtn:hover:not(:disabled) {

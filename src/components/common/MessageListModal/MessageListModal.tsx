@@ -71,7 +71,7 @@ export default function MessageListModal({
           return;
         }
         console.error('[message list]', err);
-        ToastUtils.error('쪽지 목록을 불러올 수 없습니다.');
+        ToastUtils.error('메시지 목록을 불러올 수 없습니다.');
         setMessages([]);
       })
       .finally(() => setLoading(false));
@@ -172,7 +172,7 @@ export default function MessageListModal({
         {viewMode === 'list' ? (
           <>
             <h2 id="message-list-modal-title" className={styles.title}>
-              쪽지함
+              메시지 목록
             </h2>
 
             <div className={styles.tabs}>
@@ -181,14 +181,14 @@ export default function MessageListModal({
                 className={`${styles.tab} ${activeTab === 'RECEIVED' ? styles.tabActive : ''}`}
                 onClick={() => handleTabClick('RECEIVED')}
               >
-                받은 쪽지함
+                받은 메시지
               </button>
               <button
                 type="button"
                 className={`${styles.tab} ${activeTab === 'SENT' ? styles.tabActive : ''}`}
                 onClick={() => handleTabClick('SENT')}
               >
-                보낸 쪽지함
+                보낸 메시지
               </button>
             </div>
 
@@ -196,7 +196,7 @@ export default function MessageListModal({
               {loading ? (
                 <div className={styles.loading}>로딩 중…</div>
               ) : messages.length === 0 ? (
-                <div className={styles.empty}>쪽지가 없습니다.</div>
+                <div className={styles.empty}>메시지가 없습니다.</div>
               ) : (
                 <ul className={styles.list}>
                   {messages.map((item) => (
@@ -229,7 +229,7 @@ export default function MessageListModal({
         ) : (
           <>
             <h2 id="message-detail-modal-title" className={styles.title}>
-              쪽지 상세
+              {isReceived ? '받은 메시지' : '보낸 메시지'}
             </h2>
 
             <div className={styles.detailArea}>
@@ -248,14 +248,7 @@ export default function MessageListModal({
                     {detailData.content}
                   </div>
                   <div className={styles.detailActions}>
-                    <button
-                      type="button"
-                      className={styles.backBtn}
-                      onClick={handleBackToList}
-                    >
-                      뒤로가기
-                    </button>
-                    {isReceived && (
+                  {isReceived && (
                       <button
                         type="button"
                         className={styles.replyBtn}
@@ -264,6 +257,14 @@ export default function MessageListModal({
                         답장
                       </button>
                     )}
+                    <button
+                      type="button"
+                      className={styles.backBtn}
+                      onClick={handleBackToList}
+                    >
+                      뒤로가기
+                    </button>
+
                   </div>
                 </>
               ) : (
