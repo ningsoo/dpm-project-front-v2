@@ -7,26 +7,26 @@
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(4px);
 }
 
 /* 답장 모달 오픈 시 배경 겹침 방지 - 오버레이 배경 제거 */
 .overlayReplyOpen {
   background: transparent;
-  backdrop-filter: none;
 }
 
+/* 모달 크기 고정: 보낸/받은 쪽지함 동일 */
 .card {
   position: relative;
   padding: 32px;
   background: #fff;
   border-radius: 16px;
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
+  width: 500px;
+  max-width: 90vw;
+  height: 550px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.18);
+  flex-shrink: 0;
 }
 
 .closeBtn {
@@ -56,12 +56,14 @@
   font-weight: 700;
   color: #1a1a1a;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .tabs {
   display: flex;
   gap: 8px;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .tab {
@@ -92,14 +94,22 @@
   color: #fff;
 }
 
+/* 리스트 영역: 5개 항목 높이 고정, 초과 시 내부 스크롤 */
 .listArea {
   flex: 1;
-  min-height: 200px;
+  min-height: 0;
+  height: 370px;
   overflow-y: auto;
+  flex-shrink: 0;
+  overscroll-behavior: contain;
 }
 
 .loading,
 .empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
   padding: 40px 24px;
   text-align: center;
   color: #666;
@@ -164,21 +174,24 @@
   line-height: 1.4;
 }
 
-/* 상세 화면 */
+/* 상세 화면: 리스트와 동일한 고정 높이 유지 */
 .detailArea {
   flex: 1;
-  min-height: 200px;
+  min-height: 0;
+  height: 370px;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 }
 
 .detailHeader {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   padding-bottom: 16px;
   border-bottom: 1px solid #eee;
+  flex-shrink: 0;
 }
 
 .detailLabel {
@@ -200,19 +213,20 @@
 
 .detailBody {
   flex: 1;
+  min-height: 0;
   font-size: 0.95rem;
   color: #333;
   line-height: 1.6;
   white-space: pre-wrap;
   overflow-y: auto;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .detailActions {
   display: flex;
   gap: 12px;
   justify-content: flex-end;
-  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .backBtn {

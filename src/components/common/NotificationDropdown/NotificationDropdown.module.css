@@ -1,0 +1,132 @@
+/* 메시지 리스트와 스타일 일관성 유지 */
+.dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  min-width: 320px;
+  max-width: 400px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+  z-index: 50;
+  overflow: hidden;
+}
+
+.scrollArea {
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.loading,
+.empty {
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.loadingMore {
+  padding: 12px 16px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #999;
+}
+
+.item {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.2s;
+}
+
+.item:disabled {
+  cursor: wait;
+}
+
+.itemClicking {
+  opacity: 0.7;
+}
+
+.item:hover {
+  background: #f5f5f5;
+}
+
+.item:last-of-type {
+  border-bottom: none;
+}
+
+.itemRead {
+  opacity: 0.65;
+}
+
+.itemRead .itemText,
+.itemRead .itemDate {
+  color: #999;
+}
+
+.itemText {
+  display: block;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: #333;
+}
+
+.itemDate {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.sentinel {
+  height: 1px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* 다크모드 */
+:global(.dark) .dropdown {
+  background: #2e2e2c;
+  border-color: #3a3a38;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .loading,
+:global(.dark) .empty {
+  color: #8a877d;
+}
+
+:global(.dark) .loadingMore {
+  color: #6a6860;
+}
+
+:global(.dark) .item {
+  border-bottom-color: #3a3a38;
+}
+
+:global(.dark) .item:hover {
+  background: #3a3a38;
+}
+
+:global(.dark) .itemText {
+  color: #e8e6dc;
+}
+
+:global(.dark) .itemDate {
+  color: #8a877d;
+}
+
+:global(.dark) .itemRead .itemText,
+:global(.dark) .itemRead .itemDate {
+  color: #6a6860;
+}

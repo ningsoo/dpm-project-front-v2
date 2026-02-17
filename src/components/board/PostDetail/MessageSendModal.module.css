@@ -67,7 +67,7 @@
   box-sizing: border-box;
   transition: all 0.2s;
   background: #fafafa;
-  resize: vertical;
+  resize: none;
   min-height: 120px;
 }
 
