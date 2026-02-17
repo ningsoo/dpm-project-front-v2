@@ -1,16 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
 import { Moon, User, LogIn, LogOut } from 'lucide-react';
 import { MailIcon } from '@/assets/site/MailIcon';
+import { NotificationIcon } from '@/assets/site/NotificationIcon';
 import MessageListModal from '@/components/common/MessageListModal/MessageListModal';
+import NotificationDropdown from '@/components/common/NotificationDropdown/NotificationDropdown';
 import { messageApi } from '@/api/messageApi';
+import { notificationApi } from '@/api/notificationApi';
 import { RootState, AppDispatch } from '@/store';
-import { toggleDarkMode, setUnreadMessageCount } from '@/store/slices/uiSlice';
+import {
+  toggleDarkMode,
+  setUnreadMessageCount,
+  setUnreadNotificationCount,
+} from '@/store/slices/uiSlice';
 import { logout as authLogout } from '@/store/slices/authSlice';
 import { authApi } from '@/api/authApi';
 import { ToastUtils } from '@/utils/toastUtils';
@@ -18,8 +25,8 @@ import logoImg from '@/assets/site/logo.png';
 import whiteLogoImg from '@/assets/site/whitelogo.png';
 import styles from './Header.module.css';
 
-/** 로그인 시 아이콘 4개 + gap 기준 고정 폭 (레이아웃 밀림 방지) */
-const ACTIONS_WIDTH_PX = 184;
+/** 로그인 시 아이콘 5개 + gap 기준 고정 폭 (레이아웃 밀림 방지) */
+const ACTIONS_WIDTH_PX = 232;
 
 const CATEGORIES = [
   { slug: 'showcase', label: 'Showcase' },
@@ -40,8 +47,11 @@ export default function Header() {
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const authInitialized = useSelector((s: RootState) => s.auth.initialized);
   const unreadCount = useSelector((s: RootState) => s.ui.unreadMessageCount);
+  const unreadNotificationCount = useSelector((s: RootState) => s.ui.unreadNotificationCount);
 
   const [showMessageListModal, setShowMessageListModal] = useState(false);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const notificationBtnRef = useRef<HTMLButtonElement>(null);
 
   /* 인증 resolve 후 실제 UI를 opacity 전환으로 노출 (깜빡임 제거) */
   const [contentVisible, setContentVisible] = useState(false);
@@ -54,21 +64,31 @@ export default function Header() {
     return () => cancelAnimationFrame(id);
   }, [authInitialized]);
 
-  /* 로그인 시에만 unread 메시지 개수 조회 (중복 호출 방지: isAuthenticated true일 때 1회) */
+  /* 로그인 시에만 unread 메시지/알림 개수 조회 (중복 호출 방지: isAuthenticated true일 때 1회) */
   useEffect(() => {
     if (!authInitialized || !isAuthenticated) return;
 
-    messageApi
-      .getUnreadCount()
-      .then(({ data }) => {
-        const count = data?.data;
+    Promise.allSettled([
+      messageApi.getUnreadCount(),
+      notificationApi.getUnreadCount(),
+    ]).then(([messageResult, notificationResult]) => {
+      if (messageResult.status === 'fulfilled') {
+        const count = messageResult.value?.data?.data;
         if (typeof count === 'number') {
           dispatch(setUnreadMessageCount(count));
         }
-      })
-      .catch((err) => {
-        console.error('[unread message count]', err);
-      });
+      } else {
+        console.error('[unread message count]', messageResult.reason);
+      }
+      if (notificationResult.status === 'fulfilled') {
+        const count = notificationResult.value?.data?.data;
+        if (typeof count === 'number') {
+          dispatch(setUnreadNotificationCount(count));
+        }
+      } else {
+        console.error('[unread notification count]', notificationResult.reason);
+      }
+    });
   }, [authInitialized, isAuthenticated, dispatch]);
 
   const handleLogout = async () => {
@@ -147,6 +167,22 @@ export default function Header() {
                 >
                   <MailIcon size={20} unreadCount={unreadCount} />
                 </button>
+                <div className={styles.msgWrapper}>
+                  <button
+                    ref={notificationBtnRef}
+                    type="button"
+                    className={styles.iconBtn}
+                    onClick={() => setShowNotificationDropdown((p) => !p)}
+                    aria-label="알림"
+                  >
+                    <NotificationIcon size={20} unreadCount={unreadNotificationCount} />
+                  </button>
+                  <NotificationDropdown
+                    open={showNotificationDropdown}
+                    onClose={() => setShowNotificationDropdown(false)}
+                    anchorRef={notificationBtnRef}
+                  />
+                </div>
                 <Link href="/mypage" className={styles.iconBtn} aria-label="마이페이지">
                   <User size={20} />
                 </Link>
