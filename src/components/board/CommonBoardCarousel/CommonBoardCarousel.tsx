@@ -16,21 +16,6 @@ import { ChevronLeft, ChevronRight, Heart, Eye } from 'lucide-react';
 import { formatViews } from '@/utils/displayFormatters';
 import styles from './CommonBoardCarousel.module.css';
 
-/** 데이터 + 레이아웃 준비 전 배경 flicker 방지: 준비 후 opacity 전환 */
-const useSectionReveal = (isLoading: boolean, hasContent: boolean, layoutReady: boolean) => {
-  const [revealed, setRevealed] = useState(false);
-  const isReady = isLoading || !hasContent || layoutReady;
-  useEffect(() => {
-    if (!isReady) {
-      setRevealed(false);
-      return;
-    }
-    const id = requestAnimationFrame(() => setRevealed(true));
-    return () => cancelAnimationFrame(id);
-  }, [isReady]);
-  return revealed;
-};
-
 const CARD_GAP = 20;
 const TRANSITION_MS = 650;
 
@@ -51,11 +36,12 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
   const [cardWidth, setCardWidth] = useState(300);
   const [wrapperWidth, setWrapperWidth] = useState(0);
 
+  /** 최초 콘텐츠 표시 후 true — 이후 재진입 시 skeleton 없이 바로 표시 */
+  const [hasRevealed, setHasRevealed] = useState(false);
+
   const wrapperRef = useRef<HTMLDivElement>(null);
   const shouldResetWhenReachEndRef = useRef(false);
   const isTransitingRef = useRef(false);
-
-  const sectionRevealed = useSectionReveal(isLoading, posts.length > 0, layoutReady);
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -90,6 +76,13 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
     });
   }, [N, wrapperWidth, layoutReady]);
 
+  /** layoutReady 되면 reveal 확정 */
+  useEffect(() => {
+    if (layoutReady && !hasRevealed) {
+      setHasRevealed(true);
+    }
+  }, [layoutReady, hasRevealed]);
+
   /** 끝 도달 시 점프 애니메이션 제거 (2N → N 리셋) */
   useEffect(() => {
     if (!layoutReady) return;
@@ -101,21 +94,26 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
       setCenter(N);
       shouldResetWhenReachEndRef.current = false;
       requestAnimationFrame(() => {
-        setTransitionEnabled(true);
-        isTransitingRef.current = false;
+        requestAnimationFrame(() => {
+          setTransitionEnabled(true);
+          isTransitingRef.current = false;
+        });
       });
     }, TRANSITION_MS);
     return () => clearTimeout(t);
   }, [center, N, layoutReady]);
 
-  /** center 안정화 가드 */
+  /** center 안정화 가드 — transition 중이면 무시 */
   useEffect(() => {
     if (!layoutReady) return;
+    if (isTransitingRef.current) return;
     if (center < N - 1 || center > 2 * N) {
       setTransitionEnabled(false);
       setCenter(N);
       requestAnimationFrame(() => {
-        setTransitionEnabled(true);
+        requestAnimationFrame(() => {
+          setTransitionEnabled(true);
+        });
       });
     }
   }, [center, N, layoutReady]);
@@ -159,13 +157,14 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
 
   const movePrev = () => {
     if (N === 0 || isTransitingRef.current) return;
-    if (center === N) {
+    if (center <= N) {
+      // 앞쪽 끝 → 뒤로 점프 후 한 칸 이동
       isTransitingRef.current = true;
       setTransitionEnabled(false);
       setCenter(2 * N);
       requestAnimationFrame(() => {
-        setCenter(2 * N - 1);
         requestAnimationFrame(() => {
+          setCenter(2 * N - 1);
           setTransitionEnabled(true);
           setTimeout(() => { isTransitingRef.current = false; }, TRANSITION_MS);
         });
@@ -178,7 +177,8 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
   const moveNext = () => {
     if (N === 0 || isTransitingRef.current) return;
     if (center >= 2 * N - 1) {
-      isTransitingRef.current = true;          // 즉시 잠금 — 리셋 완료 전 추가 클릭 차단
+      // 뒤쪽 끝 → 마지막으로 이동 후 리셋 예약
+      isTransitingRef.current = true;
       shouldResetWhenReachEndRef.current = true;
       setCenter(2 * N);
     } else {
@@ -203,15 +203,14 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
     ? `translateX(${translateX}px)`
     : 'translateX(0px)';
 
+  /* ── skeleton 표시 ── */
   if (isLoading) {
     return (
       <section
-        className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''} ${
-          sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
-        }`}
+        className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''} ${styles.sectionRevealed}`}
       >
         <div className={styles.wrapper}>
-          <div className={styles.track}>
+          <div className={styles.skeletonTrack}>
             {[0, 1, 2].map((i) => (
               <div key={`skeleton-${i}`} className={styles.skeletonCard} />
             ))}
@@ -221,26 +220,24 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
     );
   }
 
+  /* ── empty ── */
   if (posts.length === 0) {
     return (
       <section
-        className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''} ${
-          sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
-        }`}
+        className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''} ${styles.sectionRevealed}`}
       >
         <div className={styles.wrapper}>
-          <div className={styles.track}>
-            <div className={styles.emptyState}>등록된 게시글이 없습니다.</div>
-          </div>
+          <div className={styles.emptyState}>등록된 게시글이 없습니다.</div>
         </div>
       </section>
     );
   }
 
+  /* ── content ── */
   return (
     <section
       className={`${styles.section} ${darkMode ? 'dark' : ''} ${
-        sectionRevealed ? styles.sectionRevealed : styles.sectionHidden
+        hasRevealed ? styles.sectionRevealed : styles.sectionHidden
       }`}
     >
       <div className={styles.wrapper} ref={wrapperRef}>
