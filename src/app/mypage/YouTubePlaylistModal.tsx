@@ -46,15 +46,17 @@ export function YouTubePlaylistModal({ isOpen, onClose, onSuccess }: YouTubePlay
       } else {
         setPlaylists([]);
       }
-    } catch (error: any) {
-      const status = error?.response?.status;
+    } catch (error: unknown) {
+      const errRes = (error as { response?: { status?: number; data?: { message?: string } } })?.response;
+      const status = errRes?.status;
+      const msg = errRes?.data?.message;
 
       if (status === 401) {
-        ToastUtils.error('로그인이 필요합니다.');
+        ToastUtils.error(msg || '로그인이 필요합니다.');
       } else if (status === 403) {
-        ToastUtils.error('Google 계정 연동이 필요합니다.');
+        ToastUtils.error(msg || 'Google 계정 연동이 필요합니다.');
       } else {
-        ToastUtils.error('플레이리스트를 불러오는데 실패했습니다.');
+        ToastUtils.error(msg || '플레이리스트를 불러오는데 실패했습니다.');
       }
       onClose();
     } finally {
@@ -77,17 +79,19 @@ export function YouTubePlaylistModal({ isOpen, onClose, onSuccess }: YouTubePlay
       ToastUtils.success('플레이리스트가 성공적으로 등록되었습니다.');
       onClose();
       onSuccess();
-    } catch (error: any) {
-      const status = error?.response?.status;
+    } catch (error: unknown) {
+      const errRes = (error as { response?: { status?: number; data?: { message?: string } } })?.response;
+      const status = errRes?.status;
+      const msg = errRes?.data?.message;
 
       if (status === 401) {
-        ToastUtils.error('로그인이 필요합니다.');
+        ToastUtils.error(msg || '로그인이 필요합니다.');
       } else if (status === 403) {
-        ToastUtils.error('Google 계정 연동이 필요합니다.');
+        ToastUtils.error(msg || 'Google 계정 연동이 필요합니다.');
       } else if (status === 409) {
-        ToastUtils.error('이미 등록된 플레이리스트입니다.');
+        ToastUtils.error(msg || '이미 등록된 플레이리스트입니다.');
       } else {
-        ToastUtils.error('플레이리스트 등록에 실패했습니다.');
+        ToastUtils.error(msg || '플레이리스트 등록에 실패했습니다.');
       }
     } finally {
       setRegistering(false);
