@@ -154,11 +154,11 @@ export function MyPostsSection() {
             <div className={`${styles.fadeLayer} ${loading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableRow}`}>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 70 }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
                   <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '80%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 90 }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 40 }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 30 }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '45%' }} /></div>
                 </div>
               ))}
             </div>
