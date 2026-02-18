@@ -99,6 +99,8 @@ const SETTLEMENT_SUB_TABS = [
   { id: 'request' as const, label: '정산 신청' },
 ];
 
+const SUB_TAB_FADE_MS = 150;
+
 interface SettlementSectionProps {
   user: SettlementUser;
 }
@@ -142,7 +144,26 @@ export function SettlementSection({ user }: SettlementSectionProps) {
   const [availableAmount, setAvailableAmount] = useState(0);
   const [availableRows, setAvailableRows] = useState<AvailableSettlementRow[]>([]);
   const [availableLoading, setAvailableLoading] = useState(true);
-  
+
+  /* ── 서브탭 전환 페이드 ── */
+  const [displayedSubTab, setDisplayedSubTab] = useState(subTab);
+  const [subTabVisible, setSubTabVisible] = useState(true);
+  const subTabTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (subTab === displayedSubTab) return;
+    setSubTabVisible(false);
+    if (subTabTimeoutRef.current) clearTimeout(subTabTimeoutRef.current);
+    subTabTimeoutRef.current = setTimeout(() => {
+      setDisplayedSubTab(subTab);
+      requestAnimationFrame(() => setSubTabVisible(true));
+    }, SUB_TAB_FADE_MS);
+  }, [subTab, displayedSubTab]);
+
+  useEffect(() => {
+    return () => { if (subTabTimeoutRef.current) clearTimeout(subTabTimeoutRef.current); };
+  }, []);
+
   const fetchHistory = useCallback(() => {
     setLoading(true);
     const params = historyRange.start || historyRange.end
@@ -314,9 +335,9 @@ export function SettlementSection({ user }: SettlementSectionProps) {
         ))}
       </div>
 
-      <div className={styles.settlementInnerContent}>
+      <div className={styles.settlementInnerContent} style={{ opacity: subTabVisible ? 1 : 0, transition: `opacity ${SUB_TAB_FADE_MS}ms ease` }}>
         {/* === 1. 정산 내역 탭 === */}
-        {subTab === 'history' && (
+        {displayedSubTab === 'history' && (
           <div>
             <div className={styles.settlementDateRow}>
                <input type="date" value={historyRange.start} onChange={e=>setHistoryRange(r=>({...r, start:e.target.value}))} max={getTodayDateString()} className={styles.settlementDateInput}/>
@@ -336,11 +357,11 @@ export function SettlementSection({ user }: SettlementSectionProps) {
                 <div className={`${styles.fadeLayer} ${loading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableRow}`}>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 90 }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 90 }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 60 }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 60 }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 60 }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '65%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '65%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
                     </div>
                   ))}
                 </div>
@@ -363,7 +384,7 @@ export function SettlementSection({ user }: SettlementSectionProps) {
         )}
 
         {/* === 2. 정산 정보 등록 탭 === */}
-        {subTab === 'register' && (
+        {displayedSubTab === 'register' && (
            <div>
              <form onSubmit={handleRegisterAccount} className={styles.settlementForm}>
                 <div className={styles.settlementField}>
@@ -402,7 +423,7 @@ export function SettlementSection({ user }: SettlementSectionProps) {
         )}
 
         {/* === 3. 정산 신청 탭 === */}
-        {subTab === 'request' && (
+        {displayedSubTab === 'request' && (
           <div>
             <div className={styles.settlementRequestSummaryBox}>
               <div className={styles.settlementSummaryRow}>
@@ -431,8 +452,8 @@ export function SettlementSection({ user }: SettlementSectionProps) {
                   <div className={`${styles.fadeLayer} ${availableLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                     {Array.from({ length: 3 }).map((_, i) => (
                       <div key={i} className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
-                        <div className={styles.tableCell} style={centerStyle}><div className={styles.skeletonBar} style={{ width: 70 }} /></div>
-                        <div className={styles.tableCell} style={centerStyle}><div className={styles.skeletonBar} style={{ width: 90 }} /></div>
+                        <div className={styles.tableCell} style={centerStyle}><div className={styles.skeletonBar} style={{ width: '40%' }} /></div>
+                        <div className={styles.tableCell} style={centerStyle}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /><div className={styles.skeletonBar} style={{ width: '40%' }} /></div></div>
                       </div>
                     ))}
                   </div>

@@ -963,11 +963,11 @@ function MypagePageContent() {
                     {Array.from({ length: 3 }).map((_, i) => (
                       <div key={i} className={styles.tableGrid + ' ' + styles.reportsGrid + ' ' + styles.tableRow}>
                         <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 16, height: 16 }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 90 }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 80 }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 50 }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 60 }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 50 }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
                       </div>
                     ))}
                   </div>
@@ -1094,10 +1094,10 @@ function MypagePageContent() {
                   <div className={`${styles.fadeLayer} ${inquiryLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                     {Array.from({ length: 3 }).map((_, i) => (
                       <div key={i} className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableRow} style={{ padding: '12px 0' }}>
-                        <div className={styles.tableCell} style={{ textAlign: 'left' }}><div className={styles.skeletonBar} style={{ width: 100 }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 70 }} /></div>
+                        <div className={styles.tableCell} style={{ textAlign: 'left' }}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
                         <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 60 }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
                       </div>
                     ))}
                   </div>
