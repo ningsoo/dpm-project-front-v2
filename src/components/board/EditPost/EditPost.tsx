@@ -71,6 +71,14 @@ export default function EditPost({ category, boardId }: EditPostProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [resolvedCategory, setResolvedCategory] = useState<string>(category || 'showcase');
 
+  // 원본 값 저장 (변경 감지용)
+  const originalTitle = useRef('');
+  const originalContent = useRef('');
+  const originalYoutubeUrl = useRef('');
+  const originalPlaylistId = useRef<number | null>(null);
+  const originalImageCount = useRef(0);
+  const originalAttachmentId = useRef<number | null>(null);
+
   const dragPhotoIndex = useRef<number | null>(null);
 
   const safeCat = ['showcase', 'playlists', 'spotlight', 'community', 'reviews'].includes(
@@ -94,6 +102,27 @@ export default function EditPost({ category, boardId }: EditPostProps) {
   const contentOk = content.length >= 1 && content.length <= 3000;
   const youtubeUrlOk = !!youtubeUrl.trim() && !youtubeUrlError && !!youtubeVideoId;
   const playlistIdOk = selectedPlaylist != null && selectedPlaylist.playlistId != null;
+
+  // 변경 감지: 원본 값과 현재 값 비교
+  const hasChanged = (() => {
+    if (title !== originalTitle.current) return true;
+    if (content !== originalContent.current) return true;
+    if (isShowcase && youtubeUrl !== originalYoutubeUrl.current) return true;
+    if (isPlaylists && selectedPlaylist && selectedPlaylist.playlistId !== originalPlaylistId.current) return true;
+    if (isSpotlight) {
+      if (imageItems.length !== originalImageCount.current) return true;
+      if (deletedImageIds.length > 0) return true;
+      if (imageItems.some((it) => it.type === 'new')) return true;
+    }
+    if (isCommunityOrReviews) {
+      if (imageItems.length !== originalImageCount.current) return true;
+      if (deletedImageIds.length > 0) return true;
+      if (imageItems.some((it) => it.type === 'new')) return true;
+      if (communityNewAttachmentFile) return true;
+      if (communityDeleteAttachmentIds.length > 0) return true;
+    }
+    return false;
+  })();
 
   /** PLAYLISTS 수정 시 썸네일이 없을 때 내 플레이리스트 또는 트랙 목록으로 썸네일 보강 */
   const fetchPlaylistThumbnail = (playlistId: number, fallback: MyPlaylistItem) => {
@@ -153,6 +182,11 @@ export default function EditPost({ category, boardId }: EditPostProps) {
         setContent(c);
         setYoutubeUrl(link);
 
+        // 원본 값 저장
+        originalTitle.current = t;
+        originalContent.current = c;
+        originalYoutubeUrl.current = link;
+
         if (cat === 'SHOWCASE' && link) {
           const videoId = extractYouTubeVideoId(link);
           if (videoId) {
@@ -176,6 +210,7 @@ export default function EditPost({ category, boardId }: EditPostProps) {
               itemCount: Array.isArray(items) ? items.length : 0,
             };
             setSelectedPlaylist(initial);
+            originalPlaylistId.current = Number(pid);
             if (!thumb) {
               fetchPlaylistThumbnail(Number(pid), initial);
             }
@@ -192,6 +227,7 @@ export default function EditPost({ category, boardId }: EditPostProps) {
           }));
           setImageItems(items);
           setDeletedImageIds([]);
+          originalImageCount.current = items.length;
         }
 
         if (cat === 'COMMUNITY' || cat === 'REVIEWS') {
@@ -212,6 +248,7 @@ export default function EditPost({ category, boardId }: EditPostProps) {
             setCommunityLoadMode('image');
             setCommunityExistingAttachment(null);
             setCommunityDeleteAttachmentIds([]);
+            originalImageCount.current = items.length;
           } else if (attId != null && attName) {
             setCommunityExistingAttachment({
               attachmentId: Number(attId),
@@ -221,6 +258,7 @@ export default function EditPost({ category, boardId }: EditPostProps) {
             setImageItems([]);
             setDeletedImageIds([]);
             setCommunityDeleteAttachmentIds([]);
+            originalAttachmentId.current = Number(attId);
           } else {
             setCommunityLoadMode(null);
           }
@@ -760,6 +798,7 @@ export default function EditPost({ category, boardId }: EditPostProps) {
             className={`${styles.btn} ${styles.submit}`}
             disabled={
               loading ||
+              !hasChanged ||
               (isShowcase
                 ? !titleOk || !contentOk || !youtubeUrlOk
                 : isPlaylists
