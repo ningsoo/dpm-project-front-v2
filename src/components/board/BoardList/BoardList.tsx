@@ -56,6 +56,12 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
   const [search, setSearch] = useState('');
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
 
+  /* ── 카테고리 전환 페이드 ── */
+  const [contentVisible, setContentVisible] = useState(true);
+  const prevCategoryRef = useRef(category);
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const FADE_MS = 150;
+
   const sentinelRef = useRef<HTMLDivElement>(null);
   const listContainerRef = useRef<HTMLDivElement>(null);
 
@@ -111,23 +117,60 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
     [categoryType, posts.length, processAndAssignDisplayNumber]
   );
 
-  const fetchInitial = useCallback(() => {
-    setPosts([]);
-    setPage(0);
-    setLast(false);
-    setHasError(false);
-    fetchPage(0, false);
-  }, [fetchPage]);
-
   const fetchMore = useCallback(() => {
     if (loading || loadingMore || last || hasError) return;
     fetchPage(page + 1, true);
   }, [loading, loadingMore, last, hasError, page, fetchPage]);
 
+  // 카테고리 변경 감지 및 초기 로드
   useEffect(() => {
-    fetchInitial();
-    window.scrollTo({ top: 0, behavior: 'auto' });
-  }, [categoryType]); // eslint-disable-line react-hooks/exhaustive-deps
+    const prev = prevCategoryRef.current;
+    prevCategoryRef.current = category;
+
+    // 타이머 정리
+    if (fadeTimerRef.current) {
+      clearTimeout(fadeTimerRef.current);
+      fadeTimerRef.current = undefined;
+    }
+
+    // 콘텐츠 숨기고, 데이터 초기화 후 로드
+    setContentVisible(false);
+    setPosts([]);
+    setPage(0);
+    setLast(false);
+    setHasError(false);
+
+    if (prev !== category) {
+      // 카테고리 전환: 이전 콘텐츠 페이드아웃 시간 확보
+      fadeTimerRef.current = setTimeout(() => {
+        fetchPage(0, false);
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      }, FADE_MS);
+    } else {
+      // 최초 마운트: 바로 로드
+      fetchPage(0, false);
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+
+    return () => {
+      if (fadeTimerRef.current) {
+        clearTimeout(fadeTimerRef.current);
+      }
+    };
+  }, [category]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // loading 끝나면 실제 데이터 레이어 페이드인
+  const prevLoadingRef = useRef(loading);
+  useEffect(() => {
+    const wasLoading = prevLoadingRef.current;
+    prevLoadingRef.current = loading;
+
+    if (wasLoading && !loading) {
+      requestAnimationFrame(() => {
+        setContentVisible(true);
+      });
+    }
+  }, [loading]);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -219,89 +262,147 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
         </button>
       </div>
 
-      {loading && posts.length === 0 ? (
-        <div className={styles.loading}>로딩 중…</div>
-      ) : viewMode === 'grid' ? (
-        <div className={styles.grid}>
-          {displayedPosts.map((p, idx) => {
-            const safeCat = category as BoardCategorySlug;
-            const thumbnailUrl = getBoardThumbnailUrl(p, safeCat);
-            const isShowcase = category === 'showcase';
-            const videoId = isShowcase ? getShowcaseVideoId(p) : '';
-
-            const thumbnail =
-              isShowcase && videoId ? (
-                <YouTubeHoverThumbnail
-                  thumbnailUrl={thumbnailUrl}
-                  videoId={videoId}
-                  alt={p.title}
-                />
-              ) : (
-                <img src={thumbnailUrl} alt="" className={styles.thumb} />
-              );
-
-            return (
-              <BoardCard
-                key={`${p.boardId}-${idx}`}
-                thumbnail={thumbnail}
-                title={p.title}
-                nickname={p.nickname}
-                likeCount={p.likes}
-                viewCount={p.views}
-                displayNumber={shouldShowNumbers ? p.displayNumber : undefined}
-                onClick={() => router.push(`/boards/${p.boardId}`)}
-              />
-            );
-          })}
-        </div>
-      ) : (
-        <div className={styles.tableWrap}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                {/* community, reviews 카테고리일 때만 번호 컬럼 표시 */}
-                {shouldShowNumbers && <th>번호</th>}
-                <th>제목</th>
-                <th>작성자</th>
-                <th>좋아요</th>
-                {shouldShowNumbers && <th>댓글</th>}
-                <th>조회</th>
-                <th>날짜</th>
-              </tr>
-            </thead>
-            <tbody>
-              {displayedPosts.map((p, idx) => (
-                <tr
-                  key={`${p.boardId}-${idx}`}
-                  onClick={() => router.push(`/boards/${p.boardId}`)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {/* community, reviews 카테고리일 때만 번호 표시 */}
-                  {shouldShowNumbers && <td>{p.displayNumber}</td>}
-                  <td>
-                    <Link href={`/boards/${p.boardId}`}>{p.title}</Link>
-                  </td>
-                  <td>{p.nickname || '—'}</td>
-                  <td>{p.likes ?? 0}</td>
-                  {shouldShowNumbers && <td>{formatCommentCount(p.countComment)}</td>}
-                  <td>{formatViews(p.views)}</td>
-                  <td>{formatCreatedDateTime(p.createdDateTime)}</td>
-                </tr>
+      <div className={styles.listContentWrap}>
+        {/* ── 스켈레톤 레이어 ── */}
+        <div className={`${styles.listLayer} ${loading && posts.length === 0 ? styles.layerVisible : styles.layerHidden}`}>
+          {viewMode === 'grid' ? (
+            <div className={styles.grid}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className={styles.skeletonCard}>
+                  <div className={styles.skeletonThumb} />
+                  <div className={styles.skeletonBody}>
+                    <div className={styles.skeletonTitle} />
+                    <div className={styles.skeletonMeta}>
+                      <div className={styles.skeletonMetaLeft} />
+                      <div className={styles.skeletonMetaRight} />
+                    </div>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    {shouldShowNumbers && <th>번호</th>}
+                    <th>제목</th>
+                    <th>작성자</th>
+                    <th>좋아요</th>
+                    {shouldShowNumbers && <th>댓글</th>}
+                    <th>조회</th>
+                    <th>날짜</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <tr key={i} className={styles.skeletonRow}>
+                      {shouldShowNumbers && (
+                        <td><div className={styles.skeletonCell} style={{ width: 30 }} /></td>
+                      )}
+                      <td><div className={styles.skeletonCell} style={{ width: '80%' }} /></td>
+                      <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                      <td><div className={styles.skeletonCell} style={{ width: 30 }} /></td>
+                      {shouldShowNumbers && (
+                        <td><div className={styles.skeletonCell} style={{ width: 30 }} /></td>
+                      )}
+                      <td><div className={styles.skeletonCell} style={{ width: 40 }} /></td>
+                      <td><div className={styles.skeletonCell} style={{ width: 70 }} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-      )}
 
-      <div ref={sentinelRef} className={styles.infiniteScrollSentinel} aria-hidden />
+        {/* ── 실제 콘텐츠 레이어 ── */}
+        <div className={`${styles.listLayer} ${contentVisible && !loading ? styles.layerVisible : styles.layerHidden}`}>
+          {viewMode === 'grid' ? (
+            <div className={styles.grid}>
+              {displayedPosts.map((p, idx) => {
+                const safeCat = category as BoardCategorySlug;
+                const thumbnailUrl = getBoardThumbnailUrl(p, safeCat);
+                const isShowcase = category === 'showcase';
+                const videoId = isShowcase ? getShowcaseVideoId(p) : '';
 
-      {loadingMore && (
-        <div className={styles.loading}>더 불러오는 중…</div>
-      )}
+                const thumbnail =
+                  isShowcase && videoId ? (
+                    <YouTubeHoverThumbnail
+                      thumbnailUrl={thumbnailUrl}
+                      videoId={videoId}
+                      alt={p.title}
+                    />
+                  ) : (
+                    <img src={thumbnailUrl} alt="" className={styles.thumb} />
+                  );
 
-      {!loading && posts.length === 0 && (
-        <div className={styles.empty}>등록된 게시글이 없습니다.</div>
-      )}
+                return (
+                  <BoardCard
+                    key={`${p.boardId}-${idx}`}
+                    thumbnail={thumbnail}
+                    title={p.title}
+                    nickname={p.nickname}
+                    likeCount={p.likes}
+                    viewCount={p.views}
+                    displayNumber={shouldShowNumbers ? p.displayNumber : undefined}
+                    onClick={() => router.push(`/boards/${p.boardId}`)}
+                  />
+                );
+              })}
+            </div>
+          ) : (
+            <div className={styles.tableWrap}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    {shouldShowNumbers && <th>번호</th>}
+                    <th>제목</th>
+                    <th>작성자</th>
+                    <th>좋아요</th>
+                    {shouldShowNumbers && <th>댓글</th>}
+                    <th>조회</th>
+                    <th>날짜</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayedPosts.map((p, idx) => (
+                    <tr
+                      key={`${p.boardId}-${idx}`}
+                      onClick={() => router.push(`/boards/${p.boardId}`)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {shouldShowNumbers && <td>{p.displayNumber}</td>}
+                      <td>
+                        <Link href={`/boards/${p.boardId}`}>{p.title}</Link>
+                      </td>
+                      <td>{p.nickname || '—'}</td>
+                      <td>{p.likes ?? 0}</td>
+                      {shouldShowNumbers && <td>{formatCommentCount(p.countComment)}</td>}
+                      <td>{formatViews(p.views)}</td>
+                      <td>{formatCreatedDateTime(p.createdDateTime)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <div ref={sentinelRef} className={styles.infiniteScrollSentinel} aria-hidden />
+
+          {loadingMore && (
+            <div className={styles.loadingMore}>
+              <span className={styles.loadingDot} />
+              <span className={styles.loadingDot} />
+              <span className={styles.loadingDot} />
+            </div>
+          )}
+
+          {!loading && posts.length === 0 && (
+            <div className={styles.empty}>등록된 게시글이 없습니다.</div>
+          )}
+        </div>
+      </div>
 
       {showLoginRequiredModal && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true">

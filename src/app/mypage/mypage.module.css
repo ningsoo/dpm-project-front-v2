@@ -130,17 +130,15 @@
   padding: 16px 0;
   font-size: 0.95rem;
   color: #444;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition: opacity 0.15s ease;
 }
 
 .contentVisible {
   opacity: 1;
-  transform: translateY(0);
 }
 
 .contentHidden {
   opacity: 0;
-  transform: translateY(6px);
 }
 
 /* Grid 테이블 공통 스타일 */

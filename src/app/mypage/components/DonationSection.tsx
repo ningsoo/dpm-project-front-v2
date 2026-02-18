@@ -543,7 +543,7 @@ export function DonationSection() {
               후원 취소 확인
             </h3>
             <p className={styles.donationConfirmMessage}>
-              정말 이 음악인에 대한 후원을 취소하시겠습니까?
+              정말 이 사용자에 대한 후원을 취소하시겠습니까?
             </p>
             <div className={styles.settlementConfirmActions}>
               <button
