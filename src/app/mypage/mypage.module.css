@@ -130,7 +130,7 @@
   padding: 16px 0;
   font-size: 0.95rem;
   color: #444;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.45s ease;
 }
 
 .contentVisible {
@@ -394,7 +394,7 @@
   margin-top: 16px;
 }
 
-/* 사용내역: 사용일시·사용대상 넓게, 수량·내용·상태·취소 좁게 */
+/* 사용내역: 구매내역과 동일한 그리드 비율 */
 .popUsageGrid6 {
   width: 100%;
   grid-template-columns:
@@ -402,7 +402,7 @@
     12%   /* 사용수량 */
     20%   /* 사용대상 */
     16%   /* 사용내용 */
-    14%   /* 사용상태 */
+    18%   /* 사용상태 */
     14%;  /* 사용취소 */
 }
 
@@ -1629,4 +1629,198 @@
 
 :global(.dark) .settlementSection .submitBtn:hover:not(:disabled) {
   background: #42413B;
+}
+
+/* ================= 스켈레톤 ↔ 콘텐츠 크로스페이드 ================= */
+
+.fadeWrap {
+  display: grid;
+}
+
+.fadeLayer {
+  grid-area: 1 / 1;
+  transition: opacity 0.35s ease;
+}
+
+.fadeLayerVisible {
+  opacity: 1;
+}
+
+.fadeLayerHidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ================= 스켈레톤 로딩 ================= */
+
+@keyframes mypageShimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeletonBar {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #eee 25%, #e0e0e0 50%, #eee 75%);
+  background-size: 800px 100%;
+  animation: mypageShimmer 1.5s infinite ease-in-out;
+}
+
+/* 날짜+시간 2줄 스켈레톤 (donationDateCell과 동일 구조) */
+.skeletonDateCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.skeletonRow {
+  display: contents;
+}
+
+.skeletonRow > div {
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.skeletonCard {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.skeletonCardThumb {
+  padding-top: 56.25%;
+  background: linear-gradient(90deg, #eee 25%, #e0e0e0 50%, #eee 75%);
+  background-size: 800px 100%;
+  animation: mypageShimmer 1.5s infinite ease-in-out;
+}
+
+.skeletonCardBody {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 초기 로딩 프로필 스켈레톤 */
+.skeletonProfile {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px;
+}
+
+.skeletonAvatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #eee 25%, #e0e0e0 50%, #eee 75%);
+  background-size: 800px 100%;
+  animation: mypageShimmer 1.5s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+.skeletonProfileText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* 스켈레톤 Dark Mode */
+:global(.dark) .skeletonBar {
+  background: linear-gradient(90deg, #2e2e2c 25%, #3a3a38 50%, #2e2e2c 75%);
+  background-size: 800px 100%;
+  animation: mypageShimmer 1.5s infinite ease-in-out;
+}
+
+:global(.dark) .skeletonCard {
+  background: #242422;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .skeletonCardThumb {
+  background: linear-gradient(90deg, #2e2e2c 25%, #3a3a38 50%, #2e2e2c 75%);
+  background-size: 800px 100%;
+  animation: mypageShimmer 1.5s infinite ease-in-out;
+}
+
+:global(.dark) .skeletonAvatar {
+  background: linear-gradient(90deg, #2e2e2c 25%, #3a3a38 50%, #2e2e2c 75%);
+  background-size: 800px 100%;
+  animation: mypageShimmer 1.5s infinite ease-in-out;
+}
+
+/* 페이지 최초 진입 크로스페이드 */
+.pageLoadWrap {
+  display: grid;
+}
+
+.pageLayer {
+  grid-area: 1 / 1;
+  transition: opacity 0.35s ease;
+}
+
+.pageLayerVisible {
+  opacity: 1;
+}
+
+.pageLayerHidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 탭 스켈레톤 */
+.skeletonTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.skeletonTab {
+  width: 72px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #eee 25%, #e0e0e0 50%, #eee 75%);
+  background-size: 800px 100%;
+  animation: mypageShimmer 1.5s infinite ease-in-out;
+}
+
+/* 콘텐츠 영역 스켈레톤 */
+.skeletonContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 0;
+}
+
+.skeletonContentRow {
+  height: 18px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #eee 25%, #e0e0e0 50%, #eee 75%);
+  background-size: 800px 100%;
+  animation: mypageShimmer 1.5s infinite ease-in-out;
+}
+
+:global(.dark) .skeletonTabs {
+  border-bottom-color: #333;
+}
+
+:global(.dark) .skeletonTab {
+  background: linear-gradient(90deg, #2e2e2c 25%, #3a3a38 50%, #2e2e2c 75%);
+  background-size: 800px 100%;
+  animation: mypageShimmer 1.5s infinite ease-in-out;
+}
+
+:global(.dark) .skeletonContentRow {
+  background: linear-gradient(90deg, #2e2e2c 25%, #3a3a38 50%, #2e2e2c 75%);
+  background-size: 800px 100%;
+  animation: mypageShimmer 1.5s infinite ease-in-out;
 }

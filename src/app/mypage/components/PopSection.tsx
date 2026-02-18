@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchClient } from '@/api/fetchClient';
 import { ToastUtils } from '@/utils/toastUtils';
@@ -183,19 +183,40 @@ function getDate30DaysAgo(): string {
   return `${year}-${month}-${day}`;
 }
 
+const SUB_TAB_FADE_MS = 150;
+
 function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onChargeClick }: PopSectionProps) {
   const router = useRouter();
   const [inputRange, setInputRange] = useState({ start: getDate30DaysAgo(), end: getTodayDateString() });
   const [usageList, setUsageList] = useState<PopUsageRow[]>([]);
   const [purchaseList, setPurchaseList] = useState<PopPurchaseRow[]>([]);
-  const [usageLoading, setUsageLoading] = useState(false);
-  const [purchaseLoading, setPurchaseLoading] = useState(false);
+  const [usageLoading, setUsageLoading] = useState(true);
+  const [purchaseLoading, setPurchaseLoading] = useState(true);
   const [cancelTarget, setCancelTarget] = useState<PopUsageRow | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
   const [purchaseCancelTarget, setPurchaseCancelTarget] = useState<PopPurchaseRow | null>(null);
   const [showPurchaseCancelModal, setShowPurchaseCancelModal] = useState(false);
   const [purchaseCancelSubmitting, setPurchaseCancelSubmitting] = useState(false);
+
+  /* ── 서브탭 전환 페이드 ── */
+  const [displayedSubTab, setDisplayedSubTab] = useState(subTab);
+  const [subTabVisible, setSubTabVisible] = useState(true);
+  const subTabTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (subTab === displayedSubTab) return;
+    setSubTabVisible(false);
+    if (subTabTimeoutRef.current) clearTimeout(subTabTimeoutRef.current);
+    subTabTimeoutRef.current = setTimeout(() => {
+      setDisplayedSubTab(subTab);
+      requestAnimationFrame(() => setSubTabVisible(true));
+    }, SUB_TAB_FADE_MS);
+  }, [subTab, displayedSubTab]);
+
+  useEffect(() => {
+    return () => { if (subTabTimeoutRef.current) clearTimeout(subTabTimeoutRef.current); };
+  }, []);
 
   const handleError = useCallback(
     (err: unknown) => {
@@ -511,125 +532,129 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
         </button>
       </div>
 
-      <div className={styles.popTableWrap}>
-        {subTab === 'usage' && (
+      <div className={styles.popTableWrap} style={{ opacity: subTabVisible ? 1 : 0, transition: `opacity ${SUB_TAB_FADE_MS}ms ease` }}>
+        {displayedSubTab === 'usage' && (
           <div style={{ overflowX: 'auto' }}>
             <div className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableHeader}`}>
               {USAGE_COLUMNS.map((col) => (
                 <div key={col}>{col}</div>
               ))}
             </div>
-            {usageLoading ? (
-              <div className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.settlementGrid3EmptyRow}`}>
-                <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
-                  로딩 중...
-                </div>
+            <div className={styles.fadeWrap}>
+              <div className={`${styles.fadeLayer} ${usageLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableRow}`}>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                  </div>
+                ))}
               </div>
-            ) : filteredUsageList.length === 0 ? (
-              <div className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.settlementGrid3EmptyRow}`}>
-                <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
-                  내역이 없습니다.
-                </div>
-              </div>
-            ) : (
-              filteredUsageList.map((row, idx) => {
-                const usageDatetime = row.requestedDatetime ?? row.createdDatetime;
-                return (
-                  <div
-                    key={idx}
-                    className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableRow}`}
-                  >
-                    <div className={styles.tableCell}>
-                      <PopUsageDateCell dt={usageDatetime} />
-                    </div>
-                    <div className={styles.tableCell}>
-                      {formatAmountWithWon(row.changeAmount)}
-                    </div>
-                    <div className={styles.tableCell}>
-                      {row.related?.name ?? '-'}
-                    </div>
-                    <div className={styles.tableCell}>
-                      {mapPopTargetToLabel(row.popTarget)}
-                    </div>
-                    <div className={styles.tableCell}>
-                      <span className={getPopStatusBadgeClass(row.popStatus)}>
-                        {mapPopStatusToLabel(row.popStatus)}
-                      </span>
-                    </div>
-                    <div className={styles.tableCell}>
-                      {!row.approvedDatetime && row.popStatus !== 'COMPLETED' && row.popStatus !== 'CANCELED' && (
-                        <button
-                          type="button"
-                          className={styles.donationCancelBtn}
-                          disabled={cancelSubmitting}
-                          onClick={() => handleCancelUsageClick(row)}
-                        >
-                          사용취소
-                        </button>
-                      )}
+              <div className={`${styles.fadeLayer} ${!usageLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+                {filteredUsageList.length === 0 && !usageLoading ? (
+                  <div className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.settlementGrid3EmptyRow}`}>
+                    <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
+                      내역이 없습니다.
                     </div>
                   </div>
-                );
-              })
-            )}
+                ) : (
+                  filteredUsageList.map((row, idx) => {
+                    const usageDatetime = row.requestedDatetime ?? row.createdDatetime;
+                    return (
+                      <div
+                        key={idx}
+                        className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableRow}`}
+                      >
+                        <div className={styles.tableCell}><PopUsageDateCell dt={usageDatetime} /></div>
+                        <div className={styles.tableCell}>{formatAmountWithWon(row.changeAmount)}</div>
+                        <div className={styles.tableCell}>{row.related?.name ?? '-'}</div>
+                        <div className={styles.tableCell}>{mapPopTargetToLabel(row.popTarget)}</div>
+                        <div className={styles.tableCell}>
+                          <span className={getPopStatusBadgeClass(row.popStatus)}>
+                            {mapPopStatusToLabel(row.popStatus)}
+                          </span>
+                        </div>
+                        <div className={styles.tableCell}>
+                          {!row.approvedDatetime && row.popStatus !== 'COMPLETED' && row.popStatus !== 'CANCELED' && (
+                            <button
+                              type="button"
+                              className={styles.donationCancelBtn}
+                              disabled={cancelSubmitting}
+                              onClick={() => handleCancelUsageClick(row)}
+                            >
+                              사용취소
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
           </div>
         )}
-        {subTab === 'purchase' && (
+        {displayedSubTab === 'purchase' && (
           <div style={{ overflowX: 'auto' }}>
             <div className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableHeader}`}>
               {PURCHASE_COLUMNS.map((col) => (
                 <div key={col}>{col}</div>
               ))}
             </div>
-            {purchaseLoading ? (
-              <div className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.settlementGrid3EmptyRow}`}>
-                <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
-                  로딩 중...
-                </div>
+            <div className={styles.fadeWrap}>
+              <div className={`${styles.fadeLayer} ${purchaseLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableRow}`}>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                  </div>
+                ))}
               </div>
-            ) : filteredPurchaseList.length === 0 ? (
-              <div className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.settlementGrid3EmptyRow}`}>
-                <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
-                  내역이 없습니다.
-                </div>
+              <div className={`${styles.fadeLayer} ${!purchaseLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+                {filteredPurchaseList.length === 0 && !purchaseLoading ? (
+                  <div className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.settlementGrid3EmptyRow}`}>
+                    <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
+                      내역이 없습니다.
+                    </div>
+                  </div>
+                ) : (
+                  filteredPurchaseList.map((row, idx) => (
+                    <div
+                      key={idx}
+                      className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableRow}`}
+                    >
+                      <div className={styles.tableCell}><PopUsageDateCell dt={row.createdDatetime} /></div>
+                      <div className={styles.tableCell}>{formatAmountWithPop(row.changeAmount)}</div>
+                      <div className={styles.tableCell}>{mapPurchaseTargetToLabel(row.target)}</div>
+                      <div className={styles.tableCell}>{formatActualAmount(row.actualAmount)}</div>
+                      <div className={styles.tableCell}>
+                        <PopUsageDateCell dt={row.popStatus === 'CANCELED' ? undefined : row.expiredDatetime} />
+                      </div>
+                      <div className={styles.tableCell}>
+                        {row.popStatus === 'CANCELED' ? (
+                          <span className={styles.popStatusNeutral}>취소완료</span>
+                        ) : row.popStatus === 'COMPLETED' ? (
+                          <button
+                            type="button"
+                            className={styles.donationCancelBtn}
+                            onClick={() => handleCancelPurchaseClick(row)}
+                          >
+                            구매취소
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
-            ) : (
-              filteredPurchaseList.map((row, idx) => (
-                <div
-                  key={idx}
-                  className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableRow}`}
-                >
-                  <div className={styles.tableCell}>
-                    <PopUsageDateCell dt={row.createdDatetime} />
-                  </div>
-                  <div className={styles.tableCell}>
-                    {formatAmountWithPop(row.changeAmount)}
-                  </div>
-                  <div className={styles.tableCell}>
-                    {mapPurchaseTargetToLabel(row.target)}
-                  </div>
-                  <div className={styles.tableCell}>
-                     {formatActualAmount(row.actualAmount)}
-                  </div>
-                  <div className={styles.tableCell}>
-                    <PopUsageDateCell dt={row.popStatus === 'CANCELED' ? undefined : row.expiredDatetime} />
-                  </div>
-                  <div className={styles.tableCell}>
-                    {row.popStatus === 'CANCELED' ? (
-                      <span className={styles.popStatusNeutral}>취소완료</span>
-                    ) : row.popStatus === 'COMPLETED' ? (
-                      <button
-                        type="button"
-                        className={styles.donationCancelBtn}
-                        onClick={() => handleCancelPurchaseClick(row)}
-                      >
-                        구매취소
-                      </button>
-                    ) : null}
-                  </div>
-                </div>
-              ))
-            )}
+            </div>
           </div>
         )}
       </div>

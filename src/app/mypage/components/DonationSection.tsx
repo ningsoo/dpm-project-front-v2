@@ -125,6 +125,7 @@ function formatAmountAbsWithComma(amount?: number): string {
 }
 
 const FIXED_CANCEL_REASON = '구매자 변심으로 인한 취소';
+const SUB_TAB_FADE_MS = 150;
 
 /** createdDatetime 기준 최신순. createdDatetime 없으면 맨 아래로 */
 function sortByCreatedDatetimeDesc(rows: PopHistoryResponseRow[]): PopHistoryResponseRow[] {
@@ -182,8 +183,8 @@ export function DonationSection() {
   const [appliedRange, setAppliedRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
   const [sentRaw, setSentRaw] = useState<PopHistoryResponseRow[]>([]);
   const [receivedRaw, setReceivedRaw] = useState<PopHistoryResponseRow[]>([]);
-  const [sentLoading, setSentLoading] = useState(false);
-  const [receivedLoading, setReceivedLoading] = useState(false);
+  const [sentLoading, setSentLoading] = useState(true);
+  const [receivedLoading, setReceivedLoading] = useState(true);
   const [visibleCountSent, setVisibleCountSent] = useState(BATCH_SIZE);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -191,6 +192,25 @@ export function DonationSection() {
   const [cancelTarget, setCancelTarget] = useState<PopHistoryResponseRow | null>(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
+
+  /* ── 서브탭 전환 페이드 ── */
+  const [displayedSubTab, setDisplayedSubTab] = useState(subTab);
+  const [subTabVisible, setSubTabVisible] = useState(true);
+  const subTabTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (subTab === displayedSubTab) return;
+    setSubTabVisible(false);
+    if (subTabTimeoutRef.current) clearTimeout(subTabTimeoutRef.current);
+    subTabTimeoutRef.current = setTimeout(() => {
+      setDisplayedSubTab(subTab);
+      requestAnimationFrame(() => setSubTabVisible(true));
+    }, SUB_TAB_FADE_MS);
+  }, [subTab, displayedSubTab]);
+
+  useEffect(() => {
+    return () => { if (subTabTimeoutRef.current) clearTimeout(subTabTimeoutRef.current); };
+  }, []);
 
   const fetchSent = useCallback(async () => {
     const uid = tokenUtils.getUserIdFromAccessToken();
@@ -405,126 +425,139 @@ export function DonationSection() {
           </button>
         </div>
 
-        {subTab === 'sent' && (
+        <div style={{ opacity: subTabVisible ? 1 : 0, transition: `opacity ${SUB_TAB_FADE_MS}ms ease` }}>
+        {displayedSubTab === 'sent' && (
           <div ref={scrollContainerRef} className={styles.donationScrollArea}>
-            {sentLoading ? (
-              <p className={styles.settlementLoading}>로딩 중...</p>
-            ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <div className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableHeader}`}>
-                  <div>후원일</div>
-                  <div>요청일</div>
-                  <div>승인일</div>
-                  <div>취소일</div>
-                  <div>금액</div>
-                  <div>상태</div>
-                  <div>취소</div>
-                  <div>수혜자</div>
+            <div style={{ overflowX: 'auto' }}>
+              <div className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableHeader}`}>
+                <div>후원일</div>
+                <div>요청일</div>
+                <div>승인일</div>
+                <div>취소일</div>
+                <div>금액</div>
+                <div>상태</div>
+                <div>취소</div>
+                <div>수혜자</div>
+              </div>
+              <div className={styles.fadeWrap}>
+                <div className={`${styles.fadeLayer} ${sentLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableRow}`}>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    </div>
+                  ))}
                 </div>
-                {sentVisible.length === 0 ? (
-                  <div className={styles.settlementEmpty}>후원 보낸 내역이 없습니다.</div>
-                ) : (
-                  <>
-                    {sentVisible.map((row, idx) => (
+                <div className={`${styles.fadeLayer} ${!sentLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+                  {sentVisible.length === 0 && !sentLoading ? (
+                    <div className={styles.settlementEmpty}>후원 보낸 내역이 없습니다.</div>
+                  ) : (
+                    <>
+                      {sentVisible.map((row, idx) => (
+                        <div
+                          key={row.popHistoryId ?? idx}
+                          className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableRow}`}
+                        >
+                          <div className={styles.tableCell}><DonationDateCell dt={row.createdDatetime} /></div>
+                          <div className={styles.tableCell}><DonationDateCell dt={row.requestedDatetime} /></div>
+                          <div className={styles.tableCell}><DonationDateCell dt={row.approvedDatetime} /></div>
+                          <div className={styles.tableCell}><DonationDateCell dt={row.cancelDatetime} /></div>
+                          <div className={styles.tableCell}>{formatAmountAbsWithComma(row.changeAmount)}</div>
+                          <div className={styles.tableCell}>
+                            <span className={getDonationStatusBadgeClass(row.popStatus)}>
+                              {getPopStatusLabel(row.popStatus)}
+                            </span>
+                          </div>
+                          <div className={styles.tableCell}>
+                            {isCancelable(row) && (
+                              <button
+                                type="button"
+                                className={styles.donationCancelBtn}
+                                disabled={cancelSubmitting}
+                                onClick={() => {
+                                  setCancelTarget(row);
+                                  setShowConfirmModal(true);
+                                }}
+                              >
+                                취소하기
+                              </button>
+                            )}
+                          </div>
+                          <div className={styles.tableCell}>{row.related?.name ?? '-'}</div>
+                        </div>
+                      ))}
+                      {hasMoreSent && (
+                        <div ref={sentinelRef} style={{ minHeight: 1, padding: 8 }} aria-hidden="true" />
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {displayedSubTab === 'received' && (
+          <div>
+            <div style={{ overflowX: 'auto' }}>
+              <div className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableHeader}`}>
+                <div>후원일</div>
+                <div>요청일</div>
+                <div>확정일</div>
+                <div>취소일</div>
+                <div>금액</div>
+                <div>상태</div>
+                <div>후원자</div>
+              </div>
+              <div className={styles.fadeWrap}>
+                <div className={`${styles.fadeLayer} ${receivedLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableRow}`}>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    </div>
+                  ))}
+                </div>
+                <div className={`${styles.fadeLayer} ${!receivedLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+                  {receivedFiltered.length === 0 && !receivedLoading ? (
+                    <div className={styles.settlementEmpty}>후원 받은 내역이 없습니다.</div>
+                  ) : (
+                    receivedFiltered.map((row, idx) => (
                       <div
                         key={row.popHistoryId ?? idx}
-                        className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableRow}`}
+                        className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableRow}`}
                       >
-                        <div className={styles.tableCell}>
-                          <DonationDateCell dt={row.createdDatetime} />
-                        </div>
-                        <div className={styles.tableCell}>
-                          <DonationDateCell dt={row.requestedDatetime} />
-                        </div>
-                        <div className={styles.tableCell}>
-                          <DonationDateCell dt={row.approvedDatetime} />
-                        </div>
-                        <div className={styles.tableCell}>
-                          <DonationDateCell dt={row.cancelDatetime} />
-                        </div>
+                        <div className={styles.tableCell}><DonationDateCell dt={row.createdDatetime} /></div>
+                        <div className={styles.tableCell}><DonationDateCell dt={row.requestedDatetime} /></div>
+                        <div className={styles.tableCell}><DonationDateCell dt={row.approvedDatetime} /></div>
+                        <div className={styles.tableCell}><DonationDateCell dt={row.cancelDatetime} /></div>
                         <div className={styles.tableCell}>{formatAmountAbsWithComma(row.changeAmount)}</div>
                         <div className={styles.tableCell}>
                           <span className={getDonationStatusBadgeClass(row.popStatus)}>
                             {getPopStatusLabel(row.popStatus)}
                           </span>
                         </div>
-                        <div className={styles.tableCell}>
-                          {isCancelable(row) && (
-                            <button
-                              type="button"
-                              className={styles.donationCancelBtn}
-                              disabled={cancelSubmitting}
-                              onClick={() => {
-                                setCancelTarget(row);
-                                setShowConfirmModal(true);
-                              }}
-                            >
-                              취소하기
-                            </button>
-                          )}
-                        </div>
                         <div className={styles.tableCell}>{row.related?.name ?? '-'}</div>
                       </div>
-                    ))}
-                    {hasMoreSent && (
-                      <div ref={sentinelRef} style={{ minHeight: 1, padding: 8 }} aria-hidden="true" />
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {subTab === 'received' && (
-          <div>
-            {receivedLoading ? (
-              <p className={styles.settlementLoading}>로딩 중...</p>
-            ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <div className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableHeader}`}>
-                  <div>후원일</div>
-                  <div>요청일</div>
-                  <div>확정일</div>
-                  <div>취소일</div>
-                  <div>금액</div>
-                  <div>상태</div>
-                  <div>후원자</div>
+                    ))
+                  )}
                 </div>
-                {receivedFiltered.length === 0 ? (
-                  <div className={styles.settlementEmpty}>후원 받은 내역이 없습니다.</div>
-                ) : (
-                  receivedFiltered.map((row, idx) => (
-                    <div
-                      key={row.popHistoryId ?? idx}
-                      className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableRow}`}
-                    >
-                      <div className={styles.tableCell}>
-                        <DonationDateCell dt={row.createdDatetime} />
-                      </div>
-                      <div className={styles.tableCell}>
-                        <DonationDateCell dt={row.requestedDatetime} />
-                      </div>
-                      <div className={styles.tableCell}>
-                        <DonationDateCell dt={row.approvedDatetime} />
-                      </div>
-                      <div className={styles.tableCell}>
-                        <DonationDateCell dt={row.cancelDatetime} />
-                      </div>
-                      <div className={styles.tableCell}>{formatAmountAbsWithComma(row.changeAmount)}</div>
-                      <div className={styles.tableCell}>
-                        <span className={getDonationStatusBadgeClass(row.popStatus)}>
-                          {getPopStatusLabel(row.popStatus)}
-                        </span>
-                      </div>
-                      <div className={styles.tableCell}>{row.related?.name ?? '-'}</div>
-                    </div>
-                  ))
-                )}
               </div>
-            )}
+            </div>
           </div>
         )}
+        </div>
       </div>
 
       {showConfirmModal && (
