@@ -216,16 +216,179 @@
 
 /* ================= 기타 ================= */
 
-.empty,
+.empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: #666;
+}
+
 .loading {
   padding: 48px 24px;
   text-align: center;
   color: #666;
 }
 
+/* 무한 스크롤 로딩 도트 */
+@keyframes loadingBounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.loadingMore {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 24px;
+}
+
+.loadingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #999;
+  animation: loadingBounce 1.4s infinite ease-in-out both;
+}
+
+.loadingDot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loadingDot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.loadingDot:nth-child(3) {
+  animation-delay: 0s;
+}
+
 .carouselSection {
   margin-bottom: 32px;
   min-height: 420px;
+}
+
+/* ================= 스켈레톤 로딩 ================= */
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.skeletonCard {
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.skeletonThumb {
+  padding-top: 56.25%;
+  background: linear-gradient(90deg, #eee 25%, #e0e0e0 50%, #eee 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite ease-in-out;
+}
+
+.skeletonBody {
+  padding: 12px;
+}
+
+.skeletonTitle {
+  height: 16px;
+  width: 75%;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #eee 25%, #e0e0e0 50%, #eee 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite ease-in-out;
+}
+
+.skeletonMeta {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.skeletonMetaLeft {
+  height: 12px;
+  width: 60px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #eee 25%, #e0e0e0 50%, #eee 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite ease-in-out;
+}
+
+.skeletonMetaRight {
+  height: 12px;
+  width: 80px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #eee 25%, #e0e0e0 50%, #eee 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite ease-in-out;
+}
+
+.skeletonRow td {
+  padding: 14px 16px;
+}
+
+.skeletonCell {
+  height: 14px;
+  border-radius: 4px;
+  margin: 0 auto;
+  background: linear-gradient(90deg, #eee 25%, #e0e0e0 50%, #eee 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite ease-in-out;
+}
+
+/* 스켈레톤 Dark Mode */
+:global(.dark) .skeletonCard {
+  background: #242422;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .skeletonThumb {
+  background: linear-gradient(90deg, #2e2e2c 25%, #3a3a38 50%, #2e2e2c 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite ease-in-out;
+}
+
+:global(.dark) .skeletonTitle,
+:global(.dark) .skeletonMetaLeft,
+:global(.dark) .skeletonMetaRight,
+:global(.dark) .skeletonCell {
+  background: linear-gradient(90deg, #2e2e2c 25%, #3a3a38 50%, #2e2e2c 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite ease-in-out;
+}
+
+/* ============ 카테고리 전환 크로스페이드 ============ */
+
+.listContentWrap {
+  position: relative;
+}
+
+.listLayer {
+  transition: opacity 0.2s ease;
+}
+
+.layerVisible {
+  opacity: 1;
+}
+
+.layerHidden {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
 }
 
 /* ================= Dark Mode ================= */
@@ -301,6 +464,10 @@
 :global(.dark) .empty,
 :global(.dark) .loading {
   color: #8A877D;
+}
+
+:global(.dark) .loadingDot {
+  background: #5a5850;
 }
 
 :global(.dark) .table a {
