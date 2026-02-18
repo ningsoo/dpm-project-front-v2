@@ -127,21 +127,21 @@ export function SettlementSection({ user }: SettlementSectionProps) {
   const [subTab, setSubTab] = useState<'history' | 'register' | 'request'>('history');
   
   const [historyList, setHistoryList] = useState<SettlementHistoryItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [historyRange, setHistoryRange] = useState({ start: getDate30DaysAgo(), end: getTodayDateString() });
-  
+
   const [accountNumber, setAccountNumber] = useState('');
   const [accountNumberError, setAccountNumberError] = useState('');
   const [isAccountNumberTyping, setIsAccountNumberTyping] = useState(false);
   const accountNumberDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const [accountSubmitting, setAccountSubmitting] = useState(false);
-  
+
   const [requestSubmitting, setRequestSubmitting] = useState(false);
   const [showRequestConfirm, setShowRequestConfirm] = useState(false);
 
   const [availableAmount, setAvailableAmount] = useState(0);
   const [availableRows, setAvailableRows] = useState<AvailableSettlementRow[]>([]);
-  const [availableLoading, setAvailableLoading] = useState(false);
+  const [availableLoading, setAvailableLoading] = useState(true);
   
   const fetchHistory = useCallback(() => {
     setLoading(true);
@@ -324,28 +324,41 @@ export function SettlementSection({ user }: SettlementSectionProps) {
                <input type="date" value={historyRange.end} onChange={e=>setHistoryRange(r=>({...r, end:e.target.value}))} max={getTodayDateString()} className={styles.settlementDateInput}/>
                <button className={styles.settlementSearchBtn} onClick={fetchHistory}>조회</button>
             </div>
-            {loading ? <p className={styles.settlementLoading}>로딩 중...</p> : (
-              <div style={{ overflowX: 'auto' }}>
-                <div className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableHeader}`}>
-                  <div>정산요청일</div>
-                  <div>정산승인일</div>
-                  <div>변동 수량</div>
-                  <div>정산금액</div>
-                  <div>정산처리상태</div>
-                </div>
-                {historyList.length === 0 ? <div className={styles.settlementEmpty}>내역이 없습니다.</div> : 
-                  historyList.map((item, idx) => (
-                    <div key={idx} className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableRow}`}>
-                      <div className={styles.tableCell}><SettlementDateCell dt={item.requestedDatetime} /></div>
-                      <div className={styles.tableCell}><SettlementDateCell dt={item.approvedDatetime} /></div>
-                      <div className={styles.tableCell}>{formatSettlementAmount(item.changeAmount)}</div>
-                      <div className={styles.tableCell}>{formatSettlementAmount(item.changeAmount)}</div>
-                      <div className={styles.tableCell}>{item.statusLabel ?? '정산신청'}</div>
-                    </div>
-                  ))
-                }
+            <div style={{ overflowX: 'auto' }}>
+              <div className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableHeader}`}>
+                <div>정산요청일</div>
+                <div>정산승인일</div>
+                <div>변동 수량</div>
+                <div>정산금액</div>
+                <div>정산처리상태</div>
               </div>
-            )}
+              <div className={styles.fadeWrap}>
+                <div className={`${styles.fadeLayer} ${loading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableRow}`}>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 90 }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 90 }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 60 }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 60 }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 60 }} /></div>
+                    </div>
+                  ))}
+                </div>
+                <div className={`${styles.fadeLayer} ${!loading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+                  {historyList.length === 0 && !loading ? <div className={styles.settlementEmpty}>내역이 없습니다.</div> :
+                    historyList.map((item, idx) => (
+                      <div key={idx} className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableRow}`}>
+                        <div className={styles.tableCell}><SettlementDateCell dt={item.requestedDatetime} /></div>
+                        <div className={styles.tableCell}><SettlementDateCell dt={item.approvedDatetime} /></div>
+                        <div className={styles.tableCell}>{formatSettlementAmount(item.changeAmount)}</div>
+                        <div className={styles.tableCell}>{formatSettlementAmount(item.changeAmount)}</div>
+                        <div className={styles.tableCell}>{item.statusLabel ?? '정산신청'}</div>
+                      </div>
+                    ))
+                  }
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -409,32 +422,42 @@ export function SettlementSection({ user }: SettlementSectionProps) {
             </div>
 
             <div className={styles.settlementRequestTableWrap}>
-              {availableLoading ? <p className={styles.settlementLoading}>로딩 중...</p> : (
-                <div style={{ overflowX: 'auto' }}>
-                  <div className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableHeader}`}>
-                    <div style={centerStyle}>후원금액</div>
-                    <div style={centerStyle}>후원승인일</div>
-                  </div>
-                  {availableRows.length === 0 ? (
-                    <div className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
-                      <div className={styles.tableCell} style={{ ...centerStyle, gridColumn: '1 / -1' }}>
-                        내역이 없습니다.
-                      </div>
-                    </div>
-                  ) : (
-                    availableRows.map((row, idx) => (
-                      <div key={row.transactionId ?? idx} className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
-                        <div className={styles.tableCell} style={centerStyle}>
-                          {formatSettlementAmount(typeof row.changeAmount === 'number' ? Math.abs(row.changeAmount) : undefined)}
-                        </div>
-                        <div className={styles.tableCell} style={centerStyle}>
-                          <SettlementDateCell dt={row.approvedDatetime ?? row.createdDatetime} />
-                        </div>
-                      </div>
-                    ))
-                  )}
+              <div style={{ overflowX: 'auto' }}>
+                <div className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableHeader}`}>
+                  <div style={centerStyle}>후원금액</div>
+                  <div style={centerStyle}>후원승인일</div>
                 </div>
-              )}
+                <div className={styles.fadeWrap}>
+                  <div className={`${styles.fadeLayer} ${availableLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
+                        <div className={styles.tableCell} style={centerStyle}><div className={styles.skeletonBar} style={{ width: 70 }} /></div>
+                        <div className={styles.tableCell} style={centerStyle}><div className={styles.skeletonBar} style={{ width: 90 }} /></div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className={`${styles.fadeLayer} ${!availableLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+                    {availableRows.length === 0 && !availableLoading ? (
+                      <div className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
+                        <div className={styles.tableCell} style={{ ...centerStyle, gridColumn: '1 / -1' }}>
+                          내역이 없습니다.
+                        </div>
+                      </div>
+                    ) : (
+                      availableRows.map((row, idx) => (
+                        <div key={row.transactionId ?? idx} className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
+                          <div className={styles.tableCell} style={centerStyle}>
+                            {formatSettlementAmount(typeof row.changeAmount === 'number' ? Math.abs(row.changeAmount) : undefined)}
+                          </div>
+                          <div className={styles.tableCell} style={centerStyle}>
+                            <SettlementDateCell dt={row.approvedDatetime ?? row.createdDatetime} />
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
