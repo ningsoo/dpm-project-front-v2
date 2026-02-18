@@ -40,6 +40,12 @@ function CommentDateCell({ dateTimeArray }: { dateTimeArray: number[] | undefine
   );
 }
 
+/** categoryType을 첫 글자만 대문자, 나머지는 소문자로 변환 */
+function formatCategoryType(categoryType: string): string {
+  if (!categoryType) return categoryType;
+  return categoryType.charAt(0).toUpperCase() + categoryType.slice(1).toLowerCase();
+}
+
 export function MyCommentsSection() {
   const router = useRouter();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
@@ -154,7 +160,7 @@ export function MyCommentsSection() {
                   <CommentDateCell dateTimeArray={comment.createdDateTime} />
                 </div>
                 <div className={styles.tableCell}>
-                  {comment.categoryType}
+                  {formatCategoryType(comment.categoryType)}
                 </div>
                 <div className={styles.tableCell}>
                   {comment.content}
