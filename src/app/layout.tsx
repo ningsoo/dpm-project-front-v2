@@ -32,10 +32,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <ThemeSync />
           <Header />
-          <main style={{ paddingTop: 64, minHeight: 'calc(100vh - 64px - 120px)' }}>{children}</main>
+          <main style={{ paddingTop: 64, minHeight: 'calc(100vh - 64px - 120px)', position: 'relative' }}>
+            {children}
+            <TopButton />
+          </main>
           <Footer />
           <ToastRoot />
-          <TopButton />
         </Providers>
       </body>
     </html>
