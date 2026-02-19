@@ -157,42 +157,53 @@ export function MyCommentsSection() {
             <div>원문 글 제목</div>
             <div>추천</div>
           </div>
-          {loading ? (
-            <div className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.settlementGrid3EmptyRow}`}>
-              <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
-                로딩 중...
-              </div>
+          <div className={styles.fadeWrap}>
+            {/* 스켈레톤 레이어 */}
+            <div className={`${styles.fadeLayer} ${loading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableRow}`}>
+                  <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '80%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '45%' }} /></div>
+                </div>
+              ))}
             </div>
-          ) : comments.length === 0 ? (
-            <div className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.settlementGrid3EmptyRow}`}>
-              <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
-                댓글이 없습니다.
-              </div>
+            {/* 실제 콘텐츠 레이어 */}
+            <div className={`${styles.fadeLayer} ${!loading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+              {comments.length === 0 && !loading ? (
+                <div className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.settlementGrid3EmptyRow}`}>
+                  <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
+                    댓글이 없습니다.
+                  </div>
+                </div>
+              ) : (
+                comments.map((comment) => (
+                  <div
+                    key={comment.commentId}
+                    className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableRow}`}
+                  >
+                    <div className={styles.tableCell}>
+                      <CommentDateCell dateTimeArray={comment.createdDateTime} />
+                    </div>
+                    <div className={styles.tableCell}>
+                      {formatCategoryType(comment.categoryType)}
+                    </div>
+                    <div className={`${styles.tableCell} ${styles.commentContentCell}`}>
+                      {formatCommentContent(comment.content)}
+                    </div>
+                    <div className={styles.tableCell}>
+                      {comment.title}
+                    </div>
+                    <div className={styles.tableCell}>
+                      {comment.likeCount}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-          ) : (
-            comments.map((comment) => (
-              <div
-                key={comment.commentId}
-                className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableRow}`}
-              >
-                <div className={styles.tableCell}>
-                  <CommentDateCell dateTimeArray={comment.createdDateTime} />
-                </div>
-                <div className={styles.tableCell}>
-                  {formatCategoryType(comment.categoryType)}
-                </div>
-                <div className={`${styles.tableCell} ${styles.commentContentCell}`}>
-                  {formatCommentContent(comment.content)}
-                </div>
-                <div className={styles.tableCell}>
-                  {comment.title}
-                </div>
-                <div className={styles.tableCell}>
-                  {comment.likeCount}
-                </div>
-              </div>
-            ))
-          )}
+          </div>
         </div>
       </div>
     </div>
