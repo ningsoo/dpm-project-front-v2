@@ -149,7 +149,6 @@ export function MyPostsSection() {
             <div>조회</div>
             <div>추천</div>
           </div>
-<<<<<<< fix/board
           <div className={styles.fadeWrap}>
             {/* 스켈레톤 레이어 */}
             <div className={`${styles.fadeLayer} ${loading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
@@ -162,44 +161,41 @@ export function MyPostsSection() {
                   <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '45%' }} /></div>
                 </div>
               ))}
-=======
-          {loading ? (
-            <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.settlementGrid3EmptyRow}`}>
-              <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
-                로딩 중...
-              </div>
->>>>>>> develop
             </div>
-          ) : posts.length === 0 ? (
-            <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.settlementGrid3EmptyRow}`}>
-              <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
-                게시글이 없습니다.
-              </div>
+            {/* 실제 콘텐츠 레이어 */}
+            <div className={`${styles.fadeLayer} ${!loading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+              {posts.length === 0 && !loading ? (
+                <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.settlementGrid3EmptyRow}`}>
+                  <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
+                    게시글이 없습니다.
+                  </div>
+                </div>
+              ) : (
+                posts.map((post) => (
+                  <div
+                    key={post.boardId}
+                    className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableRow}`}
+                  >
+                    <div className={styles.tableCell}>
+                      {mapCategoryTypeToLabel(post.category.categoryType)}
+                    </div>
+                    <div className={styles.tableCell}>
+                      {post.title}
+                    </div>
+                    <div className={styles.tableCell}>
+                      <PostDateCell dateTimeArray={post.createdDateTime} />
+                    </div>
+                    <div className={styles.tableCell}>
+                      {post.views}
+                    </div>
+                    <div className={styles.tableCell}>
+                      {post.likes}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
-          ) : (
-            posts.map((post) => (
-              <div
-                key={post.boardId}
-                className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableRow}`}
-              >
-                <div className={styles.tableCell}>
-                  <PostDateCell dateTimeArray={post.createdDateTime} />
-                </div>
-                <div className={styles.tableCell}>
-                  {mapCategoryTypeToLabel(post.category.categoryType)}
-                </div>
-                <div className={styles.tableCell}>
-                  {post.title}
-                </div>
-                <div className={styles.tableCell}>
-                  {post.views}
-                </div>
-                <div className={styles.tableCell}>
-                  {post.likes}
-                </div>
-              </div>
-            ))
-          )}
+          </div>
         </div>
       </div>
     </div>
