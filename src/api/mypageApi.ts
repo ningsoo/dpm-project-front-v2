@@ -128,4 +128,8 @@ export const mypageApi = {
   /** 내가 쓴 게시글 조회 - GET /mypage/my-posts */
   getMyPosts: () =>
     fetchClient.get<ApiResponse<unknown>>('/api/mypage/my-posts'),
+
+  /** 내가 쓴 댓글 조회 - GET /mypage/my-comments */
+  getMyComments: () =>
+    fetchClient.get<ApiResponse<unknown>>('/api/mypage/my-comments'),
 };
