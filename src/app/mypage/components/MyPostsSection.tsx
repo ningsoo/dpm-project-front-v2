@@ -149,11 +149,26 @@ export function MyPostsSection() {
             <div>조회</div>
             <div>추천</div>
           </div>
+<<<<<<< fix/board
+          <div className={styles.fadeWrap}>
+            {/* 스켈레톤 레이어 */}
+            <div className={`${styles.fadeLayer} ${loading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableRow}`}>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '80%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '45%' }} /></div>
+                </div>
+              ))}
+=======
           {loading ? (
             <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.settlementGrid3EmptyRow}`}>
               <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
                 로딩 중...
               </div>
+>>>>>>> develop
             </div>
           ) : posts.length === 0 ? (
             <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.settlementGrid3EmptyRow}`}>

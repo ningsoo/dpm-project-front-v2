@@ -258,6 +258,13 @@ function MypagePageContent() {
     }
   }, [searchParams, router]);
 
+  // 신고내역 탭 활성화 시 데이터 fetch (API 미연동 – 스켈레톤만 해제)
+  useEffect(() => {
+    if (tab !== 'reports' || !isAuthenticated) return;
+    setReportsList([]);
+    setReportsLoading(false);
+  }, [tab, isAuthenticated]);
+
   // 문의내역 탭 활성화 시 데이터 fetch
   useEffect(() => {
     if (tab !== 'inquiries' || !isAuthenticated) return;
@@ -373,17 +380,9 @@ function MypagePageContent() {
       return;
     }
     if (type === 'reports') {
-      setReportsLoading(true);
-      try {
-        const res = await mypageApi.getReports({ start: range.start, end: range.end });
-        const data = res.data?.data;
-        setReportsList(Array.isArray(data) ? data : []);
-      } catch {
-        ToastUtils.error('신고 내역을 불러올 수 없습니다.');
-        setReportsList([]);
-      } finally {
-        setReportsLoading(false);
-      }
+      // TODO: 신고 API 연동 후 활성화
+      setReportsList([]);
+      setReportsLoading(false);
     }
   };
 
@@ -907,11 +906,11 @@ function MypagePageContent() {
                     {Array.from({ length: 3 }).map((_, i) => (
                       <div key={i} className={styles.tableGrid + ' ' + styles.reportsGrid + ' ' + styles.tableRow}>
                         <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 16, height: 16 }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 90 }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 80 }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 50 }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 60 }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 50 }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
                       </div>
                     ))}
                   </div>
@@ -1038,10 +1037,10 @@ function MypagePageContent() {
                   <div className={`${styles.fadeLayer} ${inquiryLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                     {Array.from({ length: 3 }).map((_, i) => (
                       <div key={i} className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableRow} style={{ padding: '12px 0' }}>
-                        <div className={styles.tableCell} style={{ textAlign: 'left' }}><div className={styles.skeletonBar} style={{ width: 100 }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 70 }} /></div>
+                        <div className={styles.tableCell} style={{ textAlign: 'left' }}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
                         <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 60 }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
                       </div>
                     ))}
                   </div>

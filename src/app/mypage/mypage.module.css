@@ -1669,11 +1669,12 @@
 /* ================= 스켈레톤 ↔ 콘텐츠 크로스페이드 ================= */
 
 .fadeWrap {
-  position: relative;
+  display: grid;
 }
 
 .fadeLayer {
-  transition: opacity 0.45s ease;
+  grid-area: 1 / 1;
+  transition: opacity 0.35s ease;
 }
 
 .fadeLayerVisible {
@@ -1683,8 +1684,6 @@
 .fadeLayerHidden {
   opacity: 0;
   pointer-events: none;
-  position: absolute;
-  inset: 0;
 }
 
 /* ================= 스켈레톤 로딩 ================= */
@@ -1700,6 +1699,14 @@
   background: linear-gradient(90deg, #eee 25%, #e0e0e0 50%, #eee 75%);
   background-size: 800px 100%;
   animation: mypageShimmer 1.5s infinite ease-in-out;
+}
+
+/* 날짜+시간 2줄 스켈레톤 (donationDateCell과 동일 구조) */
+.skeletonDateCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
 .skeletonRow {
@@ -1785,11 +1792,12 @@
 
 /* 페이지 최초 진입 크로스페이드 */
 .pageLoadWrap {
-  position: relative;
+  display: grid;
 }
 
 .pageLayer {
-  transition: opacity 0.45s ease;
+  grid-area: 1 / 1;
+  transition: opacity 0.35s ease;
 }
 
 .pageLayerVisible {
@@ -1799,8 +1807,6 @@
 .pageLayerHidden {
   opacity: 0;
   pointer-events: none;
-  position: absolute;
-  inset: 0;
 }
 
 /* 탭 스켈레톤 */

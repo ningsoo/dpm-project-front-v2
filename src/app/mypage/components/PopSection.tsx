@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { fetchClient } from '@/api/fetchClient';
 import { ToastUtils } from '@/utils/toastUtils';
@@ -183,6 +183,8 @@ function getDate30DaysAgo(): string {
   return `${year}-${month}-${day}`;
 }
 
+const SUB_TAB_FADE_MS = 150;
+
 function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onChargeClick }: PopSectionProps) {
   const router = useRouter();
   const [inputRange, setInputRange] = useState({ start: getDate30DaysAgo(), end: getTodayDateString() });
@@ -196,6 +198,25 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
   const [purchaseCancelTarget, setPurchaseCancelTarget] = useState<PopPurchaseRow | null>(null);
   const [showPurchaseCancelModal, setShowPurchaseCancelModal] = useState(false);
   const [purchaseCancelSubmitting, setPurchaseCancelSubmitting] = useState(false);
+
+  /* ── 서브탭 전환 페이드 ── */
+  const [displayedSubTab, setDisplayedSubTab] = useState(subTab);
+  const [subTabVisible, setSubTabVisible] = useState(true);
+  const subTabTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (subTab === displayedSubTab) return;
+    setSubTabVisible(false);
+    if (subTabTimeoutRef.current) clearTimeout(subTabTimeoutRef.current);
+    subTabTimeoutRef.current = setTimeout(() => {
+      setDisplayedSubTab(subTab);
+      requestAnimationFrame(() => setSubTabVisible(true));
+    }, SUB_TAB_FADE_MS);
+  }, [subTab, displayedSubTab]);
+
+  useEffect(() => {
+    return () => { if (subTabTimeoutRef.current) clearTimeout(subTabTimeoutRef.current); };
+  }, []);
 
   const handleError = useCallback(
     (err: unknown) => {
@@ -511,8 +532,8 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
         </button>
       </div>
 
-      <div className={styles.popTableWrap}>
-        {subTab === 'usage' && (
+      <div className={styles.popTableWrap} style={{ opacity: subTabVisible ? 1 : 0, transition: `opacity ${SUB_TAB_FADE_MS}ms ease` }}>
+        {displayedSubTab === 'usage' && (
           <div style={{ overflowX: 'auto' }}>
             <div className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableHeader}`}>
               {USAGE_COLUMNS.map((col) => (
@@ -523,12 +544,12 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
               <div className={`${styles.fadeLayer} ${usageLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableRow}`}>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 80 }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 50 }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 50 }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 60 }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 50 }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 50 }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
                   </div>
                 ))}
               </div>
@@ -576,7 +597,7 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
             </div>
           </div>
         )}
-        {subTab === 'purchase' && (
+        {displayedSubTab === 'purchase' && (
           <div style={{ overflowX: 'auto' }}>
             <div className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableHeader}`}>
               {PURCHASE_COLUMNS.map((col) => (
@@ -587,12 +608,12 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
               <div className={`${styles.fadeLayer} ${purchaseLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableRow}`}>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 80 }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 50 }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 60 }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 50 }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 70 }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 50 }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
                   </div>
                 ))}
               </div>

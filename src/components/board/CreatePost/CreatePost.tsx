@@ -274,7 +274,8 @@ export default function CreatePost({ category }: CreatePostProps) {
         }
       }
 
-      // 201 Created 성공 시 해당 카테고리 목록으로 이동
+      // 201 Created 성공 시 토스트 + 해당 카테고리 목록으로 이동
+      ToastUtils.success('게시글이 등록되었습니다.');
       const listSlug = ['showcase', 'playlists', 'spotlight', 'community', 'reviews'].includes(category)
         ? category
         : 'showcase';
