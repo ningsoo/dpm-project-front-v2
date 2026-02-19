@@ -18,6 +18,7 @@ import { DonationSection } from './components/DonationSection';
 import PopSection from './components/PopSection';
 import { MyPageYouTubeSection } from './components/MyPageYouTubeSection';
 import { MyPostsSection } from './components/MyPostsSection';
+import { MyCommentsSection } from './components/MyCommentsSection';
 import defaultProfileImg from '@/assets/site/profile.png';
 import styles from './mypage.module.css';
 
@@ -767,64 +768,7 @@ function MypagePageContent() {
           <MyPageYouTubeSection user={user} isAuthenticated={isAuthenticated} />
         )}
         {displayedTab === 'posts' && <MyPostsSection />}
-        {displayedTab === 'comments' && (
-          <div>
-            <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>
-              <input
-                type="text"
-                placeholder="검색어 입력"
-                value={searchQuery.comments}
-                onChange={(e) => setSearchQuery({ ...searchQuery, comments: e.target.value })}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch('comments')}
-                style={{
-                  width: '100%',
-                  padding: '8px 40px 8px 12px',
-                  border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
-                  borderRadius: 8,
-                  fontSize: 14,
-                  background: darkMode ? '#242422' : '#fff',
-                  color: darkMode ? '#B5B3A7' : '#333',
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => handleSearch('comments')}
-                onMouseEnter={(e) => { e.currentTarget.style.color = darkMode ? '#3A3934' : '#111'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; }}
-                style={{
-                  position: 'absolute',
-                  right: 8,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 4,
-                  color: '#666',
-                  transition: 'color 0.2s',
-                }}
-              >
-                <Search size={18} />
-              </button>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <div>
-                <div className={styles.tableGrid + ' ' + styles.commentsGrid + ' ' + styles.tableHeader}>
-                  <div>게시판 종류</div>
-                  <div>댓글내용</div>
-                  <div>원문 글 제목</div>
-                  <div>작성일</div>
-                </div>
-                <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                  댓글이 없습니다.
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {displayedTab === 'comments' && <MyCommentsSection />}
         {displayedTab === 'liked' && (
           <div>
             <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>

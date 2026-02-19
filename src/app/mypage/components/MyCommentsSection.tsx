@@ -9,23 +9,18 @@ import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import styles from '../mypage.module.css';
 
-interface MyPost {
-  boardId: number;
-  category: {
-    categoryId: number;
-    categoryType: string;
-    sortOrder: number;
-    role: string;
-    active: boolean;
-  };
-  title: string;
+interface MyComment {
+  commentId: number;
   createdDateTime: number[]; // [year, month, day, hour, minute, second]
-  views: number;
-  likes: number;
+  categoryType: string;
+  content: string;
+  boardId: number;
+  title: string;
+  likeCount: number;
 }
 
 /** createdDateTime 배열을 yyyy.mm.dd / hh:mm:ss 형식으로 변환 */
-function formatPostDate(dateTimeArray: number[] | undefined): { date: string; time: string } {
+function formatCommentDate(dateTimeArray: number[] | undefined): { date: string; time: string } {
   if (!Array.isArray(dateTimeArray) || dateTimeArray.length < 3) {
     return { date: '-', time: '' };
   }
@@ -35,8 +30,8 @@ function formatPostDate(dateTimeArray: number[] | undefined): { date: string; ti
   return { date, time };
 }
 
-function PostDateCell({ dateTimeArray }: { dateTimeArray: number[] | undefined }) {
-  const { date, time } = formatPostDate(dateTimeArray);
+function CommentDateCell({ dateTimeArray }: { dateTimeArray: number[] | undefined }) {
+  const { date, time } = formatCommentDate(dateTimeArray);
   return (
     <div className={styles.donationDateCell}>
       <span>{date}</span>
@@ -45,35 +40,48 @@ function PostDateCell({ dateTimeArray }: { dateTimeArray: number[] | undefined }
   );
 }
 
-/** categoryType을 한글 라벨로 변환 */
-function mapCategoryTypeToLabel(categoryType: string): string {
-  const map: Record<string, string> = {
-    SHOWCASE: 'Showcase',
-    PLAYLISTS: 'Playlists',
-    SPOTLIGHT: 'Spotlight',
-    COMMUNITY: 'Community',
-    REVIEWS: 'Reviews',
-  };
-  return map[categoryType] ?? categoryType;
+/** categoryType을 첫 글자만 대문자, 나머지는 소문자로 변환 */
+function formatCategoryType(categoryType: string): string {
+  if (!categoryType) return categoryType;
+  return categoryType.charAt(0).toUpperCase() + categoryType.slice(1).toLowerCase();
 }
 
-export function MyPostsSection() {
+const COMMENT_CHARS_PER_LINE = 15;
+const COMMENT_MAX_LINES = 2;
+
+/** 댓글 내용: 한 줄 15자, 최대 2줄. 2줄 초과 시 말줄임(...) */
+function formatCommentContent(content: string): string {
+  if (!content) return '';
+  const s = String(content).trim();
+  if (s.length <= COMMENT_CHARS_PER_LINE) return s;
+  if (s.length <= COMMENT_CHARS_PER_LINE * COMMENT_MAX_LINES) {
+    return s.slice(0, COMMENT_CHARS_PER_LINE) + '\n' + s.slice(COMMENT_CHARS_PER_LINE);
+  }
+  return (
+    s.slice(0, COMMENT_CHARS_PER_LINE) +
+    '\n' +
+    s.slice(COMMENT_CHARS_PER_LINE, COMMENT_CHARS_PER_LINE * COMMENT_MAX_LINES) +
+    '...'
+  );
+}
+
+export function MyCommentsSection() {
   const router = useRouter();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const [searchQuery, setSearchQuery] = useState('');
-  const [posts, setPosts] = useState<MyPost[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [comments, setComments] = useState<MyComment[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // 탭 활성화 시 데이터 fetch
   useEffect(() => {
     if (!isAuthenticated) return;
     setLoading(true);
     mypageApi
-      .getMyPosts()
+      .getMyComments()
       .then(({ data }) => {
-        const content = (data?.data as { content?: MyPost[] })?.content;
-        setPosts(Array.isArray(content) ? content : []);
+        const content = (data?.data as { content?: MyComment[] })?.content;
+        setComments(Array.isArray(content) ? content : []);
       })
       .catch((err: unknown) => {
         const status = (err as { response?: { status?: number } })?.response?.status;
@@ -81,9 +89,9 @@ export function MyPostsSection() {
           ToastUtils.error('로그인이 필요합니다.');
           router.push('/auth/login');
         } else {
-          ToastUtils.error('게시글을 불러올 수 없습니다.');
+          ToastUtils.error('댓글을 불러올 수 없습니다.');
         }
-        setPosts([]);
+        setComments([]);
       })
       .finally(() => {
         setLoading(false);
@@ -93,7 +101,7 @@ export function MyPostsSection() {
   const handleSearch = () => {
     if (searchQuery.trim()) {
       // TODO: 실제 검색 API 호출
-      console.log('Searching posts:', searchQuery);
+      console.log('Searching comments:', searchQuery);
     }
   };
 
@@ -142,76 +150,49 @@ export function MyPostsSection() {
       </div>
       <div className={styles.popTableWrap}>
         <div style={{ overflowX: 'auto' }}>
-          <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableHeader}`}>
+          <div className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableHeader}`}>
             <div>날짜</div>
             <div>게시판</div>
-            <div>제목</div>
-            <div>조회</div>
+            <div>댓글</div>
+            <div>원문 글 제목</div>
             <div>추천</div>
           </div>
           {loading ? (
-            <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.settlementGrid3EmptyRow}`}>
+            <div className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.settlementGrid3EmptyRow}`}>
               <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
                 로딩 중...
               </div>
             </div>
-          ) : posts.length === 0 ? (
-            <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.settlementGrid3EmptyRow}`}>
+          ) : comments.length === 0 ? (
+            <div className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.settlementGrid3EmptyRow}`}>
               <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
-                게시글이 없습니다.
+                댓글이 없습니다.
               </div>
             </div>
           ) : (
-            posts.map((post) => (
+            comments.map((comment) => (
               <div
-                key={post.boardId}
-                className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableRow}`}
+                key={comment.commentId}
+                className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableRow}`}
               >
                 <div className={styles.tableCell}>
-                  <PostDateCell dateTimeArray={post.createdDateTime} />
+                  <CommentDateCell dateTimeArray={comment.createdDateTime} />
                 </div>
                 <div className={styles.tableCell}>
-                  {mapCategoryTypeToLabel(post.category.categoryType)}
+                  {formatCategoryType(comment.categoryType)}
+                </div>
+                <div className={`${styles.tableCell} ${styles.commentContentCell}`}>
+                  {formatCommentContent(comment.content)}
                 </div>
                 <div className={styles.tableCell}>
-                  {post.title}
+                  {comment.title}
                 </div>
-              ))}
-            </div>
-            {/* 실제 콘텐츠 레이어 */}
-            <div className={`${styles.fadeLayer} ${!loading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
-              {posts.length === 0 && !loading ? (
-                <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.settlementGrid3EmptyRow}`}>
-                  <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
-                    게시글이 없습니다.
-                  </div>
+                <div className={styles.tableCell}>
+                  {comment.likeCount}
                 </div>
-              ) : (
-                posts.map((post) => (
-                  <div
-                    key={post.boardId}
-                    className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableRow}`}
-                  >
-                    <div className={styles.tableCell}>
-                      {mapCategoryTypeToLabel(post.category.categoryType)}
-                    </div>
-                    <div className={styles.tableCell}>
-                      {post.title}
-                    </div>
-                    <div className={styles.tableCell}>
-                      <PostDateCell dateTimeArray={post.createdDateTime} />
-                    </div>
-                    <div className={styles.tableCell}>
-                      {post.views}
-                    </div>
-                    <div className={styles.tableCell}>
-                      {post.likes}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
