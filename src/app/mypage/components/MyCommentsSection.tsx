@@ -46,15 +46,23 @@ function formatCategoryType(categoryType: string): string {
   return categoryType.charAt(0).toUpperCase() + categoryType.slice(1).toLowerCase();
 }
 
-const COMMENT_PREVIEW_LEN = 10;
+const COMMENT_CHARS_PER_LINE = 15;
+const COMMENT_MAX_LINES = 2;
 
-/** 댓글 내용을 10자 단위 줄바꿈, 20자 초과 시 말줄임 */
+/** 댓글 내용: 한 줄 15자, 최대 2줄. 2줄 초과 시 말줄임(...) */
 function formatCommentContent(content: string): string {
   if (!content) return '';
   const s = String(content).trim();
-  if (s.length <= COMMENT_PREVIEW_LEN) return s;
-  if (s.length <= COMMENT_PREVIEW_LEN * 2) return s.slice(0, COMMENT_PREVIEW_LEN) + '\n' + s.slice(COMMENT_PREVIEW_LEN);
-  return s.slice(0, COMMENT_PREVIEW_LEN) + '\n' + s.slice(COMMENT_PREVIEW_LEN, COMMENT_PREVIEW_LEN * 2) + '...';
+  if (s.length <= COMMENT_CHARS_PER_LINE) return s;
+  if (s.length <= COMMENT_CHARS_PER_LINE * COMMENT_MAX_LINES) {
+    return s.slice(0, COMMENT_CHARS_PER_LINE) + '\n' + s.slice(COMMENT_CHARS_PER_LINE);
+  }
+  return (
+    s.slice(0, COMMENT_CHARS_PER_LINE) +
+    '\n' +
+    s.slice(COMMENT_CHARS_PER_LINE, COMMENT_CHARS_PER_LINE * COMMENT_MAX_LINES) +
+    '...'
+  );
 }
 
 export function MyCommentsSection() {
