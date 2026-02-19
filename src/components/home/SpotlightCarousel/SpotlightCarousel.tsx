@@ -34,6 +34,7 @@ export default function SpotlightCarousel() {
   const wrapperRef = useRef<HTMLDivElement>(null);
   const shouldResetWhenReachEndRef = useRef(false);
   const isTransitingRef = useRef(false);
+  const [autoplayKey, setAutoplayKey] = useState(0);
 
   /** 데이터 조회 */
   const fetchSpotlights = useCallback(async () => {
@@ -127,12 +128,12 @@ export default function SpotlightCarousel() {
     }
   }, [center, N, layoutReady]);
 
-  /** autoplay */
+  /** autoplay — autoplayKey가 바뀌면 interval이 초기화됨 */
   useEffect(() => {
     if (!layoutReady || N === 0) return;
 
     const t = setInterval(() => {
-      if (isTransitingRef.current) return;       // 전환 중이면 건너뜀
+      if (isTransitingRef.current) return;
       setCenter((c) => {
         if (c >= 2 * N - 1) {
           isTransitingRef.current = true;
@@ -144,12 +145,17 @@ export default function SpotlightCarousel() {
     }, 4000);
 
     return () => clearInterval(t);
-  }, [N, layoutReady]);
+  }, [N, layoutReady, autoplayKey]);
+
+  /** 버튼 클릭 시 interval 리셋 — 4초 타이머를 처음부터 다시 시작 */
+  const resetAutoplay = () => {
+    setAutoplayKey((k) => k + 1);
+  };
 
   /** 이동 */
   const movePrev = () => {
     if (N === 0 || isTransitingRef.current) return;
-
+    resetAutoplay();
     if (center <= N) {
       // 앞쪽 끝 → 뒤로 점프 후 한 칸 이동
       isTransitingRef.current = true;
@@ -169,7 +175,7 @@ export default function SpotlightCarousel() {
 
   const moveNext = () => {
     if (N === 0 || isTransitingRef.current) return;
-
+    resetAutoplay();
     if (center >= 2 * N - 1) {
       // 뒤쪽 끝 → 마지막으로 이동 후 리셋 예약
       isTransitingRef.current = true;

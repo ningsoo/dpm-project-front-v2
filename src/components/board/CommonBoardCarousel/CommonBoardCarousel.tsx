@@ -33,7 +33,7 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
   const [transitionEnabled, setTransitionEnabled] = useState(false);
   const [layoutReady, setLayoutReady] = useState(false);
   const [hoveredCenter, setHoveredCenter] = useState(false);
-  const [cardWidth, setCardWidth] = useState(300);
+  const [cardWidth, setCardWidth] = useState(380);
   const [wrapperWidth, setWrapperWidth] = useState(0);
 
   /** 최초 콘텐츠 표시 후 true — 이후 재진입 시 skeleton 없이 바로 표시 */
@@ -42,6 +42,8 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
   const wrapperRef = useRef<HTMLDivElement>(null);
   const shouldResetWhenReachEndRef = useRef(false);
   const isTransitingRef = useRef(false);
+  const [autoplayKey, setAutoplayKey] = useState(0);
+  const pauseTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -118,11 +120,11 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
     }
   }, [center, N, layoutReady]);
 
-  /** autoplay */
+  /** autoplay — autoplayKey가 바뀌면 interval이 초기화됨 */
   useEffect(() => {
     if (!layoutReady || N === 0) return;
     const t = setInterval(() => {
-      if (isTransitingRef.current) return;       // 전환 중이면 건너뜀
+      if (isTransitingRef.current) return;
       setCenter((c) => {
         if (c >= 2 * N - 1) {
           isTransitingRef.current = true;
@@ -133,8 +135,9 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
       });
     }, 4000);
     return () => clearInterval(t);
-  }, [N, layoutReady]);
+  }, [N, layoutReady, autoplayKey]);
 
+  /** wrapper가 처음 마운트될 때부터 크기 측정 (로딩 중에도) — 카드 크기 플래시 방지 */
   useEffect(() => {
     const el = wrapperRef.current;
     if (!el) return;
@@ -153,10 +156,16 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
       observer.disconnect();
       window.removeEventListener('resize', update);
     };
-  }, [posts.length]);
+  }, []);
+
+  /** 버튼 클릭 시 interval 리셋 — 4초 타이머를 처음부터 다시 시작 */
+  const resetAutoplay = () => {
+    setAutoplayKey((k) => k + 1);
+  };
 
   const movePrev = () => {
     if (N === 0 || isTransitingRef.current) return;
+    resetAutoplay();
     if (center <= N) {
       // 앞쪽 끝 → 뒤로 점프 후 한 칸 이동
       isTransitingRef.current = true;
@@ -176,6 +185,7 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
 
   const moveNext = () => {
     if (N === 0 || isTransitingRef.current) return;
+    resetAutoplay();
     if (center >= 2 * N - 1) {
       // 뒤쪽 끝 → 마지막으로 이동 후 리셋 예약
       isTransitingRef.current = true;
@@ -203,59 +213,36 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
     ? `translateX(${translateX}px)`
     : 'translateX(0px)';
 
-  /* ── skeleton 표시 ── */
-  if (isLoading) {
-    return (
-      <section
-        className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''} ${styles.sectionRevealed}`}
-      >
-        <div className={styles.wrapper}>
+  /* ── 단일 섹션으로 wrapper 항상 마운트 — ResizeObserver가 로딩 중에도 측정해 카드 크기 플래시 방지 ── */
+  return (
+    <section
+      className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''} ${styles.sectionRevealed}`}
+    >
+      <div className={styles.wrapper} ref={wrapperRef}>
+        {isLoading || (!hasRevealed && posts.length > 0) ? (
           <div className={styles.skeletonTrack}>
             {[0, 1, 2].map((i) => (
               <div key={`skeleton-${i}`} className={styles.skeletonCard} />
             ))}
           </div>
-        </div>
-      </section>
-    );
-  }
-
-  /* ── empty ── */
-  if (posts.length === 0) {
-    return (
-      <section
-        className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''} ${styles.sectionRevealed}`}
-      >
-        <div className={styles.wrapper}>
+        ) : posts.length === 0 ? (
           <div className={styles.emptyState}>등록된 게시글이 없습니다.</div>
-        </div>
-      </section>
-    );
-  }
-
-  /* ── content ── */
-  return (
-    <section
-      className={`${styles.section} ${darkMode ? 'dark' : ''} ${
-        hasRevealed ? styles.sectionRevealed : styles.sectionHidden
-      }`}
-    >
-      <div className={styles.wrapper} ref={wrapperRef}>
-        <button type="button" className={styles.prevBtn} onClick={movePrev} aria-label="이전">
-          <ChevronLeft size={48} />
-        </button>
-        <button type="button" className={styles.nextBtn} onClick={moveNext} aria-label="다음">
-          <ChevronRight size={48} />
-        </button>
-
-        <div
-          className={styles.track}
-          style={{
-            transform: trackTransform,
-            transition: transitionEnabled ? undefined : 'none',
-          }}
-        >
-          {displayPosts.map((post, index) => {
+        ) : (
+          <>
+            <button type="button" className={styles.prevBtn} onClick={movePrev} aria-label="이전">
+              <ChevronLeft size={48} />
+            </button>
+            <button type="button" className={styles.nextBtn} onClick={moveNext} aria-label="다음">
+              <ChevronRight size={48} />
+            </button>
+            <div
+              className={styles.track}
+              style={{
+                transform: trackTransform,
+                transition: transitionEnabled ? undefined : 'none',
+              }}
+            >
+              {displayPosts.map((post, index) => {
             const isCenter = index === center;
             const categorySlug = String(category).toLowerCase() as BoardCategorySlug;
             const imageUrl = getBoardThumbnailUrl(post, categorySlug);
@@ -295,7 +282,9 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
               </div>
             );
           })}
-        </div>
+            </div>
+          </>
+        )}
       </div>
     </section>
   );
