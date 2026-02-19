@@ -22,7 +22,7 @@ export default function TopShowcase() {
 
   useEffect(() => {
     boardApi
-      .getBoardByCategory('SHOWCASE')
+      .getHotMainBoard('SHOWCASE')
       .then(({ data }) => {
         const list = extractBoardListFromResponse(data);
         setPosts(list.slice(0, 8));

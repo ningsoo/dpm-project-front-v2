@@ -41,7 +41,7 @@ export default function ShowcaseFeaturedSection() {
   useEffect(() => {
     setIsLoading(true);
     boardApi
-      .getBoardByCategory('SHOWCASE')
+      .getHotCategoryBoard('SHOWCASE')
       .then(({ data }) => {
         const list = extractBoardListFromResponse(data);
         setPosts(list.slice(0, TOTAL));

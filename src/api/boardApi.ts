@@ -89,6 +89,14 @@ export const boardApi = {
     fetchClient.delete<ApiResponse<string>>(
       `/api/boards/${boardId}`
     ),
+  
+  /** 6. Top 8 카테고리별 월간 인기 게시글 조회 - GET /api/boards/hot/main */
+  getHotMainBoard: (categoryType: BoardCategory) =>
+    fetchClient.get<ApiResponse<BoardListItem[]>>(`/api/boards/hot/main/${categoryType}`),
+
+  /** 7. 카테고리별 주간 인기 게시글 조회 - GET /api/boards/hot/[categoryType] */
+  getHotCategoryBoard: (categoryType: BoardCategory) =>
+    fetchClient.get<ApiResponse<BoardListItem[]>>(`/api/boards/hot/${categoryType}`),
 
   /**
    * 댓글 전체 조회
