@@ -250,6 +250,13 @@
   justify-content: center;
 }
 
+/* 내 댓글 / 좋아요 한 게시글 - row 높이 통일 (2줄 표시 시와 동일, 한 줄만 있어도 동일 높이) */
+.likedGrid5.tableRow,
+.commentsGrid5.tableRow {
+  min-height: 60px;
+  box-sizing: border-box;
+}
+
 /* 내 댓글 - 댓글 내용 셀: 10자 줄바꿈, 컬럼 침범 방지 */
 .commentsGrid5 .commentContentCell {
   white-space: pre-line;
@@ -262,6 +269,32 @@
 /* 좋아요 한 게시글 */
 .likedGrid {
   grid-template-columns: 140px 1fr 140px 160px 100px 100px;
+}
+
+/* 좋아요 한 게시글 (POP 스타일 적용) */
+.likedGrid5 {
+  width: 100%;
+  grid-template-columns:
+    15%   /* 게시판 */
+    35%   /* 제목 */
+    18%   /* 작성자 */
+    16%   /* 조회 */
+    16%;  /* 추천 */
+}
+
+.likedGrid5.tableHeader {
+  padding: 0;
+}
+
+.likedGrid5.tableHeader > div {
+  padding: 10px 6px;
+}
+
+.likedGrid5 .tableCell {
+  padding: 10px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 결제 내역 */

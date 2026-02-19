@@ -19,6 +19,7 @@ import PopSection from './components/PopSection';
 import { MyPageYouTubeSection } from './components/MyPageYouTubeSection';
 import { MyPostsSection } from './components/MyPostsSection';
 import { MyCommentsSection } from './components/MyCommentsSection';
+import { MyPostLikesSection } from './components/MyPostLikesSection';
 import defaultProfileImg from '@/assets/site/profile.png';
 import styles from './mypage.module.css';
 
@@ -768,66 +769,7 @@ function MypagePageContent() {
         )}
         {displayedTab === 'posts' && <MyPostsSection />}
         {displayedTab === 'comments' && <MyCommentsSection />}
-        {displayedTab === 'liked' && (
-          <div>
-            <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>
-              <input
-                type="text"
-                placeholder="검색어 입력"
-                value={searchQuery.liked}
-                onChange={(e) => setSearchQuery({ ...searchQuery, liked: e.target.value })}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch('liked')}
-                style={{
-                  width: '100%',
-                  padding: '8px 40px 8px 12px',
-                  border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
-                  borderRadius: 8,
-                  fontSize: 14,
-                  background: darkMode ? '#242422' : '#fff',
-                  color: darkMode ? '#B5B3A7' : '#333',
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => handleSearch('liked')}
-                onMouseEnter={(e) => { e.currentTarget.style.color = darkMode ? '#3A3934' : '#111'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; }}
-                style={{
-                  position: 'absolute',
-                  right: 8,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 4,
-                  color: '#666',
-                  transition: 'color 0.2s',
-                }}
-              >
-                <Search size={18} />
-              </button>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <div>
-                <div className={styles.tableGrid + ' ' + styles.likedGrid + ' ' + styles.tableHeader}>
-                  <div>게시판 종류</div>
-                  <div>제목</div>
-                  <div>작성자</div>
-                  <div>날짜</div>
-                  <div>조회</div>
-                  <div>추천</div>
-                </div>
-                <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                  좋아요 한 게시글이 없습니다.
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {displayedTab === 'liked' && <MyPostLikesSection />}
         {displayedTab === 'reports' && (
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
