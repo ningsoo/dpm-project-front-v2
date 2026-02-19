@@ -300,7 +300,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                       {shouldShowNumbers && (
                         <td><div className={styles.skeletonCell} style={{ width: 30 }} /></td>
                       )}
-                      <td><div className={styles.skeletonCell} style={{ width: '80%' }} /></td>
+                      <td><div className={styles.skeletonCell} style={{ width: '70%' }} /></td>
                       <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
                       <td><div className={styles.skeletonCell} style={{ width: 30 }} /></td>
                       {shouldShowNumbers && (
