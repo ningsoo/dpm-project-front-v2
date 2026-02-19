@@ -250,6 +250,15 @@
   justify-content: center;
 }
 
+/* 내 댓글 - 댓글 내용 셀: 10자 줄바꿈, 컬럼 침범 방지 */
+.commentsGrid5 .commentContentCell {
+  white-space: pre-line;
+  word-break: break-all;
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
+}
+
 /* 좋아요 한 게시글 */
 .likedGrid {
   grid-template-columns: 140px 1fr 140px 160px 100px 100px;

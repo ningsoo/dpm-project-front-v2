@@ -46,6 +46,17 @@ function formatCategoryType(categoryType: string): string {
   return categoryType.charAt(0).toUpperCase() + categoryType.slice(1).toLowerCase();
 }
 
+const COMMENT_PREVIEW_LEN = 10;
+
+/** 댓글 내용을 10자 단위 줄바꿈, 20자 초과 시 말줄임 */
+function formatCommentContent(content: string): string {
+  if (!content) return '';
+  const s = String(content).trim();
+  if (s.length <= COMMENT_PREVIEW_LEN) return s;
+  if (s.length <= COMMENT_PREVIEW_LEN * 2) return s.slice(0, COMMENT_PREVIEW_LEN) + '\n' + s.slice(COMMENT_PREVIEW_LEN);
+  return s.slice(0, COMMENT_PREVIEW_LEN) + '\n' + s.slice(COMMENT_PREVIEW_LEN, COMMENT_PREVIEW_LEN * 2) + '...';
+}
+
 export function MyCommentsSection() {
   const router = useRouter();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
@@ -162,8 +173,8 @@ export function MyCommentsSection() {
                 <div className={styles.tableCell}>
                   {formatCategoryType(comment.categoryType)}
                 </div>
-                <div className={styles.tableCell}>
-                  {comment.content}
+                <div className={`${styles.tableCell} ${styles.commentContentCell}`}>
+                  {formatCommentContent(comment.content)}
                 </div>
                 <div className={styles.tableCell}>
                   {comment.title}
