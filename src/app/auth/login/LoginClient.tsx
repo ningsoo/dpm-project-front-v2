@@ -210,18 +210,19 @@ export default function LoginClient() {
       setPwlsRegPollingEmail(email.trim());
     } catch (err) {
       const status = (err as Error & { status?: number })?.status;
+      const msg = err instanceof Error ? err.message : undefined;
       if (status === 400) {
         setQrModalOpen(false);
-        ToastUtils.info('이미 패스워드리스 서비스를 사용 중입니다.');
+        ToastUtils.info(msg || '이미 패스워드리스 서비스를 사용 중입니다.');
       } else if (status === 404) {
         setQrModalOpen(false);
-        ToastUtils.error('존재하지 않는 유저입니다.');
+        ToastUtils.error(msg || '존재하지 않는 유저입니다.');
       } else if (status === 500) {
         setQrModalOpen(false);
-        ToastUtils.error('서빙 API 통신 실패');
+        ToastUtils.error(msg || '서빙 API 통신 실패');
       } else {
-        setPwlsModalError(err instanceof Error ? err.message : 'QR 발급에 실패했습니다');
-        ToastUtils.error(err instanceof Error ? err.message : 'QR 발급에 실패했습니다');
+        setPwlsModalError(msg || 'QR 발급에 실패했습니다');
+        ToastUtils.error(msg || 'QR 발급에 실패했습니다');
       }
     } finally {
       setPwlsRegisterLoading(false);
@@ -261,14 +262,15 @@ export default function LoginClient() {
       setPwlsRegPollingEmail(email.trim());
     } catch (err) {
       const status = (err as Error & { status?: number })?.status;
+      const msg = err instanceof Error ? err.message : undefined;
       if (status === 400) {
-        ToastUtils.info('이미 패스워드리스 서비스를 사용 중입니다.');
+        ToastUtils.info(msg || '이미 패스워드리스 서비스를 사용 중입니다.');
       } else if (status === 404) {
-        ToastUtils.error('존재하지 않는 유저입니다.');
+        ToastUtils.error(msg || '존재하지 않는 유저입니다.');
       } else if (status === 500) {
-        ToastUtils.error('서빙 API 통신 실패');
+        ToastUtils.error(msg || '서빙 API 통신 실패');
       } else {
-        ToastUtils.error(err instanceof Error ? err.message : '등록 요청에 실패했습니다');
+        ToastUtils.error(msg || '등록 요청에 실패했습니다');
       }
     } finally {
       setPwlsRegisterLoading(false);
