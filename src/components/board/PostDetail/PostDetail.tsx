@@ -62,7 +62,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(false);
+  const [fetchError, setFetchError] = useState<false | 'not_found' | 'server'>(false);
   const [retryTrigger, setRetryTrigger] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -122,14 +122,16 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
             '| response.data:', typeof resData === 'object' ? JSON.stringify(resData) : resData
           );
           ToastUtils.error('일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
-        } else if (status !== 404) {
+          setFetchError('server');
+        } else if (status === 404) {
+          ToastUtils.error('삭제된 게시글입니다.');
+          setFetchError('not_found');
+        } else {
           console.error('게시글 조회 실패', 'boardId:', boardId, 'status:', status, err);
           ToastUtils.error('글을 불러올 수 없습니다');
-        } else {
-          ToastUtils.error('삭제된 게시글입니다.');
+          setFetchError('server');
         }
         setPost(null);
-        setFetchError(true);
       })
       .finally(() => {
         if (!signal.aborted) setLoading(false);
@@ -245,6 +247,13 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
   if (loading) return <div className={styles.loading}>로딩 중…</div>;
   if (!post) {
+    if (fetchError === 'not_found') {
+      return (
+        <div className={styles.loading}>
+          <p>게시글을 불러올 수 없습니다.</p>
+        </div>
+      );
+    }
     if (fetchError) {
       return (
         <div className={styles.loading}>
