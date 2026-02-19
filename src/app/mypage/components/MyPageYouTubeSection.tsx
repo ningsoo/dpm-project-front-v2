@@ -46,7 +46,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
 
   const [showYouTubePlaylistModal, setShowYouTubePlaylistModal] = useState(false);
   const [playlists, setPlaylists] = useState<PlaylistItem[]>([]);
-  const [playlistsLoading, setPlaylistsLoading] = useState(false);
+  const [playlistsLoading, setPlaylistsLoading] = useState(true);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [playlistToDelete, setPlaylistToDelete] = useState<PlaylistItem | null>(null);
   const [selectedPlaylist, setSelectedPlaylist] = useState<PlaylistItem | null>(null);
@@ -323,26 +323,24 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
             </div>
           )}
         </div>
-        {playlistsLoading ? (
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: 60 }}>
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                border: `4px solid ${darkMode ? '#333' : '#f0f0f0'}`,
-                borderTop: `4px solid ${darkMode ? '#3A3934' : '#111'}`,
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-              }}
-            />
-            <style>{`
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            `}</style>
+        <div className={styles.fadeWrap}>
+          {/* 스켈레톤 카드 레이어 */}
+          <div className={`${styles.fadeLayer} ${playlistsLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+            <div style={{ display: 'flex', gap: CARD_GAP, padding: '4px 4px 8px' }}>
+              {Array.from({ length: CARDS_PER_VIEW }).map((_, i) => (
+                <div key={i} className={styles.skeletonCard} style={{ flex: `0 0 calc((100% - ${CARD_GAP * (CARDS_PER_VIEW - 1)}px) / ${CARDS_PER_VIEW})` }}>
+                  <div className={styles.skeletonCardThumb} />
+                  <div className={styles.skeletonCardBody}>
+                    <div className={styles.skeletonBar} style={{ width: '80%', height: 16 }} />
+                    <div className={styles.skeletonBar} style={{ width: '50%' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        ) : playlists.length === 0 ? (
+          {/* 실제 콘텐츠 레이어 */}
+          <div className={`${styles.fadeLayer} ${!playlistsLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+        {playlists.length === 0 && !playlistsLoading ? (
           <div style={{ textAlign: 'center', color: '#666', padding: 60 }}>
             등록된 플레이리스트가 없습니다.
           </div>
@@ -506,6 +504,8 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
             </div>
           </div>
         )}
+          </div>
+        </div>
         </>
         )}
       </div>

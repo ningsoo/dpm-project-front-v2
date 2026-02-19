@@ -63,7 +63,7 @@ export function MyPostsSection() {
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const [searchQuery, setSearchQuery] = useState('');
   const [posts, setPosts] = useState<MyPost[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // 탭 활성화 시 데이터 fetch
   useEffect(() => {
@@ -176,15 +176,42 @@ export function MyPostsSection() {
                 <div className={styles.tableCell}>
                   {post.title}
                 </div>
-                <div className={styles.tableCell}>
-                  {post.views}
+              ))}
+            </div>
+            {/* 실제 콘텐츠 레이어 */}
+            <div className={`${styles.fadeLayer} ${!loading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+              {posts.length === 0 && !loading ? (
+                <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.settlementGrid3EmptyRow}`}>
+                  <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
+                    게시글이 없습니다.
+                  </div>
                 </div>
-                <div className={styles.tableCell}>
-                  {post.likes}
-                </div>
-              </div>
-            ))
-          )}
+              ) : (
+                posts.map((post) => (
+                  <div
+                    key={post.boardId}
+                    className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableRow}`}
+                  >
+                    <div className={styles.tableCell}>
+                      {mapCategoryTypeToLabel(post.category.categoryType)}
+                    </div>
+                    <div className={styles.tableCell}>
+                      {post.title}
+                    </div>
+                    <div className={styles.tableCell}>
+                      <PostDateCell dateTimeArray={post.createdDateTime} />
+                    </div>
+                    <div className={styles.tableCell}>
+                      {post.views}
+                    </div>
+                    <div className={styles.tableCell}>
+                      {post.likes}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

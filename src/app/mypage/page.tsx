@@ -93,6 +93,7 @@ function MypagePageContent() {
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pageReady, setPageReady] = useState(false);
   const [tab, setTab] = useState<string>(() => getValidTab(tabParam));
 
   /* ── 탭 전환 페이드 애니메이션 ── */
@@ -130,7 +131,7 @@ function MypagePageContent() {
     inquiries: { start: getDate30DaysAgo(), end: getTodayDateString() },
   });
   const [reportsList, setReportsList] = useState<any[]>([]);
-  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportsLoading, setReportsLoading] = useState(true);
   const [selectedReports, setSelectedReports] = useState<number[]>([]);
   const [showReportCancelModal, setShowReportCancelModal] = useState(false);
   const [showPencilIcon, setShowPencilIcon] = useState(false);
@@ -160,7 +161,7 @@ function MypagePageContent() {
   const [inquiries, setInquiries] = useState<{ createdAt: string; inquiryType: string; title: string; inquiryStatus: string; inquiryId: number }[]>([]);
   const [inquiryPage, setInquiryPage] = useState(0);
   const [inquiryTotalPages, setInquiryTotalPages] = useState(0);
-  const [inquiryLoading, setInquiryLoading] = useState(false);
+  const [inquiryLoading, setInquiryLoading] = useState(true);
 
   // 문의 상세 모달
   const [showInquiryDetailModal, setShowInquiryDetailModal] = useState(false);
@@ -202,13 +203,16 @@ function MypagePageContent() {
   }, []);
 
   // 초기화 완료 후 사용자 정보 로드
+  const MIN_SKELETON_MS = 350;
   useEffect(() => {
     if (!initialized) return;
-    
+
     if (!isAuthenticated) {
       router.push('/auth/login');
       return;
     }
+
+    const startTime = Date.now();
 
     // 사용자 정보 가져오기
     mypageApi.getMypage()
@@ -233,7 +237,16 @@ function MypagePageContent() {
         }
       })
       .finally(() => {
-        setLoading(false);
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, MIN_SKELETON_MS - elapsed);
+        setTimeout(() => {
+          setLoading(false);
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              setPageReady(true);
+            });
+          });
+        }, remaining);
       });
   }, [initialized, isAuthenticated, router]);
 
@@ -309,7 +322,26 @@ function MypagePageContent() {
   if (!initialized || loading) {
     return (
       <div className={styles.wrap}>
-        <p>로딩 중...</p>
+        <div className={styles.skeletonProfile}>
+          <div className={styles.skeletonAvatar} />
+          <div className={styles.skeletonProfileText}>
+            <div className={styles.skeletonBar} style={{ width: 120, height: 20 }} />
+            <div className={styles.skeletonBar} style={{ width: 180 }} />
+            <div className={styles.skeletonBar} style={{ width: 140 }} />
+          </div>
+        </div>
+        <div className={styles.skeletonTabs}>
+          {Array.from({ length: 9 }).map((_, i) => (
+            <div key={i} className={styles.skeletonTab} style={{ width: i % 3 === 0 ? 80 : i % 3 === 1 ? 64 : 56 }} />
+          ))}
+        </div>
+        <div className={styles.skeletonContent}>
+          <div className={styles.skeletonContentRow} style={{ width: '100%' }} />
+          <div className={styles.skeletonContentRow} style={{ width: '85%' }} />
+          <div className={styles.skeletonContentRow} style={{ width: '92%' }} />
+          <div className={styles.skeletonContentRow} style={{ width: '78%' }} />
+          <div className={styles.skeletonContentRow} style={{ width: '88%' }} />
+        </div>
       </div>
     );
   }
@@ -618,7 +650,7 @@ function MypagePageContent() {
   };
 
   return (
-    <div className={styles.wrap}>
+    <div className={styles.wrap} style={{ opacity: pageReady ? 1 : 0, transition: 'opacity 0.45s ease' }}>
       <section className={styles.profile}>
         <div
           className={styles.avatarWrap}
@@ -849,70 +881,79 @@ function MypagePageContent() {
                 </button>
               )}
             </div>
-            {reportsLoading ? (
-              <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                불러오는 중...
-              </div>
-            ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <div>
-                  <div className={styles.tableGrid + ' ' + styles.reportsGrid + ' ' + styles.tableHeader}>
-                    <div>
-                      <input
-                        type="checkbox"
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            // TODO: 모든 신고 ID 선택
-                            setSelectedReports([]);
-                          } else {
-                            setSelectedReports([]);
-                          }
-                        }}
-                      />
-                    </div>
-                    <div>신고일시</div>
-                    <div>신고사유</div>
-                    <div>상태</div>
-                    <div>글 바로가기</div>
-                    <div>신고 취소</div>
+            <div style={{ overflowX: 'auto' }}>
+              <div>
+                <div className={styles.tableGrid + ' ' + styles.reportsGrid + ' ' + styles.tableHeader}>
+                  <div>
+                    <input
+                      type="checkbox"
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedReports([]);
+                        } else {
+                          setSelectedReports([]);
+                        }
+                      }}
+                    />
                   </div>
-                  {reportsList.length === 0 ? (
-                    <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                      신고 내역이 없습니다.
-                    </div>
-                  ) : (
-                    reportsList.map((report, idx) => (
-                      <div key={idx} className={styles.tableGrid + ' ' + styles.reportsGrid + ' ' + styles.tableRow}>
-                        <div className={styles.tableCell}>
-                          <input
-                            type="checkbox"
-                            checked={selectedReports.includes(report.id || idx)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedReports([...selectedReports, report.id || idx]);
-                              } else {
-                                setSelectedReports(selectedReports.filter((id) => id !== (report.id || idx)));
-                              }
-                            }}
-                          />
-                        </div>
-                        <div className={styles.tableCell}>{report.createdAt || '-'}</div>
-                        <div className={styles.tableCell}>{report.reason || '-'}</div>
-                        <div className={styles.tableCell}>{report.status || '-'}</div>
-                        <div className={styles.tableCell}>
-                          {report.boardId ? (
-                            <Link href={`/boards/${report.boardId}`}>바로가기</Link>
-                          ) : (
-                            '-'
-                          )}
-                        </div>
-                        <div className={styles.tableCell}>-</div>
+                  <div>신고일시</div>
+                  <div>신고사유</div>
+                  <div>상태</div>
+                  <div>글 바로가기</div>
+                  <div>신고 취소</div>
+                </div>
+                <div className={styles.fadeWrap}>
+                  <div className={`${styles.fadeLayer} ${reportsLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className={styles.tableGrid + ' ' + styles.reportsGrid + ' ' + styles.tableRow}>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 16, height: 16 }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 90 }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 80 }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 50 }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 60 }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 50 }} /></div>
                       </div>
-                    ))
-                  )}
+                    ))}
+                  </div>
+                  <div className={`${styles.fadeLayer} ${!reportsLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+                    {reportsList.length === 0 && !reportsLoading ? (
+                      <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+                        신고 내역이 없습니다.
+                      </div>
+                    ) : (
+                      reportsList.map((report, idx) => (
+                        <div key={idx} className={styles.tableGrid + ' ' + styles.reportsGrid + ' ' + styles.tableRow}>
+                          <div className={styles.tableCell}>
+                            <input
+                              type="checkbox"
+                              checked={selectedReports.includes(report.id || idx)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedReports([...selectedReports, report.id || idx]);
+                                } else {
+                                  setSelectedReports(selectedReports.filter((id) => id !== (report.id || idx)));
+                                }
+                              }}
+                            />
+                          </div>
+                          <div className={styles.tableCell}>{report.createdAt || '-'}</div>
+                          <div className={styles.tableCell}>{report.reason || '-'}</div>
+                          <div className={styles.tableCell}>{report.status || '-'}</div>
+                          <div className={styles.tableCell}>
+                            {report.boardId ? (
+                              <Link href={`/boards/${report.boardId}`}>바로가기</Link>
+                            ) : (
+                              '-'
+                            )}
+                          </div>
+                          <div className={styles.tableCell}>-</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
           </div>
         )}
         {displayedTab === 'settlement' && (
@@ -985,20 +1026,26 @@ function MypagePageContent() {
                 조회
               </button>
             </div>
-            {inquiryLoading ? (
-              <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                불러오는 중...
-              </div>
-            ) : (
-              <>
-                <div style={{ overflowX: 'auto' }}>
-                  <div>
-                    <div className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableHeader}>
-                      <div style={{ textAlign: 'left' }}>문의일시</div>
-                      <div style={{ textAlign: 'center' }}>문의유형</div>
-                      <div style={{ textAlign: 'center' }}>제목</div>
-                      <div style={{ textAlign: 'center' }}>상태</div>
-                    </div>
+            <div style={{ overflowX: 'auto' }}>
+              <div>
+                <div className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableHeader}>
+                  <div style={{ textAlign: 'left' }}>문의일시</div>
+                  <div style={{ textAlign: 'center' }}>문의유형</div>
+                  <div style={{ textAlign: 'center' }}>제목</div>
+                  <div style={{ textAlign: 'center' }}>상태</div>
+                </div>
+                <div className={styles.fadeWrap}>
+                  <div className={`${styles.fadeLayer} ${inquiryLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableRow} style={{ padding: '12px 0' }}>
+                        <div className={styles.tableCell} style={{ textAlign: 'left' }}><div className={styles.skeletonBar} style={{ width: 100 }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 70 }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 60 }} /></div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className={`${styles.fadeLayer} ${!inquiryLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                     {inquiries.length === 0 ? (
                       <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
                         문의 내역이 없습니다.
@@ -1107,11 +1154,13 @@ function MypagePageContent() {
                     )}
                   </div>
                 </div>
-                {inquiryTotalPages > 1 && (
-                  <div className={styles.pagination}>
-                    <button
-                      type="button"
-                      className={styles.pageBtn}
+              </div>
+            </div>
+            {inquiryTotalPages > 1 && (
+              <div className={styles.pagination}>
+                <button
+                  type="button"
+                  className={styles.pageBtn}
                       disabled={inquiryPage === 0}
                       onClick={() => setInquiryPage((p) => Math.max(0, p - 1))}
                     >
@@ -1137,9 +1186,7 @@ function MypagePageContent() {
                     >
                       &gt;
                     </button>
-                  </div>
-                )}
-              </>
+              </div>
             )}
           </div>
         )}
@@ -1484,8 +1531,15 @@ function MypagePageContent() {
             <h2 className={styles.modalTitle}>문의 상세</h2>
 
             {inquiryDetailLoading ? (
-              <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
-                불러오는 중...
+              <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div className={styles.skeletonBar} style={{ width: '40%', height: 18 }} />
+                <div className={styles.skeletonBar} style={{ width: '60%' }} />
+                <div className={styles.skeletonBar} style={{ width: '80%' }} />
+                <div className={styles.skeletonBar} style={{ width: '50%' }} />
+                <div style={{ marginTop: 12 }}>
+                  <div className={styles.skeletonBar} style={{ width: '40%', height: 18 }} />
+                </div>
+                <div className={styles.skeletonBar} style={{ width: '30%' }} />
               </div>
             ) : inquiryDetail ? (
               <div className={styles.inquiryDetailBody}>
@@ -1737,7 +1791,26 @@ export default function MypagePage() {
     <Suspense
       fallback={
         <div className={styles.wrap}>
-          <p>로딩 중...</p>
+          <div className={styles.skeletonProfile}>
+            <div className={styles.skeletonAvatar} />
+            <div className={styles.skeletonProfileText}>
+              <div className={styles.skeletonBar} style={{ width: 120, height: 20 }} />
+              <div className={styles.skeletonBar} style={{ width: 180 }} />
+              <div className={styles.skeletonBar} style={{ width: 140 }} />
+            </div>
+          </div>
+          <div className={styles.skeletonTabs}>
+            {Array.from({ length: 9 }).map((_, i) => (
+              <div key={i} className={styles.skeletonTab} style={{ width: i % 3 === 0 ? 80 : i % 3 === 1 ? 64 : 56 }} />
+            ))}
+          </div>
+          <div className={styles.skeletonContent}>
+            <div className={styles.skeletonContentRow} style={{ width: '100%' }} />
+            <div className={styles.skeletonContentRow} style={{ width: '85%' }} />
+            <div className={styles.skeletonContentRow} style={{ width: '92%' }} />
+            <div className={styles.skeletonContentRow} style={{ width: '78%' }} />
+            <div className={styles.skeletonContentRow} style={{ width: '88%' }} />
+          </div>
         </div>
       }
     >
