@@ -791,15 +791,14 @@
 }
 
 .commentSubmit {
-  padding: 6px 16px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 500;
   color: #fff;
   background: #111;
   border: none;
-  border-radius: 999px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .commentSubmit:hover:not(:disabled) {
