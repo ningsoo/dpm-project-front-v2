@@ -11,6 +11,7 @@ import { tokenUtils } from '@/utils/tokenUtils';
 import { checkAuth } from '@/store/slices/authSlice';
 import { YouTubePlaylistModal } from '../YouTubePlaylistModal';
 import { PlaylistDetailModal } from '../PlaylistDetailModal';
+import styles from '../mypage.module.css';
 
 interface UserInfo {
   id: string;
