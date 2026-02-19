@@ -38,12 +38,13 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
 
   /** 최초 콘텐츠 표시 후 true — 이후 재진입 시 skeleton 없이 바로 표시 */
   const [hasRevealed, setHasRevealed] = useState(false);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+
+  const [autoplayKey, setAutoplayKey] = useState(0);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const shouldResetWhenReachEndRef = useRef(false);
   const isTransitingRef = useRef(false);
-  const [autoplayKey, setAutoplayKey] = useState(0);
-  const pauseTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   const fetchPosts = useCallback(async () => {
     try {
@@ -85,6 +86,23 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
     }
   }, [layoutReady, hasRevealed]);
 
+  /** 썸네일 이미지 프리로드 — 보이는 3장만 로드 후 스켈레톤 숨김 */
+  useEffect(() => {
+    if (N === 0 || isLoading || imagesLoaded) return;
+    const visiblePosts = posts.slice(0, Math.min(3, N));
+    const categorySlug = String(category).toLowerCase() as BoardCategorySlug;
+    let loaded = 0;
+    const total = visiblePosts.length;
+    visiblePosts.forEach((post) => {
+      const img = new Image();
+      img.onload = img.onerror = () => {
+        loaded++;
+        if (loaded >= total) setImagesLoaded(true);
+      };
+      img.src = getBoardThumbnailUrl(post, categorySlug);
+    });
+  }, [N, isLoading, posts, category, imagesLoaded]);
+
   /** 끝 도달 시 점프 애니메이션 제거 (2N → N 리셋) */
   useEffect(() => {
     if (!layoutReady) return;
@@ -124,7 +142,7 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
   useEffect(() => {
     if (!layoutReady || N === 0) return;
     const t = setInterval(() => {
-      if (isTransitingRef.current) return;
+      if (isTransitingRef.current) return;       // 전환 중이면 건너뜀
       setCenter((c) => {
         if (c >= 2 * N - 1) {
           isTransitingRef.current = true;
@@ -136,6 +154,11 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
     }, 4000);
     return () => clearInterval(t);
   }, [N, layoutReady, autoplayKey]);
+
+  /** 버튼 클릭 시 interval 리셋 */
+  const resetAutoplay = () => {
+    setAutoplayKey((k) => k + 1);
+  };
 
   /** wrapper가 처음 마운트될 때부터 크기 측정 (로딩 중에도) — 카드 크기 플래시 방지 */
   useEffect(() => {
@@ -157,11 +180,6 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
       window.removeEventListener('resize', update);
     };
   }, []);
-
-  /** 버튼 클릭 시 interval 리셋 — 4초 타이머를 처음부터 다시 시작 */
-  const resetAutoplay = () => {
-    setAutoplayKey((k) => k + 1);
-  };
 
   const movePrev = () => {
     if (N === 0 || isTransitingRef.current) return;
@@ -213,21 +231,43 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
     ? `translateX(${translateX}px)`
     : 'translateX(0px)';
 
-  /* ── 단일 섹션으로 wrapper 항상 마운트 — ResizeObserver가 로딩 중에도 측정해 카드 크기 플래시 방지 ── */
+  /** 스켈레톤: 로딩 중이거나, 레이아웃 미준비이거나, 이미지 미로드 시 표시 */
+  const showSkeleton = isLoading || (posts.length > 0 && (!layoutReady || !imagesLoaded));
+
+  /* ── empty ── */
+  if (!isLoading && posts.length === 0) {
+    return (
+      <section
+        className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''} ${styles.sectionRevealed}`}
+      >
+        <div className={styles.wrapper}>
+          <div className={styles.emptyState}>등록된 게시글이 없습니다.</div>
+        </div>
+      </section>
+    );
+  }
+
+  /* ── content (skeleton overlay until layoutReady) ── */
   return (
     <section
       className={`${styles.section} ${styles.sectionPlaceholder} ${darkMode ? 'dark' : ''} ${styles.sectionRevealed}`}
     >
       <div className={styles.wrapper} ref={wrapperRef}>
-        {isLoading || (!hasRevealed && posts.length > 0) ? (
+        {/* 스켈레톤: layoutReady 전까지 표시, 이후 페이드아웃 */}
+        <div className={`${styles.skeletonLayer} ${showSkeleton ? styles.skeletonVisible : styles.skeletonHidden}`}>
           <div className={styles.skeletonTrack}>
             {[0, 1, 2].map((i) => (
-              <div key={`skeleton-${i}`} className={styles.skeletonCard} />
+              <div
+                key={`skeleton-${i}`}
+                className={styles.skeletonCard}
+                style={cardWidth ? { width: cardWidth } : undefined}
+              />
             ))}
           </div>
-        ) : posts.length === 0 ? (
-          <div className={styles.emptyState}>등록된 게시글이 없습니다.</div>
-        ) : (
+        </div>
+
+        {/* 실제 캐러셀: 항상 마운트, layoutReady 후 표시 */}
+        {layoutReady && (
           <>
             <button type="button" className={styles.prevBtn} onClick={movePrev} aria-label="이전">
               <ChevronLeft size={48} />
@@ -243,45 +283,45 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
               }}
             >
               {displayPosts.map((post, index) => {
-            const isCenter = index === center;
-            const categorySlug = String(category).toLowerCase() as BoardCategorySlug;
-            const imageUrl = getBoardThumbnailUrl(post, categorySlug);
-            return (
-              <div
-                key={`${post.boardId}-${index}`}
-                role="button"
-                tabIndex={0}
-                className={`${styles.card} ${isCenter ? styles.center : ''} ${
-                  hoveredCenter && isCenter ? styles.expanded : ''
-                }`}
-                style={{ width: cardWidth, minWidth: cardWidth }}
-                onMouseEnter={() => isCenter && setHoveredCenter(true)}
-                onMouseLeave={() => isCenter && setHoveredCenter(false)}
-                onClick={() => goToPost(post.boardId)}
-                onKeyDown={(e) => e.key === 'Enter' && goToPost(post.boardId)}
-              >
-                <div className={styles.thumb} style={{ backgroundImage: `url(${imageUrl})` }}>
-                  <div className={styles.overlay}>
-                    <div className={styles.cardTitle}>{post.title}</div>
-                    <div className={styles.overlayMetaRow}>
-                      <div className={styles.author}>{post.nickname || '—'}</div>
-                      <div className={styles.meta}>
-                        <span className={styles.metaItem}>
-                          <Heart size={14} strokeWidth={2} />
-                          {post.likes ?? 0}
-                        </span>
-                        <span className={styles.metaItem}>
-                          <Eye size={14} strokeWidth={2} />
-                          {formatViews(post.views)}
-                        </span>
+                const isCenter = index === center;
+                const categorySlug = String(category).toLowerCase() as BoardCategorySlug;
+                const imageUrl = getBoardThumbnailUrl(post, categorySlug);
+                return (
+                  <div
+                    key={`${post.boardId}-${index}`}
+                    role="button"
+                    tabIndex={0}
+                    className={`${styles.card} ${isCenter ? styles.center : ''} ${
+                      hoveredCenter && isCenter ? styles.expanded : ''
+                    }`}
+                    style={{ width: cardWidth, minWidth: cardWidth }}
+                    onMouseEnter={() => isCenter && setHoveredCenter(true)}
+                    onMouseLeave={() => isCenter && setHoveredCenter(false)}
+                    onClick={() => goToPost(post.boardId)}
+                    onKeyDown={(e) => e.key === 'Enter' && goToPost(post.boardId)}
+                  >
+                    <div className={styles.thumb} style={{ backgroundImage: `url(${imageUrl})` }}>
+                      <div className={styles.overlay}>
+                        <div className={styles.cardTitle}>{post.title}</div>
+                        <div className={styles.overlayMetaRow}>
+                          <div className={styles.author}>{post.nickname || '—'}</div>
+                          <div className={styles.meta}>
+                            <span className={styles.metaItem}>
+                              <Heart size={14} strokeWidth={2} />
+                              {post.likes ?? 0}
+                            </span>
+                            <span className={styles.metaItem}>
+                              <Eye size={14} strokeWidth={2} />
+                              {formatViews(post.views)}
+                            </span>
+                          </div>
+                        </div>
+                        <div className={styles.desc}>{post.content || ''}</div>
                       </div>
                     </div>
-                    <div className={styles.desc}>{post.content || ''}</div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
             </div>
           </>
         )}

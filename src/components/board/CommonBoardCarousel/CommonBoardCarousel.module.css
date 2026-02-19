@@ -2,7 +2,6 @@
 /* Section Layout */
 /* ============================= */
 
-/* 부모 max-width 1200 기준 내부 full */
 .section {
   position: relative;
   width: 100%;
@@ -10,8 +9,13 @@
   margin: 0 auto;
   padding: 0;
   overflow: hidden;
-  background: #fafafa;
-  border-radius: 12px;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 45%,
+    #f3f3f3 0%,
+    #f7f7f7 50%,
+    #fcfcfc 80%,
+    #fff 100%
+  );
 }
 
 /* 배경만 먼저 보이는 flicker 방지: 준비 후 opacity 전환 (display 미사용) */
@@ -25,7 +29,13 @@
 }
 
 :global(.dark) .section {
-  background: #1D1D1B;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 45%,
+    #212120 0%,
+    #1D1D1B 50%,
+    #1b1b19 80%,
+    #1a1a18 100%
+  );
 }
 
 /* CLS 방지 (렌더 전 높이 확보) */
@@ -41,6 +51,7 @@
   overflow: hidden;
   position: relative;
   width: 100%;
+  min-height: 420px;
   margin: 0 auto;
 }
 
@@ -259,23 +270,42 @@
 }
 
 /* ============================= */
+/* Skeleton Layer (overlay for smooth fade) */
+/* ============================= */
+
+.skeletonLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  transition: opacity 0.3s ease;
+}
+
+.skeletonVisible {
+  opacity: 1;
+}
+
+.skeletonHidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ============================= */
 /* Skeleton */
 /* ============================= */
 
 .skeletonTrack {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 20px;
   width: 100%;
   height: 420px;
-  padding: 0 20px;
   box-sizing: border-box;
 }
 
 .skeletonCard {
   position: relative;
-  flex: 1;
-  min-width: 200px;
+  flex-shrink: 0;
   height: 380px;
   border-radius: 12px;
   overflow: hidden;
