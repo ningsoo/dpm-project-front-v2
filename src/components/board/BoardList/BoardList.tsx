@@ -343,6 +343,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                     thumbnail={thumbnail}
                     title={p.title}
                     nickname={p.nickname}
+                    profileImage={p.profileImage}
                     likeCount={p.likes}
                     viewCount={p.views}
                     displayNumber={shouldShowNumbers ? p.displayNumber : undefined}

@@ -55,6 +55,7 @@ export default function TopShowcase() {
               thumbnail={thumbnail}
               title={p.title}
               nickname={p.nickname}
+              profileImage={p.profileImage}
               likeCount={p.likes}
               viewCount={p.views}
               onClick={() => router.push(`/boards/${p.boardId}`)}
