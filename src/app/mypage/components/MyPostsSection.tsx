@@ -176,42 +176,15 @@ export function MyPostsSection() {
                 <div className={styles.tableCell}>
                   {post.title}
                 </div>
-              ))}
-            </div>
-            {/* 실제 콘텐츠 레이어 */}
-            <div className={`${styles.fadeLayer} ${!loading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
-              {posts.length === 0 && !loading ? (
-                <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.settlementGrid3EmptyRow}`}>
-                  <div className={`${styles.settlementEmpty} ${styles.popGridEmptyCell}`}>
-                    게시글이 없습니다.
-                  </div>
+                <div className={styles.tableCell}>
+                  {post.views}
                 </div>
-              ) : (
-                posts.map((post) => (
-                  <div
-                    key={post.boardId}
-                    className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableRow}`}
-                  >
-                    <div className={styles.tableCell}>
-                      {mapCategoryTypeToLabel(post.category.categoryType)}
-                    </div>
-                    <div className={styles.tableCell}>
-                      {post.title}
-                    </div>
-                    <div className={styles.tableCell}>
-                      <PostDateCell dateTimeArray={post.createdDateTime} />
-                    </div>
-                    <div className={styles.tableCell}>
-                      {post.views}
-                    </div>
-                    <div className={styles.tableCell}>
-                      {post.likes}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+                <div className={styles.tableCell}>
+                  {post.likes}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
