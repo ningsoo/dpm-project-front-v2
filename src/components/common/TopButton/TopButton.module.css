@@ -1,9 +1,12 @@
 .wrap {
-  position: fixed;
-  right: 32px;
+  position: sticky;
   bottom: 32px;
   z-index: 50;
   pointer-events: none;
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 32px;
+  height: 0;
 }
 
 .btn {
@@ -22,18 +25,19 @@
   cursor: pointer;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   transition: background 0.2s, transform 0.2s;
+  transform: translateY(-48px);
 }
 
 .btn:hover {
   background: #000;
-  transform: translateY(-2px);
+  transform: translateY(-50px);
 }
 
 .btn:active {
-  transform: translateY(0);
+  transform: translateY(-48px);
 }
 
-/* Dark mode (CreatePost/BoardFormLayout 기준) */
+/* Dark mode */
 :global(.dark) .btn {
   background: #3a3934;
 }
