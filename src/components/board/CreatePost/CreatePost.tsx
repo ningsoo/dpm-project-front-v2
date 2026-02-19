@@ -398,11 +398,14 @@ export default function CreatePost({ category }: CreatePostProps) {
             )}
           </div>
         )}
+        
 
         {/* Spotlight: 파일선택 + 썸네일 미리보기 */}
         {category === 'spotlight' && (
-          <div className={styles.label}>
-            사진 (1~5장)
+          <div className={styles.attachmentGroup}>
+            <label className={styles.label}>
+              첨부파일 <span className={styles.optional}>(1 - 5장)</span>
+            </label>
             <input
               ref={photoInputRef}
               type="file"
@@ -456,23 +459,27 @@ export default function CreatePost({ category }: CreatePostProps) {
           </div>
         )}
 
-        {/* Community / Reviews: 첨부 + 미리보기 */}
+        {/* Community / Reviews: 첨부파일 */}
         {['community', 'reviews'].includes(category) && (
-          <div className={styles.label}>
-            첨부
-            <input
-              ref={attachmentInputRef}
-              type="file"
-              hidden
-              onChange={handleAttachment}
-            />
-            <button
-              type="button"
-              className={styles.addBtn}
-              onClick={() => attachmentInputRef.current?.click()}
-            >
-              선택
-            </button>
+          <div className={styles.attachmentGroup}>
+            <label className={styles.label}>
+              첨부파일 <span className={styles.optional}>(선택사항)</span>
+            </label>
+            <div className={styles.fileUploadRow}>
+              <input
+                ref={attachmentInputRef}
+                type="file"
+                hidden
+                onChange={handleAttachment}
+              />
+              <button
+                type="button"
+                className={styles.addBtn}
+                onClick={() => attachmentInputRef.current?.click()}
+              >
+                파일 선택
+              </button>
+            </div>
             {attachmentFile && (
               <div className={styles.attachmentPreview}>
                 {SPOTLIGHT_IMAGE_TYPES.includes(attachmentFile.type) ||
