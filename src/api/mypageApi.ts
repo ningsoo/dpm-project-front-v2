@@ -132,4 +132,8 @@ export const mypageApi = {
   /** 내가 쓴 댓글 조회 - GET /mypage/my-comments */
   getMyComments: () =>
     fetchClient.get<ApiResponse<unknown>>('/api/mypage/my-comments'),
+
+  /** 좋아요 한 게시글 조회 - GET /mypage/my-post-likes */
+  getMyPostLikes: () =>
+    fetchClient.get<ApiResponse<unknown>>('/api/mypage/my-post-likes'),
 };
