@@ -197,9 +197,9 @@
 .postsGrid5 {
   width: 100%;
   grid-template-columns:
-    18%   /* 게시판 종류 */
-    32%   /* 제목 */
     20%   /* 날짜 */
+    18%   /* 게시판 */
+    32%   /* 제목 */
     15%   /* 조회 */
     15%;  /* 추천 */
 }
@@ -222,6 +222,41 @@
 /* 내 댓글 */
 .commentsGrid {
   grid-template-columns: 140px 1fr 1fr 160px;
+}
+
+/* 내 댓글 (POP 스타일 적용) */
+.commentsGrid5 {
+  width: 100%;
+  grid-template-columns:
+    18%   /* 날짜 */
+    15%   /* 게시판 */
+    27%   /* 댓글 */
+    25%   /* 원문 글 제목 */
+    15%;  /* 추천 */
+}
+
+.commentsGrid5.tableHeader {
+  padding: 0;
+}
+
+.commentsGrid5.tableHeader > div {
+  padding: 10px 6px;
+}
+
+.commentsGrid5 .tableCell {
+  padding: 10px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 내 댓글 - 댓글 내용 셀: 10자 줄바꿈, 컬럼 침범 방지 */
+.commentsGrid5 .commentContentCell {
+  white-space: pre-line;
+  word-break: break-all;
+  min-width: 0;
+  overflow: hidden;
+  text-align: center;
 }
 
 /* 좋아요 한 게시글 */

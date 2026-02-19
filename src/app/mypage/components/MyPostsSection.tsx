@@ -143,9 +143,9 @@ export function MyPostsSection() {
       <div className={styles.popTableWrap}>
         <div style={{ overflowX: 'auto' }}>
           <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableHeader}`}>
-            <div>게시판 종류</div>
-            <div>제목</div>
             <div>날짜</div>
+            <div>게시판</div>
+            <div>제목</div>
             <div>조회</div>
             <div>추천</div>
           </div>

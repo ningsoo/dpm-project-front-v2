@@ -126,7 +126,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
           console.error('게시글 조회 실패', 'boardId:', boardId, 'status:', status, err);
           ToastUtils.error('글을 불러올 수 없습니다');
         } else {
-          ToastUtils.error('글을 불러올 수 없습니다');
+          ToastUtils.error('삭제된 게시글입니다.');
         }
         setPost(null);
         setFetchError(true);
@@ -162,6 +162,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
       .deletePost(boardId)
       .then(() => {
         ToastUtils.success('글이 삭제되었습니다.');
+      
 
         // 이동은 실제 카테고리 기준
         const nextCat = post?.categoryType?.toLowerCase() ?? post?.category?.toLowerCase() ?? category;
@@ -396,7 +397,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
               }
               setShowDonationModal(true);
             }}
-            aria-label="POP 선물"
+            aria-label="POP 후원"
           >
             <PopIcon size={32} />
           </button>
