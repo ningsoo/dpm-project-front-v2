@@ -53,12 +53,14 @@
 .input,
 .textarea {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  background: #fff;
-  font-size: 14px;
-  transition: border-color 0.2s;
+  padding: 14px 16px;
+  border: 1px solid #e5e5e5;
+  background: #fafafa;
+  font-size: 0.95rem;
+  border-radius: 12px;
+  transition: all 0.2s ease;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .dark .select,
@@ -88,12 +90,16 @@
 .textarea:focus {
   outline: none;
   border-color: #111;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
 }
 
 .dark .select:focus,
 .dark .input:focus,
 .dark .textarea:focus {
   border-color: #b5b3a7;
+  background: #2a2a28;
+  box-shadow: 0 0 0 3px rgba(181, 179, 167, 0.1);
 }
 
 .textarea {
