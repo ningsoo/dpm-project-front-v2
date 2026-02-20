@@ -624,6 +624,9 @@
 .donationSentGrid8 .tableCell,
 .donationReceivedGrid7 .tableCell {
   padding: 10px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .donationSentGrid9.tableRow,
@@ -948,9 +951,39 @@
   grid-template-columns: minmax(50px, 60px) minmax(150px, 1.2fr) minmax(200px, 1.5fr) minmax(100px, 1fr) minmax(140px, 1.2fr) minmax(120px, 1fr);
 }
 
+.reportsGrid .tableCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* 문의 내역: 4컬럼 (문의일시, 문의유형, 제목, 상태) */
 .inquiryGrid {
   grid-template-columns: minmax(150px, 1fr) minmax(120px, 0.8fr) minmax(200px, 2fr) minmax(100px, 0.8fr);
+}
+
+.inquiryGrid.tableHeader,
+.inquiryGrid.tableRow {
+  padding: 0;
+}
+
+.inquiryGrid.tableHeader > div {
+  padding: 12px;
+}
+
+.inquiryGrid.tableHeader > div:first-child {
+  padding-left: 12px;
+}
+
+.inquiryGrid .tableCell {
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inquiryGrid .tableCell:first-child {
+  justify-content: center;
 }
 
 .statusBadge {

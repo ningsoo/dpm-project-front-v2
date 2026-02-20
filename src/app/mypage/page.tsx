@@ -525,9 +525,16 @@ function MypagePageContent() {
               {dateRowEl}
               <div style={{ overflowX: 'auto' }}>
                 <div className={`${styles.tableGrid} ${styles.inquiryGrid} ${styles.tableHeader}`}>
-                  <div>문의일시</div><div>문의유형</div><div>제목</div><div>상태</div>
+                  <div style={{ textAlign: 'center' }}>문의일시</div><div>문의유형</div><div>제목</div><div>상태</div>
                 </div>
-                {skeletonTableRow(styles.inquiryGrid, 4, ['75%', '60%', '70%', '55%'])}
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className={`${styles.tableGrid} ${styles.inquiryGrid} ${styles.tableRow}`}>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                  </div>
+                ))}
               </div>
             </div>
           );
@@ -1430,7 +1437,7 @@ function MypagePageContent() {
             <div style={{ overflowX: 'auto' }}>
               <div>
                 <div className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableHeader}>
-                  <div style={{ textAlign: 'left' }}>문의일시</div>
+                  <div style={{ textAlign: 'center' }}>문의일시</div>
                   <div style={{ textAlign: 'center' }}>문의유형</div>
                   <div style={{ textAlign: 'center' }}>제목</div>
                   <div style={{ textAlign: 'center' }}>상태</div>
@@ -1438,8 +1445,8 @@ function MypagePageContent() {
                 <div className={styles.fadeWrap}>
                   <div className={`${styles.fadeLayer} ${inquiryLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                     {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableRow} style={{ padding: '12px 0' }}>
-                        <div className={styles.tableCell} style={{ textAlign: 'left' }}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
+                      <div key={i} className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableRow}>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
                         <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
                         <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
                         <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
@@ -1456,9 +1463,8 @@ function MypagePageContent() {
                         <div
                           key={item.inquiryId}
                           className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableRow}
-                          style={{ padding: '12px 0' }}
                         >
-                          <div className={styles.tableCell} style={{ textAlign: 'left' }}>
+                          <div className={styles.tableCell} style={{ textAlign: 'center' }}>
                             {(() => {
                               if (!item.createdAt) return '-';
                               // LocalDateTime 배열: [year, month, day, hour, minute, second]
