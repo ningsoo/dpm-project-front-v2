@@ -98,6 +98,7 @@ export default function CommentSection({
   const [commentReportReason, setCommentReportReason] = useState('');
   const [commentLikeLoading, setCommentLikeLoading] = useState<string | null>(null);
   const [commentSubmitLoading, setCommentSubmitLoading] = useState(false);
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const [commentEditLoading, setCommentEditLoading] = useState<string | null>(null);
@@ -165,6 +166,10 @@ export default function CommentSection({
           el.scrollIntoView({ block: 'start' });
           didAutoScrollRef.current = true;
           pendingHashIdRef.current = null;
+          // 스크롤 후 해당 댓글 하이라이트 애니메이션
+          const commentId = targetId.replace('comment-', '');
+          setHighlightedCommentId(commentId);
+          setTimeout(() => setHighlightedCommentId(null), 2000);
           return;
         }
         attempt += 1;
@@ -393,7 +398,7 @@ export default function CommentSection({
                 <div
                   key={c.commentId ?? c.id}
                   id={apiCommentId != null ? `comment-${apiCommentId}` : undefined}
-                  className={styles.commentItem}
+                  className={`${styles.commentItem}${highlightedCommentId === apiCommentId ? ` ${styles.commentItemHighlight}` : ''}`}
                 >
                   <div className={styles.commentHead}>
                     {isCommentAuthor ? (
