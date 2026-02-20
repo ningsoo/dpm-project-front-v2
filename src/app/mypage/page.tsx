@@ -209,6 +209,11 @@ function MypagePageContent() {
     if (!initialized) return;
 
     if (!isAuthenticated) {
+      if (sessionStorage.getItem('soundock_logout_redirect') === '1') {
+        sessionStorage.removeItem('soundock_logout_redirect');
+        router.replace('/');
+        return;
+      }
       router.push('/auth/login');
       return;
     }
@@ -224,12 +229,22 @@ function MypagePageContent() {
           setProfileImage(userData.profileImage || null);
         } else {
           ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
-          router.push('/auth/login');
+          if (sessionStorage.getItem('soundock_logout_redirect') === '1') {
+            sessionStorage.removeItem('soundock_logout_redirect');
+            router.replace('/');
+          } else {
+            router.push('/auth/login');
+          }
         }
       })
       .catch((error) => {
         if (error?.response?.status === 401) {
-          router.push('/auth/login');
+          if (sessionStorage.getItem('soundock_logout_redirect') === '1') {
+            sessionStorage.removeItem('soundock_logout_redirect');
+            router.replace('/');
+          } else {
+            router.push('/auth/login');
+          }
         } else {
           ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
         }
