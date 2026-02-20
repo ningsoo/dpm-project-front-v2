@@ -141,9 +141,9 @@ function MypagePageContent() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [cropArea, setCropArea] = useState({ x: 0, y: 0, size: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const dragStartRef = useRef({ x: 0, y: 0 });
   const [isResizing, setIsResizing] = useState(false);
-  const resizeStartRef = useRef({ x: 0, y: 0, size: 0 });
+  const resizeStartRef = useRef({ x: 0, y: 0, size: 0, mouseX: 0, mouseY: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [receivedLikes, setReceivedLikes] = useState(0);
@@ -302,9 +302,11 @@ function MypagePageContent() {
     const onMouseMove = (e: MouseEvent) => {
       const rect = imageRef.current?.getBoundingClientRect();
       if (!rect) return;
-      const relX = e.clientX - rect.left;
-      const relY = e.clientY - rect.top;
-      const newSize = Math.min(relX - resizeStartRef.current.x, relY - resizeStartRef.current.y);
+      // 마우스 이동 델타 계산 (초기 마우스 위치 기준)
+      const deltaX = e.clientX - resizeStartRef.current.mouseX;
+      const deltaY = e.clientY - resizeStartRef.current.mouseY;
+      const delta = Math.max(deltaX, deltaY);
+      const newSize = resizeStartRef.current.size + delta;
       const maxSize = Math.min(rect.width, rect.height) * 0.95;
       const maxSizeByX = rect.width - resizeStartRef.current.x;
       const maxSizeByY = rect.height - resizeStartRef.current.y;
@@ -326,6 +328,34 @@ function MypagePageContent() {
       window.removeEventListener('mouseup', onMouseUp);
     };
   }, [isResizing]);
+
+  // 크롭 영역 드래그 시 window mousemove/mouseup (영역 밖으로 마우스가 나가도 동작)
+  const cropAreaRef = useRef(cropArea);
+  cropAreaRef.current = cropArea;
+  useEffect(() => {
+    if (!isDragging) return;
+    const onMouseMove = (e: MouseEvent) => {
+      const rect = imageRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const cur = cropAreaRef.current;
+      const newX = e.clientX - rect.left - dragStartRef.current.x;
+      const newY = e.clientY - rect.top - dragStartRef.current.y;
+      const maxX = rect.width - cur.size;
+      const maxY = rect.height - cur.size;
+      setCropArea((prev) => ({
+        ...prev,
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY)),
+      }));
+    };
+    const onMouseUp = () => setIsDragging(false);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [isDragging]);
 
   if (!initialized || loading) {
     return (
@@ -504,26 +534,10 @@ function MypagePageContent() {
     e.preventDefault();
     setIsDragging(true);
     const rect = imageRef.current.getBoundingClientRect();
-    setDragStart({
+    dragStartRef.current = {
       x: e.clientX - rect.left - cropArea.x,
       y: e.clientY - rect.top - cropArea.y,
-    });
-  };
-
-  const handleCropAreaMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imageRef.current) return;
-    if (isResizing) return;
-    if (!isDragging) return;
-    const rect = imageRef.current.getBoundingClientRect();
-    const newX = e.clientX - rect.left - dragStart.x;
-    const newY = e.clientY - rect.top - dragStart.y;
-    const maxX = rect.width - cropArea.size;
-    const maxY = rect.height - cropArea.size;
-    setCropArea((prev) => ({
-      ...prev,
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY)),
-    }));
+    };
   };
 
   const handleResizeHandleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -535,13 +549,11 @@ function MypagePageContent() {
       x: cropArea.x,
       y: cropArea.y,
       size: cropArea.size,
+      mouseX: e.clientX,
+      mouseY: e.clientY,
     };
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    setIsResizing(false);
-  };
 
   const validateCreditAmount = (value: string): string => {
     if (!value) {
@@ -1289,7 +1301,7 @@ function MypagePageContent() {
                 marginBottom: 16,
                 overflow: 'hidden',
                 borderRadius: 8,
-                background: '#000',
+                background: darkMode ? '#2E2E2C' : '#e5e5e5',
               }}
             >
               <img
@@ -1303,54 +1315,24 @@ function MypagePageContent() {
                   display: 'block',
                 }}
               />
-              {/* 오버레이 - 위쪽 */}
+              {/* 어둡게 처리할 전체 오버레이 (크롭 영역만 투명 구멍) */}
               <div
                 style={{
                   position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: cropArea.y,
+                  inset: 0,
                   background: 'rgba(0,0,0,0.6)',
+                  clipPath: `polygon(
+                    0% 0%, 100% 0%, 100% 100%, 0% 100%,
+                    0% ${cropArea.y}px,
+                    ${cropArea.x}px ${cropArea.y}px,
+                    ${cropArea.x}px ${cropArea.y + cropArea.size}px,
+                    ${cropArea.x + cropArea.size}px ${cropArea.y + cropArea.size}px,
+                    ${cropArea.x + cropArea.size}px ${cropArea.y}px,
+                    0% ${cropArea.y}px
+                  )`,
+                  pointerEvents: 'none',
                 }}
               />
-              {/* 오버레이 - 아래쪽 */}
-              {imageRef.current && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: imageRef.current.clientHeight - cropArea.y - cropArea.size,
-                    background: 'rgba(0,0,0,0.6)',
-                  }}
-                />
-              )}
-              {/* 오버레이 - 왼쪽 */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: cropArea.y,
-                  left: 0,
-                  width: cropArea.x,
-                  height: cropArea.size,
-                  background: 'rgba(0,0,0,0.6)',
-                }}
-              />
-              {/* 오버레이 - 오른쪽 */}
-              {imageRef.current && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: cropArea.y,
-                    right: 0,
-                    width: imageRef.current.clientWidth - cropArea.x - cropArea.size,
-                    height: cropArea.size,
-                    background: 'rgba(0,0,0,0.6)',
-                  }}
-                />
-              )}
               <div
                 style={{
                   position: 'absolute',
@@ -1358,15 +1340,12 @@ function MypagePageContent() {
                   top: cropArea.y,
                   width: cropArea.size,
                   height: cropArea.size,
-                  border: `3px solid ${darkMode ? '#3A3934' : '#111'}`,
+                  border: `2px solid rgba(255, 255, 255, 0.7)`,
                   borderRadius: '50%',
                   cursor: isDragging ? 'grabbing' : 'grab',
                   boxSizing: 'border-box',
                 }}
                 onMouseDown={handleCropAreaMouseDown}
-                onMouseMove={handleCropAreaMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
               >
                 <div
                   data-resize-handle="true"

@@ -266,9 +266,9 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
           </div>
         </div>
 
-        {/* 실제 캐러셀: 항상 마운트, layoutReady 후 표시 */}
-        {layoutReady && (
-          <>
+        {/* 실제 캐러셀: 항상 마운트, 스켈레톤 뒤에서 대기 → 크기 점프 방지 */}
+        {len > 0 && (
+          <div style={{ visibility: showSkeleton ? 'hidden' : 'visible' }}>
             <button type="button" className={styles.prevBtn} onClick={movePrev} aria-label="이전">
               <ChevronLeft size={48} />
             </button>
@@ -323,7 +323,7 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
                 );
               })}
             </div>
-          </>
+          </div>
         )}
       </div>
     </section>

@@ -19,6 +19,7 @@ import PlaylistDetailSection from './PlaylistDetailSection';
 import DonationModal from './DonationModal';
 import MessageSendModal from './MessageSendModal';
 import { PopIcon } from '@/assets/site/paths';
+import defaultProfileImg from '@/assets/site/profile.png';
 import styles from '../BoardFormLayout/BoardFormLayout.module.css';
 import postDetailStyles from './PostDetail.module.css';
 
@@ -361,7 +362,16 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
       </div>
 
       <div className={styles.authorRow}>
-        <div className={styles.menuWrapper} ref={nicknameMenuRef}>
+        <div className={postDetailStyles.authorInfo}>
+          <span className={postDetailStyles.avatar}>
+            <img
+              src={post.profileImage || defaultProfileImg.src}
+              alt=""
+              className={postDetailStyles.avatarImg}
+              style={!post.profileImage ? { objectFit: 'contain' } : undefined}
+            />
+          </span>
+          <div className={styles.menuWrapper} ref={nicknameMenuRef}>
           {isAuthor ? (
             <span className={styles.author}>{post.nickname || '—'}</span>
           ) : (
@@ -394,6 +404,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
               )}
             </>
           )}
+        </div>
         </div>
         {!isAuthor && post.userId != null && (
           <button

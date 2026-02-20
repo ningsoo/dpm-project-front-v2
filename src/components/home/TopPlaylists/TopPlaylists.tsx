@@ -44,6 +44,7 @@ export default function TopPlaylists() {
             }
             title={p.title}
             nickname={p.nickname}
+            profileImage={p.profileImage}
             likeCount={p.likes}
             viewCount={p.views}
             href={`/boards/${p.boardId}`}
