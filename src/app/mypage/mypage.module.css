@@ -12,6 +12,15 @@
   padding: 24px;
   background: #fafafa;
   border-radius: 12px;
+  list-style: none;
+}
+.profile,
+.profile * {
+  list-style: none;
+}
+.profile *::marker {
+  content: none;
+  display: none;
 }
 
 .avatarWrap {
@@ -23,6 +32,13 @@
   height: 100px;
   border-radius: 50%;
   background: #070707;
+  overflow: hidden;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  isolation: isolate;
+  box-sizing: border-box;
+  border: 2px solid #fafafa;
 }
 
 .profileText {
@@ -146,6 +162,15 @@
   display: grid;
   align-items: center;
   border-bottom: 1px solid #eee;
+  list-style: none;
+}
+.tableGrid,
+.tableGrid * {
+  list-style: none;
+}
+.tableGrid *::marker {
+  content: none;
+  display: none;
 }
 
 .tableHeader {
@@ -599,6 +624,9 @@
 .donationSentGrid8 .tableCell,
 .donationReceivedGrid7 .tableCell {
   padding: 10px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .donationSentGrid9.tableRow,
@@ -923,9 +951,39 @@
   grid-template-columns: minmax(50px, 60px) minmax(150px, 1.2fr) minmax(200px, 1.5fr) minmax(100px, 1fr) minmax(140px, 1.2fr) minmax(120px, 1fr);
 }
 
+.reportsGrid .tableCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* 문의 내역: 4컬럼 (문의일시, 문의유형, 제목, 상태) */
 .inquiryGrid {
   grid-template-columns: minmax(150px, 1fr) minmax(120px, 0.8fr) minmax(200px, 2fr) minmax(100px, 0.8fr);
+}
+
+.inquiryGrid.tableHeader,
+.inquiryGrid.tableRow {
+  padding: 0;
+}
+
+.inquiryGrid.tableHeader > div {
+  padding: 12px;
+}
+
+.inquiryGrid.tableHeader > div:first-child {
+  padding-left: 12px;
+}
+
+.inquiryGrid .tableCell {
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inquiryGrid .tableCell:first-child {
+  justify-content: center;
 }
 
 .statusBadge {
@@ -1386,6 +1444,7 @@
 
 :global(.dark) .avatar {
   background: #3A3A38;
+  border-color: #242422;
 }
 
 :global(.dark) .nickname {
@@ -1778,14 +1837,21 @@
 /* 초기 로딩 프로필 스켈레톤 */
 .skeletonProfile {
   display: flex;
-  align-items: center;
-  gap: 20px;
+  align-items: flex-start;
+  gap: 24px;
   padding: 24px;
+  background: #fafafa;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+:global(.dark) .skeletonProfile {
+  background: #242422;
 }
 
 .skeletonAvatar {
-  width: 80px;
-  height: 80px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   background: linear-gradient(90deg, #eee 25%, #e0e0e0 50%, #eee 75%);
   background-size: 800px 100%;
@@ -1798,6 +1864,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding-top: 5px;
 }
 
 /* 스켈레톤 Dark Mode */

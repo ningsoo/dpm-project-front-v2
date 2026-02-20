@@ -17,6 +17,7 @@ interface PopSectionProps {
   onChangeSubTab: (next: 'usage' | 'purchase') => void;
   onPopBalanceRefresh?: () => Promise<void> | void;
   onChargeClick?: () => void;
+  onLoadingChange?: (loading: boolean) => void;
 }
 
 const POP_SUB_TABS = [
@@ -185,7 +186,7 @@ function getDate30DaysAgo(): string {
 
 const SUB_TAB_FADE_MS = 150;
 
-function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onChargeClick }: PopSectionProps) {
+function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onChargeClick, onLoadingChange }: PopSectionProps) {
   const router = useRouter();
   const [inputRange, setInputRange] = useState({ start: getDate30DaysAgo(), end: getTodayDateString() });
   const [usageList, setUsageList] = useState<PopUsageRow[]>([]);
@@ -304,6 +305,11 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
       fetchPurchase();
     }
   }, [subTab, fetchPurchase]);
+
+  const popLoading = subTab === 'usage' ? usageLoading : purchaseLoading;
+  useEffect(() => {
+    onLoadingChange?.(popLoading);
+  }, [popLoading, onLoadingChange]);
 
   // 날짜가 바뀌면 종료일을 오늘로 자동 업데이트
   useEffect(() => {

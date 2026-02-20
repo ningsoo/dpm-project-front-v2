@@ -35,12 +35,13 @@ interface PlaylistItem {
 interface MyPageYouTubeSectionProps {
   user: UserInfo;
   isAuthenticated: boolean;
+  onLoadingChange?: (loading: boolean) => void;
 }
 
 const CARDS_PER_VIEW = 3;
 const CARD_GAP = 24;
 
-export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSectionProps) {
+export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }: MyPageYouTubeSectionProps) {
   const searchParams = useSearchParams();
   const dispatch = useDispatch();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
@@ -87,8 +88,14 @@ export function MyPageYouTubeSection({ user, isAuthenticated }: MyPageYouTubeSec
   useEffect(() => {
     if (isAuthenticated && user?.youtubeConnected) {
       fetchPlaylists();
+    } else {
+      setPlaylistsLoading(false);
     }
   }, [isAuthenticated, user?.youtubeConnected]);
+
+  useEffect(() => {
+    onLoadingChange?.(playlistsLoading);
+  }, [playlistsLoading, onLoadingChange]);
 
   const fetchPlaylists = async () => {
     setPlaylistsLoading(true);

@@ -175,10 +175,15 @@ function getDate30DaysAgo(): string {
   return `${year}-${month}-${day}`;
 }
 
-export function DonationSection() {
+interface DonationSectionProps {
+  subTab: 'sent' | 'received';
+  onChangeSubTab: (next: 'sent' | 'received') => void;
+  onLoadingChange?: (loading: boolean) => void;
+}
+
+export function DonationSection({ subTab, onChangeSubTab, onLoadingChange }: DonationSectionProps) {
   const userId = tokenUtils.getUserIdFromAccessToken();
   if (userId !== null) showedUserIdNullToastRef.current = false;
-  const [subTab, setSubTab] = useState<'sent' | 'received'>('sent');
   const [inputRange, setInputRange] = useState<{ start: string; end: string }>({ start: getDate30DaysAgo(), end: getTodayDateString() });
   const [appliedRange, setAppliedRange] = useState<{ start: string; end: string }>({ start: '', end: '' });
   const [sentRaw, setSentRaw] = useState<PopHistoryResponseRow[]>([]);
@@ -211,6 +216,11 @@ export function DonationSection() {
   useEffect(() => {
     return () => { if (subTabTimeoutRef.current) clearTimeout(subTabTimeoutRef.current); };
   }, []);
+
+  const donationLoading = subTab === 'sent' ? sentLoading : receivedLoading;
+  useEffect(() => {
+    onLoadingChange?.(donationLoading);
+  }, [donationLoading, onLoadingChange]);
 
   const fetchSent = useCallback(async () => {
     const uid = tokenUtils.getUserIdFromAccessToken();
@@ -388,7 +398,7 @@ export function DonationSection() {
             role="tab"
             aria-selected={subTab === t.id}
             className={subTab === t.id ? styles.settlementSubTabActive : styles.settlementSubTab}
-            onClick={() => setSubTab(t.id)}
+            onClick={() => onChangeSubTab(t.id)}
           >
             {t.label}
             {subTab === t.id && <span className={styles.settlementSubTabIndicator} aria-hidden="true" />}

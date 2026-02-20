@@ -57,13 +57,21 @@ function mapCategoryTypeToLabel(categoryType: string): string {
   return map[categoryType] ?? categoryType;
 }
 
-export function MyPostsSection() {
+interface MyPostsSectionProps {
+  onLoadingChange?: (loading: boolean) => void;
+}
+
+export function MyPostsSection({ onLoadingChange }: MyPostsSectionProps = {}) {
   const router = useRouter();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const [searchQuery, setSearchQuery] = useState('');
   const [posts, setPosts] = useState<MyPost[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    onLoadingChange?.(loading);
+  }, [loading, onLoadingChange]);
 
   // 탭 활성화 시 데이터 fetch
   useEffect(() => {

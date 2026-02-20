@@ -141,11 +141,20 @@ export default function Header() {
       </Link>
 
       <nav className={styles.nav}>
-        {CATEGORIES.map((c) => (
-          <Link key={c.slug} href={`/boards/category/${c.slug}`} className={styles.navLink}>
-            {c.label}
-          </Link>
-        ))}
+        {CATEGORIES.map((c) => {
+          const categoryMatch = pathname?.match(/^\/boards\/category\/([^/]+)/)?.[1]?.toLowerCase();
+          const isOnCategoryPage = !!categoryMatch;
+          const isActive = isOnCategoryPage && categoryMatch === c.slug;
+          return (
+            <Link
+              key={c.slug}
+              href={`/boards/category/${c.slug}`}
+              className={isActive ? styles.navLink : isOnCategoryPage ? styles.navLinkInactive : styles.navLink}
+            >
+              {c.label}
+            </Link>
+          );
+        })}
       </nav>
 
       <div
