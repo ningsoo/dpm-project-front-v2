@@ -65,13 +65,21 @@ function formatCommentContent(content: string): string {
   );
 }
 
-export function MyCommentsSection() {
+interface MyCommentsSectionProps {
+  onLoadingChange?: (loading: boolean) => void;
+}
+
+export function MyCommentsSection({ onLoadingChange }: MyCommentsSectionProps = {}) {
   const router = useRouter();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const [searchQuery, setSearchQuery] = useState('');
   const [comments, setComments] = useState<MyComment[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    onLoadingChange?.(loading);
+  }, [loading, onLoadingChange]);
 
   // 탭 활성화 시 데이터 fetch
   useEffect(() => {

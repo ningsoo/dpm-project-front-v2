@@ -182,6 +182,9 @@ function MypagePageContent() {
   } | null>(null);
   const [inquiryDetailLoading, setInquiryDetailLoading] = useState(false);
 
+  /* ── 탭별 섹션 로딩 완료까지 페이지 스켈레톤 유지 (재중복 방지) ── */
+  const [sectionLoading, setSectionLoading] = useState(true);
+
   // URL tab 쿼리와 tab state 동기화 (뒤로가기/링크/새로고침 시)
   useEffect(() => {
     const next = getValidTab(searchParams.get('tab'));
@@ -360,34 +363,431 @@ function MypagePageContent() {
     };
   }, [isDragging]);
 
-  if (!initialized || loading) {
-    return (
-      <div className={styles.wrap}>
-        <div className={styles.skeletonProfile}>
-          <div className={styles.skeletonAvatar} />
-          <div className={styles.skeletonProfileText}>
-            <div className={styles.skeletonBar} style={{ width: 120, height: 20 }} />
-            <div className={styles.skeletonBar} style={{ width: 180 }} />
-            <div className={styles.skeletonBar} style={{ width: 140 }} />
+  if (!user) {
+    if (!initialized || loading) {
+      const t = getValidTab(tabParam);
+      if (tabParam) {
+        const skeletonTableRow = (gridClass: string, cols: number, widths: string[]) => (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className={`${styles.tableGrid} ${gridClass} ${styles.tableRow}`}>
+              {Array.from({ length: cols }).map((__, c) => (
+                <div key={c} className={styles.tableCell}>
+                  <div className={styles.skeletonBar} style={{ width: widths[c] || '60%' }} />
+                </div>
+              ))}
+            </div>
+          ))
+        );
+        const searchBarEl = (
+          <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>
+            <input
+              type="text"
+              placeholder="검색어 입력"
+              disabled
+              style={{
+                width: '100%',
+                padding: '8px 40px 8px 12px',
+                border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
+                borderRadius: 8,
+                fontSize: 14,
+                background: darkMode ? '#242422' : '#fff',
+                color: darkMode ? '#B5B3A7' : '#333',
+              }}
+            />
+            <span style={{
+              position: 'absolute',
+              right: 8,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 4,
+              color: '#666',
+            }}>
+              <Search size={18} />
+            </span>
+          </div>
+        );
+
+        const dateRowEl = (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
+            <input
+              type="date"
+              defaultValue={getDate30DaysAgo()}
+              disabled
+              max={getTodayDateString()}
+              style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
+            />
+            <span style={{ color: darkMode ? '#8A877D' : undefined }}>~</span>
+            <input
+              type="date"
+              defaultValue={getTodayDateString()}
+              disabled
+              max={getTodayDateString()}
+              style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
+            />
+            <button
+              type="button"
+              disabled
+              style={{
+                padding: '8px 16px',
+                background: darkMode ? '#3A3934' : '#111',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'not-allowed',
+                fontSize: 14,
+              }}
+            >
+              조회
+            </button>
+          </div>
+        );
+
+        const settlementDateRowEl = (
+          <div className={styles.settlementDateRow}>
+            <input type="date" defaultValue={getDate30DaysAgo()} disabled max={getTodayDateString()} className={styles.settlementDateInput} />
+            <span>~</span>
+            <input type="date" defaultValue={getTodayDateString()} disabled max={getTodayDateString()} className={styles.settlementDateInput} />
+            <button type="button" className={styles.settlementSearchBtn} disabled>조회</button>
+          </div>
+        );
+
+        let tabSkeleton: React.ReactNode = null;
+        if (t === 'posts') {
+          tabSkeleton = (
+            <div>
+              {searchBarEl}
+              <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+                <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableHeader}`}>
+                  <div>날짜</div><div>게시판</div><div>제목</div><div>조회</div><div>추천</div>
+                </div>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableRow}`}>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '80%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '45%' }} /></div>
+                  </div>
+                ))}
+              </div></div>
+            </div>
+          );
+        } else if (t === 'comments') {
+          tabSkeleton = (
+            <div>
+              {searchBarEl}
+              <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+                <div className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableHeader}`}>
+                  <div>날짜</div><div>게시판</div><div>댓글</div><div>원문 글 제목</div><div>추천</div>
+                </div>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableRow}`}>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '80%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '45%' }} /></div>
+                  </div>
+                ))}
+              </div></div>
+            </div>
+          );
+        } else if (t === 'liked') {
+          tabSkeleton = (
+            <div>
+              {searchBarEl}
+              <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+                <div className={`${styles.tableGrid} ${styles.likedGrid5} ${styles.tableHeader}`}>
+                  <div>게시판</div><div>제목</div><div>작성자</div><div>조회</div><div>추천</div>
+                </div>
+                {skeletonTableRow(styles.likedGrid5, 5, ['70%', '85%', '50%', '40%', '35%'])}
+              </div></div>
+            </div>
+          );
+        } else if (t === 'reports') {
+          tabSkeleton = (
+            <div>
+              {dateRowEl}
+              <div style={{ overflowX: 'auto' }}>
+                <div className={`${styles.tableGrid} ${styles.reportsGrid} ${styles.tableHeader}`}>
+                  <div /><div>신고일시</div><div>신고사유</div><div>상태</div><div>글 바로가기</div><div>신고 취소</div>
+                </div>
+                {skeletonTableRow(styles.reportsGrid, 6, ['16px', '75%', '70%', '55%', '60%', '55%'])}
+              </div>
+            </div>
+          );
+        } else if (t === 'inquiries') {
+          tabSkeleton = (
+            <div>
+              {dateRowEl}
+              <div style={{ overflowX: 'auto' }}>
+                <div className={`${styles.tableGrid} ${styles.inquiryGrid} ${styles.tableHeader}`}>
+                  <div>문의일시</div><div>문의유형</div><div>제목</div><div>상태</div>
+                </div>
+                {skeletonTableRow(styles.inquiryGrid, 4, ['75%', '60%', '70%', '55%'])}
+              </div>
+            </div>
+          );
+        } else if (t === 'pop') {
+          const popSt = searchParams.get('popSubTab');
+          const popSub = (popSt === 'usage' || popSt === 'purchase') ? popSt : 'purchase';
+          const isUsage = popSub === 'usage';
+          tabSkeleton = (
+            <div className={styles.popSection}>
+              <div className={styles.settlementRequestSummaryBox}>
+                <div className={styles.settlementSummaryRow}>
+                  <span>보유 POP</span>
+                  <span className={styles.settlementTotalAmount}>
+                    <div className={styles.skeletonBar} style={{ width: 80, height: 16, display: 'inline-block' }} />
+                  </span>
+                </div>
+                <button type="button" className={styles.submitBtn} disabled>충전하기</button>
+              </div>
+              <div className={styles.settlementSubTabs}>
+                <button type="button" className={popSub === 'purchase' ? styles.settlementSubTabActive : styles.settlementSubTab}>구매내역{popSub === 'purchase' && <span className={styles.settlementSubTabIndicator} />}</button>
+                <button type="button" className={popSub === 'usage' ? styles.settlementSubTabActive : styles.settlementSubTab}>사용내역{popSub === 'usage' && <span className={styles.settlementSubTabIndicator} />}</button>
+              </div>
+              {settlementDateRowEl}
+              <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+                {isUsage ? (
+                  <>
+                    <div className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableHeader}`}>
+                      <div>사용일시</div><div>사용수량</div><div>사용대상</div><div>사용내용</div><div>사용상태</div><div>사용취소</div>
+                    </div>
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableRow}`}>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <div className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableHeader}`}>
+                      <div>충전일시</div><div>충전수량</div><div>상세내역</div><div>결제금액</div><div>유효기간</div><div>구매취소</div>
+                    </div>
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableRow}`}>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div></div>
+            </div>
+          );
+        } else if (t === 'donation') {
+          const donSt = searchParams.get('donationSubTab');
+          const donSub = (donSt === 'sent' || donSt === 'received') ? donSt : 'sent';
+          tabSkeleton = (
+            <div className={styles.donationSection}>
+              <div className={styles.settlementSubTabs}>
+                <button type="button" className={donSub === 'sent' ? styles.settlementSubTabActive : styles.settlementSubTab}>보낸내역{donSub === 'sent' && <span className={styles.settlementSubTabIndicator} />}</button>
+                <button type="button" className={donSub === 'received' ? styles.settlementSubTabActive : styles.settlementSubTab}>받은내역{donSub === 'received' && <span className={styles.settlementSubTabIndicator} />}</button>
+              </div>
+              <div className={styles.settlementInnerContent}>
+                {settlementDateRowEl}
+                <div style={{ overflowX: 'auto' }}>
+                  {donSub === 'sent' ? (
+                    <>
+                      <div className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableHeader}`}>
+                        <div>후원일</div><div>요청일</div><div>승인일</div><div>취소일</div><div>금액</div><div>상태</div><div>취소</div><div>수혜자</div>
+                      </div>
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableRow}`}>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      <div className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableHeader}`}>
+                        <div>후원일</div><div>요청일</div><div>확정일</div><div>취소일</div><div>금액</div><div>상태</div><div>후원자</div>
+                      </div>
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableRow}`}>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        } else if (t === 'settlement') {
+          const stParam = searchParams.get('settlementSubTab');
+          const stSub = (stParam === 'history' || stParam === 'register' || stParam === 'request') ? stParam : 'history';
+          let settlementContent: React.ReactNode = null;
+          if (stSub === 'history') {
+            settlementContent = (
+              <div className={styles.settlementInnerContent}>
+                {settlementDateRowEl}
+                <div style={{ overflowX: 'auto' }}>
+                  <div className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableHeader}`}>
+                    <div>정산요청일</div><div>정산승인일</div><div>변동 수량</div><div>정산금액</div><div>정산처리상태</div>
+                  </div>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableRow}`}>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '65%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '65%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          } else if (stSub === 'register') {
+            settlementContent = (
+              <div className={styles.settlementInnerContent}>
+                <div className={styles.settlementForm}>
+                  {['이메일', '이름', '연락처', '계좌번호'].map((label) => (
+                    <div key={label} className={styles.settlementField}>
+                      <label>{label}</label>
+                      <div className={styles.skeletonBar} style={{ width: '100%', height: 40, borderRadius: 8 }} />
+                    </div>
+                  ))}
+                  <div className={styles.skeletonBar} style={{ width: 80, height: 40, borderRadius: 8 }} />
+                </div>
+              </div>
+            );
+          } else {
+            settlementContent = (
+              <div className={styles.settlementInnerContent}>
+                <div className={styles.settlementRequestSummaryBox}>
+                  <div className={styles.settlementSummaryRow}>
+                    <span>정산 가능 금액</span>
+                    <span className={styles.settlementTotalAmount}>
+                      <div className={styles.skeletonBar} style={{ width: 80, height: 16, display: 'inline-block' }} />
+                    </span>
+                  </div>
+                  <button type="button" className={styles.submitBtn} disabled>정산요청</button>
+                </div>
+                <div className={styles.settlementRequestTableWrap}><div style={{ overflowX: 'auto' }}>
+                  <div className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableHeader}`}>
+                    <div style={{ textAlign: 'center' }}>후원금액</div>
+                    <div style={{ textAlign: 'center' }}>후원승인일</div>
+                  </div>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
+                      <div className={styles.tableCell} style={{ textAlign: 'center' }}><div className={styles.skeletonBar} style={{ width: '40%' }} /></div>
+                      <div className={styles.tableCell} style={{ textAlign: 'center' }}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /><div className={styles.skeletonBar} style={{ width: '40%' }} /></div></div>
+                    </div>
+                  ))}
+                </div></div>
+              </div>
+            );
+          }
+          tabSkeleton = (
+            <div className={styles.settlementSection}>
+              <div className={styles.settlementSubTabs}>
+                {[{ id: 'history', label: '정산 내역' }, { id: 'register', label: '정산 정보 등록' }, { id: 'request', label: '정산 신청' }].map((st) => (
+                  <button key={st.id} type="button" className={stSub === st.id ? styles.settlementSubTabActive : styles.settlementSubTab}>
+                    {st.label}{stSub === st.id && <span className={styles.settlementSubTabIndicator} />}
+                  </button>
+                ))}
+              </div>
+              {settlementContent}
+            </div>
+          );
+        } else if (t === 'playlists') {
+          tabSkeleton = (
+            <div style={{ display: 'flex', gap: 24, padding: '4px 4px 8px' }}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className={styles.skeletonCard} style={{ flex: '0 0 calc((100% - 48px) / 3)' }}>
+                  <div className={styles.skeletonCardThumb} style={{ height: 180, paddingTop: 0 }} />
+                  <div className={styles.skeletonCardBody} style={{ minHeight: 80 }}>
+                    <div className={styles.skeletonBar} style={{ width: '80%', height: 16 }} />
+                    <div className={styles.skeletonBar} style={{ width: '40%' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        } else {
+          tabSkeleton = (
+            <div className={styles.skeletonContent}>
+              <div className={styles.skeletonContentRow} style={{ width: '100%' }} />
+              <div className={styles.skeletonContentRow} style={{ width: '85%' }} />
+              <div className={styles.skeletonContentRow} style={{ width: '92%' }} />
+            </div>
+          );
+        }
+        return (
+          <div className={styles.wrap}>
+            <div className={styles.skeletonProfile}>
+              <div className={styles.skeletonAvatar} />
+              <div className={styles.skeletonProfileText}>
+                <div className={styles.skeletonBar} style={{ width: 120, height: 26 }} />
+                <div className={styles.skeletonBar} style={{ width: 200, height: 16 }} />
+                <div className={styles.skeletonBar} style={{ width: 140, height: 16 }} />
+                <div className={styles.skeletonBar} style={{ width: 110, height: 16 }} />
+              </div>
+            </div>
+            <div className={styles.tabs}>
+              {TABS.map((tb) => (
+                <button key={tb.id} type="button" className={t === tb.id ? styles.tabActive : styles.tab}>
+                  {tb.label}
+                </button>
+              ))}
+            </div>
+            <div className={styles.content}>{tabSkeleton}</div>
+          </div>
+        );
+      }
+      return (
+        <div className={styles.wrap}>
+          <div className={styles.skeletonProfile}>
+            <div className={styles.skeletonAvatar} />
+            <div className={styles.skeletonProfileText}>
+              <div className={styles.skeletonBar} style={{ width: 120, height: 26 }} />
+              <div className={styles.skeletonBar} style={{ width: 200, height: 16 }} />
+              <div className={styles.skeletonBar} style={{ width: 140, height: 16 }} />
+              <div className={styles.skeletonBar} style={{ width: 110, height: 16 }} />
+            </div>
+          </div>
+          <div className={styles.skeletonTabs}>
+            {Array.from({ length: 9 }).map((_, i) => (
+              <div key={i} className={styles.skeletonTab} style={{ width: i % 3 === 0 ? 80 : i % 3 === 1 ? 64 : 56 }} />
+            ))}
+          </div>
+          <div className={styles.skeletonContent}>
+            <div className={styles.skeletonContentRow} style={{ width: '100%' }} />
+            <div className={styles.skeletonContentRow} style={{ width: '85%' }} />
+            <div className={styles.skeletonContentRow} style={{ width: '92%' }} />
+            <div className={styles.skeletonContentRow} style={{ width: '78%' }} />
+            <div className={styles.skeletonContentRow} style={{ width: '88%' }} />
           </div>
         </div>
-        <div className={styles.skeletonTabs}>
-          {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className={styles.skeletonTab} style={{ width: i % 3 === 0 ? 80 : i % 3 === 1 ? 64 : 56 }} />
-          ))}
-        </div>
-        <div className={styles.skeletonContent}>
-          <div className={styles.skeletonContentRow} style={{ width: '100%' }} />
-          <div className={styles.skeletonContentRow} style={{ width: '85%' }} />
-          <div className={styles.skeletonContentRow} style={{ width: '92%' }} />
-          <div className={styles.skeletonContentRow} style={{ width: '78%' }} />
-          <div className={styles.skeletonContentRow} style={{ width: '88%' }} />
-        </div>
-      </div>
-    );
-  }
-
-  if (!user) {
+      );
+    }
     return (
       <div className={styles.wrap}>
         <p>사용자 정보를 불러올 수 없습니다.</p>
@@ -804,11 +1204,11 @@ function MypagePageContent() {
 
       <div className={`${styles.content} ${tabVisible ? styles.contentVisible : styles.contentHidden}`}>
         {displayedTab === 'playlists' && (
-          <MyPageYouTubeSection user={user} isAuthenticated={isAuthenticated} />
+          <MyPageYouTubeSection user={user} isAuthenticated={isAuthenticated} onLoadingChange={setSectionLoading} />
         )}
-        {displayedTab === 'posts' && <MyPostsSection />}
-        {displayedTab === 'comments' && <MyCommentsSection />}
-        {displayedTab === 'liked' && <MyPostLikesSection />}
+        {displayedTab === 'posts' && <MyPostsSection onLoadingChange={setSectionLoading} />}
+        {displayedTab === 'comments' && <MyCommentsSection onLoadingChange={setSectionLoading} />}
+        {displayedTab === 'liked' && <MyPostLikesSection onLoadingChange={setSectionLoading} />}
         {displayedTab === 'reports' && (
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
@@ -936,12 +1336,33 @@ function MypagePageContent() {
             </div>
           </div>
         )}
-        {displayedTab === 'settlement' && (
-          <SettlementSection user={user} />
-        )}
-        {displayedTab === 'donation' && (
-          <DonationSection />
-        )}
+        {displayedTab === 'settlement' && (() => {
+          const stParam = searchParams.get('settlementSubTab');
+          const validSt = (stParam === 'history' || stParam === 'register' || stParam === 'request') ? stParam : 'history';
+          return (
+            <SettlementSection
+              user={user}
+              subTab={validSt}
+              onChangeSubTab={(next) => {
+                router.replace(`/mypage?tab=settlement&settlementSubTab=${next}`, { scroll: false });
+              }}
+              onLoadingChange={setSectionLoading}
+            />
+          );
+        })()}
+        {displayedTab === 'donation' && (() => {
+          const dtParam = searchParams.get('donationSubTab');
+          const validDt = (dtParam === 'sent' || dtParam === 'received') ? dtParam : 'sent';
+          return (
+            <DonationSection
+              subTab={validDt}
+              onChangeSubTab={(next) => {
+                router.replace(`/mypage?tab=donation&donationSubTab=${next}`, { scroll: false });
+              }}
+              onLoadingChange={setSectionLoading}
+            />
+          );
+        })()}
         {displayedTab === 'inquiries' && (
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
@@ -1177,6 +1598,7 @@ function MypagePageContent() {
             <PopSection
               user={user}
               subTab={validPopSubTab}
+              onLoadingChange={setSectionLoading}
               onChangeSubTab={(next) => {
                 router.replace(`/mypage?tab=pop&popSubTab=${next}`, { scroll: false });
               }}

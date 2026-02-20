@@ -103,6 +103,9 @@ const SUB_TAB_FADE_MS = 150;
 
 interface SettlementSectionProps {
   user: SettlementUser;
+  subTab: 'history' | 'register' | 'request';
+  onChangeSubTab: (next: 'history' | 'register' | 'request') => void;
+  onLoadingChange?: (loading: boolean) => void;
 }
 
 /** 오늘 날짜를 YYYY-MM-DD 형식으로 반환 */
@@ -125,8 +128,7 @@ function getDate30DaysAgo(): string {
   return `${year}-${month}-${day}`;
 }
 
-export function SettlementSection({ user }: SettlementSectionProps) {
-  const [subTab, setSubTab] = useState<'history' | 'register' | 'request'>('history');
+export function SettlementSection({ user, subTab, onChangeSubTab, onLoadingChange }: SettlementSectionProps) {
   
   const [historyList, setHistoryList] = useState<SettlementHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -205,6 +207,11 @@ export function SettlementSection({ user }: SettlementSectionProps) {
     }
   }, [subTab, fetchHistory, fetchAvailable]);
 
+  const settlementLoading = subTab === 'history' ? loading : subTab === 'request' ? availableLoading : false;
+  useEffect(() => {
+    onLoadingChange?.(settlementLoading);
+  }, [settlementLoading, onLoadingChange]);
+
   // 날짜가 바뀌면 종료일을 오늘로 자동 업데이트
   useEffect(() => {
     const updateEndDate = () => {
@@ -274,7 +281,7 @@ export function SettlementSection({ user }: SettlementSectionProps) {
           ToastUtils.error(res.data.message);
         } else {
           ToastUtils.success('정산 계좌가 등록되었습니다.');
-          setSubTab('request');
+          onChangeSubTab('request');
         }
       })
       .catch(() => ToastUtils.error('등록 실패'))
@@ -298,7 +305,7 @@ export function SettlementSection({ user }: SettlementSectionProps) {
         }
         
         ToastUtils.success('정산 신청이 완료되었습니다.');
-        setSubTab('history');
+        onChangeSubTab('history');
       })
       .catch((err: any) => {
          setShowRequestConfirm(false);
@@ -327,7 +334,7 @@ export function SettlementSection({ user }: SettlementSectionProps) {
             role="tab"
             aria-selected={subTab === t.id}
             className={subTab === t.id ? styles.settlementSubTabActive : styles.settlementSubTab}
-            onClick={() => setSubTab(t.id)}
+            onClick={() => onChangeSubTab(t.id)}
           >
             {t.label}
             {subTab === t.id && <span className={styles.settlementSubTabIndicator} />}
