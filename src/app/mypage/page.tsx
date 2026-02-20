@@ -101,6 +101,7 @@ function MypagePageContent() {
   const [displayedTab, setDisplayedTab] = useState<string>(tab);
   const [tabVisible, setTabVisible] = useState(true);
   const tabTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restoreScrollRef = useRef<{ tab: string; scrollY: number } | null>(null);
   const TAB_FADE_MS = 150;
 
   const switchTab = useCallback((nextTab: string) => {
@@ -124,6 +125,38 @@ function MypagePageContent() {
       if (tabTimeoutRef.current) clearTimeout(tabTimeoutRef.current);
     };
   }, []);
+
+  /* ── 뒤로가기 시 탭·스크롤 복원 (마운트 시 1회만 읽음) ── */
+  useEffect(() => {
+    const raw = sessionStorage.getItem('soundock_mypage_return');
+    if (!raw) return;
+    sessionStorage.removeItem('soundock_mypage_return');
+    try {
+      const data = JSON.parse(raw) as { tab?: string; scrollY?: number };
+      if (data.tab && typeof data.scrollY === 'number' && TAB_IDS.includes(data.tab as (typeof TAB_IDS)[number])) {
+        const currentTab = getValidTab(searchParams.get('tab'));
+        if (currentTab !== data.tab) {
+          router.replace(`/mypage?tab=${data.tab}`);
+        }
+        restoreScrollRef.current = { tab: data.tab, scrollY: data.scrollY };
+      }
+    } catch {
+      // ignore invalid JSON
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run only on mount
+  }, []);
+
+  useEffect(() => {
+    const pending = restoreScrollRef.current;
+    if (!pending || displayedTab !== pending.tab) return;
+    restoreScrollRef.current = null;
+    const scrollY = pending.scrollY;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollY);
+      });
+    });
+  }, [displayedTab]);
 
   const [searchQuery, setSearchQuery] = useState({ posts: '', comments: '', liked: '' });
   const [dateRange, setDateRange] = useState({

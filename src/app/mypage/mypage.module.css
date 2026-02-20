@@ -267,6 +267,24 @@
   text-align: center;
 }
 
+/* 테이블 셀 내 링크용 버튼 (내 게시글/내 댓글/좋아요 한 게시글) */
+.cellLinkBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  display: inline;
+  width: 100%;
+}
+.cellLinkBtn:hover {
+  text-decoration: underline;
+}
+
 /* 좋아요 한 게시글 */
 .likedGrid {
   grid-template-columns: 140px 1fr 140px 160px 100px 100px;
