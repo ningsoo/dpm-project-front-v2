@@ -30,10 +30,12 @@ export default function SpotlightCarousel() {
 
   const [cardWidth, setCardWidth] = useState(0);
   const [wrapperWidth, setWrapperWidth] = useState(0);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const shouldResetWhenReachEndRef = useRef(false);
   const isTransitingRef = useRef(false);
+  const [autoplayKey, setAutoplayKey] = useState(0);
 
   /** 데이터 조회 */
   const fetchSpotlights = useCallback(async () => {
@@ -90,6 +92,22 @@ export default function SpotlightCarousel() {
     });
   }, [N, wrapperWidth, layoutReady]);
 
+  /** 썸네일 이미지 프리로드 — 보이는 3장만 로드 후 스켈레톤 숨김 */
+  useEffect(() => {
+    if (N === 0 || isLoading || imagesLoaded) return;
+    const visiblePosts = posts.slice(0, Math.min(3, N));
+    let loaded = 0;
+    const total = visiblePosts.length;
+    visiblePosts.forEach((post) => {
+      const img = new Image();
+      img.onload = img.onerror = () => {
+        loaded++;
+        if (loaded >= total) setImagesLoaded(true);
+      };
+      img.src = getBoardThumbnailUrl(post, 'spotlight');
+    });
+  }, [N, isLoading, posts, imagesLoaded]);
+
   /** 끝 도달 시 점프 애니메이션 제거 (2N → N 리셋) */
   useEffect(() => {
     if (!layoutReady) return;
@@ -127,12 +145,12 @@ export default function SpotlightCarousel() {
     }
   }, [center, N, layoutReady]);
 
-  /** autoplay */
+  /** autoplay — autoplayKey가 바뀌면 interval이 초기화됨 */
   useEffect(() => {
     if (!layoutReady || N === 0) return;
 
     const t = setInterval(() => {
-      if (isTransitingRef.current) return;       // 전환 중이면 건너뜀
+      if (isTransitingRef.current) return;
       setCenter((c) => {
         if (c >= 2 * N - 1) {
           isTransitingRef.current = true;
@@ -144,12 +162,17 @@ export default function SpotlightCarousel() {
     }, 4000);
 
     return () => clearInterval(t);
-  }, [N, layoutReady]);
+  }, [N, layoutReady, autoplayKey]);
+
+  /** 버튼 클릭 시 interval 리셋 — 4초 타이머를 처음부터 다시 시작 */
+  const resetAutoplay = () => {
+    setAutoplayKey((k) => k + 1);
+  };
 
   /** 이동 */
   const movePrev = () => {
     if (N === 0 || isTransitingRef.current) return;
-
+    resetAutoplay();
     if (center <= N) {
       // 앞쪽 끝 → 뒤로 점프 후 한 칸 이동
       isTransitingRef.current = true;
@@ -169,7 +192,7 @@ export default function SpotlightCarousel() {
 
   const moveNext = () => {
     if (N === 0 || isTransitingRef.current) return;
-
+    resetAutoplay();
     if (center >= 2 * N - 1) {
       // 뒤쪽 끝 → 마지막으로 이동 후 리셋 예약
       isTransitingRef.current = true;
@@ -201,8 +224,8 @@ export default function SpotlightCarousel() {
     ? `translateX(${translateX}px)`
     : 'translateX(0px)';
 
-  /** 스켈레톤: 데이터 로딩 중이거나, 데이터가 있지만 아직 레이아웃 준비 안 된 경우 표시 */
-  const showSkeleton = isLoading || (posts.length > 0 && !layoutReady);
+  /** 스켈레톤: 로딩 중이거나, 레이아웃 미준비이거나, 이미지 미로드 시 표시 */
+  const showSkeleton = isLoading || (posts.length > 0 && (!layoutReady || !imagesLoaded));
 
   /* ── empty ── */
   if (!isLoading && posts.length === 0) {
@@ -227,17 +250,21 @@ export default function SpotlightCarousel() {
       className={`${styles.section} ${darkMode ? 'dark' : ''} ${styles.sectionRevealed}`}
     >
       <div className={styles.wrapper} ref={wrapperRef}>
-        {/* 스켈레톤: layoutReady 전까지 표시 */}
-        {showSkeleton && (
+        {/* 스켈레톤: layoutReady 전까지 표시, 이후 페이드아웃 */}
+        <div className={`${styles.skeletonLayer} ${showSkeleton ? styles.skeletonVisible : styles.skeletonHidden}`}>
           <div className={styles.skeletonTrack}>
             {[0, 1, 2].map((i) => (
-              <div key={i} className={styles.skeletonCard} />
+              <div
+                key={i}
+                className={styles.skeletonCard}
+                style={cardWidth ? { width: cardWidth } : undefined}
+              />
             ))}
           </div>
-        )}
+        </div>
 
-        {/* 실제 캐러셀: layoutReady 후 표시 */}
-        {!showSkeleton && (
+        {/* 실제 캐러셀: 항상 마운트, layoutReady 후 표시 */}
+        {layoutReady && (
           <>
             <button
               type="button"

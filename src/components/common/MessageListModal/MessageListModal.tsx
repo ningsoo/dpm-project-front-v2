@@ -105,11 +105,12 @@ export default function MessageListModal({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [open, showReplyModal, viewMode, onClose]);
 
-  // 모달 닫힐 때 view 초기화
+  // 모달 닫힐 때 view & 탭 초기화
   useEffect(() => {
     if (!open) {
       setViewMode('list');
       setDetailData(null);
+      setActiveTab('RECEIVED');
     }
   }, [open]);
 

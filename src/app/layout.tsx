@@ -5,6 +5,7 @@ import Footer from '@/components/common/Footer/Footer';
 import ToastRoot from '@/components/common/Toast/Toast';
 import TopButton from '@/components/common/TopButton/TopButton';
 import ThemeSync from './ThemeSync';
+import ScrollToTop from '@/components/common/ScrollToTop/ScrollToTop';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -31,11 +32,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Providers>
           <ThemeSync />
+          <ScrollToTop />
           <Header />
-          <main style={{ paddingTop: 64, minHeight: 'calc(100vh - 64px - 120px)' }}>{children}</main>
+          <main style={{ paddingTop: 64, minHeight: 'calc(100vh - 64px - 120px)', position: 'relative' }}>
+            {children}
+            <TopButton />
+          </main>
           <Footer />
           <ToastRoot />
-          <TopButton />
         </Providers>
       </body>
     </html>

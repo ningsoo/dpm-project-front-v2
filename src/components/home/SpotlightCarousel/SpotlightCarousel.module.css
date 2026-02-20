@@ -1,10 +1,17 @@
 .section {
+  position: relative;
   padding: 18px 0;
   width: 100%;
   max-width: 100%;
   margin: 0 auto;
   overflow-x: hidden;
-  background: #fafafa;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 45%,
+    #f3f3f3 0%,
+    #f7f7f7 50%,
+    #fcfcfc 80%,
+    #fff 100%
+  );
 }
 
 /* ===== Reveal ===== */
@@ -18,12 +25,22 @@
   transition: opacity 0.22s ease;
 }
 
+.sectionPlaceholder {
+  min-height: 456px;
+}
+
 .sectionPlaceholder .track {
   min-height: 420px;
 }
 
 :global(.dark) .section {
-  background: #1D1D1B;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 45%,
+    #212120 0%,
+    #1D1D1B 50%,
+    #1b1b19 80%,
+    #1a1a18 100%
+  );
 }
 
 /* ===== Title ===== */
@@ -41,14 +58,15 @@
   color: #B5B3A7;
 }
 
-/* ===== Wrapper (핵심 수정) ===== */
+/* ===== Wrapper ===== */
 
 .wrapper {
   overflow: hidden;
   position: relative;
   width: 100%;
+  min-height: 420px;
   margin: 0 auto;
-  padding: 0;                 /* ← padding 제거 */
+  padding: 0;
   box-sizing: border-box;
 }
 
@@ -62,20 +80,22 @@
   height: 420px;
   transition: transform 0.6s ease-in-out;
   will-change: transform;
+  contain: layout;
 }
 
-/* ===== Card (핵심 수정) ===== */
+/* ===== Card ===== */
 
 .card {
   position: relative;
   flex-shrink: 0;
-  width: 360px;               /* ← width 명시 */
+  width: 360px;
   height: 400px;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   cursor: pointer;
   overflow: hidden;
   transition: box-shadow 0.3s ease;
+  will-change: auto;
 }
 
 .card:hover {
@@ -227,6 +247,24 @@
   opacity: 0.95;
 }
 
+/* ===== Skeleton Layer ===== */
+
+.skeletonLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  transition: opacity 0.3s ease;
+}
+
+.skeletonVisible {
+  opacity: 1;
+}
+
+.skeletonHidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* ===== Skeleton ===== */
 
 .skeletonTrack {
@@ -240,8 +278,7 @@
 }
 
 .skeletonCard {
-  flex: 0 1 calc((100% - 40px) / 3);   /* 실제 카드와 동일한 3분할 */
-  min-width: 200px;
+  flex-shrink: 0;
   height: 400px;
   border-radius: 12px;
   background: #e8e8e8;
