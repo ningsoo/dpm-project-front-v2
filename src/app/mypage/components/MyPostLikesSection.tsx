@@ -150,7 +150,21 @@ export function MyPostLikesSection({ onLoadingChange }: MyPostLikesSectionProps 
                     className={`${styles.tableGrid} ${styles.likedGrid5} ${styles.tableRow}`}
                   >
                     <div className={styles.tableCell}>{formatCategoryType(row.categoryType)}</div>
-                    <div className={styles.tableCell}>{row.title}</div>
+                    <div className={styles.tableCell}>
+                      <button
+                        type="button"
+                        className={styles.cellLinkBtn}
+                        onClick={() => {
+                          sessionStorage.setItem(
+                            'soundock_mypage_return',
+                            JSON.stringify({ tab: 'liked', scrollY: window.scrollY })
+                          );
+                          router.push(`/boards/${row.boardId}`);
+                        }}
+                      >
+                        {row.title}
+                      </button>
+                    </div>
                     <div className={styles.tableCell}>{row.nickname}</div>
                     <div className={styles.tableCell}>{row.views}</div>
                     <div className={styles.tableCell}>{row.likes}</div>

@@ -191,7 +191,19 @@ export function MyPostsSection({ onLoadingChange }: MyPostsSectionProps = {}) {
                       {mapCategoryTypeToLabel(post.category.categoryType)}
                     </div>
                     <div className={styles.tableCell}>
-                      {post.title}
+                      <button
+                        type="button"
+                        className={styles.cellLinkBtn}
+                        onClick={() => {
+                          sessionStorage.setItem(
+                            'soundock_mypage_return',
+                            JSON.stringify({ tab: 'posts', scrollY: window.scrollY })
+                          );
+                          router.push(`/boards/${post.boardId}`);
+                        }}
+                      >
+                        {post.title}
+                      </button>
                     </div>
                     <div className={styles.tableCell}>
                       {post.views}

@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
-import { Key, User, Plus, Search, Pencil, Heart, X, Check, Unplug } from 'lucide-react';
+import { KeyRound, UserCog, Plus, Search, Pencil, Heart, X, Check, Unplug } from 'lucide-react';
 import { AppDispatch, RootState } from '@/store';
 import { authApi } from '@/api/authApi';
 import { mypageApi } from '@/api/mypageApi';
@@ -104,6 +104,7 @@ function MypagePageContent() {
   const [displayedTab, setDisplayedTab] = useState<string>(tab);
   const [tabVisible, setTabVisible] = useState(true);
   const tabTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restoreScrollRef = useRef<{ tab: string; scrollY: number } | null>(null);
   const TAB_FADE_MS = 150;
 
   const switchTab = useCallback((nextTab: string) => {
@@ -127,6 +128,38 @@ function MypagePageContent() {
       if (tabTimeoutRef.current) clearTimeout(tabTimeoutRef.current);
     };
   }, []);
+
+  /* ── 뒤로가기 시 탭·스크롤 복원 (마운트 시 1회만 읽음) ── */
+  useEffect(() => {
+    const raw = sessionStorage.getItem('soundock_mypage_return');
+    if (!raw) return;
+    sessionStorage.removeItem('soundock_mypage_return');
+    try {
+      const data = JSON.parse(raw) as { tab?: string; scrollY?: number };
+      if (data.tab && typeof data.scrollY === 'number' && TAB_IDS.includes(data.tab as (typeof TAB_IDS)[number])) {
+        const currentTab = getValidTab(searchParams.get('tab'));
+        if (currentTab !== data.tab) {
+          router.replace(`/mypage?tab=${data.tab}`);
+        }
+        restoreScrollRef.current = { tab: data.tab, scrollY: data.scrollY };
+      }
+    } catch {
+      // ignore invalid JSON
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run only on mount
+  }, []);
+
+  useEffect(() => {
+    const pending = restoreScrollRef.current;
+    if (!pending || displayedTab !== pending.tab) return;
+    restoreScrollRef.current = null;
+    const scrollY = pending.scrollY;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollY);
+      });
+    });
+  }, [displayedTab]);
 
   const [searchQuery, setSearchQuery] = useState({ posts: '', comments: '', liked: '' });
   const [dateRange, setDateRange] = useState({
@@ -215,6 +248,11 @@ function MypagePageContent() {
     if (!initialized) return;
 
     if (!isAuthenticated) {
+      if (sessionStorage.getItem('soundock_logout_redirect') === '1') {
+        sessionStorage.removeItem('soundock_logout_redirect');
+        router.replace('/');
+        return;
+      }
       router.push('/auth/login');
       return;
     }
@@ -224,21 +262,28 @@ function MypagePageContent() {
     // 사용자 정보 가져오기
     mypageApi.getMypage()
       .then(({ data }) => {
-        console.log('[MyPage] getMyInfo raw response:', data);
-        console.log('[MyPage] data.data:', data?.data);
         const userData = data?.data as UserInfo | undefined;
-        console.log('[MyPage] youtubeConnected:', userData?.youtubeConnected);
         if (userData) {
           setUser(userData);
           setProfileImage(userData.profileImage || null);
         } else {
           ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
-          router.push('/auth/login');
+          if (sessionStorage.getItem('soundock_logout_redirect') === '1') {
+            sessionStorage.removeItem('soundock_logout_redirect');
+            router.replace('/');
+          } else {
+            router.push('/auth/login');
+          }
         }
       })
       .catch((error) => {
         if (error?.response?.status === 401) {
-          router.push('/auth/login');
+          if (sessionStorage.getItem('soundock_logout_redirect') === '1') {
+            sessionStorage.removeItem('soundock_logout_redirect');
+            router.replace('/');
+          } else {
+            router.push('/auth/login');
+          }
         } else {
           ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
         }
@@ -853,7 +898,7 @@ function MypagePageContent() {
       ToastUtils.success(PWLS_WITHDRAWAL_GUIDE);
       setShowPwlsWithdrawalModal(false);
       setPwlsWithdrawalLoading(false);
-      router.push('/');
+      window.location.href = '/';
     } catch (err) {
       const message = err instanceof Error ? err.message : '패스워드리스 해지에 실패했습니다.';
       ToastUtils.error(message);
@@ -1166,7 +1211,7 @@ function MypagePageContent() {
               setShowPasswordVerifyModal(true);
             }}
           >
-            <Key size={22} />
+            <KeyRound size={22} />
           </button>
           <button
             type="button"
@@ -1177,7 +1222,7 @@ function MypagePageContent() {
               setShowPasswordVerifyModal(true);
             }}
           >
-            <User size={22} />
+            <UserCog size={22} />
           </button>
           {user?.passwordless === true && (
             <button
@@ -1507,8 +1552,6 @@ function MypagePageContent() {
                                 setInquiryDetail(null);
                                 mypageApi.getInquiryDetail(item.inquiryId)
                                   .then(({ data }) => {
-                                    console.log('[InquiryDetail] raw API response:', data);
-                                    console.log('[InquiryDetail] data.data:', data?.data);
                                     const detail = data?.data as {
                                       title: string;
                                       inquiryType: string;
@@ -1520,7 +1563,6 @@ function MypagePageContent() {
                                       adminComment?: string;
                                       commentCreatedAt?: string;
                                     } | undefined;
-                                    console.log('[InquiryDetail] fileUrl:', detail?.fileUrl);
                                     setInquiryDetail(detail ?? null);
                                   })
                                   .catch(() => {

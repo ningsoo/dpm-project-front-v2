@@ -98,6 +98,7 @@ export default function CommentSection({
   const [commentReportReason, setCommentReportReason] = useState('');
   const [commentLikeLoading, setCommentLikeLoading] = useState<string | null>(null);
   const [commentSubmitLoading, setCommentSubmitLoading] = useState(false);
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const [commentEditLoading, setCommentEditLoading] = useState<string | null>(null);
@@ -107,8 +108,21 @@ export default function CommentSection({
   } | null>(null);
 
   const commentMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const didAutoScrollRef = useRef(false);
+  const pendingHashIdRef = useRef<string | null>(null);
   const currentUserId =
     typeof window !== 'undefined' ? tokenUtils.getUserIdFromToken() : null;
+
+  // 해시가 #comment-로 시작하면 댓글 섹션 자동 펼침
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash;
+    if (hash.startsWith('#comment-')) {
+      const targetId = hash.slice(1);
+      pendingHashIdRef.current = targetId;
+      setCommentOpen(true);
+    }
+  }, []);
 
   // ===== 댓글 조회 =====
   useEffect(() => {
@@ -134,6 +148,38 @@ export default function CommentSection({
         setCountComment(0);
       });
   }, [boardId]);
+
+  // 댓글 목록 렌더 후 해시 대상으로 스크롤
+  useEffect(() => {
+    if (
+      !didAutoScrollRef.current &&
+      pendingHashIdRef.current &&
+      commentOpen
+    ) {
+      const targetId = pendingHashIdRef.current;
+      let attempt = 0;
+      const maxAttempts = 12;
+      const intervalMs = 150;
+      const tryScroll = () => {
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.scrollIntoView({ block: 'start' });
+          didAutoScrollRef.current = true;
+          pendingHashIdRef.current = null;
+          // 스크롤 후 해당 댓글 하이라이트 애니메이션
+          const commentId = targetId.replace('comment-', '');
+          setHighlightedCommentId(commentId);
+          setTimeout(() => setHighlightedCommentId(null), 2000);
+          return;
+        }
+        attempt += 1;
+        if (attempt < maxAttempts) {
+          setTimeout(tryScroll, intervalMs);
+        }
+      };
+      tryScroll();
+    }
+  }, [commentOpen, comments.length]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -349,7 +395,11 @@ export default function CommentSection({
               const isCommentLikeLoading = commentLikeLoading === apiCommentId;
 
               return (
-                <div key={c.commentId ?? c.id} className={styles.commentItem}>
+                <div
+                  key={c.commentId ?? c.id}
+                  id={apiCommentId != null ? `comment-${apiCommentId}` : undefined}
+                  className={`${styles.commentItem}${highlightedCommentId === apiCommentId ? ` ${styles.commentItemHighlight}` : ''}`}
+                >
                   <div className={styles.commentHead}>
                     {isCommentAuthor ? (
                       <span className={styles.commentAuthor}>{c.nickname}</span>

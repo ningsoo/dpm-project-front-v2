@@ -199,10 +199,34 @@ export function MyCommentsSection({ onLoadingChange }: MyCommentsSectionProps = 
                       {formatCategoryType(comment.categoryType)}
                     </div>
                     <div className={`${styles.tableCell} ${styles.commentContentCell}`}>
-                      {formatCommentContent(comment.content)}
+                      <button
+                        type="button"
+                        className={styles.cellLinkBtn}
+                        onClick={() => {
+                          sessionStorage.setItem(
+                            'soundock_mypage_return',
+                            JSON.stringify({ tab: 'comments', scrollY: window.scrollY })
+                          );
+                          router.push(`/boards/${comment.boardId}#comment-${comment.commentId}`);
+                        }}
+                      >
+                        {formatCommentContent(comment.content)}
+                      </button>
                     </div>
                     <div className={styles.tableCell}>
-                      {comment.title}
+                      <button
+                        type="button"
+                        className={styles.cellLinkBtn}
+                        onClick={() => {
+                          sessionStorage.setItem(
+                            'soundock_mypage_return',
+                            JSON.stringify({ tab: 'comments', scrollY: window.scrollY })
+                          );
+                          router.push(`/boards/${comment.boardId}`);
+                        }}
+                      >
+                        {comment.title}
+                      </button>
                     </div>
                     <div className={styles.tableCell}>
                       {comment.likeCount}

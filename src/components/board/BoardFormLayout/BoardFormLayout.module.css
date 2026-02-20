@@ -813,6 +813,43 @@
 .commentItem {
   padding: 16px 0;
   border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.5s ease;
+}
+
+.commentItemHighlight {
+  animation: commentHighlightFade 2s ease-out;
+  margin: 0 -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+  border-radius: 20px;
+}
+
+@keyframes commentHighlightFade {
+  0% {
+    background-color: rgba(51, 51, 51, 0.08);
+  }
+  50% {
+    background-color: rgba(51, 51, 51, 0.08);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+:global(.dark) .commentItemHighlight {
+  animation: commentHighlightFadeDark 2s ease-out;
+}
+
+@keyframes commentHighlightFadeDark {
+  0% {
+    background-color: rgba(58, 57, 52, 0.6);
+  }
+  50% {
+    background-color: rgba(58, 57, 52, 0.6);
+  }
+  100% {
+    background-color: transparent;
+  }
 }
 
 .commentHead {
