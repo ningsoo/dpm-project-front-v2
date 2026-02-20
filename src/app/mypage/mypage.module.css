@@ -12,6 +12,15 @@
   padding: 24px;
   background: #fafafa;
   border-radius: 12px;
+  list-style: none;
+}
+.profile,
+.profile * {
+  list-style: none;
+}
+.profile *::marker {
+  content: none;
+  display: none;
 }
 
 .avatarWrap {
@@ -23,6 +32,13 @@
   height: 100px;
   border-radius: 50%;
   background: #070707;
+  overflow: hidden;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  isolation: isolate;
+  box-sizing: border-box;
+  border: 2px solid #fafafa;
 }
 
 .profileText {
@@ -146,6 +162,15 @@
   display: grid;
   align-items: center;
   border-bottom: 1px solid #eee;
+  list-style: none;
+}
+.tableGrid,
+.tableGrid * {
+  list-style: none;
+}
+.tableGrid *::marker {
+  content: none;
+  display: none;
 }
 
 .tableHeader {
@@ -1386,6 +1411,7 @@
 
 :global(.dark) .avatar {
   background: #3A3A38;
+  border-color: #242422;
 }
 
 :global(.dark) .nickname {

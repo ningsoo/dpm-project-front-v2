@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
@@ -63,6 +64,8 @@ function getValidTab(tabParam: string | null): string {
 
 const PWLS_WITHDRAWAL_GUIDE =
   '패스워드리스 해지가 완료되었습니다.';
+
+const PROFILE_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
 
 /** 오늘 날짜를 YYYY-MM-DD 형식으로 반환 */
 function getTodayDateString(): string {
@@ -454,16 +457,30 @@ function MypagePageContent() {
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const imageUrl = event.target?.result as string;
-        setSelectedImage(imageUrl);
-        setShowImageUpload(false);
-        setShowCropModal(true);
-      };
-      reader.readAsDataURL(file);
+    const input = e.target;
+    if (!file) return;
+    if (!PROFILE_IMAGE_TYPES.includes(file.type) && !/\.(jpe?g|png|webp|gif)$/i.test(file.name)) {
+      ToastUtils.error('이미지 파일만 선택 가능합니다. (jpg, png, webp, gif)');
+      input.value = '';
+      return;
     }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const imageUrl = event.target?.result as string | undefined;
+      if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.startsWith('data:')) {
+        ToastUtils.error('이미지를 불러올 수 없습니다.');
+        return;
+      }
+      setCropArea({ x: 0, y: 0, size: 0 });
+      setSelectedImage(imageUrl);
+      setShowImageUpload(false);
+      setShowCropModal(true);
+    };
+    reader.onerror = () => {
+      ToastUtils.error('이미지를 읽는 중 오류가 발생했습니다.');
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
   };
 
   const handleCropConfirm = () => {
@@ -515,15 +532,25 @@ function MypagePageContent() {
   };
 
   const handleImageLoad = () => {
-    if (imageRef.current) {
-      const rect = imageRef.current.getBoundingClientRect();
-      const size = Math.min(rect.width, rect.height) * 0.6;
+    if (!imageRef.current) return;
+    const setCropCentered = () => {
+      if (!imageRef.current) return;
+      const w = imageRef.current.offsetWidth;
+      const h = imageRef.current.offsetHeight;
+      if (w <= 0 || h <= 0) {
+        setTimeout(setCropCentered, 50);
+        return;
+      }
+      const size = Math.min(w, h) * 0.6;
       setCropArea({
-        x: (rect.width - size) / 2,
-        y: (rect.height - size) / 2,
+        x: (w - size) / 2,
+        y: (h - size) / 2,
         size,
       });
-    }
+    };
+    requestAnimationFrame(() => {
+      requestAnimationFrame(setCropCentered);
+    });
   };
 
   const CROP_MIN_SIZE = 80;
@@ -1269,12 +1296,12 @@ function MypagePageContent() {
         </div>
       )}
 
-      {showCropModal && selectedImage && (
+      {showCropModal && selectedImage && typeof document !== 'undefined' && createPortal(
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 100,
+            zIndex: 10000,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -1355,13 +1382,13 @@ function MypagePageContent() {
                   onMouseDown={handleResizeHandleMouseDown}
                   style={{
                     position: 'absolute',
-                    right: 2,
-                    bottom: 2,
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    background: darkMode ? '#3A3934' : '#111',
-                    border: '2px solid #fff',
+                    right: 0,
+                    bottom: 0,
+                    width: 12,
+                    height: 12,
+                    borderRight: '2px solid rgba(255,255,255,0.9)',
+                    borderBottom: '2px solid rgba(255,255,255,0.9)',
+                    borderRadius: '0 0 4px 0',
                     cursor: 'nwse-resize',
                     boxSizing: 'border-box',
                   }}
@@ -1409,7 +1436,8 @@ function MypagePageContent() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {showPasswordVerifyModal && passwordVerifyTarget && (
