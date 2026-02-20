@@ -218,10 +218,7 @@ function MypagePageContent() {
     // 사용자 정보 가져오기
     mypageApi.getMypage()
       .then(({ data }) => {
-        console.log('[MyPage] getMyInfo raw response:', data);
-        console.log('[MyPage] data.data:', data?.data);
         const userData = data?.data as UserInfo | undefined;
-        console.log('[MyPage] youtubeConnected:', userData?.youtubeConnected);
         if (userData) {
           setUser(userData);
           setProfileImage(userData.profileImage || null);
@@ -443,7 +440,7 @@ function MypagePageContent() {
       ToastUtils.success(PWLS_WITHDRAWAL_GUIDE);
       setShowPwlsWithdrawalModal(false);
       setPwlsWithdrawalLoading(false);
-      router.push('/');
+      window.location.href = '/';
     } catch (err) {
       const message = err instanceof Error ? err.message : '패스워드리스 해지에 실패했습니다.';
       ToastUtils.error(message);
@@ -1053,8 +1050,6 @@ function MypagePageContent() {
                                 setInquiryDetail(null);
                                 mypageApi.getInquiryDetail(item.inquiryId)
                                   .then(({ data }) => {
-                                    console.log('[InquiryDetail] raw API response:', data);
-                                    console.log('[InquiryDetail] data.data:', data?.data);
                                     const detail = data?.data as {
                                       title: string;
                                       inquiryType: string;
@@ -1066,7 +1061,6 @@ function MypagePageContent() {
                                       adminComment?: string;
                                       commentCreatedAt?: string;
                                     } | undefined;
-                                    console.log('[InquiryDetail] fileUrl:', detail?.fileUrl);
                                     setInquiryDetail(detail ?? null);
                                   })
                                   .catch(() => {
