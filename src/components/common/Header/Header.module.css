@@ -82,11 +82,39 @@
   color: #111;
 }
 
+/* 선택되지 않은 카테고리: 채도 유지, 명도 낮춤 (R200 G198 B200) */
+.navLinkInactive {
+  font-family: "Monda", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  padding: 8px 12px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: rgb(200, 198, 200);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.navLinkInactive:hover {
+  background: #f5f5f5;
+  color: #111;
+}
+
 :global(html.dark) .navLink {
   color: #A19E94;
 }
 
 :global(html.dark) .navLink:hover {
+  background: #2E2E2C;
+  color: #B5B3A7;
+}
+
+:global(html.dark) .navLinkInactive {
+  color: rgb(200, 198, 200);
+}
+
+:global(html.dark) .navLinkInactive:hover {
   background: #2E2E2C;
   color: #B5B3A7;
 }
