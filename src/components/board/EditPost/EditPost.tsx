@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '@/store';
+import { setCurrentBoardCategory } from '@/store/slices/uiSlice';
 import { boardApi } from '@/api/boardApi';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
@@ -50,6 +53,7 @@ const COMMUNITY_ALLOWED_EXT = /\.(jpe?g|png|webp|pdf|txt|docx?|zip)$/i;
 
 export default function EditPost({ category, boardId }: EditPostProps) {
   const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -267,6 +271,17 @@ export default function EditPost({ category, boardId }: EditPostProps) {
       .catch(() => ToastUtils.error('글을 불러올 수 없습니다'))
       .finally(() => setFetching(false));
   }, [boardId, category]);
+
+  // 게시글 수정 페이지에서도 헤더 네비에 현재 카테고리 active 표시
+  useEffect(() => {
+    const slug = resolvedCategory?.toLowerCase() ?? null;
+    if (slug) {
+      dispatch(setCurrentBoardCategory(slug));
+    }
+    return () => {
+      dispatch(setCurrentBoardCategory(null));
+    };
+  }, [resolvedCategory, dispatch]);
 
   const handleYoutubeUrlBlur = () => {
     const trimmed = youtubeUrl.trim();
