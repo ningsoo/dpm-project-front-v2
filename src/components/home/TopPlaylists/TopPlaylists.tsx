@@ -18,7 +18,7 @@ export default function TopPlaylists() {
 
   useEffect(() => {
     boardApi
-      .getBoardByCategory('PLAYLISTS')
+      .getHotMainBoard('PLAYLISTS')
       .then(({ data }) => {
         const list = extractBoardListFromResponse(data);
         setPosts(list.slice(0, 8));

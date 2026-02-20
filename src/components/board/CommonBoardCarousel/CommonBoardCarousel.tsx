@@ -48,7 +48,7 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
 
   const fetchPosts = useCallback(async () => {
     try {
-      const { data } = await boardApi.getBoardByCategory(category);
+      const { data } = await boardApi.getHotCategoryBoard(category);
       const list = extractBoardListFromResponse(data);
       setPosts(list);
     } catch {
