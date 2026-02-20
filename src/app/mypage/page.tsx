@@ -4,7 +4,7 @@ import { Suspense, useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
-import { Key, User, Plus, Search, Pencil, Heart, X, Check, Unplug } from 'lucide-react';
+import { KeyRound, UserCog, Plus, Search, Pencil, Heart, X, Check, Unplug } from 'lucide-react';
 import { AppDispatch, RootState } from '@/store';
 import { authApi } from '@/api/authApi';
 import { mypageApi } from '@/api/mypageApi';
@@ -744,7 +744,7 @@ function MypagePageContent() {
               setShowPasswordVerifyModal(true);
             }}
           >
-            <Key size={22} />
+            <KeyRound size={22} />
           </button>
           <button
             type="button"
@@ -755,7 +755,7 @@ function MypagePageContent() {
               setShowPasswordVerifyModal(true);
             }}
           >
-            <User size={22} />
+            <UserCog size={22} />
           </button>
           {user?.passwordless === true && (
             <button

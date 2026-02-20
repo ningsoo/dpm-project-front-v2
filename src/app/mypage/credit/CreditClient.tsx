@@ -231,8 +231,8 @@ export default function CreditClient() {
 
   if (!initialized || loading) {
     return (
-      <div className={styles.wrap}>
-        <p>로딩 중...</p>
+      <div className={creditStyles.spinnerWrap}>
+        <div className={creditStyles.spinner} />
       </div>
     );
   }
@@ -248,8 +248,8 @@ export default function CreditClient() {
 
   if (queryValid !== true || changeAmount == null || amount == null) {
     return (
-      <div className={styles.wrap}>
-        <p>로딩 중...</p>
+      <div className={creditStyles.spinnerWrap}>
+        <div className={creditStyles.spinner} />
       </div>
     );
   }
