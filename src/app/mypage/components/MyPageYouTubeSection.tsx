@@ -220,58 +220,41 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
             <button
               type="button"
               onClick={() => setShowYouTubePlaylistModal(true)}
+              className={styles.playlistActionBtn}
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '8px 16px',
                 background: darkMode ? '#3A3934' : '#111',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 8,
-                cursor: 'pointer',
-                fontSize: 14,
-                fontWeight: 500,
               }}
             >
               <Plus size={18} />
               등록
             </button>
-            {playlists.length > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsDeleteMode(!isDeleteMode);
-                  if (isDeleteMode) {
-                    setPlaylistToDelete(null);
-                  }
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '8px 16px',
-                  background: isDeleteMode ? '#A6534F' : '#666',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: 14,
-                  fontWeight: 500,
-                  transition: 'background 0.2s',
-                }}
-              >
-                <Trash2 size={18} />
-                {isDeleteMode ? '완료' : '관리'}
-              </button>
-            )}
+            <button
+              type="button"
+              disabled={playlistsLoading || playlists.length === 0}
+              onClick={() => {
+                if (playlistsLoading || playlists.length === 0) return;
+                setIsDeleteMode(!isDeleteMode);
+                if (isDeleteMode) {
+                  setPlaylistToDelete(null);
+                }
+              }}
+              className={styles.playlistActionBtn}
+              style={{
+                background: isDeleteMode ? '#A6534F' : (darkMode ? '#3A3934' : '#111'),
+                cursor: playlistsLoading || playlists.length === 0 ? 'not-allowed' : 'pointer',
+                opacity: playlistsLoading || playlists.length === 0 ? 0.5 : 1,
+              }}
+            >
+              <Trash2 size={18} />
+              {isDeleteMode ? '완료' : '관리'}
+            </button>
           </div>
-          {playlists.length > CARDS_PER_VIEW && (
+          {(playlistsLoading || playlists.length > CARDS_PER_VIEW) && (
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 type="button"
                 onClick={slidePrev}
-                disabled={sliderIndex === 0}
+                disabled={playlistsLoading || sliderIndex === 0}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -281,13 +264,13 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
                   background: darkMode ? '#242422' : '#fff',
                   border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
                   borderRadius: '50%',
-                  cursor: sliderIndex === 0 ? 'not-allowed' : 'pointer',
+                  cursor: playlistsLoading || sliderIndex === 0 ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s',
-                  opacity: sliderIndex === 0 ? 0.4 : 1,
+                  opacity: playlistsLoading || sliderIndex === 0 ? 0.4 : 1,
                   color: darkMode ? '#B5B3A7' : undefined,
                 }}
                 onMouseEnter={(e) => {
-                  if (sliderIndex === 0) return;
+                  if (playlistsLoading || sliderIndex === 0) return;
                   e.currentTarget.style.background = darkMode ? '#2E2E2C' : '#f5f5f5';
                   e.currentTarget.style.borderColor = darkMode ? '#8A877D' : '#999';
                 }}
@@ -301,7 +284,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
               <button
                 type="button"
                 onClick={slideNext}
-                disabled={sliderIndex >= maxSliderIndex}
+                disabled={playlistsLoading || sliderIndex >= maxSliderIndex}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -311,13 +294,13 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
                   background: darkMode ? '#242422' : '#fff',
                   border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
                   borderRadius: '50%',
-                  cursor: sliderIndex >= maxSliderIndex ? 'not-allowed' : 'pointer',
+                  cursor: playlistsLoading || sliderIndex >= maxSliderIndex ? 'not-allowed' : 'pointer',
                   transition: 'all 0.2s',
-                  opacity: sliderIndex >= maxSliderIndex ? 0.4 : 1,
+                  opacity: playlistsLoading || sliderIndex >= maxSliderIndex ? 0.4 : 1,
                   color: darkMode ? '#B5B3A7' : undefined,
                 }}
                 onMouseEnter={(e) => {
-                  if (sliderIndex >= maxSliderIndex) return;
+                  if (playlistsLoading || sliderIndex >= maxSliderIndex) return;
                   e.currentTarget.style.background = darkMode ? '#2E2E2C' : '#f5f5f5';
                   e.currentTarget.style.borderColor = darkMode ? '#8A877D' : '#999';
                 }}
