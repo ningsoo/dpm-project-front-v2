@@ -4,6 +4,8 @@ interface UiState {
   darkMode: boolean;
   unreadMessageCount: number;
   unreadNotificationCount: number;
+  /** 게시글 상세/수정 페이지에서 현재 게시글의 카테고리 (헤더 네비 active 표시용) */
+  currentBoardCategory: string | null;
 }
 
 const initialState: UiState = {
@@ -12,6 +14,7 @@ const initialState: UiState = {
   darkMode: false,
   unreadMessageCount: 0,
   unreadNotificationCount: 0,
+  currentBoardCategory: null,
 };
 
 const uiSlice = createSlice({
@@ -36,8 +39,17 @@ const uiSlice = createSlice({
     setUnreadNotificationCount: (state, action: PayloadAction<number>) => {
       state.unreadNotificationCount = action.payload;
     },
+    setCurrentBoardCategory: (state, action: PayloadAction<string | null>) => {
+      state.currentBoardCategory = action.payload;
+    },
   },
 });
 
-export const { toggleDarkMode, setDarkMode, setUnreadMessageCount, setUnreadNotificationCount } = uiSlice.actions;
+export const {
+  toggleDarkMode,
+  setDarkMode,
+  setUnreadMessageCount,
+  setUnreadNotificationCount,
+  setCurrentBoardCategory,
+} = uiSlice.actions;
 export default uiSlice.reducer;

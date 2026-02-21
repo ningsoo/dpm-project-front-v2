@@ -4,8 +4,9 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { Heart, Eye, MoreVertical } from 'lucide-react';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store';
+import { setCurrentBoardCategory } from '@/store/slices/uiSlice';
 import { boardApi } from '@/api/boardApi';
 import { s3Api } from '@/api/s3Api';
 import { ToastUtils } from '@/utils/toastUtils';
@@ -19,6 +20,7 @@ import PlaylistDetailSection from './PlaylistDetailSection';
 import DonationModal from './DonationModal';
 import MessageSendModal from './MessageSendModal';
 import { PopIcon } from '@/assets/site/paths';
+import { MailIcon } from '@/assets/site/MailIcon';
 import defaultProfileImg from '@/assets/site/profile.png';
 import styles from '../BoardFormLayout/BoardFormLayout.module.css';
 import postDetailStyles from './PostDetail.module.css';
@@ -59,6 +61,7 @@ interface PostDetailProps {
 export default function PostDetail({ category, boardId }: PostDetailProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const dispatch = useDispatch<AppDispatch>();
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
 
   const [post, setPost] = useState<Post | null>(null);
@@ -140,6 +143,16 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
     return () => controller.abort();
   }, [boardId, retryTrigger]);
+
+  // 게시글 로드 시 헤더 네비에 현재 카테고리 active 표시용 (로딩 중에는 진입 카테고리 유지)
+  useEffect(() => {
+    if (!post) return; // 로딩 중에는 기존 값 유지
+    const cat = (post.categoryType ?? post.category ?? category).toString().toLowerCase();
+    dispatch(setCurrentBoardCategory(cat));
+    return () => {
+      dispatch(setCurrentBoardCategory(null));
+    };
+  }, [post, category, dispatch]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -361,8 +374,8 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
         </div>
       </div>
 
-      <div className={styles.authorRow}>
-        <div className={postDetailStyles.authorInfo}>
+      <section className={postDetailStyles.profileCard}>
+        <div className={postDetailStyles.profileCardAvatarWrap}>
           <span className={postDetailStyles.avatar}>
             <img
               src={post.profileImage || defaultProfileImg.src}
@@ -371,58 +384,80 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
               style={!post.profileImage ? { objectFit: 'contain' } : undefined}
             />
           </span>
+        </div>
+        <div className={postDetailStyles.profileCardText}>
           <div className={styles.menuWrapper} ref={nicknameMenuRef}>
-          {isAuthor ? (
-            <span className={styles.author}>{post.nickname || '—'}</span>
-          ) : (
+            {isAuthor ? (
+              <span className={postDetailStyles.author}>{post.nickname || '—'}</span>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className={`${postDetailStyles.author} ${postDetailStyles.authorBtn}`}
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      setShowLoginRequiredModal(true);
+                      return;
+                    }
+                    setNicknameMenuOpen((p) => !p);
+                  }}
+                >
+                  {post.nickname || '—'}
+                </button>
+                {nicknameMenuOpen && isAuthenticated && post.userId != null && (
+                  <div className={styles.menuDropdown}>
+                    <button
+                      className={styles.menuItem}
+                      onClick={() => {
+                        setNicknameMenuOpen(false);
+                        setShowMessageModal(true);
+                      }}
+                    >
+                      쪽지
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+        <div className={postDetailStyles.profileCardActions}>
+          {!isAuthor && post.userId != null && (
             <>
               <button
                 type="button"
-                className={`${styles.author} ${styles.authorAsButton}`}
+                className={postDetailStyles.profileCardIconLink}
                 onClick={() => {
                   if (!isAuthenticated) {
                     setShowLoginRequiredModal(true);
                     return;
                   }
-                  setNicknameMenuOpen((p) => !p);
+                  setShowMessageModal(true);
                 }}
+                aria-label="쪽지 보내기"
+                title="쪽지 보내기"
               >
-                {post.nickname || '—'}
+                <MailIcon size={20} />
               </button>
-              {nicknameMenuOpen && isAuthenticated && post.userId != null && (
-                <div className={styles.menuDropdown}>
-                  <button
-                    className={styles.menuItem}
-                    onClick={() => {
-                      setNicknameMenuOpen(false);
-                      setShowMessageModal(true);
-                    }}
-                  >
-                    쪽지
-                  </button>
-                </div>
-              )}
+              <button
+                type="button"
+                className={postDetailStyles.profileCardIconLink}
+                onClick={() => {
+                  if (!isAuthenticated) {
+                    setShowLoginRequiredModal(true);
+                    return;
+                  }
+                  setShowDonationModal(true);
+                }}
+                aria-label="POP 후원"
+                title="POP 후원"
+              >
+                <PopIcon size={40} />
+              </button>
             </>
           )}
         </div>
-        </div>
-        {!isAuthor && post.userId != null && (
-          <button
-            type="button"
-            className={styles.donateBtn}
-            onClick={() => {
-              if (!isAuthenticated) {
-                setShowLoginRequiredModal(true);
-                return;
-              }
-              setShowDonationModal(true);
-            }}
-            aria-label="POP 후원"
-          >
-            <PopIcon size={32} />
-          </button>
-        )}
-      </div>
+      </section>
 
       {showMessageModal && post.userId != null && (
         <MessageSendModal

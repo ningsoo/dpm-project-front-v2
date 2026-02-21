@@ -70,8 +70,8 @@
 /* 프로필 아바타 (게시글 상세) */
 .avatar {
   flex-shrink: 0;
-  width: 25px;
-  height: 25px;
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
   background: #111;
   display: flex;
@@ -92,7 +92,7 @@
 
 
 .author {
-  font-size: 1rem;
+  font-size: 2rem;
   font-weight: 500;
   color: #333;
   cursor: pointer;
@@ -846,4 +846,80 @@
 
 :global(.dark) .reportTextarea:focus {
   border-color: #9EA2B8;
+}
+
+/* =========================
+   Profile Card (MyPage 스타일)
+========================= */
+
+.profileCard {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 14px 24px;
+  background: #fafafa;
+  border-radius: 12px;
+}
+
+.profileCardAvatarWrap {
+  flex-shrink: 0;
+}
+
+.profileCardText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 45px;
+}
+
+.authorBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.profileCardActions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.profileCardIconLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  background: none;
+  border: none;
+  padding: 4px;
+  transition: color 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+
+.profileCardIconLink:hover {
+  color: #111;
+  transform: scale(1.08);
+}
+
+.profileCardIconLink:focus,
+.profileCardIconLink:focus-visible,
+.profileCardIconLink:active {
+  outline: none;
+  box-shadow: none;
+}
+
+:global(.dark) .profileCard {
+  background: #242422;
+}
+
+:global(.dark) .profileCardIconLink {
+  color: #8A877D;
+}
+
+:global(.dark) .profileCardIconLink:hover {
+  color: #B5B3A7;
 }

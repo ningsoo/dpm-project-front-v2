@@ -53,6 +53,7 @@ export default function Header() {
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const messageBtnRef = useRef<HTMLButtonElement>(null);
   const notificationBtnRef = useRef<HTMLButtonElement>(null);
+  const currentBoardCategory = useSelector((s: RootState) => s.ui.currentBoardCategory);
 
   /* 인증 resolve 후 실제 UI를 opacity 전환으로 노출 (깜빡임 제거) */
   const [contentVisible, setContentVisible] = useState(false);
@@ -139,13 +140,15 @@ export default function Header() {
       <nav className={styles.nav}>
         {CATEGORIES.map((c) => {
           const categoryMatch = pathname?.match(/^\/boards\/category\/([^/]+)/)?.[1]?.toLowerCase();
-          const isOnCategoryPage = !!categoryMatch;
-          const isActive = isOnCategoryPage && categoryMatch === c.slug;
+          const isOnBoardDetail = pathname?.match(/^\/boards\/(?!category)[^/]+(\/edit)?$/);
+          const activeCategory = categoryMatch ?? (isOnBoardDetail ? currentBoardCategory : null);
+          const isOnBoardsContext = !!categoryMatch || !!isOnBoardDetail;
+          const isActive = !!activeCategory && activeCategory === c.slug;
           return (
             <Link
               key={c.slug}
               href={`/boards/category/${c.slug}`}
-              className={isActive ? styles.navLink : isOnCategoryPage ? styles.navLinkInactive : styles.navLink}
+              className={isActive ? styles.navLink : isOnBoardsContext ? styles.navLinkInactive : styles.navLink}
             >
               {c.label}
             </Link>

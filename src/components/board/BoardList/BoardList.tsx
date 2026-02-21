@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store';
+import { setCurrentBoardCategory } from '@/store/slices/uiSlice';
 import { boardApi } from '@/api/boardApi';
 import type { BoardCategory } from '@/api/boardApi';
 import type { BoardListItem } from '@/api/boardTypes';
@@ -45,6 +46,7 @@ function toBoardCategory(category: string): BoardCategory {
 export default function BoardList({ category, viewMode }: BoardListProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const dispatch = useDispatch<AppDispatch>();
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const [posts, setPosts] = useState<BoardListItemWithDisplay[]>([]);
   const [page, setPage] = useState(0);
@@ -55,6 +57,9 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
   const [searchType, setSearchType] = useState<'title' | 'nickname'>('title');
   const [search, setSearch] = useState('');
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  const filterRef = useRef<HTMLDivElement>(null);
 
   /* ── 카테고리 전환 페이드 ── */
   const [contentVisible, setContentVisible] = useState(true);
@@ -68,6 +73,12 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
   const categoryType = toBoardCategory(category);
 
   const shouldShowNumbers = category === 'community' || category === 'reviews';
+
+  // 카테고리 목록 진입 시 헤더 네비에 표시 (게시글 상세 로딩 중에도 유지)
+  useEffect(() => {
+    const slug = category?.toLowerCase() ?? null;
+    if (slug) dispatch(setCurrentBoardCategory(slug));
+  }, [category, dispatch]);
 
   const processAndAssignDisplayNumber = useCallback(
     (list: BoardListItem[], startIndex: number): BoardListItemWithDisplay[] => {
@@ -190,6 +201,18 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
     return () => observer.disconnect();
   }, [loading, loadingMore, last, hasError, fetchMore]);
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setFilterOpen(false);
+      }
+    };
+    if (filterOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [filterOpen]);
+
   const displayedPosts = useMemo(() => {
     const kw = search.trim();
     if (!kw) return posts;
@@ -233,14 +256,48 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
 
       <div className={styles.searchRow}>
         <div className={styles.search}>
-          <select
-            className={styles.filter}
-            value={searchType}
-            onChange={(e) => setSearchType(e.target.value as 'title' | 'nickname')}
-          >
-            <option value="title">제목</option>
-            <option value="nickname">닉네임</option>
-          </select>
+          <div className={styles.filterWrap} ref={filterRef}>
+            <button
+              type="button"
+              className={styles.filter}
+              onClick={() => setFilterOpen((o) => !o)}
+              aria-haspopup="listbox"
+              aria-expanded={filterOpen}
+              aria-label="검색 타입 선택"
+            >
+              {searchType === 'title' ? '제목' : '닉네임'}
+            </button>
+            {filterOpen && (
+              <ul
+                className={styles.filterDropdown}
+                role="listbox"
+                aria-label="검색 타입"
+              >
+                <li
+                  role="option"
+                  aria-selected={searchType === 'title'}
+                  className={`${styles.filterOption} ${searchType === 'title' ? styles.filterOptionSelected : ''}`}
+                  onClick={() => {
+                    setSearchType('title');
+                    setFilterOpen(false);
+                  }}
+                >
+                  제목
+                </li>
+                <li
+                  role="option"
+                  aria-selected={searchType === 'nickname'}
+                  className={`${styles.filterOption} ${searchType === 'nickname' ? styles.filterOptionSelected : ''}`}
+                  onClick={() => {
+                    setSearchType('nickname');
+                    setFilterOpen(false);
+                  }}
+                >
+                  닉네임
+                </li>
+              </ul>
+            )}
+          </div>
           <input
             type="text"
             className={styles.input}

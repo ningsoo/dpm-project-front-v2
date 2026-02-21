@@ -14,119 +14,164 @@ export function PopIcon({ size = 64, className = '' }: PopIconProps) {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className={className}
-      style={ { overflow: 'visible' } }
+      style={{ overflow: 'visible' }}
     >
       <style>
         {`
-          .bubble {
-            transition: transform 0.3s ease-out;
+          @keyframes pop {
+            0%, 100% { transform: translate(0, -14px) scale(1); opacity: 1; }
+            50% { transform: translate(0, -14px) scale(1.1); opacity: 0.8; }
           }
-          svg:hover .bubble {
-            animation: floatUp 0.6s ease-out;
+          
+          @keyframes float {
+            0% { transform: translateY(0) scale(1); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-30px) scale(0.5); opacity: 0; }
           }
-          @keyframes floatUp {
-            0% {
-              transform: translateY(0);
-              opacity: 1;
-            }
-            100% {
-              transform: translateY(-15px);
-              opacity: 0;
-            }
+          
+          .pop-main {
+            animation: none;
           }
+          
+          .bubble-1, .bubble-2, .bubble-3, .bubble-4, .bubble-5 {
+            opacity: 0;
+          }
+          
+          svg:hover .pop-main {
+            animation: pop 2s ease-in-out infinite;
+          }
+          
+          svg:hover .bubble-1 { animation: float 3s ease-in-out infinite; }
+          svg:hover .bubble-2 { animation: float 3s ease-in-out 0.5s infinite; }
+          svg:hover .bubble-3 { animation: float 3s ease-in-out 1s infinite; }
+          svg:hover .bubble-4 { animation: float 3s ease-in-out 1.5s infinite; }
+          svg:hover .bubble-5 { animation: float 3s ease-in-out 2s infinite; }
+          
+          /* Light mode colors */
+          .pop-gradient-light { stop-color: #434343; }
+          .pop-gradient-light-end { stop-color: #555555; }
+          .pop-stem { stroke: #1a1a1a; }
+          .bubble-light { fill: #777777; }
+          .sparkle-light { fill: #999999; }
+          
+          /* Dark mode colors */
+          @media (prefers-color-scheme: dark) {
+            .pop-gradient-light { stop-color: #77746a; }
+            .pop-gradient-light-end { stop-color: #77746a; }
+            .pop-stem { stroke: #77746a; }
+            .bubble-light { fill: #666666; }
+            .sparkle-light { fill: #888888; }
+          }
+          
+          /* Manual dark mode class support */
+          .dark .pop-gradient-light { stop-color: #77746a; }
+          .dark .pop-gradient-light-end { stop-color: #77746a; }
+          .dark .pop-stem { stroke: #77746a; }
+          .dark .bubble-light { fill: #666666; }
+          .dark .sparkle-light { fill: #888888; }
         `}
       </style>
 
-      <circle cx="35" cy="62" r="9" fill="#E0D5F0" />
-      <circle cx="35" cy="62" r="7" fill="#D4C5E8" />
-      <circle cx="35" cy="62" r="4" fill="#F0E6FA" opacity="0.6" />
+      <defs>
+        <linearGradient id="popGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" className="pop-gradient-light" />
+          <stop offset="100%" className="pop-gradient-light-end" />
+        </linearGradient>
+        
+      </defs>
 
-      <circle cx="55" cy="58" r="8" fill="#E0D5F0" />
-      <circle cx="55" cy="58" r="6" fill="#D4C5E8" />
-      <circle cx="55" cy="58" r="3.5" fill="#F0E6FA" opacity="0.6" />
+      {/* Dual eighth notes - solid style with rounded edges */}
+      <g className="pop-main" transform="translate(0, -14)">
+        {/* Left note head - outline only */}
+        <ellipse
+          cx="32"
+          cy="82"
+          rx="11"
+          ry="8"
+          fill="none"
+          stroke="url(#popGradient)"
+          strokeWidth="4.0"
+          transform="rotate(-28 32 88)"
+        />
+        {/* Right note head - outline only */}
+        <ellipse
+          cx="60"
+          cy="78"
+          rx="11"
+          ry="8"
+          fill="none"
+          stroke="url(#popGradient)"
+          strokeWidth="4.0"
+          transform="rotate(-28 65 72)"
+        />
+        {/* Left stem - at right edge of left note head */}
+        <path
+          d="M 39 76.5 L 36 48"
+          stroke="url(#popGradient)"
+          strokeWidth="5"
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Right stem - at right edge of right note head */}
+        <path
+          d="M 69 68.5 L 72 37"
+          stroke="url(#popGradient)"
+          strokeWidth="5"
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Beam - left bottom to right top (ascending) */}
+        {/* <path
+          d="M 36 36 L 68 30"
+          stroke="url(#popGradient)"
+          strokeWidth="5"
+          strokeLinecap="round"
+          fill="none"
+        /> */}
 
-      <path
-        d="M 40 60 Q 42 45, 40 30 Q 39 25, 42 22"
-        stroke="#E0D5F0"
-        strokeWidth="3.5"
-        fill="none"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="M 60 56 Q 63 40, 62 25 Q 61 20, 64 17"
-        stroke="#E0D5F0"
-        strokeWidth="3.5"
-        fill="none"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="M 52 66 Q 54 55, 53 45"
-        stroke="#D4C5E8"
-        strokeWidth="3"
-        fill="none"
-        strokeLinecap="round"
-      />
-
-      <path
-        d="M 40 30 Q 50 28, 62 25"
-        stroke="#D4C5E8"
-        strokeWidth="4"
-        fill="none"
-        strokeLinecap="round"
-        opacity="0.8"
-      />
-
-      <path
-        d="M 40 35 Q 50 33, 62 30"
-        stroke="#F0E6FA"
-        strokeWidth="3"
-        fill="none"
-        strokeLinecap="round"
-        opacity="0.5"
-      />
-
-      <g className="bubble">
-        <circle cx="25" cy="35" r="3.5" fill="#D4C5E8" opacity="0.7" />
-        <circle cx="25" cy="35" r="2" fill="#F0E6FA" opacity="0.8" />
+        {/* Beam - left bottom to right top (ascending) */}
+        <path
+          d="M 38 47 L 70 37"
+          stroke="url(#popGradient)"
+          strokeWidth="5"
+          strokeLinecap="round"
+          fill="none"
+        />
       </g>
 
-      <g className="bubble" style={ { animationDelay: '0.1s' } }>
-        <circle cx="72" cy="40" r="4" fill="#E0D5F0" opacity="0.6" />
-        <circle cx="72" cy="40" r="2.5" fill="#F0E6FA" opacity="0.7" />
+      {/* Floating bubbles */}
+      <g className="bubble-1">
+        <circle cx="50" cy="55" r="6" className="bubble-light" opacity="0.8" />
+        <circle cx="48" cy="53" r="2" fill="white" opacity="0.4" />
       </g>
 
-      <g className="bubble" style={ { animationDelay: '0.05s' } }>
-        <circle cx="68" cy="28" r="3" fill="#D4C5E8" opacity="0.7" />
-        <circle cx="68" cy="28" r="1.5" fill="#F0E6FA" opacity="0.6" />
+      <g className="bubble-2">
+        <circle cx="35" cy="50" r="5" className="bubble-light" opacity="0.7" />
+        <circle cx="34" cy="49" r="1.5" fill="white" opacity="0.4" />
       </g>
 
-      <g className="bubble" style={ { animationDelay: '0.15s' } }>
-        <circle cx="30" cy="50" r="2.5" fill="#F0E6FA" opacity="0.7" />
+      <g className="bubble-3">
+        <circle cx="65" cy="52" r="4.5" className="bubble-light" opacity="0.75" />
+        <circle cx="64" cy="51" r="1.5" fill="white" opacity="0.4" />
       </g>
 
-      <path
-        d="M 20 45 Q 25 43, 30 45"
-        stroke="#D4C5E8"
-        strokeWidth="2"
-        fill="none"
-        strokeLinecap="round"
-        opacity="0.4"
-      />
+      <g className="bubble-4">
+        <circle cx="42" cy="40" r="4" className="bubble-light" opacity="0.65" />
+        <circle cx="41" cy="39" r="1" fill="white" opacity="0.4" />
+      </g>
 
-      <path
-        d="M 70 50 Q 75 48, 80 50"
-        stroke="#F0E6FA"
-        strokeWidth="2"
-        fill="none"
-        strokeLinecap="round"
-        opacity="0.4"
-      />
+      <g className="bubble-5">
+        <circle cx="58" cy="38" r="3.5" className="bubble-light" opacity="0.6" />
+        <circle cx="57" cy="37" r="1" fill="white" opacity="0.4" />
+      </g>
 
-      <circle cx="33" cy="60" r="3" fill="#EBD9F5" opacity="0.7" />
-      <circle cx="53" cy="56" r="2.5" fill="#EBD9F5" opacity="0.7" />
-      <ellipse cx="46" cy="67" rx="2" ry="1.5" fill="#F0E6FA" opacity="0.6" />
+      {/* Sparkles */}
+      <g className="sparkle-light" opacity="0.6">
+        <path d="M 30 32 L 31 34 L 33 35 L 31 36 L 30 38 L 29 36 L 27 35 L 29 34 Z" />
+        <path d="M 70 30 L 71 32 L 73 33 L 71 34 L 70 36 L 69 34 L 67 33 L 69 32 Z" />
+        <path d="M 50 25 L 51 27 L 53 28 L 51 29 L 50 31 L 49 29 L 47 28 L 49 27 Z" />
+      </g>
     </svg>
   );
 }

@@ -101,6 +101,7 @@
   color: #111;
 }
 
+/* 다크모드: 진입한(active) 카테고리는 밝은 색, 비활성은 검정 */
 :global(html.dark) .navLink {
   color: #A19E94;
 }
@@ -111,12 +112,12 @@
 }
 
 :global(html.dark) .navLinkInactive {
-  color: rgb(200, 198, 200);
+  color: #080707;
 }
 
 :global(html.dark) .navLinkInactive:hover {
   background: #2E2E2C;
-  color: #B5B3A7;
+  color: #A19E94;
 }
 
 /* 우측 영역 고정 폭: 로그인/로그아웃/플레이스홀더 동일 → 레이아웃 밀림 방지 */

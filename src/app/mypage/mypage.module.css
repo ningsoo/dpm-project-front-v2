@@ -99,6 +99,21 @@
   color: #111;
 }
 
+/* 플레이리스트 등록/관리 버튼 공통 */
+.playlistActionBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+}
+
 .iconLink:focus,
 .iconLink:focus-visible,
 .iconLink:active {
