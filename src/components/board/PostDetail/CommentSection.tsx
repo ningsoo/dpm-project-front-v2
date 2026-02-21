@@ -6,15 +6,16 @@ import { boardApi } from '@/api/boardApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
 import { formatCreatedDateTimeFull } from '@/utils/createdDateTime';
-import { formatCommentCount } from '@/utils/displayFormatters';
+import { formatCommentCount, formatNickname } from '@/utils/displayFormatters';
 import MessageSendModal from './MessageSendModal';
 import styles from '../BoardFormLayout/BoardFormLayout.module.css';
 
-/** API 응답 댓글 형태 */
+/** API 응답 댓글 형태 (백엔드 isDeleted → JSON deleted) */
 interface CommentFromApi {
   commentId?: number | string;
   userId?: number;
   nickname: string;
+  deleted?: boolean;
   content: string;
   likeCount?: number;
   toggledLike?: boolean;
@@ -28,6 +29,7 @@ interface Comment {
   commentId: string | undefined;
   userId: number | undefined;
   nickname: string;
+  deleted?: boolean;
   content: string;
   likeCount: number;
   toggledLike: boolean;
@@ -69,6 +71,7 @@ function transformComments(apiData: CommentFromApi[]): Comment[] {
       commentId: c.commentId != null ? String(c.commentId) : undefined,
       userId: c.userId,
       nickname: c.nickname,
+      deleted: c.deleted,
       content: c.content,
       likeCount: typeof c.likeCount === 'number' ? c.likeCount : 0,
       toggledLike: c.toggledLike === true,
@@ -106,6 +109,7 @@ export default function CommentSection({
   const [messageModalTarget, setMessageModalTarget] = useState<{
     userId: number;
     nickname: string;
+    deleted?: boolean;
   } | null>(null);
 
   const commentMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -409,7 +413,7 @@ export default function CommentSection({
                     }}
                   >
                     {isCommentAuthor ? (
-                      <span className={styles.commentAuthor}>{c.nickname}</span>
+                      <span className={`${styles.commentAuthor} ${c.deleted ? 'authorDeleted' : ''}`}>{formatNickname(c.nickname, c.deleted, '-')}</span>
                     ) : (
                       <div className={styles.menuWrapper}>
                         <button
@@ -425,7 +429,7 @@ export default function CommentSection({
                             setCommentMenuSource('nickname');
                           }}
                         >
-                          {c.nickname}
+                          <span className={c.deleted ? 'authorDeleted' : ''}>{formatNickname(c.nickname, c.deleted, '-')}</span>
                         </button>
                         {commentMenuOpen === c.id && commentMenuSource === 'nickname' && (
                           <div className={`${styles.menuDropdown} ${styles.menuDropdownRight}`}>
@@ -437,6 +441,7 @@ export default function CommentSection({
                                   setMessageModalTarget({
                                     userId: c.userId!,
                                     nickname: c.nickname,
+                                    deleted: c.deleted,
                                   });
                                 }}
                               >
@@ -507,6 +512,7 @@ export default function CommentSection({
                                     setMessageModalTarget({
                                       userId: c.userId!,
                                       nickname: c.nickname,
+                                      deleted: c.deleted,
                                     });
                                   }}
                                 >
@@ -578,7 +584,7 @@ export default function CommentSection({
           open={!!messageModalTarget}
           onClose={() => setMessageModalTarget(null)}
           targetUserId={messageModalTarget.userId}
-          targetNickname={messageModalTarget.nickname}
+          targetNickname={formatNickname(messageModalTarget.nickname, messageModalTarget.deleted)}
           onLoginRequired={onLoginRequired}
         />
       )}

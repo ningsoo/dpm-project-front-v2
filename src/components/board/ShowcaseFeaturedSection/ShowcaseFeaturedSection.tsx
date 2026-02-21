@@ -10,6 +10,7 @@ import {
   getBoardThumbnailUrl,
   getShowcaseVideoId,
 } from '@/utils/boardThumbnailUtils';
+import { formatNickname } from '@/utils/displayFormatters';
 import styles from './ShowcaseFeaturedSection.module.css';
 
 /** 마운트 후 1프레임 뒤 reveal → 배경 단독 노출(flicker) 방지 */
@@ -191,7 +192,7 @@ export default function ShowcaseFeaturedSection() {
                   >
                     <div className={styles.overlayContent}>
                       <div className={styles.author}>
-                        {post.nickname || '—'}
+                        <span className={post.deleted ? 'authorDeleted' : ''}>{formatNickname(post.nickname, post.deleted, '—')}</span>
                       </div>
                       <div className={styles.title}>{post.title}</div>
                     </div>

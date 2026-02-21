@@ -11,7 +11,7 @@ import {
   getBoardThumbnailUrl,
 } from '@/utils/boardThumbnailUtils';
 import { ChevronLeft, ChevronRight, Heart, Eye } from 'lucide-react';
-import { formatViews } from '@/utils/displayFormatters';
+import { formatViews, formatNickname } from '@/utils/displayFormatters';
 import styles from './SpotlightCarousel.module.css';
 
 const CARD_GAP = 20;
@@ -318,7 +318,7 @@ export default function SpotlightCarousel() {
                           {post.title}
                         </div>
                         <div className={styles.overlayMetaRow}>
-                          <div className={styles.author}>{post.nickname || '—'}</div>
+                          <div className={`${styles.author} ${post.deleted ? 'authorDeleted' : ''}`}>{formatNickname(post.nickname, post.deleted, '—')}</div>
                           <div className={styles.meta}>
                             <span className={styles.metaItem}>
                               <Heart size={14} strokeWidth={2} />

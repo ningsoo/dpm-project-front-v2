@@ -44,6 +44,7 @@ export default function TopPlaylists() {
             }
             title={p.title}
             nickname={p.nickname}
+            deleted={p.deleted}
             profileImage={p.profileImage}
             likeCount={p.likes}
             viewCount={p.views}

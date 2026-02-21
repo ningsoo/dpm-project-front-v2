@@ -11,7 +11,7 @@ import type { BoardCategory } from '@/api/boardApi';
 import type { BoardListItem } from '@/api/boardTypes';
 import { ToastUtils } from '@/utils/toastUtils';
 import { formatCreatedDateTime } from '@/utils/createdDateTime';
-import { formatViews, formatCommentCount } from '@/utils/displayFormatters';
+import { formatViews, formatCommentCount, formatNickname } from '@/utils/displayFormatters';
 import {
   extractPageableInfoFromResponse,
   getBoardThumbnailUrl,
@@ -400,6 +400,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                     thumbnail={thumbnail}
                     title={p.title}
                     nickname={p.nickname}
+                    deleted={p.deleted}
                     profileImage={p.profileImage}
                     likeCount={p.likes}
                     viewCount={p.views}
@@ -434,7 +435,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                       <td>
                         <Link href={`/boards/${p.boardId}`}>{p.title}</Link>
                       </td>
-                      <td>{p.nickname || '—'}</td>
+                      <td className={p.deleted ? 'authorDeleted' : ''}>{formatNickname(p.nickname, p.deleted)}</td>
                       <td>{p.likes ?? 0}</td>
                       {shouldShowNumbers && <td>{formatCommentCount(p.countComment)}</td>}
                       <td>{formatViews(p.views)}</td>
