@@ -70,8 +70,8 @@
 /* 프로필 아바타 (게시글 상세) */
 .avatar {
   flex-shrink: 0;
-  width: 45px;
-  height: 45px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background: #111;
   display: flex;
@@ -849,7 +849,7 @@
 }
 
 /* =========================
-   Profile Card (MyPage 스타일)
+   Profile Card (showcase/spotlight/reviews와 동일 - community/playlists 포함 모든 카테고리 통일)
 ========================= */
 
 .profileCard {
@@ -857,7 +857,7 @@
   gap: 24px;
   align-items: center;
   margin-bottom: 24px;
-  padding: 14px 24px;
+  padding: 24px;
   background: #fafafa;
   border-radius: 12px;
 }
@@ -874,6 +874,21 @@
   min-height: 45px;
 }
 
+/* 프로필 카드 내 닉네임 (showcase/spotlight/reviews와 동일) */
+.profileCard .author {
+  margin: 0 0 4px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #111;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.profileCard .author:hover {
+  color: #000;
+  text-decoration: underline;
+}
+
 .authorBtn {
   background: none;
   border: none;
@@ -888,21 +903,25 @@
   flex-shrink: 0;
 }
 
+/* 액션 버튼 (showcase/spotlight/reviews와 동일 - 박스형) */
 .profileCardIconLink {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 44px;
+  height: 44px;
   color: #555;
-  background: none;
-  border: none;
-  padding: 4px;
-  transition: color 0.2s, transform 0.2s;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 0;
+  transition: background 0.2s, color 0.2s;
   cursor: pointer;
 }
 
 .profileCardIconLink:hover {
+  background: #f0f0f0;
   color: #111;
-  transform: scale(1.08);
 }
 
 .profileCardIconLink:focus,
@@ -916,10 +935,17 @@
   background: #242422;
 }
 
+:global(.dark) .profileCard .author {
+  color: #B5B3A7;
+}
+
 :global(.dark) .profileCardIconLink {
+  background: #242422;
+  border-color: #3A3A38;
   color: #8A877D;
 }
 
 :global(.dark) .profileCardIconLink:hover {
+  background: #2E2E2C;
   color: #B5B3A7;
 }

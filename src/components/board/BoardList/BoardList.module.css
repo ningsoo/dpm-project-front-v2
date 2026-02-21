@@ -70,17 +70,11 @@
 }
 
 .filterOptionSelected {
-  background: #eee;
   font-weight: 500;
 }
 
 .filterOptionSelected:hover {
   background: #e5e5e5;
-}
-
-/* 호버 중일 때는 호버된 항목만 배경 표시, 선택된 항목 배경 제거 */
-.filterDropdown:has(.filterOption:hover) .filterOptionSelected:not(:hover) {
-  background: transparent;
 }
 
 .input {
@@ -483,16 +477,11 @@
 }
 
 :global(.dark) .filterOptionSelected {
-  background: #3a3a38;
   color: #b5b3a7;
 }
 
 :global(.dark) .filterOptionSelected:hover {
   background: #42413b;
-}
-
-:global(.dark) .filterDropdown:has(.filterOption:hover) .filterOptionSelected:not(:hover) {
-  background: transparent;
 }
 
 :global(.dark) .input {

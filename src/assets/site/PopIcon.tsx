@@ -38,6 +38,15 @@ export function PopIcon({ size = 64, className = '' }: PopIconProps) {
             opacity: 0;
           }
           
+          .sparkle-group {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+          }
+          
+          svg:hover .sparkle-group {
+            opacity: 0.6;
+          }
+          
           svg:hover .pop-main {
             animation: pop 2s ease-in-out infinite;
           }
@@ -92,7 +101,7 @@ export function PopIcon({ size = 64, className = '' }: PopIconProps) {
           fill="none"
           stroke="url(#popGradient)"
           strokeWidth="4.0"
-          transform="rotate(-28 32 88)"
+          transform="rotate(-28 35 88)"
         />
         {/* Right note head - outline only */}
         <ellipse
@@ -105,34 +114,27 @@ export function PopIcon({ size = 64, className = '' }: PopIconProps) {
           strokeWidth="4.0"
           transform="rotate(-28 65 72)"
         />
-        {/* Left stem - at right edge of left note head */}
+        {/* Left stem - note head와 접선 방향으로 부드럽게 이어짐 (cubic Bezier) */}
         <path
-          d="M 39 76.5 L 36 48"
+          d="M 39 78 C 38 68 38 58 36 48"
           stroke="url(#popGradient)"
           strokeWidth="5"
           strokeLinecap="round"
+          strokeLinejoin="round"
           fill="none"
         />
-        {/* Right stem - at right edge of right note head */}
+        {/* Right stem - note head와 접선 방향으로 부드럽게 이어짐 (cubic Bezier) */}
         <path
-          d="M 69 68.5 L 72 37"
+          d="M 69 68.8 C 70 65 71 50 72 37"
           stroke="url(#popGradient)"
           strokeWidth="5"
           strokeLinecap="round"
+          strokeLinejoin="round"
           fill="none"
         />
-        {/* Beam - left bottom to right top (ascending) */}
-        {/* <path
-          d="M 36 36 L 68 30"
-          stroke="url(#popGradient)"
-          strokeWidth="5"
-          strokeLinecap="round"
-          fill="none"
-        /> */}
-
-        {/* Beam - left bottom to right top (ascending) */}
+        {/* Beam - stem 상단을 직선으로 연결 */}
         <path
-          d="M 38 47 L 70 37"
+          d="M 36 48 L 72 37"
           stroke="url(#popGradient)"
           strokeWidth="5"
           strokeLinecap="round"
@@ -166,8 +168,8 @@ export function PopIcon({ size = 64, className = '' }: PopIconProps) {
         <circle cx="57" cy="37" r="1" fill="white" opacity="0.4" />
       </g>
 
-      {/* Sparkles */}
-      <g className="sparkle-light" opacity="0.6">
+      {/* Sparkles - 호버 시에만 표시 */}
+      <g className="sparkle-group sparkle-light">
         <path d="M 30 32 L 31 34 L 33 35 L 31 36 L 30 38 L 29 36 L 27 35 L 29 34 Z" />
         <path d="M 70 30 L 71 32 L 73 33 L 71 34 L 70 36 L 69 34 L 67 33 L 69 32 Z" />
         <path d="M 50 25 L 51 27 L 53 28 L 51 29 L 50 31 L 49 29 L 47 28 L 49 27 Z" />

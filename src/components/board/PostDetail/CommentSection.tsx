@@ -93,6 +93,7 @@ export default function CommentSection({
   const [commentText, setCommentText] = useState('');
   const [commentOpen, setCommentOpen] = useState(false);
   const [commentMenuOpen, setCommentMenuOpen] = useState<string | null>(null);
+  const [commentMenuSource, setCommentMenuSource] = useState<'nickname' | 'ellipsis'>('ellipsis');
   const [showCommentDeleteModal, setShowCommentDeleteModal] = useState<string | null>(null);
   const [showCommentReportModal, setShowCommentReportModal] = useState<string | null>(null);
   const [commentReportReason, setCommentReportReason] = useState('');
@@ -400,23 +401,57 @@ export default function CommentSection({
                   id={apiCommentId != null ? `comment-${apiCommentId}` : undefined}
                   className={`${styles.commentItem}${highlightedCommentId === apiCommentId ? ` ${styles.commentItemHighlight}` : ''}`}
                 >
-                  <div className={styles.commentHead}>
+                  <div
+                    className={styles.commentHead}
+                    ref={(el) => {
+                      if (el) commentMenuRefs.current[c.id] = el;
+                      else delete commentMenuRefs.current[c.id];
+                    }}
+                  >
                     {isCommentAuthor ? (
                       <span className={styles.commentAuthor}>{c.nickname}</span>
                     ) : (
-                      <button
-                        type="button"
-                        className={styles.commentAuthorBtn}
-                        onClick={() => {
-                          if (!isAuthenticated) {
-                            onLoginRequired();
-                            return;
-                          }
-                          setCommentMenuOpen(commentMenuOpen === c.id ? null : c.id);
-                        }}
-                      >
-                        {c.nickname}
-                      </button>
+                      <div className={styles.menuWrapper}>
+                        <button
+                          type="button"
+                          className={styles.commentAuthorBtn}
+                          onClick={() => {
+                            if (!isAuthenticated) {
+                              onLoginRequired();
+                              return;
+                            }
+                            const nextOpen = commentMenuOpen === c.id && commentMenuSource === 'nickname' ? null : c.id;
+                            setCommentMenuOpen(nextOpen);
+                            setCommentMenuSource('nickname');
+                          }}
+                        >
+                          {c.nickname}
+                        </button>
+                        {commentMenuOpen === c.id && commentMenuSource === 'nickname' && (
+                          <div className={`${styles.menuDropdown} ${styles.menuDropdownRight}`}>
+                            {c.userId != null && (
+                              <button
+                                className={styles.menuItem}
+                                onClick={() => {
+                                  setCommentMenuOpen(null);
+                                  setMessageModalTarget({
+                                    userId: c.userId!,
+                                    nickname: c.nickname,
+                                  });
+                                }}
+                              >
+                                쪽지
+                              </button>
+                            )}
+                            <button
+                              className={styles.menuItem}
+                              onClick={() => handleCommentReportClick(c.id)}
+                            >
+                              신고
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     )}
                     <button
                       type="button"
@@ -430,24 +465,20 @@ export default function CommentSection({
                     <span className={styles.commentDate}>
                       {formatCreatedDateTimeFull(c.createdDateTime)}
                     </span>
-                    <div
-                      className={styles.menuWrapper}
-                      ref={(el) => {
-                        if (el) commentMenuRefs.current[c.id] = el;
-                        else delete commentMenuRefs.current[c.id];
-                      }}
-                    >
+                    <div className={styles.menuWrapper}>
                       <button
                         type="button"
                         className={styles.iconBtn}
-                        onClick={() =>
-                          setCommentMenuOpen(commentMenuOpen === c.id ? null : c.id)
-                        }
+                        onClick={() => {
+                          const nextOpen = commentMenuOpen === c.id && commentMenuSource === 'ellipsis' ? null : c.id;
+                          setCommentMenuOpen(nextOpen);
+                          setCommentMenuSource('ellipsis');
+                        }}
                         style={{ padding: '2px 6px' }}
                       >
                         <MoreVertical size={16} />
                       </button>
-                      {commentMenuOpen === c.id && (
+                      {commentMenuOpen === c.id && commentMenuSource === 'ellipsis' && (
                         <div className={styles.menuDropdown}>
                           {isCommentAuthor ? (
                             <>
