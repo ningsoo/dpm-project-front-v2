@@ -257,11 +257,7 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
         <div className={`${styles.skeletonLayer} ${showSkeleton ? styles.skeletonVisible : styles.skeletonHidden}`}>
           <div className={styles.skeletonTrack}>
             {[0, 1, 2].map((i) => (
-              <div
-                key={`skeleton-${i}`}
-                className={styles.skeletonCard}
-                style={cardWidth ? { width: cardWidth } : undefined}
-              />
+              <div key={`skeleton-${i}`} className={styles.skeletonCard} />
             ))}
           </div>
         </div>
