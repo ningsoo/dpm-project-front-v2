@@ -242,15 +242,13 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
               style={{
                 background: isDeleteMode ? '#A6534F' : (darkMode ? '#3A3934' : '#111'),
                 cursor: playlistsLoading || playlists.length === 0 ? 'not-allowed' : 'pointer',
-                opacity: playlistsLoading || playlists.length === 0 ? 0.5 : 1,
               }}
             >
               <Trash2 size={18} />
               {isDeleteMode ? '완료' : '관리'}
             </button>
           </div>
-          {(playlistsLoading || playlists.length > CARDS_PER_VIEW) && (
-            <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, minWidth: 88 }}>
               <button
                 type="button"
                 onClick={slidePrev}
@@ -312,7 +310,6 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
                 <ChevronRight size={20} />
               </button>
             </div>
-          )}
         </div>
         <div className={styles.fadeWrap}>
           {/* 스켈레톤 카드 레이어 */}

@@ -103,8 +103,12 @@
 .playlistActionBtn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  padding: 8px 16px;
+  min-width: 84px;
+  height: 34px;
+  padding: 0 16px;
+  box-sizing: border-box;
   color: #fff;
   border: none;
   border-radius: 8px;
@@ -112,6 +116,24 @@
   font-size: 14px;
   font-weight: 500;
   font-family: inherit;
+}
+
+/* 스켈레톤용 등록/관리 버튼 틀 (실제 버튼과 동일 크기) */
+.skeletonPlaylistActionBtn {
+  width: 84px;
+  height: 34px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  background: linear-gradient(90deg, #eee 25%, #e0e0e0 50%, #eee 75%);
+  background-size: 800px 100%;
+  animation: mypageShimmer 1.5s infinite ease-in-out;
+}
+
+:global(.dark) .skeletonPlaylistActionBtn {
+  background: linear-gradient(90deg, #2e2e2c 25%, #3a3a38 50%, #2e2e2c 75%);
+  background-size: 800px 100%;
+  animation: mypageShimmer 1.5s infinite ease-in-out;
 }
 
 .iconLink:focus,
@@ -162,7 +184,11 @@
   padding: 16px 0;
   font-size: 0.95rem;
   color: #444;
-  transition: opacity 0.45s ease;
+  transition: opacity 0.4s ease;
+}
+
+.skeletonOverlay {
+  will-change: opacity;
 }
 
 .contentVisible {
@@ -1868,7 +1894,7 @@
   gap: 8px;
 }
 
-/* 초기 로딩 프로필 스켈레톤 */
+/* 초기 로딩 프로필 스켈레톤 (profile과 동일한 레이아웃) */
 .skeletonProfile {
   display: flex;
   align-items: flex-start;
@@ -1876,6 +1902,7 @@
   padding: 24px;
   background: #fafafa;
   border-radius: 12px;
+  margin-top: 10px;
   margin-bottom: 24px;
 }
 
@@ -1944,7 +1971,7 @@
   pointer-events: none;
 }
 
-/* 탭 스켈레톤 */
+/* 탭 스켈레톤 (tabs와 동일한 레이아웃) */
 .skeletonTabs {
   display: flex;
   flex-wrap: wrap;
@@ -1963,12 +1990,13 @@
   animation: mypageShimmer 1.5s infinite ease-in-out;
 }
 
-/* 콘텐츠 영역 스켈레톤 */
+/* 콘텐츠 영역 스켈레톤 (content와 동일한 레이아웃) */
 .skeletonContent {
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 16px 0;
+  min-height: 200px;
 }
 
 .skeletonContentRow {
@@ -1980,7 +2008,7 @@
 }
 
 :global(.dark) .skeletonTabs {
-  border-bottom-color: #333;
+  border-bottom-color: #3A3A38;
 }
 
 :global(.dark) .skeletonTab {
