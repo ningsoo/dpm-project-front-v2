@@ -1,0 +1,1017 @@
+/* ============================================= */
+/* Layout                                        */
+/* ============================================= */
+
+.adminWrap {
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 34px 24px 24px;
+  gap: 24px;
+  min-height: calc(100vh - 64px - 120px);
+}
+
+/* ============================================= */
+/* Sidebar                                       */
+/* ============================================= */
+
+.sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 88px;
+  align-self: flex-start;
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 20px 12px;
+}
+
+.sidebarTitle {
+  margin: 0 0 16px;
+  padding: 0 8px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navItem,
+.navItemActive {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #666;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  font-family: inherit;
+  text-align: left;
+}
+
+.navItem:hover {
+  background: #eee;
+  color: #333;
+}
+
+.navItemActive {
+  background: #111;
+  color: #fff;
+}
+
+/* ============================================= */
+/* Content Area                                  */
+/* ============================================= */
+
+.contentArea {
+  flex: 0 0 800px;
+  min-width: 0;
+  width: 800px;
+  max-width: 100%;
+}
+
+.sectionTitle {
+  margin: 0 0 20px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.sectionContent {
+  transition: opacity 0.15s ease;
+}
+
+.contentVisible {
+  opacity: 1;
+}
+
+.contentHidden {
+  opacity: 0;
+}
+
+/* ============================================= */
+/* Stat Cards (Dashboard)                        */
+/* ============================================= */
+
+/* 대시보드 전용: 테이블바 전체 너비(800px)에 맞춰 4등분 */
+.dashContent {
+  width: 100%;
+}
+
+/* 카드 영역: 정확히 800px, 4등분 */
+.dashCardsWrap {
+  width: 800px;
+  max-width: 100%;
+  margin-bottom: 24px;
+}
+
+.statCards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.statCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: #fafafa;
+  border-radius: 12px;
+  border: 1px solid #eee;
+}
+
+.statIconWrap {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #f0f0f0;
+  color: #333;
+  flex-shrink: 0;
+}
+
+.statInfo {
+  min-width: 0;
+}
+
+.statValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.statLabel {
+  font-size: 0.82rem;
+  color: #666;
+  margin: 4px 0 0;
+}
+
+/* ============================================= */
+/* Filter Bar                                    */
+/* ============================================= */
+
+.filterBar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.searchInput {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  width: 240px;
+  font-family: inherit;
+  color: #333;
+  background: #fff;
+}
+
+.searchInput::placeholder {
+  color: #999;
+}
+
+.filterSelect {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  font-family: inherit;
+  color: #333;
+  cursor: pointer;
+}
+
+.filterBtn {
+  padding: 8px 16px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.filterBtn:hover {
+  background: #333;
+}
+
+/* ============================================= */
+/* Grid Table                                    */
+/* ============================================= */
+
+.tableGrid {
+  display: grid;
+  align-items: center;
+}
+
+.tableHeader {
+  grid-column: 1 / -1;
+  display: grid;
+  border-bottom: 2px solid #ddd;
+  font-weight: 600;
+  font-size: 13px;
+  color: #333;
+}
+
+.tableHeader > div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  padding: 14px 16px;
+  text-align: center !important;
+  white-space: nowrap;
+  background: #fafafa;
+}
+
+.tableHeader > div:first-child {
+  border-top-left-radius: 12px;
+}
+
+.tableHeader > div:last-child {
+  border-top-right-radius: 12px;
+}
+
+.tableRow {
+  grid-column: 1 / -1;
+  display: grid;
+  border-bottom: 1px solid #eee;
+  transition: background 0.15s;
+}
+
+.tableRow:hover {
+  background: #fafafa;
+}
+
+.tableCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 10px;
+  font-size: 13px;
+  text-align: center !important;
+  color: #444;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tableCellLeft {
+  composes: tableCell;
+  text-align: center !important;
+}
+
+/* Section-specific grid columns (전부 합계 800px) */
+.usersGrid       { grid-template-columns: 50px 200px 100px 100px 100px 100px 150px; }  /* 800 */
+.boardsGrid      { grid-template-columns: 50px 120px 280px 200px 150px; }              /* 800 */
+.commentsGrid    { grid-template-columns: 50px 150px 300px 150px 150px; }              /* 800 */
+.inquiriesGrid   { grid-template-columns: 50px 120px 280px 200px 150px; }              /* 800 */
+.reportsGrid     { grid-template-columns: 50px 100px 250px 100px 300px; }              /* 800 */
+.penaltiesGrid       { grid-template-columns: 50px 150px 300px 150px 150px; }              /* 800 */
+.settlementsGrid     { grid-template-columns: 50px 150px 300px 150px 150px; }              /* 800 */
+.cancelRequestsTableWrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #eee;
+}
+
+.cancelRequestsGrid  { grid-template-columns: 50px 150px 150px 130px 240px 80px; width: 800px; } /* 800: No|요청자|수혜자|후원금액|요청일시|승인 */
+
+.cellDateTime {
+  flex-direction: column !important;
+  align-items: center !important;
+  white-space: normal !important;
+  gap: 2px;
+}
+
+/* ============================================= */
+/* Status Badges                                 */
+/* ============================================= */
+
+.statusBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.statusPending {
+  background: #f5f5f5;
+  color: #757575;
+}
+
+.statusActive {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.statusProcessing {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.statusCompleted {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.statusSuspended {
+  background: #fce4ec;
+  color: #A6534F;
+}
+
+.statusRejected {
+  background: #fce4ec;
+  color: #A6534F;
+}
+
+/* ============================================= */
+/* Action Buttons                                */
+/* ============================================= */
+
+.actionBtn {
+  padding: 5px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid;
+  transition: background 0.2s, color 0.2s;
+  white-space: nowrap;
+  font-family: inherit;
+  background: transparent;
+}
+
+.deleteBtn {
+  composes: actionBtn;
+  color: #A6534F;
+  border-color: #A6534F;
+}
+
+.deleteBtn:hover {
+  background: #A6534F;
+  color: #fff;
+}
+
+.approveBtn {
+  composes: actionBtn;
+  color: #2e7d32;
+  border-color: #2e7d32;
+}
+
+.approveBtn:hover {
+  background: #2e7d32;
+  color: #fff;
+}
+
+.processedLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+}
+
+.manageBtn {
+  composes: actionBtn;
+  color: #555;
+  border-color: #bbb;
+}
+
+.manageBtn:hover {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+
+.detailBtn {
+  composes: actionBtn;
+  color: #1976d2;
+  border-color: #1976d2;
+}
+
+.detailBtn:hover {
+  background: #1976d2;
+  color: #fff;
+}
+
+/* 문의관리 상세 버튼: UI 빨간색 */
+.inquiriesDetailBtn {
+  composes: actionBtn;
+  color: #A6534F;
+  border-color: #A6534F;
+}
+
+.inquiriesDetailBtn:hover {
+  background: #A6534F;
+  color: #fff;
+}
+
+/* ============================================= */
+/* Pagination                                    */
+/* ============================================= */
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin-top: 20px;
+  padding: 12px 0;
+}
+
+.pageBtn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  font-family: inherit;
+  color: #444;
+}
+
+.pageBtn:hover:not(:disabled) {
+  border-color: #111;
+  color: #111;
+}
+
+.pageBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageBtnActive {
+  composes: pageBtn;
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+
+/* ============================================= */
+/* Fade Animation                                */
+/* ============================================= */
+
+.fadeWrap {
+  display: grid;
+}
+
+.fadeLayer {
+  grid-area: 1 / 1;
+  transition: opacity 0.35s ease;
+}
+
+.fadeLayerVisible {
+  opacity: 1;
+}
+
+.fadeLayerHidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ============================================= */
+/* Skeleton                                      */
+/* ============================================= */
+
+@keyframes adminShimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeletonBar {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #eee 25%, #e0e0e0 50%, #eee 75%);
+  background-size: 800px 100%;
+  animation: adminShimmer 1.5s infinite ease-in-out;
+}
+
+
+/* ============================================= */
+/* Modal                                         */
+/* ============================================= */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalCard {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 560px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modalTitle {
+  margin: 0 0 20px;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: background 0.2s, color 0.2s;
+}
+
+.closeBtn:hover {
+  background: #f5f5f5;
+  color: #111;
+}
+
+.modalField {
+  margin-bottom: 16px;
+}
+
+.modalLabel {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #444;
+}
+
+.modalInput {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #333;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.modalTextarea {
+  composes: modalInput;
+  min-height: 100px;
+  resize: none;
+}
+
+.modalSelect {
+  composes: modalInput;
+  cursor: pointer;
+}
+
+.modalActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.confirmBtn {
+  padding: 10px 20px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.confirmBtn:hover {
+  background: #333;
+}
+
+.confirmBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancelBtn {
+  padding: 10px 20px;
+  background: #f2f2f2;
+  color: #333;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: background 0.2s;
+}
+
+.cancelBtn:hover {
+  background: #e6e6e6;
+}
+
+.confirmBtnDanger {
+  composes: confirmBtn;
+  background: #A6534F;
+}
+
+.confirmBtnDanger:hover {
+  background: #8B3E3A;
+}
+
+.confirmBtnApprove {
+  composes: confirmBtn;
+  background: #2e7d32;
+}
+
+.confirmBtnApprove:hover {
+  background: #1b5e20;
+}
+
+/* Modal detail row */
+.detailRow {
+  display: flex;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 14px;
+}
+
+.detailLabel {
+  width: 90px;
+  flex-shrink: 0;
+  font-weight: 600;
+  color: #555;
+}
+
+.detailValue {
+  flex: 1;
+  color: #333;
+  word-break: break-all;
+}
+
+/* ============================================= */
+/* Empty State                                   */
+/* ============================================= */
+
+.emptyState {
+  padding: 48px 0;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+
+/* ============================================= */
+/* Dashboard sub-section                         */
+/* ============================================= */
+
+.dashSubTitle {
+  margin: 24px 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+/* ============================================= */
+/* Dark Mode                                     */
+/* ============================================= */
+
+/* Sidebar */
+:global(.dark) .sidebar {
+  background: #242422;
+}
+
+:global(.dark) .sidebarTitle {
+  color: #B5B3A7;
+}
+
+:global(.dark) .navItem {
+  color: #8A877D;
+}
+
+:global(.dark) .navItem:hover {
+  background: #2E2E2C;
+  color: #A19E94;
+}
+
+:global(.dark) .navItemActive {
+  background: #3A3934;
+  color: #B5B3A7;
+}
+
+/* Content */
+:global(.dark) .sectionTitle {
+  color: #B5B3A7;
+}
+
+/* Stat cards */
+:global(.dark) .statCard {
+  background: #242422;
+  border-color: #3A3A38;
+}
+
+:global(.dark) .statIconWrap {
+  background: #2E2E2C;
+  color: #A19E94;
+}
+
+:global(.dark) .statValue {
+  color: #B5B3A7;
+}
+
+:global(.dark) .statLabel {
+  color: #8A877D;
+}
+
+/* Filter */
+:global(.dark) .searchInput {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .searchInput::placeholder {
+  color: #6a6860;
+}
+
+:global(.dark) .filterSelect {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .filterBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .filterBtn:hover {
+  background: #42413B;
+}
+
+/* Tables */
+:global(.dark) .tableHeader {
+  border-bottom-color: #3A3A38;
+  color: #A19E94;
+}
+
+:global(.dark) .tableHeader > div {
+  background: #2e2e2c;
+}
+
+:global(.dark) .cancelRequestsTableWrap {
+  border-color: #3A3A38;
+}
+
+:global(.dark) .tableRow {
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .tableRow:hover {
+  background: #2a2a28;
+}
+
+:global(.dark) .tableCell,
+:global(.dark) .tableCellLeft {
+  color: #A19E94;
+}
+
+/* Status badges */
+:global(.dark) .statusPending {
+  background: #2a2a28;
+  color: #b0b0b0;
+}
+
+:global(.dark) .statusActive {
+  background: #1a2b1e;
+  color: #4caf50;
+}
+
+:global(.dark) .statusProcessing {
+  background: #332a1a;
+  color: #e6a030;
+}
+
+:global(.dark) .statusCompleted {
+  background: #1a2b1e;
+  color: #4caf50;
+}
+
+:global(.dark) .statusSuspended {
+  background: #2c1a1a;
+  color: #C4605C;
+}
+
+:global(.dark) .statusRejected {
+  background: #2c1a1a;
+  color: #C4605C;
+}
+
+/* Action buttons */
+:global(.dark) .manageBtn {
+  color: #A19E94;
+  border-color: #5a5850;
+}
+
+:global(.dark) .manageBtn:hover {
+  background: #A19E94;
+  color: #1B1B19;
+  border-color: #A19E94;
+}
+
+:global(.dark) .deleteBtn {
+  color: #C4605C;
+  border-color: #C4605C;
+}
+
+:global(.dark) .deleteBtn:hover {
+  background: #C4605C;
+  color: #fff;
+}
+
+:global(.dark) .approveBtn {
+  color: #4caf50;
+  border-color: #4caf50;
+}
+
+:global(.dark) .approveBtn:hover {
+  background: #4caf50;
+  color: #fff;
+}
+
+:global(.dark) .processedLabel {
+  color: #8A877D;
+}
+
+:global(.dark) .detailBtn {
+  color: #64b5f6;
+  border-color: #64b5f6;
+}
+
+:global(.dark) .detailBtn:hover {
+  background: #64b5f6;
+  color: #1B1B19;
+}
+
+:global(.dark) .inquiriesDetailBtn {
+  color: #C4605C;
+  border-color: #C4605C;
+}
+
+:global(.dark) .inquiriesDetailBtn:hover {
+  background: #C4605C;
+  color: #fff;
+}
+
+/* Pagination */
+:global(.dark) .pageBtn {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #A19E94;
+}
+
+:global(.dark) .pageBtn:hover:not(:disabled) {
+  border-color: #B5B3A7;
+  color: #B5B3A7;
+}
+
+:global(.dark) .pageBtnActive {
+  background: #3A3934;
+  border-color: #3A3934;
+  color: #B5B3A7;
+}
+
+/* Modal */
+:global(.dark) .modalCard {
+  background: #242422;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+:global(.dark) .modalTitle {
+  color: #B5B3A7;
+}
+
+:global(.dark) .closeBtn {
+  color: #8A877D;
+}
+
+:global(.dark) .closeBtn:hover {
+  background: #2E2E2C;
+  color: #B5B3A7;
+}
+
+:global(.dark) .modalLabel {
+  color: #A19E94;
+}
+
+:global(.dark) .modalInput,
+:global(.dark) .modalTextarea,
+:global(.dark) .modalSelect {
+  background: #1B1B19;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .confirmBtn {
+  background: #3A3934;
+}
+
+:global(.dark) .confirmBtn:hover {
+  background: #42413B;
+}
+
+:global(.dark) .confirmBtnDanger {
+  background: #8B3E3A;
+}
+
+:global(.dark) .confirmBtnDanger:hover {
+  background: #A6534F;
+}
+
+:global(.dark) .confirmBtnApprove {
+  background: #1b5e20;
+}
+
+:global(.dark) .confirmBtnApprove:hover {
+  background: #2e7d32;
+}
+
+:global(.dark) .cancelBtn {
+  background: #2E2E2C;
+  color: #A19E94;
+}
+
+:global(.dark) .cancelBtn:hover {
+  background: #3A3A38;
+}
+
+:global(.dark) .detailRow {
+  border-bottom-color: #3A3A38;
+}
+
+:global(.dark) .detailLabel {
+  color: #8A877D;
+}
+
+:global(.dark) .detailValue {
+  color: #B5B3A7;
+}
+
+/* Empty */
+:global(.dark) .emptyState {
+  color: #8A877D;
+}
+
+/* Skeleton */
+:global(.dark) .skeletonBar {
+  background: linear-gradient(90deg, #2e2e2c 25%, #3a3a38 50%, #2e2e2c 75%);
+  background-size: 800px 100%;
+}
+
+
+/* Dashboard */
+:global(.dark) .dashSubTitle {
+  color: #A19E94;
+}
