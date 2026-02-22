@@ -29,6 +29,18 @@ export const boardApi = {
       { params: { page } }
     ),
 
+  /** 1-1. 게시글 검색 - GET /api/boards/search?categoryType&searchType&keyword&page */
+  searchBoards: (
+    categoryType: BoardCategory,
+    searchType: 'TITLE' | 'NICKNAME',
+    keyword: string,
+    page = 0
+  ) =>
+    fetchClient.get<ApiResponse<PageableBoardResponse>>(
+      `/api/boards/search`,
+      { params: { categoryType, searchType, keyword, page } }
+    ),
+
   /** 2. 카테고리 내 게시글 작성 - POST /api/boards/category/[categoryType] (JSON) */
   createPost: (categoryType: BoardCategory, body: CreateBoardRequest) =>
     fetchClient.post<ApiResponse<string>>(

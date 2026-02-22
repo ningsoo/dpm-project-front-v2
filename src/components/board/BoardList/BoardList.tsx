@@ -56,6 +56,10 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
   const [hasError, setHasError] = useState(false);
   const [searchType, setSearchType] = useState<'title' | 'nickname'>('title');
   const [search, setSearch] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState<{
+    keyword: string;
+    searchType: 'TITLE' | 'NICKNAME';
+  } | null>(null);
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
 
@@ -128,10 +132,69 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
     [categoryType, posts.length, processAndAssignDisplayNumber]
   );
 
+  const fetchSearchPage = useCallback(
+    async (pageNum: number, isAppend: boolean, kw: string, st: 'TITLE' | 'NICKNAME') => {
+      if (isAppend) setLoadingMore(true);
+      else setLoading(true);
+
+      try {
+        const { data } = await boardApi.searchBoards(categoryType, st, kw, pageNum);
+        const { content, last: isLast } = extractPageableInfoFromResponse(data);
+
+        const startIndex = isAppend ? posts.length : 0;
+        const withDisplay = processAndAssignDisplayNumber(content, startIndex);
+
+        if (isAppend) setPosts((prev) => [...prev, ...withDisplay] as BoardListItemWithDisplay[]);
+        else setPosts(withDisplay);
+
+        setPage(pageNum);
+        setLast(isLast);
+        setHasError(false);
+      } catch {
+        ToastUtils.error('검색 결과를 불러올 수 없습니다');
+        if (!isAppend) setPosts([]);
+        setHasError(true);
+      } finally {
+        if (isAppend) setLoadingMore(false);
+        else setLoading(false);
+      }
+    },
+    [categoryType, posts.length, processAndAssignDisplayNumber]
+  );
+
+  const onSearch = useCallback(() => {
+    const kw = search.trim();
+
+    if (!kw) {
+      setAppliedSearch(null);
+      setPosts([]);
+      setPage(0);
+      setLast(false);
+      setHasError(false);
+      fetchPage(0, false);
+      return;
+    }
+
+    const st: 'TITLE' | 'NICKNAME' = searchType === 'title' ? 'TITLE' : 'NICKNAME';
+    setAppliedSearch({ keyword: kw, searchType: st });
+    setPosts([]);
+    setPage(0);
+    setLast(false);
+    setHasError(false);
+
+    fetchSearchPage(0, false, kw, st);
+  }, [search, searchType, fetchPage, fetchSearchPage]);
+
   const fetchMore = useCallback(() => {
     if (loading || loadingMore || last || hasError) return;
+
+    if (appliedSearch) {
+      fetchSearchPage(page + 1, true, appliedSearch.keyword, appliedSearch.searchType);
+      return;
+    }
+
     fetchPage(page + 1, true);
-  }, [loading, loadingMore, last, hasError, page, fetchPage]);
+  }, [loading, loadingMore, last, hasError, page, fetchPage, fetchSearchPage, appliedSearch]);
 
   // 카테고리 변경 감지 및 초기 로드
   useEffect(() => {
@@ -146,6 +209,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
 
     // 콘텐츠 숨기고, 데이터 초기화 후 로드
     setContentVisible(false);
+    setAppliedSearch(null);
     setPosts([]);
     setPage(0);
     setLast(false);
@@ -214,15 +278,16 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
   }, [filterOpen]);
 
   const displayedPosts = useMemo(() => {
+    if (appliedSearch) return posts;
+
     const kw = search.trim();
     if (!kw) return posts;
+
     return posts.filter((p) => {
       if (searchType === 'title') return (p.title ?? '').includes(kw);
       return (p.nickname ?? '').includes(kw);
     });
-  }, [posts, search, searchType]);
-
-  const onSearch = () => {};
+  }, [posts, search, searchType, appliedSearch]);
 
   const safeCat = ['showcase', 'playlists', 'spotlight', 'community', 'reviews'].includes(category)
     ? category
