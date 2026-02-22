@@ -10,24 +10,31 @@ import styles from './DonationModal.module.css';
 interface DonationModalProps {
   open: boolean;
   onClose: () => void;
-  targetUserId: number;
-  targetNickname: string;
+  /** 'spotlight'면 재화 사용량 입력용(메시지 없음, onSpotlightConfirm 사용) */
+  mode?: 'donation' | 'spotlight';
+  targetUserId?: number;
+  targetNickname?: string;
   /** 게시글 ID (후원 시 쿼리 파라미터로 전달) */
   boardId?: number;
   onSuccess?: () => void;
   onOpenCharge?: () => void;
+  /** spotlight 모드일 때: 사용량 확정 시 호출 (balance >= amount 검증 후) */
+  onSpotlightConfirm?: (amount: number) => void;
 }
 
 const MESSAGE_MAX_LENGTH = 100;
+const SPOTLIGHT_MIN_POP = 1000;
 
 export default function DonationModal({
   open,
   onClose,
-  targetUserId,
-  targetNickname,
+  mode = 'donation',
+  targetUserId = 0,
+  targetNickname = '',
   boardId,
   onSuccess,
   onOpenCharge,
+  onSpotlightConfirm,
 }: DonationModalProps) {
   const [popBalance, setPopBalance] = useState(0);
   const [donationAmount, setDonationAmount] = useState('');
@@ -83,13 +90,16 @@ export default function DonationModal({
   const amountNum =
     donationAmount === '' ? 0 : parseInt(donationAmount, 10);
 
+  const isDonation = mode === 'donation';
   const isValidAmount =
-    amountNum > 0 && amountNum <= popBalance;
+    isDonation
+      ? amountNum > 0 && amountNum <= popBalance
+      : amountNum >= SPOTLIGHT_MIN_POP && amountNum <= popBalance;
 
-  /** 후원하기 버튼 클릭: 검증 후 확인 모달 오픈 */
+  /** 후원하기 / 사용하기 버튼 클릭: 검증 후 확인 모달 오픈 */
   const handleSubmit = () => {
     if (!donationAmount.trim()) {
-      setSubmitError('후원할 POP을 입력해주세요.');
+      setSubmitError(isDonation ? '후원할 POP을 입력해주세요.' : '사용할 POP을 입력해주세요.');
       return;
     }
 
@@ -100,12 +110,17 @@ export default function DonationModal({
       return;
     }
 
+    if (!isDonation && num < SPOTLIGHT_MIN_POP) {
+      setSubmitError(`최소 ${SPOTLIGHT_MIN_POP.toLocaleString('ko-KR')} POP 이상 입력해주세요.`);
+      return;
+    }
+
     if (num > popBalance) {
       setSubmitError('보유한 POP이 부족합니다.');
       return;
     }
 
-    if (message.length > MESSAGE_MAX_LENGTH) {
+    if (isDonation && message.length > MESSAGE_MAX_LENGTH) {
       setSubmitError(
         `메시지는 ${MESSAGE_MAX_LENGTH}자 이하여야 합니다.`
       );
@@ -116,12 +131,19 @@ export default function DonationModal({
     setShowConfirmModal(true);
   };
 
-  /** 확인 모달에서 '네' 클릭 시 실제 API 요청 */
+  /** 확인 모달에서 '네' 클릭: 후원 API 또는 spotlight 확정 콜백 */
   const handleConfirmSubmit = async () => {
     const num = parseInt(donationAmount, 10);
     if (Number.isNaN(num) || num <= 0) return;
 
     setShowConfirmModal(false);
+
+    if (mode === 'spotlight') {
+      onSpotlightConfirm?.(num);
+      onClose();
+      return;
+    }
+
     setLoading(true);
     setSubmitError('');
 
@@ -178,7 +200,7 @@ export default function DonationModal({
 
         {/* 타이틀 */}
         <h2 className={styles.title}>
-          {targetNickname} 님에게 후원
+          {mode === 'spotlight' ? 'Spotlight 게시글 작성' : `${targetNickname} 님에게 후원`}
         </h2>
 
         {meLoading ? (
@@ -189,7 +211,7 @@ export default function DonationModal({
           <>
             {/* 금액 */}
             <label className={styles.label}>
-              후원할 POP
+              {mode === 'spotlight' ? '소모 POP' : '후원 POP'}
             </label>
 
             <div className={styles.inputRow}>
@@ -206,23 +228,33 @@ export default function DonationModal({
               </span>
             </div>
 
-            {/* 메시지 */}
-            <label className={styles.label}>
-              메시지 (최대 {MESSAGE_MAX_LENGTH}자)
-            </label>
+            {mode === 'spotlight' && (
+              <p className={styles.chargeNotice} style={{ marginTop: 4, marginBottom: 20 }}>
+                최소 {SPOTLIGHT_MIN_POP.toLocaleString('ko-KR')} POP 이상 입력해주세요.
+              </p>
+            )}
 
-            <input
-              type="text"
-              value={message}
-              onChange={handleMessageChange}
-              placeholder="메시지를 입력하세요"
-              className={styles.messageInput}
-              maxLength={MESSAGE_MAX_LENGTH}
-            />
+            {/* 메시지 (후원 모드만) */}
+            {mode === 'donation' && (
+              <>
+                <label className={styles.label}>
+                  메시지 (최대 {MESSAGE_MAX_LENGTH}자)
+                </label>
 
-            <div className={styles.messageCount}>
-              {message.length}/{MESSAGE_MAX_LENGTH}
-            </div>
+                <input
+                  type="text"
+                  value={message}
+                  onChange={handleMessageChange}
+                  placeholder="메시지를 입력하세요"
+                  className={styles.messageInput}
+                  maxLength={MESSAGE_MAX_LENGTH}
+                />
+
+                <div className={styles.messageCount}>
+                  {message.length}/{MESSAGE_MAX_LENGTH}
+                </div>
+              </>
+            )}
 
             {/* ===== 보유 POP + 충전 버튼 (수정된 구조) ===== */}
             <div className={styles.balanceRow}>
@@ -279,14 +311,14 @@ export default function DonationModal({
                   !isValidAmount
                 }
               >
-                {loading ? '처리 중…' : '후원하기'}
+                {loading ? '처리 중…' : mode === 'spotlight' ? '사용하기' : '후원하기'}
               </button>
             </div>
           </>
         )}
       </div>
 
-      {/* 후원 확인 모달 */}
+      {/* 후원 / 사용 확인 모달 */}
       {showConfirmModal && (
         <div
           className={styles.confirmOverlay}
@@ -297,7 +329,15 @@ export default function DonationModal({
         >
           <div className={styles.confirmCard} onClick={(e) => e.stopPropagation()}>
             <p id="donation-confirm-title" className={styles.confirmMessage}>
-              {targetNickname}님에게 {donationAmountDisplay}POP으로 후원하시겠습니까?
+              {mode === 'spotlight' ? (
+                <>
+                  {donationAmountDisplay} POP을 사용하여
+                  <br />
+                  게시글 작성 페이지로 이동하시겠습니까?
+                </>
+              ) : (
+                `${targetNickname}님에게 ${donationAmountDisplay}POP으로 후원하시겠습니까?`
+              )}
             </p>
             <div className={styles.confirmActions}>
               <button

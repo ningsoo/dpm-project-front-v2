@@ -206,6 +206,16 @@
   resize: none;
 }
 
+.inputReadOnly {
+  background: #f0f0f0 !important;
+  color: #555;
+  cursor: default;
+}
+
+.inputReadOnly:focus {
+  box-shadow: none;
+}
+
 /* =========================
    Helper / Error
 ========================= */
@@ -348,21 +358,33 @@
 
 .fileSelectBtn {
   display: inline-block;
-  margin-left: 12px;
-  padding: 6px 14px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  border-radius: 999px;
-  border: 1px solid #ddd;
-  background: #fff;
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 8px;
+  border: none;
+  background: #111;
+  color: #fff;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .fileSelectBtn:hover {
-  background: #111;
+  background: #000;
   color: #fff;
-  border-color: #111;
+}
+
+.attachmentLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.attachmentLabelRow .label {
+  margin-bottom: 0;
 }
 
 /* =========================
@@ -695,7 +717,7 @@
   color: #111;
   background: #f2f2f2;
   border: 1px solid #e5e5e5;
-  border-radius: 999px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -1150,32 +1172,35 @@
 }
 
 .modalButton {
-  padding: 10px 20px;
+  padding: 10px 18px;
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 500;
   color: #fff;
   border: none;
-  border-radius: 999px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .modalButtonCancel {
-  background: #f2f2f2;
+  background: #f5f5f5;
   color: #333;
 }
 
 .modalButtonCancel:hover {
-  background: #e6e6e6;
+  background: #e5e5e5;
 }
 
 .modalButtonConfirm {
   background: #111;
   color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .modalButtonConfirm:hover {
   background: #000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
 }
 
 .modalButtonDelete {
@@ -1241,6 +1266,11 @@
 :global(.dark) .textarea:focus {
   border-color: #888;
   box-shadow: none;
+}
+
+:global(.dark) .inputReadOnly {
+  background: #252523 !important;
+  color: #a19e94;
 }
 
 :global(.dark) .thumbPreview,
@@ -1492,10 +1522,12 @@
 
 :global(.dark) .modalButtonConfirm {
   background: #3a3934;
+  box-shadow: none;
 }
 
 :global(.dark) .modalButtonConfirm:hover {
   background: #42413b;
+  box-shadow: none;
 }
 
 :global(.dark) .modalButtonDelete {
@@ -1525,15 +1557,13 @@
 }
 
 :global(.dark) .fileSelectBtn {
-  background: #2e2e2c;
-  border-color: #3a3a38;
-  color: #b5b3a7;
+  background: #3a3934;
+  color: #fff;
 }
 
 :global(.dark) .fileSelectBtn:hover {
-  background: #3a3934;
+  background: #42413b;
   color: #fff;
-  border-color: #3a3934;
 }
 
 :global(.dark) .attachmentRemove {

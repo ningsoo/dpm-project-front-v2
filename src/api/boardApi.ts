@@ -14,12 +14,14 @@ import type {
 } from './boardTypes';
 
 /**
- * Board API
- * 1. GET  /api/boards/category/[categoryType] - 카테고리 게시글 목록 조회
- * 2. POST /api/boards/category/[categoryType] - 카테고리 내 게시글 작성
- * 3. GET  /api/boards/[boardId] - 게시글 상세 조회
- * 4. PUT  /api/boards/[boardId] - 게시글 수정
- * 5. DELETE /api/boards/[boardId] - 게시글 삭제
+ * Board API (백엔드 BoardController: /api/boards, SpotlightController: /api/spotlight)
+ * - GET  /api/boards/category/[categoryType] - 카테고리 게시글 목록 조회
+ * - POST /api/boards/category/[categoryType] - 카테고리 내 게시글 작성 (createRequest + files)
+ * - GET  /api/boards/[boardId] - 게시글 상세 조회
+ * - PATCH /api/boards/[boardId] - 게시글 수정
+ * - DELETE /api/boards/[boardId] - 게시글 삭제
+ * - GET  /api/spotlight/carousel - 메인 캐러셀 Spotlight 랜덤 10개
+ * - POST /api/spotlight - Spotlight 게시글 작성 (data + files, pop 소모)
  */
 export const boardApi = {
   /** 1. 카테고리 게시글 목록 조회 - GET /api/boards/category/[categoryType]?page={page} */
@@ -56,9 +58,13 @@ export const boardApi = {
   createPostPlaylists: (formData: FormData) =>
     fetchClient.post<ApiResponse<string>>('/api/boards/category/PLAYLISTS', formData),
 
-  /** 2-3. SPOTLIGHT 게시글 작성 - POST /api/boards/category/SPOTLIGHT (multipart) */
+  /** 2-3. SPOTLIGHT 게시글 작성 - POST /api/spotlight (RequestPart "data" + "files", pop 소모) */
   createPostSpotlight: (formData: FormData) =>
-    fetchClient.post<ApiResponse<string>>('/api/boards/category/SPOTLIGHT', formData),
+    fetchClient.post<ApiResponse<string>>('/api/spotlight', formData),
+
+  /** 메인 캐러셀 Spotlight 랜덤 10개 - GET /api/spotlight/carousel */
+  getCarouselSpotlights: () =>
+    fetchClient.get<ApiResponse<BoardListItem[]>>('/api/spotlight/carousel'),
 
   /** 2-4. COMMUNITY/REVIEWS 게시글 작성 - POST /api/boards/category/{categoryType} (multipart) */
   createPostWithFile: (categoryType: BoardCategory, formData: FormData) =>
