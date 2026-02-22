@@ -983,7 +983,7 @@ function CancelRequestsSection() {
               <div className={styles.tableCell}>{num(get(item, 'donationAmount')).toLocaleString()}원</div>
               <div className={`${styles.tableCell} ${styles.cellDateTime}`}>
                 {(() => {
-                  const { date, time } = formatDateAndTime(get(item, 'cancelRequestDate'));
+                  const { date, time } = formatDateAndTime(get(item, 'cancelRequestDate') as string | null | undefined);
                   return <><span>{date}</span><span>{time}</span></>;
                 })()}
               </div>
