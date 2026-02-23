@@ -88,6 +88,12 @@ function getPopStatusLabel(status?: string): string {
   return DONATION_STATUS_MAP[status] ?? '대기';
 }
 
+/** 닉네임 5자 초과 시 앞 5자 + ".." 표시 */
+function truncateNickname(name?: string | null): string {
+  if (!name || typeof name !== 'string') return '-';
+  return name.length > 5 ? `${name.slice(0, 5)}..` : name;
+}
+
 /** popStatus -> 배지 CSS 클래스 */
 function getDonationStatusBadgeClass(status?: string): string {
   if (!status) return styles.popStatusNeutral;
@@ -499,7 +505,7 @@ export function DonationSection({ subTab, onChangeSubTab, onLoadingChange }: Don
                               </button>
                             )}
                           </div>
-                          <div className={styles.tableCell}>{row.related?.name ?? '-'}</div>
+                          <div className={styles.tableCell}>{truncateNickname(row.related?.name)}</div>
                         </div>
                       ))}
                       {hasMoreSent && (

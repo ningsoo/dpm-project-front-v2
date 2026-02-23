@@ -46,7 +46,7 @@ function formatCategoryType(categoryType: string): string {
   return categoryType.charAt(0).toUpperCase() + categoryType.slice(1).toLowerCase();
 }
 
-const COMMENT_CHARS_PER_LINE = 15;
+const COMMENT_CHARS_PER_LINE = 20;
 const COMMENT_MAX_LINES = 2;
 
 /** 댓글 내용: 한 줄 15자, 최대 2줄. 2줄 초과 시 말줄임(...) */

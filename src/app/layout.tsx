@@ -23,10 +23,19 @@ const themeScript = `
 })();
 `;
 
+/* 새로고침 시 스크롤 복원 후 상단 점프로 인한 '접힘' 현상 방지 */
+const scrollInitScript = `
+(function() {
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  window.scrollTo(0, 0);
+})();
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: scrollInitScript }} />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
