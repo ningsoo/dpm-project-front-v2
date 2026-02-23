@@ -303,6 +303,119 @@
 
 .cancelRequestsGrid  { grid-template-columns: 50px 150px 150px 130px 240px 80px; width: 800px; } /* 800: No|요청자|수혜자|후원금액|요청일시|승인 */
 
+.announcementsSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.announcementsSectionHeader .sectionTitle {
+  margin: 0;
+}
+
+.announcementsSectionActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.announcementsTableWrap {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #eee;
+}
+
+.announcementsGrid { grid-template-columns: 50px 180px 180px 120px 90px 100px 80px; width: 800px; } /* NO|제목|기간|작성일|공지타입|공지상태|수정삭제 */
+
+.announcementMenuWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.announcementMenuCell {
+  overflow: visible;
+}
+
+.announcementMenuDropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  min-width: 100px;
+  overflow: hidden;
+}
+
+.announcementMenuItem {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  text-align: left;
+  font-size: 13px;
+  color: #333;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.announcementMenuItem:hover {
+  background: #f5f5f5;
+}
+
+.announcementMenuItemDanger {
+  color: #b91c1c;
+}
+
+.announcementMenuItemDanger:hover {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+/* 공지상태 컬럼 버튼 */
+.priorityBtnNormal {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.priorityBtnNormal:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+.priorityBtnPrimary {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  background: #111;
+  color: #fff;
+  cursor: default;
+}
+
+.priorityBtnPrimary:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
 .cellDateTime {
   flex-direction: column !important;
   align-items: center !important;
@@ -803,6 +916,48 @@
 
 :global(.dark) .cancelRequestsTableWrap {
   border-color: #3A3A38;
+}
+
+:global(.dark) .announcementsTableWrap {
+  border-color: #3A3A38;
+}
+
+:global(.dark) .announcementMenuDropdown {
+  background: #2e2e2c;
+  border-color: #3A3A38;
+}
+
+:global(.dark) .announcementMenuItem {
+  color: #A19E94;
+}
+
+:global(.dark) .announcementMenuItem:hover {
+  background: #3A3934;
+}
+
+:global(.dark) .announcementMenuItemDanger {
+  color: #f87171;
+}
+
+:global(.dark) .announcementMenuItemDanger:hover {
+  background: #450a0a;
+  color: #fca5a5;
+}
+
+:global(.dark) .priorityBtnNormal {
+  background: #2E2E2C;
+  border-color: #3A3A38;
+  color: #A19E94;
+}
+
+:global(.dark) .priorityBtnNormal:hover {
+  background: #3A3934;
+  border-color: #42413B;
+}
+
+:global(.dark) .priorityBtnPrimary {
+  background: #3A3934;
+  color: #fff;
 }
 
 :global(.dark) .tableRow {

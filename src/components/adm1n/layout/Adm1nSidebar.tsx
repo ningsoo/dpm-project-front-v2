@@ -12,6 +12,7 @@ import {
   ShieldBan,
   Wallet,
   RotateCcw,
+  Megaphone,
 } from 'lucide-react';
 import styles from '@/app/adm1n/admin.module.css';
 
@@ -25,6 +26,7 @@ const SIDEBAR_ITEMS = [
   { path: '/adm1n/penalties', label: '제재관리', icon: ShieldBan },
   { path: '/adm1n/settlements', label: '정산관리', icon: Wallet },
   { path: '/adm1n/cancel-requests', label: '후원 취소요청', icon: RotateCcw },
+  { path: '/adm1n/announcements', label: '공지관리', icon: Megaphone },
 ] as const;
 
 export function Adm1nSidebar() {
