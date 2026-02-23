@@ -455,11 +455,10 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
         return;
       }
     } else {
-      // 게시글 홍보(FEATURED_BOARD) 취소: 백엔드는 boardId로 게시글·PopHistory 조회. boardId 필수.
-      const rawBoardId = target.related?.id ?? (target as Record<string, unknown>).boardId ?? (target as Record<string, unknown>).board_id;
-      const boardIdNum = rawBoardId != null ? Number(rawBoardId) : NaN;
-      if (!Number.isInteger(boardIdNum) || Number.isNaN(boardIdNum)) {
-        ToastUtils.error('게시글 정보를 확인할 수 없어 취소할 수 없습니다.');
+      // 게시글 홍보(FEATURED_BOARD) 취소: popHistoryId 필수
+      const popHistoryId = target.popHistoryId;
+      if (popHistoryId == null || typeof popHistoryId !== 'number' || Number.isNaN(popHistoryId)) {
+        ToastUtils.error('취소할 내역을 확인할 수 없습니다.');
         return;
       }
     }
@@ -478,18 +477,51 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
         });
         ToastUtils.success('후원이 취소되었습니다.');
       } else {
-        // 게시글 홍보 취소: 백엔드는 userId, boardId로 검증 후 해당 board의 최신 PopHistory 기준 취소 금액만 remainingPop에서 차감, 0이 되면 만료 처리
+        // 게시글 홍보 취소
+        const isFeatured = (r: PopUsageRow) =>
+          r.popTarget === 'FEATURED_BOARD' || r.popTarget === 'FEATURE_BOARD';
         const rawBoardId = target.related?.id ?? (target as Record<string, unknown>).boardId ?? (target as Record<string, unknown>).board_id;
-        const boardIdNum = Number(rawBoardId);
-        const body: { userId: number; boardId: number; cancelReason: string; popHistoryId?: number } = {
-          userId: uid,
-          boardId: boardIdNum,
-          cancelReason: FEATURED_CANCEL_REASON,
-        };
-        const phId = target.popHistoryId;
-        if (typeof phId === 'number' && !Number.isNaN(phId) && phId > 0) body.popHistoryId = phId;
-        await mypageApi.cancelPopUsage(body);
-        ToastUtils.success('재화 사용 취소가 완료되었습니다.');
+        const boardIdNum = rawBoardId != null ? Number(rawBoardId) : undefined;
+
+        // 같은 boardId의 FEATURED_BOARD PENDING 건 전체 조회
+        const sameBoardPending = usageList.filter((r) => {
+          if (!isFeatured(r)) return false;
+          if (r.popStatus !== 'PENDING') return false;
+          const rId = r.related?.id ?? (r as Record<string, unknown>).boardId ?? (r as Record<string, unknown>).board_id;
+          return rId != null && Number(rId) === boardIdNum;
+        });
+
+        // 가장 오래된 건(popHistoryId 최소)이 작성 건
+        const oldestId = sameBoardPending.length > 0
+          ? Math.min(...sameBoardPending.map((r) => r.popHistoryId ?? Infinity))
+          : undefined;
+        const isCreationRow = target.popHistoryId === oldestId;
+
+        if (isCreationRow && sameBoardPending.length > 1) {
+          // 작성 건 취소 → 연장 건도 함께 전부 취소 (작성 건이 없으면 연장이 의미 없음)
+          let cancelledCount = 0;
+          for (const row of sameBoardPending) {
+            const phId = row.popHistoryId;
+            if (phId == null || typeof phId !== 'number') continue;
+            await mypageApi.cancelPopUsage({
+              userId: uid,
+              boardId: Number.isFinite(boardIdNum) ? boardIdNum : undefined,
+              popHistoryId: phId,
+              cancelReason: FEATURED_CANCEL_REASON,
+            });
+            cancelledCount++;
+          }
+          ToastUtils.success(`작성 건 포함 ${cancelledCount}건이 모두 취소되었습니다.`);
+        } else {
+          // 연장 건만 취소 (개별)
+          await mypageApi.cancelPopUsage({
+            userId: uid,
+            boardId: Number.isFinite(boardIdNum) ? boardIdNum : undefined,
+            popHistoryId: target.popHistoryId!,
+            cancelReason: FEATURED_CANCEL_REASON,
+          });
+          ToastUtils.success('재화 사용 취소가 완료되었습니다.');
+        }
       }
       fetchUsage();
       await onPopBalanceRefresh?.();
@@ -499,7 +531,7 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
     } finally {
       setCancelSubmitting(false);
     }
-  }, [cancelTarget, fetchUsage, onPopBalanceRefresh]);
+  }, [cancelTarget, usageList, fetchUsage, onPopBalanceRefresh]);
 
   const handleCancelPurchaseClick = (row: PopPurchaseRow) => {
     setPurchaseCancelTarget(row);
@@ -801,10 +833,25 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
             >
               {cancelTarget.popTarget === 'DONATION' ? '후원 취소 확인' : '게시글 홍보 취소 확인'}
             </h3>
-            <p className={styles.donationConfirmMessage}>
+            <p className={styles.donationConfirmMessage} style={{ whiteSpace: 'pre-line' }}>
               {cancelTarget.popTarget === 'DONATION'
                 ? '정말 이 사용자에 대한 후원을 취소하시겠습니까?'
-                : '이 게시글 홍보를 취소하고 재화를 환불받으시겠습니까?'}
+                : (() => {
+                    const isFt = (r: PopUsageRow) => r.popTarget === 'FEATURED_BOARD' || r.popTarget === 'FEATURE_BOARD';
+                    const bid = cancelTarget.related?.id ?? (cancelTarget as Record<string, unknown>).boardId ?? (cancelTarget as Record<string, unknown>).board_id;
+                    const bidNum = bid != null ? Number(bid) : NaN;
+                    const samePending = usageList.filter((r) => {
+                      if (!isFt(r) || r.popStatus !== 'PENDING') return false;
+                      const rId = r.related?.id ?? (r as Record<string, unknown>).boardId ?? (r as Record<string, unknown>).board_id;
+                      return rId != null && Number(rId) === bidNum;
+                    });
+                    const oldest = samePending.length > 0 ? Math.min(...samePending.map((r) => r.popHistoryId ?? Infinity)) : undefined;
+                    const isCreation = cancelTarget.popHistoryId === oldest;
+                    if (isCreation && samePending.length > 1) {
+                      return `이 게시글의 작성 재화를 취소하면 연장 ${samePending.length - 1}건도 함께 취소됩니다.\n진행하시겠습니까?`;
+                    }
+                    return '이 게시글 홍보를 취소하고 재화를 환불받으시겠습니까?';
+                  })()}
             </p>
             <div className={styles.settlementConfirmActions}>
               <button
