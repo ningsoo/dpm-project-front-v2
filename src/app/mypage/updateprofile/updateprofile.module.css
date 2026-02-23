@@ -1,0 +1,9 @@
+/* 프로필 편집 그리드 점 제거 */
+.formWrap,
+.formWrap * {
+  list-style: none !important;
+}
+.formWrap *::marker {
+  content: none !important;
+  display: none !important;
+}

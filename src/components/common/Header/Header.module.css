@@ -82,6 +82,26 @@
   color: #111;
 }
 
+/* 선택되지 않은 카테고리: 채도 유지, 명도 낮춤 (R200 G198 B200) */
+.navLinkInactive {
+  font-family: "Monda", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  padding: 8px 12px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: rgb(200, 198, 200);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.navLinkInactive:hover {
+  background: #f5f5f5;
+  color: #111;
+}
+
+/* 다크모드: 진입한(active) 카테고리는 밝은 색, 비활성은 검정 */
 :global(html.dark) .navLink {
   color: #A19E94;
 }
@@ -89,6 +109,15 @@
 :global(html.dark) .navLink:hover {
   background: #2E2E2C;
   color: #B5B3A7;
+}
+
+:global(html.dark) .navLinkInactive {
+  color: #080707;
+}
+
+:global(html.dark) .navLinkInactive:hover {
+  background: #2E2E2C;
+  color: #A19E94;
 }
 
 /* 우측 영역 고정 폭: 로그인/로그아웃/플레이스홀더 동일 → 레이아웃 밀림 방지 */
@@ -100,27 +129,32 @@
   flex-shrink: 0;
 }
 
-/* 인증 확인 전: 투명 placeholder (쉼머/펄스 없음, 고정 폭만 유지) */
-.actionsPlaceholder {
-  display: block;
-  width: 100%;
-  height: 40px;
-  background: transparent;
-  flex-shrink: 0;
-}
-
-/* 인증 resolve 후 실제 UI: opacity 전환으로 등장 (깜빡임 제거) */
+/* data-auth 기반 표시: 새로고침 시 스크립트가 먼저 실행되어 즉시 올바른 아이콘 표시 */
 .actionsContent {
   display: flex;
   gap: 8px;
   align-items: center;
   justify-content: flex-end;
-  opacity: 0;
-  transition: opacity 0.2s ease;
 }
 
-.actionsContentVisible {
-  opacity: 1;
+.actionsLoggedIn {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.actionsLoggedOut {
+  display: flex;
+  align-items: center;
+}
+
+:global(html[data-auth="true"]) .actionsLoggedOut {
+  display: none;
+}
+
+:global(html[data-auth="false"]) .actionsLoggedIn,
+:global(html:not([data-auth])) .actionsLoggedIn {
+  display: none;
 }
 
 .iconBtn {

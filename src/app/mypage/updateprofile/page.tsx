@@ -10,6 +10,7 @@ import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import { validateNicknameFormatBySignupRule, validatePhoneParts } from '@/utils/authValidation';
 import styles from '@/app/auth/auth.module.css';
+import localStyles from './updateprofile.module.css';
 
 interface UserInfo {
   id: string;
@@ -188,6 +189,7 @@ export default function UpdateProfilePage() {
 
   return (
     <div className={styles.wrap}>
+      <div className={localStyles.formWrap}>
       <form onSubmit={handleSubmit} className={styles.form}>
         <h1 className={styles.h1}>프로필 수정</h1>
 
@@ -381,6 +383,7 @@ export default function UpdateProfilePage() {
           </Link>
         </div>
       </form>
+      </div>
 
       {showSuccessModal && (
         <div

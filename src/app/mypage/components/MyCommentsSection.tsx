@@ -46,7 +46,7 @@ function formatCategoryType(categoryType: string): string {
   return categoryType.charAt(0).toUpperCase() + categoryType.slice(1).toLowerCase();
 }
 
-const COMMENT_CHARS_PER_LINE = 15;
+const COMMENT_CHARS_PER_LINE = 20;
 const COMMENT_MAX_LINES = 2;
 
 /** 댓글 내용: 한 줄 15자, 최대 2줄. 2줄 초과 시 말줄임(...) */
@@ -65,13 +65,21 @@ function formatCommentContent(content: string): string {
   );
 }
 
-export function MyCommentsSection() {
+interface MyCommentsSectionProps {
+  onLoadingChange?: (loading: boolean) => void;
+}
+
+export function MyCommentsSection({ onLoadingChange }: MyCommentsSectionProps = {}) {
   const router = useRouter();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const [searchQuery, setSearchQuery] = useState('');
   const [comments, setComments] = useState<MyComment[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    onLoadingChange?.(loading);
+  }, [loading, onLoadingChange]);
 
   // 탭 활성화 시 데이터 fetch
   useEffect(() => {
@@ -191,10 +199,34 @@ export function MyCommentsSection() {
                       {formatCategoryType(comment.categoryType)}
                     </div>
                     <div className={`${styles.tableCell} ${styles.commentContentCell}`}>
-                      {formatCommentContent(comment.content)}
+                      <button
+                        type="button"
+                        className={styles.cellLinkBtn}
+                        onClick={() => {
+                          sessionStorage.setItem(
+                            'soundock_mypage_return',
+                            JSON.stringify({ tab: 'comments', scrollY: window.scrollY })
+                          );
+                          router.push(`/boards/${comment.boardId}#comment-${comment.commentId}`);
+                        }}
+                      >
+                        {formatCommentContent(comment.content)}
+                      </button>
                     </div>
                     <div className={styles.tableCell}>
-                      {comment.title}
+                      <button
+                        type="button"
+                        className={styles.cellLinkBtn}
+                        onClick={() => {
+                          sessionStorage.setItem(
+                            'soundock_mypage_return',
+                            JSON.stringify({ tab: 'comments', scrollY: window.scrollY })
+                          );
+                          router.push(`/boards/${comment.boardId}`);
+                        }}
+                      >
+                        {comment.title}
+                      </button>
                     </div>
                     <div className={styles.tableCell}>
                       {comment.likeCount}

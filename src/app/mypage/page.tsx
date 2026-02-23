@@ -1,10 +1,11 @@
 'use client';
 
 import { Suspense, useState, useRef, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
-import { Key, User, Plus, Search, Pencil, Heart, X, Check, Unplug } from 'lucide-react';
+import { KeyRound, UserCog, Plus, Search, Pencil, Heart, X, Check, Unplug } from 'lucide-react';
 import { AppDispatch, RootState } from '@/store';
 import { authApi } from '@/api/authApi';
 import { mypageApi } from '@/api/mypageApi';
@@ -64,6 +65,13 @@ function getValidTab(tabParam: string | null): string {
 const PWLS_WITHDRAWAL_GUIDE =
   '패스워드리스 해지가 완료되었습니다.';
 
+const PROFILE_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+
+/** POP 충전 일일 한도 (원) */
+const DAILY_CHARGE_LIMIT = 3_000_000;
+
+const DAILY_CHARGE_LIMIT_MSG = '일일 충전 한도 금액은 300만원입니다.';
+
 /** 오늘 날짜를 YYYY-MM-DD 형식으로 반환 */
 function getTodayDateString(): string {
   const today = new Date();
@@ -101,6 +109,7 @@ function MypagePageContent() {
   const [displayedTab, setDisplayedTab] = useState<string>(tab);
   const [tabVisible, setTabVisible] = useState(true);
   const tabTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restoreScrollRef = useRef<{ tab: string; scrollY: number } | null>(null);
   const TAB_FADE_MS = 150;
 
   const switchTab = useCallback((nextTab: string) => {
@@ -125,6 +134,38 @@ function MypagePageContent() {
     };
   }, []);
 
+  /* ── 뒤로가기 시 탭·스크롤 복원 (마운트 시 1회만 읽음) ── */
+  useEffect(() => {
+    const raw = sessionStorage.getItem('soundock_mypage_return');
+    if (!raw) return;
+    sessionStorage.removeItem('soundock_mypage_return');
+    try {
+      const data = JSON.parse(raw) as { tab?: string; scrollY?: number };
+      if (data.tab && typeof data.scrollY === 'number' && TAB_IDS.includes(data.tab as (typeof TAB_IDS)[number])) {
+        const currentTab = getValidTab(searchParams.get('tab'));
+        if (currentTab !== data.tab) {
+          router.replace(`/mypage?tab=${data.tab}`);
+        }
+        restoreScrollRef.current = { tab: data.tab, scrollY: data.scrollY };
+      }
+    } catch {
+      // ignore invalid JSON
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run only on mount
+  }, []);
+
+  useEffect(() => {
+    const pending = restoreScrollRef.current;
+    if (!pending || displayedTab !== pending.tab) return;
+    restoreScrollRef.current = null;
+    const scrollY = pending.scrollY;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollY);
+      });
+    });
+  }, [displayedTab]);
+
   const [searchQuery, setSearchQuery] = useState({ posts: '', comments: '', liked: '' });
   const [dateRange, setDateRange] = useState({
     settlement: { start: getDate30DaysAgo(), end: getTodayDateString() },
@@ -141,9 +182,9 @@ function MypagePageContent() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [cropArea, setCropArea] = useState({ x: 0, y: 0, size: 0 });
   const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const dragStartRef = useRef({ x: 0, y: 0 });
   const [isResizing, setIsResizing] = useState(false);
-  const resizeStartRef = useRef({ x: 0, y: 0, size: 0 });
+  const resizeStartRef = useRef({ x: 0, y: 0, size: 0, mouseX: 0, mouseY: 0 });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
   const [receivedLikes, setReceivedLikes] = useState(0);
@@ -179,6 +220,9 @@ function MypagePageContent() {
   } | null>(null);
   const [inquiryDetailLoading, setInquiryDetailLoading] = useState(false);
 
+  /* ── 탭별 섹션 로딩 완료까지 페이지 스켈레톤 유지 (재중복 방지) ── */
+  const [sectionLoading, setSectionLoading] = useState(true);
+
   // URL tab 쿼리와 tab state 동기화 (뒤로가기/링크/새로고침 시)
   useEffect(() => {
     const next = getValidTab(searchParams.get('tab'));
@@ -209,6 +253,11 @@ function MypagePageContent() {
     if (!initialized) return;
 
     if (!isAuthenticated) {
+      if (sessionStorage.getItem('soundock_logout_redirect') === '1') {
+        sessionStorage.removeItem('soundock_logout_redirect');
+        router.replace('/');
+        return;
+      }
       router.push('/auth/login');
       return;
     }
@@ -218,21 +267,28 @@ function MypagePageContent() {
     // 사용자 정보 가져오기
     mypageApi.getMypage()
       .then(({ data }) => {
-        console.log('[MyPage] getMyInfo raw response:', data);
-        console.log('[MyPage] data.data:', data?.data);
         const userData = data?.data as UserInfo | undefined;
-        console.log('[MyPage] youtubeConnected:', userData?.youtubeConnected);
         if (userData) {
           setUser(userData);
           setProfileImage(userData.profileImage || null);
         } else {
           ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
-          router.push('/auth/login');
+          if (sessionStorage.getItem('soundock_logout_redirect') === '1') {
+            sessionStorage.removeItem('soundock_logout_redirect');
+            router.replace('/');
+          } else {
+            router.push('/auth/login');
+          }
         }
       })
       .catch((error) => {
         if (error?.response?.status === 401) {
-          router.push('/auth/login');
+          if (sessionStorage.getItem('soundock_logout_redirect') === '1') {
+            sessionStorage.removeItem('soundock_logout_redirect');
+            router.replace('/');
+          } else {
+            router.push('/auth/login');
+          }
         } else {
           ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
         }
@@ -302,9 +358,11 @@ function MypagePageContent() {
     const onMouseMove = (e: MouseEvent) => {
       const rect = imageRef.current?.getBoundingClientRect();
       if (!rect) return;
-      const relX = e.clientX - rect.left;
-      const relY = e.clientY - rect.top;
-      const newSize = Math.min(relX - resizeStartRef.current.x, relY - resizeStartRef.current.y);
+      // 마우스 이동 델타 계산 (초기 마우스 위치 기준)
+      const deltaX = e.clientX - resizeStartRef.current.mouseX;
+      const deltaY = e.clientY - resizeStartRef.current.mouseY;
+      const delta = Math.max(deltaX, deltaY);
+      const newSize = resizeStartRef.current.size + delta;
       const maxSize = Math.min(rect.width, rect.height) * 0.95;
       const maxSizeByX = rect.width - resizeStartRef.current.x;
       const maxSizeByY = rect.height - resizeStartRef.current.y;
@@ -327,34 +385,488 @@ function MypagePageContent() {
     };
   }, [isResizing]);
 
-  if (!initialized || loading) {
-    return (
-      <div className={styles.wrap}>
-        <div className={styles.skeletonProfile}>
-          <div className={styles.skeletonAvatar} />
-          <div className={styles.skeletonProfileText}>
-            <div className={styles.skeletonBar} style={{ width: 120, height: 20 }} />
-            <div className={styles.skeletonBar} style={{ width: 180 }} />
-            <div className={styles.skeletonBar} style={{ width: 140 }} />
-          </div>
-        </div>
-        <div className={styles.skeletonTabs}>
-          {Array.from({ length: 9 }).map((_, i) => (
-            <div key={i} className={styles.skeletonTab} style={{ width: i % 3 === 0 ? 80 : i % 3 === 1 ? 64 : 56 }} />
-          ))}
-        </div>
-        <div className={styles.skeletonContent}>
-          <div className={styles.skeletonContentRow} style={{ width: '100%' }} />
-          <div className={styles.skeletonContentRow} style={{ width: '85%' }} />
-          <div className={styles.skeletonContentRow} style={{ width: '92%' }} />
-          <div className={styles.skeletonContentRow} style={{ width: '78%' }} />
-          <div className={styles.skeletonContentRow} style={{ width: '88%' }} />
-        </div>
-      </div>
-    );
-  }
+  // 크롭 영역 드래그 시 window mousemove/mouseup (영역 밖으로 마우스가 나가도 동작)
+  const cropAreaRef = useRef(cropArea);
+  cropAreaRef.current = cropArea;
+  useEffect(() => {
+    if (!isDragging) return;
+    const onMouseMove = (e: MouseEvent) => {
+      const rect = imageRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const cur = cropAreaRef.current;
+      const newX = e.clientX - rect.left - dragStartRef.current.x;
+      const newY = e.clientY - rect.top - dragStartRef.current.y;
+      const maxX = rect.width - cur.size;
+      const maxY = rect.height - cur.size;
+      setCropArea((prev) => ({
+        ...prev,
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY)),
+      }));
+    };
+    const onMouseUp = () => setIsDragging(false);
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, [isDragging]);
 
   if (!user) {
+    if (!initialized || loading) {
+      const t = getValidTab(tabParam);
+      if (tabParam) {
+        const skeletonTableRow = (gridClass: string, cols: number, widths: string[]) => (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className={`${styles.tableGrid} ${gridClass} ${styles.tableRow}`}>
+              {Array.from({ length: cols }).map((__, c) => (
+                <div key={c} className={styles.tableCell}>
+                  <div className={styles.skeletonBar} style={{ width: widths[c] || '60%' }} />
+                </div>
+              ))}
+            </div>
+          ))
+        );
+        const searchBarEl = (
+          <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>
+            <input
+              type="text"
+              placeholder="검색어 입력"
+              disabled
+              style={{
+                width: '100%',
+                padding: '8px 40px 8px 12px',
+                border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
+                borderRadius: 8,
+                fontSize: 14,
+                background: darkMode ? '#242422' : '#fff',
+                color: darkMode ? '#B5B3A7' : '#333',
+              }}
+            />
+            <span style={{
+              position: 'absolute',
+              right: 8,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 4,
+              color: '#666',
+            }}>
+              <Search size={18} />
+            </span>
+          </div>
+        );
+
+        const dateRowEl = (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
+            <input
+              type="date"
+              defaultValue={getDate30DaysAgo()}
+              disabled
+              max={getTodayDateString()}
+              style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
+            />
+            <span style={{ color: darkMode ? '#8A877D' : undefined }}>~</span>
+            <input
+              type="date"
+              defaultValue={getTodayDateString()}
+              disabled
+              max={getTodayDateString()}
+              style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
+            />
+            <button
+              type="button"
+              disabled
+              style={{
+                padding: '8px 16px',
+                background: darkMode ? '#3A3934' : '#111',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                cursor: 'not-allowed',
+                fontSize: 14,
+              }}
+            >
+              조회
+            </button>
+          </div>
+        );
+
+        const settlementDateRowEl = (
+          <div className={styles.settlementDateRow}>
+            <input type="date" defaultValue={getDate30DaysAgo()} disabled max={getTodayDateString()} className={styles.settlementDateInput} />
+            <span>~</span>
+            <input type="date" defaultValue={getTodayDateString()} disabled max={getTodayDateString()} className={styles.settlementDateInput} />
+            <button type="button" className={styles.settlementSearchBtn} disabled>조회</button>
+          </div>
+        );
+
+        let tabSkeleton: React.ReactNode = null;
+        if (t === 'posts') {
+          tabSkeleton = (
+            <div>
+              {searchBarEl}
+              <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+                <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableHeader}`}>
+                  <div>날짜</div><div>게시판</div><div>제목</div><div>조회</div><div>추천</div>
+                </div>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableRow}`}>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '80%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '45%' }} /></div>
+                  </div>
+                ))}
+              </div></div>
+            </div>
+          );
+        } else if (t === 'comments') {
+          tabSkeleton = (
+            <div>
+              {searchBarEl}
+              <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+                <div className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableHeader}`}>
+                  <div>날짜</div><div>게시판</div><div>댓글</div><div>원문 글 제목</div><div>추천</div>
+                </div>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableRow}`}>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '80%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '45%' }} /></div>
+                  </div>
+                ))}
+              </div></div>
+            </div>
+          );
+        } else if (t === 'liked') {
+          tabSkeleton = (
+            <div>
+              {searchBarEl}
+              <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+                <div className={`${styles.tableGrid} ${styles.likedGrid5} ${styles.tableHeader}`}>
+                  <div>게시판</div><div>제목</div><div>작성자</div><div>조회</div><div>추천</div>
+                </div>
+                {skeletonTableRow(styles.likedGrid5, 5, ['70%', '85%', '50%', '40%', '35%'])}
+              </div></div>
+            </div>
+          );
+        } else if (t === 'reports') {
+          tabSkeleton = (
+            <div>
+              {dateRowEl}
+              <div style={{ overflowX: 'auto' }}>
+                <div className={`${styles.tableGrid} ${styles.reportsGrid} ${styles.tableHeader}`}>
+                  <div /><div>신고일시</div><div>신고사유</div><div>상태</div><div>글 바로가기</div><div>신고 취소</div>
+                </div>
+                {skeletonTableRow(styles.reportsGrid, 6, ['16px', '75%', '70%', '55%', '60%', '55%'])}
+              </div>
+            </div>
+          );
+        } else if (t === 'inquiries') {
+          tabSkeleton = (
+            <div>
+              {dateRowEl}
+              <div style={{ overflowX: 'auto' }}>
+                <div className={`${styles.tableGrid} ${styles.inquiryGrid} ${styles.tableHeader}`}>
+                  <div style={{ textAlign: 'center' }}>문의일시</div><div>문의유형</div><div>제목</div><div>상태</div>
+                </div>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className={`${styles.tableGrid} ${styles.inquiryGrid} ${styles.tableRow}`}>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        } else if (t === 'pop') {
+          const popSt = searchParams.get('popSubTab');
+          const popSub = (popSt === 'usage' || popSt === 'purchase') ? popSt : 'purchase';
+          const isUsage = popSub === 'usage';
+          tabSkeleton = (
+            <div className={styles.popSection}>
+              <div className={styles.settlementRequestSummaryBox}>
+                <div className={styles.settlementSummaryRow}>
+                  <span>보유 POP</span>
+                  <span className={styles.settlementTotalAmount}>
+                    <div className={styles.skeletonBar} style={{ width: 80, height: 16, display: 'inline-block' }} />
+                  </span>
+                </div>
+                <button type="button" className={styles.submitBtn} disabled>충전하기</button>
+              </div>
+              <div className={styles.settlementSubTabs}>
+                <button type="button" className={popSub === 'purchase' ? styles.settlementSubTabActive : styles.settlementSubTab}>구매내역{popSub === 'purchase' && <span className={styles.settlementSubTabIndicator} />}</button>
+                <button type="button" className={popSub === 'usage' ? styles.settlementSubTabActive : styles.settlementSubTab}>사용내역{popSub === 'usage' && <span className={styles.settlementSubTabIndicator} />}</button>
+              </div>
+              {settlementDateRowEl}
+              <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+                {isUsage ? (
+                  <>
+                    <div className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableHeader}`}>
+                      <div>사용일시</div><div>사용수량</div><div>사용대상</div><div>사용내용</div><div>사용상태</div><div>사용취소</div>
+                    </div>
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableRow}`}>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <div className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableHeader}`}>
+                      <div>충전일시</div><div>충전수량</div><div>상세내역</div><div>결제금액</div><div>유효기간</div><div>구매취소</div>
+                    </div>
+                    {Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableRow}`}>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div></div>
+            </div>
+          );
+        } else if (t === 'donation') {
+          const donSt = searchParams.get('donationSubTab');
+          const donSub = (donSt === 'sent' || donSt === 'received') ? donSt : 'sent';
+          tabSkeleton = (
+            <div className={styles.donationSection}>
+              <div className={styles.settlementSubTabs}>
+                <button type="button" className={donSub === 'sent' ? styles.settlementSubTabActive : styles.settlementSubTab}>보낸내역{donSub === 'sent' && <span className={styles.settlementSubTabIndicator} />}</button>
+                <button type="button" className={donSub === 'received' ? styles.settlementSubTabActive : styles.settlementSubTab}>받은내역{donSub === 'received' && <span className={styles.settlementSubTabIndicator} />}</button>
+              </div>
+              <div className={styles.settlementInnerContent}>
+                {settlementDateRowEl}
+                <div style={{ overflowX: 'auto' }}>
+                  {donSub === 'sent' ? (
+                    <>
+                      <div className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableHeader}`}>
+                        <div>후원일</div><div>요청일</div><div>승인일</div><div>취소일</div><div>금액</div><div>상태</div><div>취소</div><div>수혜자</div>
+                      </div>
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableRow}`}>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      <div className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableHeader}`}>
+                        <div>후원일</div><div>요청일</div><div>확정일</div><div>취소일</div><div>금액</div><div>상태</div><div>후원자</div>
+                      </div>
+                      {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableRow}`}>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        } else if (t === 'settlement') {
+          const stParam = searchParams.get('settlementSubTab');
+          const stSub = (stParam === 'history' || stParam === 'register' || stParam === 'request') ? stParam : 'history';
+          let settlementContent: React.ReactNode = null;
+          if (stSub === 'history') {
+            settlementContent = (
+              <div className={styles.settlementInnerContent}>
+                {settlementDateRowEl}
+                <div style={{ overflowX: 'auto' }}>
+                  <div className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableHeader}`}>
+                    <div>정산요청일</div><div>정산승인일</div><div>변동 수량</div><div>정산금액</div><div>정산처리상태</div>
+                  </div>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableRow}`}>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '65%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '65%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          } else if (stSub === 'register') {
+            settlementContent = (
+              <div className={styles.settlementInnerContent}>
+                <div className={styles.settlementForm}>
+                  {['이메일', '이름', '연락처', '계좌번호'].map((label) => (
+                    <div key={label} className={styles.settlementField}>
+                      <label>{label}</label>
+                      <div className={styles.skeletonBar} style={{ width: '100%', height: 40, borderRadius: 8 }} />
+                    </div>
+                  ))}
+                  <div className={styles.skeletonBar} style={{ width: 80, height: 40, borderRadius: 8 }} />
+                </div>
+              </div>
+            );
+          } else {
+            settlementContent = (
+              <div className={styles.settlementInnerContent}>
+                <div className={styles.settlementRequestSummaryBox}>
+                  <div className={styles.settlementSummaryRow}>
+                    <span>정산 가능 금액</span>
+                    <span className={styles.settlementTotalAmount}>
+                      <div className={styles.skeletonBar} style={{ width: 80, height: 16, display: 'inline-block' }} />
+                    </span>
+                  </div>
+                  <button type="button" className={styles.submitBtn} disabled>정산요청</button>
+                </div>
+                <div className={styles.settlementRequestTableWrap}><div style={{ overflowX: 'auto' }}>
+                  <div className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableHeader}`}>
+                    <div style={{ textAlign: 'center' }}>후원금액</div>
+                    <div style={{ textAlign: 'center' }}>후원승인일</div>
+                  </div>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
+                      <div className={styles.tableCell} style={{ textAlign: 'center' }}><div className={styles.skeletonBar} style={{ width: '40%' }} /></div>
+                      <div className={styles.tableCell} style={{ textAlign: 'center' }}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /><div className={styles.skeletonBar} style={{ width: '40%' }} /></div></div>
+                    </div>
+                  ))}
+                </div></div>
+              </div>
+            );
+          }
+          tabSkeleton = (
+            <div className={styles.settlementSection}>
+              <div className={styles.settlementSubTabs}>
+                {[{ id: 'history', label: '정산 내역' }, { id: 'register', label: '정산 정보 등록' }, { id: 'request', label: '정산 신청' }].map((st) => (
+                  <button key={st.id} type="button" className={stSub === st.id ? styles.settlementSubTabActive : styles.settlementSubTab}>
+                    {st.label}{stSub === st.id && <span className={styles.settlementSubTabIndicator} />}
+                  </button>
+                ))}
+              </div>
+              {settlementContent}
+            </div>
+          );
+        } else if (t === 'playlists') {
+          tabSkeleton = (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <div style={{ display: 'flex', gap: 8 }}><div className={styles.skeletonPlaylistActionBtn} /><div className={styles.skeletonPlaylistActionBtn} /></div>
+                <div style={{ display: 'flex', gap: 8, minWidth: 88 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 24, padding: '4px 4px 8px' }}>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className={styles.skeletonCard} style={{ flex: '0 0 calc((100% - 48px) / 3)' }}>
+                    <div className={styles.skeletonCardThumb} style={{ height: 180, paddingTop: 0 }} />
+                    <div className={styles.skeletonCardBody} style={{ minHeight: 80 }}>
+                      <div className={styles.skeletonBar} style={{ width: '80%', height: 16 }} />
+                      <div className={styles.skeletonBar} style={{ width: '40%' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        } else {
+          tabSkeleton = (
+            <div className={styles.skeletonContent}>
+              <div className={styles.skeletonContentRow} style={{ width: '100%' }} />
+              <div className={styles.skeletonContentRow} style={{ width: '85%' }} />
+              <div className={styles.skeletonContentRow} style={{ width: '92%' }} />
+            </div>
+          );
+        }
+        return (
+          <div className={styles.wrap}>
+            <div className={styles.skeletonProfile}>
+              <div className={styles.skeletonAvatar} />
+              <div className={styles.skeletonProfileText}>
+                <div className={styles.skeletonBar} style={{ width: 120, height: 26 }} />
+                <div className={styles.skeletonBar} style={{ width: 200, height: 16 }} />
+                <div className={styles.skeletonBar} style={{ width: 140, height: 16 }} />
+                <div className={styles.skeletonBar} style={{ width: 110, height: 16 }} />
+              </div>
+            </div>
+            <div className={styles.tabs}>
+              {TABS.map((tb) => (
+                <button key={tb.id} type="button" className={t === tb.id ? styles.tabActive : styles.tab}>
+                  {tb.label}
+                </button>
+              ))}
+            </div>
+            <div className={styles.content}>{tabSkeleton}</div>
+          </div>
+        );
+      }
+      /* tabParam 없으면 플레이리스트 스켈레톤 (playlists와 동일) */
+      return (
+        <div className={styles.wrap}>
+          <div className={styles.skeletonProfile}>
+            <div className={styles.skeletonAvatar} />
+            <div className={styles.skeletonProfileText}>
+              <div className={styles.skeletonBar} style={{ width: 120, height: 26 }} />
+              <div className={styles.skeletonBar} style={{ width: 200, height: 16 }} />
+              <div className={styles.skeletonBar} style={{ width: 140, height: 16 }} />
+              <div className={styles.skeletonBar} style={{ width: 110, height: 16 }} />
+            </div>
+          </div>
+          <div className={styles.tabs}>
+            {TABS.map((tb) => (
+              <button key={tb.id} type="button" className={tb.id === 'playlists' ? styles.tabActive : styles.tab}>{tb.label}</button>
+            ))}
+          </div>
+          <div className={styles.content}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <div style={{ display: 'flex', gap: 8 }}><div className={styles.skeletonPlaylistActionBtn} /><div className={styles.skeletonPlaylistActionBtn} /></div>
+                <div style={{ display: 'flex', gap: 8, minWidth: 88 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 24, padding: '4px 4px 8px' }}>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className={styles.skeletonCard} style={{ flex: '0 0 calc((100% - 48px) / 3)' }}>
+                    <div className={styles.skeletonCardThumb} style={{ height: 180, paddingTop: 0 }} />
+                    <div className={styles.skeletonCardBody} style={{ minHeight: 80 }}><div className={styles.skeletonBar} style={{ width: '80%', height: 16 }} /><div className={styles.skeletonBar} style={{ width: '40%' }} /></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className={styles.wrap}>
         <p>사용자 정보를 불러올 수 없습니다.</p>
@@ -413,7 +925,7 @@ function MypagePageContent() {
       ToastUtils.success(PWLS_WITHDRAWAL_GUIDE);
       setShowPwlsWithdrawalModal(false);
       setPwlsWithdrawalLoading(false);
-      router.push('/');
+      window.location.href = '/';
     } catch (err) {
       const message = err instanceof Error ? err.message : '패스워드리스 해지에 실패했습니다.';
       ToastUtils.error(message);
@@ -424,16 +936,30 @@ function MypagePageContent() {
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const imageUrl = event.target?.result as string;
-        setSelectedImage(imageUrl);
-        setShowImageUpload(false);
-        setShowCropModal(true);
-      };
-      reader.readAsDataURL(file);
+    const input = e.target;
+    if (!file) return;
+    if (!PROFILE_IMAGE_TYPES.includes(file.type) && !/\.(jpe?g|png|webp|gif)$/i.test(file.name)) {
+      ToastUtils.error('이미지 파일만 선택 가능합니다. (jpg, png, webp, gif)');
+      input.value = '';
+      return;
     }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const imageUrl = event.target?.result as string | undefined;
+      if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.startsWith('data:')) {
+        ToastUtils.error('이미지를 불러올 수 없습니다.');
+        return;
+      }
+      setCropArea({ x: 0, y: 0, size: 0 });
+      setSelectedImage(imageUrl);
+      setShowImageUpload(false);
+      setShowCropModal(true);
+    };
+    reader.onerror = () => {
+      ToastUtils.error('이미지를 읽는 중 오류가 발생했습니다.');
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
   };
 
   const handleCropConfirm = () => {
@@ -485,15 +1011,25 @@ function MypagePageContent() {
   };
 
   const handleImageLoad = () => {
-    if (imageRef.current) {
-      const rect = imageRef.current.getBoundingClientRect();
-      const size = Math.min(rect.width, rect.height) * 0.6;
+    if (!imageRef.current) return;
+    const setCropCentered = () => {
+      if (!imageRef.current) return;
+      const w = imageRef.current.offsetWidth;
+      const h = imageRef.current.offsetHeight;
+      if (w <= 0 || h <= 0) {
+        setTimeout(setCropCentered, 50);
+        return;
+      }
+      const size = Math.min(w, h) * 0.6;
       setCropArea({
-        x: (rect.width - size) / 2,
-        y: (rect.height - size) / 2,
+        x: (w - size) / 2,
+        y: (h - size) / 2,
         size,
       });
-    }
+    };
+    requestAnimationFrame(() => {
+      requestAnimationFrame(setCropCentered);
+    });
   };
 
   const CROP_MIN_SIZE = 80;
@@ -504,26 +1040,10 @@ function MypagePageContent() {
     e.preventDefault();
     setIsDragging(true);
     const rect = imageRef.current.getBoundingClientRect();
-    setDragStart({
+    dragStartRef.current = {
       x: e.clientX - rect.left - cropArea.x,
       y: e.clientY - rect.top - cropArea.y,
-    });
-  };
-
-  const handleCropAreaMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imageRef.current) return;
-    if (isResizing) return;
-    if (!isDragging) return;
-    const rect = imageRef.current.getBoundingClientRect();
-    const newX = e.clientX - rect.left - dragStart.x;
-    const newY = e.clientY - rect.top - dragStart.y;
-    const maxX = rect.width - cropArea.size;
-    const maxY = rect.height - cropArea.size;
-    setCropArea((prev) => ({
-      ...prev,
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY)),
-    }));
+    };
   };
 
   const handleResizeHandleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -535,13 +1055,11 @@ function MypagePageContent() {
       x: cropArea.x,
       y: cropArea.y,
       size: cropArea.size,
+      mouseX: e.clientX,
+      mouseY: e.clientY,
     };
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-    setIsResizing(false);
-  };
 
   const validateCreditAmount = (value: string): string => {
     if (!value) {
@@ -551,6 +1069,10 @@ function MypagePageContent() {
     const amount = parseInt(value, 10);
     if (isNaN(amount) || amount < 1000) {
       return '1000원 이상 입력해 주세요';
+    }
+
+    if (amount > DAILY_CHARGE_LIMIT) {
+      return DAILY_CHARGE_LIMIT_MSG;
     }
 
     if (amount % 100 !== 0) {
@@ -574,6 +1096,9 @@ function MypagePageContent() {
     creditValidationTimerRef.current = setTimeout(() => {
       const error = validateCreditAmount(value);
       setCreditError(error);
+      if (error === DAILY_CHARGE_LIMIT_MSG) {
+        ToastUtils.error(DAILY_CHARGE_LIMIT_MSG);
+      }
     }, 500);
   };
 
@@ -604,6 +1129,9 @@ function MypagePageContent() {
     creditValidationTimerRef.current = setTimeout(() => {
       const error = validateCreditAmount(nextAmountString);
       setCreditError(error);
+      if (error === DAILY_CHARGE_LIMIT_MSG) {
+        ToastUtils.error(DAILY_CHARGE_LIMIT_MSG);
+      }
     }, 500);
   };
 
@@ -612,6 +1140,9 @@ function MypagePageContent() {
     const error = validateCreditAmount(creditAmount);
     if (error) {
       setCreditError(error);
+      if (error === DAILY_CHARGE_LIMIT_MSG) {
+        ToastUtils.error(DAILY_CHARGE_LIMIT_MSG);
+      }
       return;
     }
 
@@ -649,8 +1180,428 @@ function MypagePageContent() {
     setCreditError('');
   };
 
+  /* pageReady 전까지 스켈레톤 유지 → 하얀 화면 깜빡임 방지 */
+  if (!pageReady) {
+    const t = getValidTab(tabParam);
+    if (tabParam) {
+      const skeletonTableRow = (gridClass: string, cols: number, widths: string[]) =>
+        Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className={`${styles.tableGrid} ${gridClass} ${styles.tableRow}`}>
+            {Array.from({ length: cols }).map((__, c) => (
+              <div key={c} className={styles.tableCell}>
+                <div className={styles.skeletonBar} style={{ width: widths[c] || '60%' }} />
+              </div>
+            ))}
+          </div>
+        ));
+      const searchBarEl = (
+        <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>
+          <input
+            type="text"
+            placeholder="검색어 입력"
+            disabled
+            style={{
+              width: '100%',
+              padding: '8px 40px 8px 12px',
+              border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
+              borderRadius: 8,
+              fontSize: 14,
+              background: darkMode ? '#242422' : '#fff',
+              color: darkMode ? '#B5B3A7' : '#333',
+            }}
+          />
+          <span style={{
+            position: 'absolute',
+            right: 8,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 4,
+            color: '#666',
+          }}>
+            <Search size={18} />
+          </span>
+        </div>
+      );
+      const dateRowEl = (
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
+          <input type="date" defaultValue={getDate30DaysAgo()} disabled max={getTodayDateString()} style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }} />
+          <span style={{ color: darkMode ? '#8A877D' : undefined }}>~</span>
+          <input type="date" defaultValue={getTodayDateString()} disabled max={getTodayDateString()} style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }} />
+          <button type="button" disabled style={{ padding: '8px 16px', background: darkMode ? '#3A3934' : '#111', color: '#fff', border: 'none', borderRadius: 8, cursor: 'not-allowed', fontSize: 14 }}>조회</button>
+        </div>
+      );
+      const settlementDateRowEl = (
+        <div className={styles.settlementDateRow}>
+          <input type="date" defaultValue={getDate30DaysAgo()} disabled max={getTodayDateString()} className={styles.settlementDateInput} />
+          <span>~</span>
+          <input type="date" defaultValue={getTodayDateString()} disabled max={getTodayDateString()} className={styles.settlementDateInput} />
+          <button type="button" className={styles.settlementSearchBtn} disabled>조회</button>
+        </div>
+      );
+      let tabSkeleton: React.ReactNode = null;
+      if (t === 'playlists') {
+        tabSkeleton = (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ display: 'flex', gap: 8 }}><div className={styles.skeletonPlaylistActionBtn} /><div className={styles.skeletonPlaylistActionBtn} /></div>
+              <div style={{ display: 'flex', gap: 8, minWidth: 88 }}>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 24, padding: '4px 4px 8px' }}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className={styles.skeletonCard} style={{ flex: '0 0 calc((100% - 48px) / 3)' }}>
+                  <div className={styles.skeletonCardThumb} style={{ height: 180, paddingTop: 0 }} />
+                  <div className={styles.skeletonCardBody} style={{ minHeight: 80 }}><div className={styles.skeletonBar} style={{ width: '80%', height: 16 }} /><div className={styles.skeletonBar} style={{ width: '40%' }} /></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      } else if (t === 'posts') {
+        tabSkeleton = (
+          <div>
+            {searchBarEl}
+            <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+              <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableHeader}`}>
+                <div>날짜</div><div>게시판</div><div>제목</div><div>조회</div><div>추천</div>
+              </div>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableRow}`}>
+                  <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '80%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '45%' }} /></div>
+                </div>
+              ))}
+            </div></div>
+          </div>
+        );
+      } else if (t === 'comments') {
+        tabSkeleton = (
+          <div>
+            {searchBarEl}
+            <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+              <div className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableHeader}`}>
+                <div>날짜</div><div>게시판</div><div>댓글</div><div>원문 글 제목</div><div>추천</div>
+              </div>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableRow}`}>
+                  <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '80%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '45%' }} /></div>
+                </div>
+              ))}
+            </div></div>
+          </div>
+        );
+      } else if (t === 'liked') {
+        tabSkeleton = (
+          <div>
+            {searchBarEl}
+            <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+              <div className={`${styles.tableGrid} ${styles.likedGrid5} ${styles.tableHeader}`}>
+                <div>게시판</div><div>제목</div><div>작성자</div><div>조회</div><div>추천</div>
+              </div>
+              {skeletonTableRow(styles.likedGrid5, 5, ['70%', '85%', '50%', '40%', '35%'])}
+            </div></div>
+          </div>
+        );
+      } else if (t === 'reports') {
+        tabSkeleton = (
+          <div>
+            {dateRowEl}
+            <div style={{ overflowX: 'auto' }}>
+              <div className={`${styles.tableGrid} ${styles.reportsGrid} ${styles.tableHeader}`}>
+                <div /><div>신고일시</div><div>신고사유</div><div>상태</div><div>글 바로가기</div><div>신고 취소</div>
+              </div>
+              {skeletonTableRow(styles.reportsGrid, 6, ['16px', '75%', '70%', '55%', '60%', '55%'])}
+            </div>
+          </div>
+        );
+      } else if (t === 'inquiries') {
+        tabSkeleton = (
+          <div>
+            {dateRowEl}
+            <div style={{ overflowX: 'auto' }}>
+              <div className={`${styles.tableGrid} ${styles.inquiryGrid} ${styles.tableHeader}`}>
+                <div style={{ textAlign: 'center' }}>문의일시</div><div>문의유형</div><div>제목</div><div>상태</div>
+              </div>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className={`${styles.tableGrid} ${styles.inquiryGrid} ${styles.tableRow}`}>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      } else if (t === 'pop') {
+        const popSt = searchParams.get('popSubTab');
+        const popSub = (popSt === 'usage' || popSt === 'purchase') ? popSt : 'purchase';
+        const isUsage = popSub === 'usage';
+        tabSkeleton = (
+          <div className={styles.popSection}>
+            <div className={styles.settlementRequestSummaryBox}>
+              <div className={styles.settlementSummaryRow}>
+                <span>보유 POP</span>
+                <span className={styles.settlementTotalAmount}>
+                  <div className={styles.skeletonBar} style={{ width: 80, height: 16, display: 'inline-block' }} />
+                </span>
+              </div>
+              <button type="button" className={styles.submitBtn} disabled>충전하기</button>
+            </div>
+            <div className={styles.settlementSubTabs}>
+              <button type="button" className={popSub === 'purchase' ? styles.settlementSubTabActive : styles.settlementSubTab}>구매내역{popSub === 'purchase' && <span className={styles.settlementSubTabIndicator} />}</button>
+              <button type="button" className={popSub === 'usage' ? styles.settlementSubTabActive : styles.settlementSubTab}>사용내역{popSub === 'usage' && <span className={styles.settlementSubTabIndicator} />}</button>
+            </div>
+            {settlementDateRowEl}
+            <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+              {isUsage ? (
+                <>
+                  <div className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableHeader}`}>
+                    <div>사용일시</div><div>사용수량</div><div>사용대상</div><div>사용내용</div><div>사용상태</div><div>사용취소</div>
+                  </div>
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableRow}`}>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <div className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableHeader}`}>
+                    <div>충전일시</div><div>충전수량</div><div>상세내역</div><div>결제금액</div><div>유효기간</div><div>구매취소</div>
+                  </div>
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableRow}`}>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div></div>
+          </div>
+        );
+      } else if (t === 'donation') {
+        const donSt = searchParams.get('donationSubTab');
+        const donSub = (donSt === 'sent' || donSt === 'received') ? donSt : 'sent';
+        tabSkeleton = (
+          <div className={styles.donationSection}>
+            <div className={styles.settlementSubTabs}>
+              <button type="button" className={donSub === 'sent' ? styles.settlementSubTabActive : styles.settlementSubTab}>보낸내역{donSub === 'sent' && <span className={styles.settlementSubTabIndicator} />}</button>
+              <button type="button" className={donSub === 'received' ? styles.settlementSubTabActive : styles.settlementSubTab}>받은내역{donSub === 'received' && <span className={styles.settlementSubTabIndicator} />}</button>
+            </div>
+            <div className={styles.settlementInnerContent}>
+              {settlementDateRowEl}
+              <div style={{ overflowX: 'auto' }}>
+                {donSub === 'sent' ? (
+                  <>
+                    <div className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableHeader}`}>
+                      <div>후원일</div><div>요청일</div><div>승인일</div><div>취소일</div><div>금액</div><div>상태</div><div>취소</div><div>수혜자</div>
+                    </div>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableRow}`}>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <div className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableHeader}`}>
+                      <div>후원일</div><div>요청일</div><div>확정일</div><div>취소일</div><div>금액</div><div>상태</div><div>후원자</div>
+                    </div>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableRow}`}>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      } else if (t === 'settlement') {
+        const stParam = searchParams.get('settlementSubTab');
+        const stSub = (stParam === 'history' || stParam === 'register' || stParam === 'request') ? stParam : 'history';
+        let settlementContent: React.ReactNode = null;
+        if (stSub === 'history') {
+          settlementContent = (
+            <div className={styles.settlementInnerContent}>
+              {settlementDateRowEl}
+              <div style={{ overflowX: 'auto' }}>
+                <div className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableHeader}`}>
+                  <div>정산요청일</div><div>정산승인일</div><div>변동 수량</div><div>정산금액</div><div>정산처리상태</div>
+                </div>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableRow}`}>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '65%' }} /></div></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '65%' }} /></div></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        } else if (stSub === 'register') {
+          settlementContent = (
+            <div className={styles.settlementInnerContent}>
+              <div className={styles.settlementForm}>
+                {['이메일', '이름', '연락처', '계좌번호'].map((label) => (
+                  <div key={label} className={styles.settlementField}>
+                    <label>{label}</label>
+                    <div className={styles.skeletonBar} style={{ width: '100%', height: 40, borderRadius: 8 }} />
+                  </div>
+                ))}
+                <div className={styles.skeletonBar} style={{ width: 80, height: 40, borderRadius: 8 }} />
+              </div>
+            </div>
+          );
+        } else {
+          settlementContent = (
+            <div className={styles.settlementInnerContent}>
+              <div className={styles.settlementRequestSummaryBox}>
+                <div className={styles.settlementSummaryRow}>
+                  <span>정산 가능 금액</span>
+                  <span className={styles.settlementTotalAmount}>
+                    <div className={styles.skeletonBar} style={{ width: 80, height: 16, display: 'inline-block' }} />
+                  </span>
+                </div>
+                <button type="button" className={styles.submitBtn} disabled>정산요청</button>
+              </div>
+              <div className={styles.settlementRequestTableWrap}><div style={{ overflowX: 'auto' }}>
+                <div className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableHeader}`}>
+                  <div style={{ textAlign: 'center' }}>후원금액</div>
+                  <div style={{ textAlign: 'center' }}>후원승인일</div>
+                </div>
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
+                    <div className={styles.tableCell} style={{ textAlign: 'center' }}><div className={styles.skeletonBar} style={{ width: '40%' }} /></div>
+                    <div className={styles.tableCell} style={{ textAlign: 'center' }}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /><div className={styles.skeletonBar} style={{ width: '40%' }} /></div></div>
+                  </div>
+                ))}
+              </div></div>
+            </div>
+          );
+        }
+        tabSkeleton = (
+          <div className={styles.settlementSection}>
+            <div className={styles.settlementSubTabs}>
+              {[{ id: 'history', label: '정산 내역' }, { id: 'register', label: '정산 정보 등록' }, { id: 'request', label: '정산 신청' }].map((st) => (
+                <button key={st.id} type="button" className={stSub === st.id ? styles.settlementSubTabActive : styles.settlementSubTab}>
+                  {st.label}{stSub === st.id && <span className={styles.settlementSubTabIndicator} />}
+                </button>
+              ))}
+            </div>
+            {settlementContent}
+          </div>
+        );
+      } else {
+        tabSkeleton = (
+          <div className={styles.skeletonContent}>
+            <div className={styles.skeletonContentRow} style={{ width: '100%' }} />
+            <div className={styles.skeletonContentRow} style={{ width: '85%' }} />
+            <div className={styles.skeletonContentRow} style={{ width: '92%' }} />
+          </div>
+        );
+      }
+      return (
+        <div className={styles.wrap}>
+          <div className={styles.skeletonProfile}>
+            <div className={styles.skeletonAvatar} />
+            <div className={styles.skeletonProfileText}>
+              <div className={styles.skeletonBar} style={{ width: 120, height: 26 }} />
+              <div className={styles.skeletonBar} style={{ width: 200, height: 16 }} />
+              <div className={styles.skeletonBar} style={{ width: 140, height: 16 }} />
+              <div className={styles.skeletonBar} style={{ width: 110, height: 16 }} />
+            </div>
+          </div>
+          <div className={styles.tabs}>
+            {TABS.map((tb) => (
+              <button key={tb.id} type="button" className={t === tb.id ? styles.tabActive : styles.tab}>{tb.label}</button>
+            ))}
+          </div>
+          <div className={styles.content}>{tabSkeleton}</div>
+        </div>
+      );
+    }
+    /* tabParam 없으면 기본 플레이리스트 스켈레톤 */
+    return (
+      <div className={styles.wrap}>
+        <div className={styles.skeletonProfile}>
+          <div className={styles.skeletonAvatar} />
+          <div className={styles.skeletonProfileText}>
+            <div className={styles.skeletonBar} style={{ width: 120, height: 26 }} />
+            <div className={styles.skeletonBar} style={{ width: 200, height: 16 }} />
+            <div className={styles.skeletonBar} style={{ width: 140, height: 16 }} />
+            <div className={styles.skeletonBar} style={{ width: 110, height: 16 }} />
+          </div>
+        </div>
+        <div className={styles.tabs}>
+          {TABS.map((tb) => (
+            <button key={tb.id} type="button" className={tb.id === 'playlists' ? styles.tabActive : styles.tab}>{tb.label}</button>
+          ))}
+        </div>
+        <div className={styles.content}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ display: 'flex', gap: 8 }}><div className={styles.skeletonPlaylistActionBtn} /><div className={styles.skeletonPlaylistActionBtn} /></div>
+              <div style={{ display: 'flex', gap: 8, minWidth: 88 }}>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 24, padding: '4px 4px 8px' }}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className={styles.skeletonCard} style={{ flex: '0 0 calc((100% - 48px) / 3)' }}>
+                  <div className={styles.skeletonCardThumb} style={{ height: 180, paddingTop: 0 }} />
+                  <div className={styles.skeletonCardBody} style={{ minHeight: 80 }}><div className={styles.skeletonBar} style={{ width: '80%', height: 16 }} /><div className={styles.skeletonBar} style={{ width: '40%' }} /></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={styles.wrap} style={{ opacity: pageReady ? 1 : 0, transition: 'opacity 0.45s ease' }}>
+    <div className={styles.wrap} style={{ opacity: pageReady ? 1 : 0, transition: 'opacity 0.35s ease' }}>
       <section className={styles.profile}>
         <div
           className={styles.avatarWrap}
@@ -720,7 +1671,7 @@ function MypagePageContent() {
               setShowPasswordVerifyModal(true);
             }}
           >
-            <Key size={22} />
+            <KeyRound size={22} />
           </button>
           <button
             type="button"
@@ -731,7 +1682,7 @@ function MypagePageContent() {
               setShowPasswordVerifyModal(true);
             }}
           >
-            <User size={22} />
+            <UserCog size={22} />
           </button>
           {user?.passwordless === true && (
             <button
@@ -765,11 +1716,11 @@ function MypagePageContent() {
 
       <div className={`${styles.content} ${tabVisible ? styles.contentVisible : styles.contentHidden}`}>
         {displayedTab === 'playlists' && (
-          <MyPageYouTubeSection user={user} isAuthenticated={isAuthenticated} />
+          <MyPageYouTubeSection user={user} isAuthenticated={isAuthenticated} onLoadingChange={setSectionLoading} />
         )}
-        {displayedTab === 'posts' && <MyPostsSection />}
-        {displayedTab === 'comments' && <MyCommentsSection />}
-        {displayedTab === 'liked' && <MyPostLikesSection />}
+        {displayedTab === 'posts' && <MyPostsSection onLoadingChange={setSectionLoading} />}
+        {displayedTab === 'comments' && <MyCommentsSection onLoadingChange={setSectionLoading} />}
+        {displayedTab === 'liked' && <MyPostLikesSection onLoadingChange={setSectionLoading} />}
         {displayedTab === 'reports' && (
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
@@ -897,12 +1848,33 @@ function MypagePageContent() {
             </div>
           </div>
         )}
-        {displayedTab === 'settlement' && (
-          <SettlementSection user={user} />
-        )}
-        {displayedTab === 'donation' && (
-          <DonationSection />
-        )}
+        {displayedTab === 'settlement' && (() => {
+          const stParam = searchParams.get('settlementSubTab');
+          const validSt = (stParam === 'history' || stParam === 'register' || stParam === 'request') ? stParam : 'history';
+          return (
+            <SettlementSection
+              user={user}
+              subTab={validSt}
+              onChangeSubTab={(next) => {
+                router.replace(`/mypage?tab=settlement&settlementSubTab=${next}`, { scroll: false });
+              }}
+              onLoadingChange={setSectionLoading}
+            />
+          );
+        })()}
+        {displayedTab === 'donation' && (() => {
+          const dtParam = searchParams.get('donationSubTab');
+          const validDt = (dtParam === 'sent' || dtParam === 'received') ? dtParam : 'sent';
+          return (
+            <DonationSection
+              subTab={validDt}
+              onChangeSubTab={(next) => {
+                router.replace(`/mypage?tab=donation&donationSubTab=${next}`, { scroll: false });
+              }}
+              onLoadingChange={setSectionLoading}
+            />
+          );
+        })()}
         {displayedTab === 'inquiries' && (
           <div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
@@ -970,7 +1942,7 @@ function MypagePageContent() {
             <div style={{ overflowX: 'auto' }}>
               <div>
                 <div className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableHeader}>
-                  <div style={{ textAlign: 'left' }}>문의일시</div>
+                  <div style={{ textAlign: 'center' }}>문의일시</div>
                   <div style={{ textAlign: 'center' }}>문의유형</div>
                   <div style={{ textAlign: 'center' }}>제목</div>
                   <div style={{ textAlign: 'center' }}>상태</div>
@@ -978,8 +1950,8 @@ function MypagePageContent() {
                 <div className={styles.fadeWrap}>
                   <div className={`${styles.fadeLayer} ${inquiryLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                     {Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableRow} style={{ padding: '12px 0' }}>
-                        <div className={styles.tableCell} style={{ textAlign: 'left' }}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
+                      <div key={i} className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableRow}>
+                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
                         <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
                         <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
                         <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
@@ -996,9 +1968,8 @@ function MypagePageContent() {
                         <div
                           key={item.inquiryId}
                           className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableRow}
-                          style={{ padding: '12px 0' }}
                         >
-                          <div className={styles.tableCell} style={{ textAlign: 'left' }}>
+                          <div className={styles.tableCell} style={{ textAlign: 'center' }}>
                             {(() => {
                               if (!item.createdAt) return '-';
                               // LocalDateTime 배열: [year, month, day, hour, minute, second]
@@ -1041,8 +2012,6 @@ function MypagePageContent() {
                                 setInquiryDetail(null);
                                 mypageApi.getInquiryDetail(item.inquiryId)
                                   .then(({ data }) => {
-                                    console.log('[InquiryDetail] raw API response:', data);
-                                    console.log('[InquiryDetail] data.data:', data?.data);
                                     const detail = data?.data as {
                                       title: string;
                                       inquiryType: string;
@@ -1054,7 +2023,6 @@ function MypagePageContent() {
                                       adminComment?: string;
                                       commentCreatedAt?: string;
                                     } | undefined;
-                                    console.log('[InquiryDetail] fileUrl:', detail?.fileUrl);
                                     setInquiryDetail(detail ?? null);
                                   })
                                   .catch(() => {
@@ -1138,6 +2106,7 @@ function MypagePageContent() {
             <PopSection
               user={user}
               subTab={validPopSubTab}
+              onLoadingChange={setSectionLoading}
               onChangeSubTab={(next) => {
                 router.replace(`/mypage?tab=pop&popSubTab=${next}`, { scroll: false });
               }}
@@ -1257,12 +2226,12 @@ function MypagePageContent() {
         </div>
       )}
 
-      {showCropModal && selectedImage && (
+      {showCropModal && selectedImage && typeof document !== 'undefined' && createPortal(
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            zIndex: 100,
+            zIndex: 10000,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -1289,7 +2258,7 @@ function MypagePageContent() {
                 marginBottom: 16,
                 overflow: 'hidden',
                 borderRadius: 8,
-                background: '#000',
+                background: darkMode ? '#2E2E2C' : '#e5e5e5',
               }}
             >
               <img
@@ -1303,54 +2272,24 @@ function MypagePageContent() {
                   display: 'block',
                 }}
               />
-              {/* 오버레이 - 위쪽 */}
+              {/* 어둡게 처리할 전체 오버레이 (크롭 영역만 투명 구멍) */}
               <div
                 style={{
                   position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: cropArea.y,
+                  inset: 0,
                   background: 'rgba(0,0,0,0.6)',
+                  clipPath: `polygon(
+                    0% 0%, 100% 0%, 100% 100%, 0% 100%,
+                    0% ${cropArea.y}px,
+                    ${cropArea.x}px ${cropArea.y}px,
+                    ${cropArea.x}px ${cropArea.y + cropArea.size}px,
+                    ${cropArea.x + cropArea.size}px ${cropArea.y + cropArea.size}px,
+                    ${cropArea.x + cropArea.size}px ${cropArea.y}px,
+                    0% ${cropArea.y}px
+                  )`,
+                  pointerEvents: 'none',
                 }}
               />
-              {/* 오버레이 - 아래쪽 */}
-              {imageRef.current && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: imageRef.current.clientHeight - cropArea.y - cropArea.size,
-                    background: 'rgba(0,0,0,0.6)',
-                  }}
-                />
-              )}
-              {/* 오버레이 - 왼쪽 */}
-              <div
-                style={{
-                  position: 'absolute',
-                  top: cropArea.y,
-                  left: 0,
-                  width: cropArea.x,
-                  height: cropArea.size,
-                  background: 'rgba(0,0,0,0.6)',
-                }}
-              />
-              {/* 오버레이 - 오른쪽 */}
-              {imageRef.current && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: cropArea.y,
-                    right: 0,
-                    width: imageRef.current.clientWidth - cropArea.x - cropArea.size,
-                    height: cropArea.size,
-                    background: 'rgba(0,0,0,0.6)',
-                  }}
-                />
-              )}
               <div
                 style={{
                   position: 'absolute',
@@ -1358,15 +2297,12 @@ function MypagePageContent() {
                   top: cropArea.y,
                   width: cropArea.size,
                   height: cropArea.size,
-                  border: `3px solid ${darkMode ? '#3A3934' : '#111'}`,
+                  border: `2px solid rgba(255, 255, 255, 0.7)`,
                   borderRadius: '50%',
                   cursor: isDragging ? 'grabbing' : 'grab',
                   boxSizing: 'border-box',
                 }}
                 onMouseDown={handleCropAreaMouseDown}
-                onMouseMove={handleCropAreaMouseMove}
-                onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
               >
                 <div
                   data-resize-handle="true"
@@ -1376,13 +2312,13 @@ function MypagePageContent() {
                   onMouseDown={handleResizeHandleMouseDown}
                   style={{
                     position: 'absolute',
-                    right: 2,
-                    bottom: 2,
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    background: darkMode ? '#3A3934' : '#111',
-                    border: '2px solid #fff',
+                    right: 0,
+                    bottom: 0,
+                    width: 12,
+                    height: 12,
+                    borderRight: '2px solid rgba(255,255,255,0.9)',
+                    borderBottom: '2px solid rgba(255,255,255,0.9)',
+                    borderRadius: '0 0 4px 0',
                     cursor: 'nwse-resize',
                     boxSizing: 'border-box',
                   }}
@@ -1430,7 +2366,8 @@ function MypagePageContent() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {showPasswordVerifyModal && passwordVerifyTarget && (

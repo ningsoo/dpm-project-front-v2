@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './Toast.module.css';
 
 interface ToastItem {
@@ -12,8 +12,17 @@ interface ToastItem {
 let toastId = 0;
 const listeners: Array<(t: ToastItem) => void> = [];
 
+/* 리스너가 없을 때 토스트를 유실하지 않기 위한 큐 */
+const pendingQueue: ToastItem[] = [];
+
 export function addToast(message: string, type: ToastItem['type'] = 'info') {
   const item: ToastItem = { id: ++toastId, message, type };
+
+  if (listeners.length === 0) {
+    pendingQueue.push(item);
+    return;
+  }
+
   listeners.forEach((fn) => fn(item));
 }
 
@@ -23,27 +32,28 @@ export default function ToastRoot() {
 
   useEffect(() => {
     const onToast = (t: ToastItem) => {
-      // 기존 타이머가 있으면 취소
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      
-      // 기존 토스트를 새 것으로 덮어쓰기
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
       setItem(t);
-      
-      // 3초 후 자동 제거
+
       timeoutRef.current = setTimeout(() => {
         setItem(null);
         timeoutRef.current = null;
       }, 3000);
     };
+
     listeners.push(onToast);
+
+    /* 마운트 시 큐에 쌓인 토스트를 순서대로 방출 */
+    if (pendingQueue.length > 0) {
+      const copy = pendingQueue.splice(0, pendingQueue.length);
+      copy.forEach((t) => onToast(t));
+    }
+
     return () => {
       const i = listeners.indexOf(onToast);
       if (i >= 0) listeners.splice(i, 1);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, []);
 

@@ -25,13 +25,21 @@ function formatCategoryType(categoryType: string): string {
   return categoryType.charAt(0).toUpperCase() + categoryType.slice(1).toLowerCase();
 }
 
-export function MyPostLikesSection() {
+interface MyPostLikesSectionProps {
+  onLoadingChange?: (loading: boolean) => void;
+}
+
+export function MyPostLikesSection({ onLoadingChange }: MyPostLikesSectionProps = {}) {
   const router = useRouter();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const [searchQuery, setSearchQuery] = useState('');
   const [items, setItems] = useState<LikedPost[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    onLoadingChange?.(loading);
+  }, [loading, onLoadingChange]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -142,7 +150,21 @@ export function MyPostLikesSection() {
                     className={`${styles.tableGrid} ${styles.likedGrid5} ${styles.tableRow}`}
                   >
                     <div className={styles.tableCell}>{formatCategoryType(row.categoryType)}</div>
-                    <div className={styles.tableCell}>{row.title}</div>
+                    <div className={styles.tableCell}>
+                      <button
+                        type="button"
+                        className={styles.cellLinkBtn}
+                        onClick={() => {
+                          sessionStorage.setItem(
+                            'soundock_mypage_return',
+                            JSON.stringify({ tab: 'liked', scrollY: window.scrollY })
+                          );
+                          router.push(`/boards/${row.boardId}`);
+                        }}
+                      >
+                        {row.title}
+                      </button>
+                    </div>
                     <div className={styles.tableCell}>{row.nickname}</div>
                     <div className={styles.tableCell}>{row.views}</div>
                     <div className={styles.tableCell}>{row.likes}</div>

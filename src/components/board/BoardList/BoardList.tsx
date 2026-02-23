@@ -3,14 +3,15 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store';
+import { setCurrentBoardCategory } from '@/store/slices/uiSlice';
 import { boardApi } from '@/api/boardApi';
 import type { BoardCategory } from '@/api/boardApi';
 import type { BoardListItem } from '@/api/boardTypes';
 import { ToastUtils } from '@/utils/toastUtils';
 import { formatCreatedDateTime } from '@/utils/createdDateTime';
-import { formatViews, formatCommentCount } from '@/utils/displayFormatters';
+import { formatViews, formatCommentCount, formatNickname } from '@/utils/displayFormatters';
 import {
   extractPageableInfoFromResponse,
   getBoardThumbnailUrl,
@@ -45,6 +46,7 @@ function toBoardCategory(category: string): BoardCategory {
 export default function BoardList({ category, viewMode }: BoardListProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const dispatch = useDispatch<AppDispatch>();
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const [posts, setPosts] = useState<BoardListItemWithDisplay[]>([]);
   const [page, setPage] = useState(0);
@@ -54,7 +56,14 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
   const [hasError, setHasError] = useState(false);
   const [searchType, setSearchType] = useState<'title' | 'nickname'>('title');
   const [search, setSearch] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState<{
+    keyword: string;
+    searchType: 'TITLE' | 'NICKNAME';
+  } | null>(null);
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+
+  const filterRef = useRef<HTMLDivElement>(null);
 
   /* ── 카테고리 전환 페이드 ── */
   const [contentVisible, setContentVisible] = useState(true);
@@ -68,6 +77,12 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
   const categoryType = toBoardCategory(category);
 
   const shouldShowNumbers = category === 'community' || category === 'reviews';
+
+  // 카테고리 목록 진입 시 헤더 네비에 표시 (게시글 상세 로딩 중에도 유지)
+  useEffect(() => {
+    const slug = category?.toLowerCase() ?? null;
+    if (slug) dispatch(setCurrentBoardCategory(slug));
+  }, [category, dispatch]);
 
   const processAndAssignDisplayNumber = useCallback(
     (list: BoardListItem[], startIndex: number): BoardListItemWithDisplay[] => {
@@ -117,10 +132,69 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
     [categoryType, posts.length, processAndAssignDisplayNumber]
   );
 
+  const fetchSearchPage = useCallback(
+    async (pageNum: number, isAppend: boolean, kw: string, st: 'TITLE' | 'NICKNAME') => {
+      if (isAppend) setLoadingMore(true);
+      else setLoading(true);
+
+      try {
+        const { data } = await boardApi.searchBoards(categoryType, st, kw, pageNum);
+        const { content, last: isLast } = extractPageableInfoFromResponse(data);
+
+        const startIndex = isAppend ? posts.length : 0;
+        const withDisplay = processAndAssignDisplayNumber(content, startIndex);
+
+        if (isAppend) setPosts((prev) => [...prev, ...withDisplay] as BoardListItemWithDisplay[]);
+        else setPosts(withDisplay);
+
+        setPage(pageNum);
+        setLast(isLast);
+        setHasError(false);
+      } catch {
+        ToastUtils.error('검색 결과를 불러올 수 없습니다');
+        if (!isAppend) setPosts([]);
+        setHasError(true);
+      } finally {
+        if (isAppend) setLoadingMore(false);
+        else setLoading(false);
+      }
+    },
+    [categoryType, posts.length, processAndAssignDisplayNumber]
+  );
+
+  const onSearch = useCallback(() => {
+    const kw = search.trim();
+
+    if (!kw) {
+      setAppliedSearch(null);
+      setPosts([]);
+      setPage(0);
+      setLast(false);
+      setHasError(false);
+      fetchPage(0, false);
+      return;
+    }
+
+    const st: 'TITLE' | 'NICKNAME' = searchType === 'title' ? 'TITLE' : 'NICKNAME';
+    setAppliedSearch({ keyword: kw, searchType: st });
+    setPosts([]);
+    setPage(0);
+    setLast(false);
+    setHasError(false);
+
+    fetchSearchPage(0, false, kw, st);
+  }, [search, searchType, fetchPage, fetchSearchPage]);
+
   const fetchMore = useCallback(() => {
     if (loading || loadingMore || last || hasError) return;
+
+    if (appliedSearch) {
+      fetchSearchPage(page + 1, true, appliedSearch.keyword, appliedSearch.searchType);
+      return;
+    }
+
     fetchPage(page + 1, true);
-  }, [loading, loadingMore, last, hasError, page, fetchPage]);
+  }, [loading, loadingMore, last, hasError, page, fetchPage, fetchSearchPage, appliedSearch]);
 
   // 카테고리 변경 감지 및 초기 로드
   useEffect(() => {
@@ -135,6 +209,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
 
     // 콘텐츠 숨기고, 데이터 초기화 후 로드
     setContentVisible(false);
+    setAppliedSearch(null);
     setPosts([]);
     setPage(0);
     setLast(false);
@@ -190,16 +265,29 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
     return () => observer.disconnect();
   }, [loading, loadingMore, last, hasError, fetchMore]);
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setFilterOpen(false);
+      }
+    };
+    if (filterOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [filterOpen]);
+
   const displayedPosts = useMemo(() => {
+    if (appliedSearch) return posts;
+
     const kw = search.trim();
     if (!kw) return posts;
+
     return posts.filter((p) => {
       if (searchType === 'title') return (p.title ?? '').includes(kw);
       return (p.nickname ?? '').includes(kw);
     });
-  }, [posts, search, searchType]);
-
-  const onSearch = () => {};
+  }, [posts, search, searchType, appliedSearch]);
 
   const safeCat = ['showcase', 'playlists', 'spotlight', 'community', 'reviews'].includes(category)
     ? category
@@ -233,14 +321,48 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
 
       <div className={styles.searchRow}>
         <div className={styles.search}>
-          <select
-            className={styles.filter}
-            value={searchType}
-            onChange={(e) => setSearchType(e.target.value as 'title' | 'nickname')}
-          >
-            <option value="title">제목</option>
-            <option value="nickname">닉네임</option>
-          </select>
+          <div className={styles.filterWrap} ref={filterRef}>
+            <button
+              type="button"
+              className={styles.filter}
+              onClick={() => setFilterOpen((o) => !o)}
+              aria-haspopup="listbox"
+              aria-expanded={filterOpen}
+              aria-label="검색 타입 선택"
+            >
+              {searchType === 'title' ? '제목' : '닉네임'}
+            </button>
+            {filterOpen && (
+              <ul
+                className={styles.filterDropdown}
+                role="listbox"
+                aria-label="검색 타입"
+              >
+                <li
+                  role="option"
+                  aria-selected={searchType === 'title'}
+                  className={`${styles.filterOption} ${searchType === 'title' ? styles.filterOptionSelected : ''}`}
+                  onClick={() => {
+                    setSearchType('title');
+                    setFilterOpen(false);
+                  }}
+                >
+                  제목
+                </li>
+                <li
+                  role="option"
+                  aria-selected={searchType === 'nickname'}
+                  className={`${styles.filterOption} ${searchType === 'nickname' ? styles.filterOptionSelected : ''}`}
+                  onClick={() => {
+                    setSearchType('nickname');
+                    setFilterOpen(false);
+                  }}
+                >
+                  닉네임
+                </li>
+              </ul>
+            )}
+          </div>
           <input
             type="text"
             className={styles.input}
@@ -343,6 +465,8 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                     thumbnail={thumbnail}
                     title={p.title}
                     nickname={p.nickname}
+                    deleted={p.deleted}
+                    profileImage={p.profileImage}
                     likeCount={p.likes}
                     viewCount={p.views}
                     displayNumber={shouldShowNumbers ? p.displayNumber : undefined}
@@ -376,7 +500,7 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                       <td>
                         <Link href={`/boards/${p.boardId}`}>{p.title}</Link>
                       </td>
-                      <td>{p.nickname || '—'}</td>
+                      <td className={p.deleted ? 'authorDeleted' : ''}>{formatNickname(p.nickname, p.deleted)}</td>
                       <td>{p.likes ?? 0}</td>
                       {shouldShowNumbers && <td>{formatCommentCount(p.countComment)}</td>}
                       <td>{formatViews(p.views)}</td>

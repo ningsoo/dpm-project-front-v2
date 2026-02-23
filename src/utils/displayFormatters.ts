@@ -15,3 +15,14 @@ export function formatCommentCount(count: number | null | undefined): string {
   if (!Number.isFinite(n) || n < 0) return '0';
   return n >= 1000 ? '999+' : String(n);
 }
+
+/** deleted가 true일 때 "탈퇴 회원" 표시 (백엔드 isDeleted → JSON deleted) */
+export function formatNickname(
+  nickname?: string | null,
+  deleted?: boolean | null,
+  fallback = '—'
+): string {
+  if (deleted) return '탈퇴 회원';
+  if (!nickname || typeof nickname !== 'string') return fallback;
+  return nickname;
+}

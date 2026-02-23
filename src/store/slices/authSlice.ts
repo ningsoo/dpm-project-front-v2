@@ -6,10 +6,16 @@ interface AuthState {
   initialized: boolean;
 }
 
-const initialState: AuthState = {
-  isAuthenticated: false,
-  initialized: false,
-};
+/** 클라이언트에서 localStorage 기반으로 즉시 hydrate → 새로고침 시 헤더 아이콘 깜빡임 방지 */
+function getInitialAuthState(): AuthState {
+  if (typeof window === 'undefined') {
+    return { isAuthenticated: false, initialized: false };
+  }
+  const token = tokenUtils.getAccessToken();
+  return { isAuthenticated: !!token, initialized: true };
+}
+
+const initialState: AuthState = getInitialAuthState();
 
 const authSlice = createSlice({
   name: 'auth',

@@ -57,11 +57,42 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   margin-bottom: 20px;
 }
 
+.authorInfo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 프로필 아바타 (게시글 상세) */
+.avatar {
+  flex-shrink: 0;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+:global(.dark) .avatar {
+  background: #111;
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
 .author {
-  font-size: 1rem;
+  font-size: 2rem;
   font-weight: 500;
   color: #333;
   cursor: pointer;
@@ -815,4 +846,106 @@
 
 :global(.dark) .reportTextarea:focus {
   border-color: #9EA2B8;
+}
+
+/* =========================
+   Profile Card (showcase/spotlight/reviews와 동일 - community/playlists 포함 모든 카테고리 통일)
+========================= */
+
+.profileCard {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 24px;
+  background: #fafafa;
+  border-radius: 12px;
+}
+
+.profileCardAvatarWrap {
+  flex-shrink: 0;
+}
+
+.profileCardText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 45px;
+}
+
+/* 프로필 카드 내 닉네임 (showcase/spotlight/reviews와 동일) */
+.profileCard .author {
+  margin: 0 0 4px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #111;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.profileCard .author:hover {
+  color: #000;
+  text-decoration: underline;
+}
+
+.authorBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.profileCardActions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* 액션 버튼 (showcase/spotlight/reviews와 동일 - 박스형) */
+.profileCardIconLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: #555;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 0;
+  transition: background 0.2s, color 0.2s;
+  cursor: pointer;
+}
+
+.profileCardIconLink:hover {
+  background: #f0f0f0;
+  color: #111;
+}
+
+.profileCardIconLink:focus,
+.profileCardIconLink:focus-visible,
+.profileCardIconLink:active {
+  outline: none;
+  box-shadow: none;
+}
+
+:global(.dark) .profileCard {
+  background: #242422;
+}
+
+:global(.dark) .profileCard .author {
+  color: #B5B3A7;
+}
+
+:global(.dark) .profileCardIconLink {
+  background: #242422;
+  border-color: #3A3A38;
+  color: #8A877D;
+}
+
+:global(.dark) .profileCardIconLink:hover {
+  background: #2E2E2C;
+  color: #B5B3A7;
 }

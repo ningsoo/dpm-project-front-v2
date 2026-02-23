@@ -11,7 +11,7 @@ import {
   getBoardThumbnailUrl,
 } from '@/utils/boardThumbnailUtils';
 import { ChevronLeft, ChevronRight, Heart, Eye } from 'lucide-react';
-import { formatViews } from '@/utils/displayFormatters';
+import { formatViews, formatNickname } from '@/utils/displayFormatters';
 import styles from './SpotlightCarousel.module.css';
 
 const CARD_GAP = 20;
@@ -254,18 +254,14 @@ export default function SpotlightCarousel() {
         <div className={`${styles.skeletonLayer} ${showSkeleton ? styles.skeletonVisible : styles.skeletonHidden}`}>
           <div className={styles.skeletonTrack}>
             {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className={styles.skeletonCard}
-                style={cardWidth ? { width: cardWidth } : undefined}
-              />
+              <div key={i} className={styles.skeletonCard} />
             ))}
           </div>
         </div>
 
-        {/* 실제 캐러셀: 항상 마운트, layoutReady 후 표시 */}
-        {layoutReady && (
-          <>
+        {/* 실제 캐러셀: 항상 마운트, 스켈레톤 뒤에서 대기 → 크기 점프 방지 */}
+        {len > 0 && (
+          <div style={{ visibility: showSkeleton ? 'hidden' : 'visible' }}>
             <button
               type="button"
               className={styles.prevBtn}
@@ -318,7 +314,7 @@ export default function SpotlightCarousel() {
                           {post.title}
                         </div>
                         <div className={styles.overlayMetaRow}>
-                          <div className={styles.author}>{post.nickname || '—'}</div>
+                          <div className={`${styles.author} ${post.deleted ? 'authorDeleted' : ''}`}>{formatNickname(post.nickname, post.deleted, '—')}</div>
                           <div className={styles.meta}>
                             <span className={styles.metaItem}>
                               <Heart size={14} strokeWidth={2} />
@@ -339,7 +335,7 @@ export default function SpotlightCarousel() {
                 );
               })}
             </div>
-          </>
+          </div>
         )}
       </div>
     </section>

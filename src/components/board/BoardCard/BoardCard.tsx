@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { Heart, Eye } from 'lucide-react';
-import { formatViews } from '@/utils/displayFormatters';
+import { formatViews, formatNickname } from '@/utils/displayFormatters';
+import defaultProfileImg from '@/assets/site/profile.png';
 import styles from './BoardCard.module.css';
 
 export interface BoardCardProps {
@@ -11,6 +12,10 @@ export interface BoardCardProps {
   title: string;
   /** 작성자 닉네임 */
   nickname?: string | null;
+  /** 탈퇴 여부 (API deleted 필드) */
+  deleted?: boolean;
+  /** 작성자 프로필 이미지 URL */
+  profileImage?: string | null;
   likeCount?: number | null;
   viewCount?: number | null;
   /** community/reviews용 번호 (선택) */
@@ -27,6 +32,8 @@ export default function BoardCard({
   thumbnail,
   title,
   nickname,
+  deleted,
+  profileImage,
   likeCount = 0,
   viewCount = 0,
   displayNumber,
@@ -48,7 +55,17 @@ export default function BoardCard({
           {title}
         </div>
         <div className={styles.authorMetaRow}>
-          <div className={styles.author}>{nickname || '—'}</div>
+          <div className={styles.authorInfo}>
+            <span className={styles.avatar}>
+              <img
+                src={profileImage || defaultProfileImg.src}
+                alt=""
+                className={styles.avatarImg}
+                style={!profileImage ? { objectFit: 'contain' } : undefined}
+              />
+            </span>
+            <span className={`${styles.author} ${deleted ? 'authorDeleted' : ''}`}>{formatNickname(nickname, deleted)}</span>
+          </div>
           <div className={styles.meta}>
             <span className={`${styles.metaItem} ${styles.metaItemHeart}`}>
               <Heart className={styles.metaItemIcon} size={14} strokeWidth={2} />

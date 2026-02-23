@@ -6,15 +6,16 @@ import { boardApi } from '@/api/boardApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
 import { formatCreatedDateTimeFull } from '@/utils/createdDateTime';
-import { formatCommentCount } from '@/utils/displayFormatters';
+import { formatCommentCount, formatNickname } from '@/utils/displayFormatters';
 import MessageSendModal from './MessageSendModal';
 import styles from '../BoardFormLayout/BoardFormLayout.module.css';
 
-/** API 응답 댓글 형태 */
+/** API 응답 댓글 형태 (백엔드 isDeleted → JSON deleted) */
 interface CommentFromApi {
   commentId?: number | string;
   userId?: number;
   nickname: string;
+  deleted?: boolean;
   content: string;
   likeCount?: number;
   toggledLike?: boolean;
@@ -28,6 +29,7 @@ interface Comment {
   commentId: string | undefined;
   userId: number | undefined;
   nickname: string;
+  deleted?: boolean;
   content: string;
   likeCount: number;
   toggledLike: boolean;
@@ -69,6 +71,7 @@ function transformComments(apiData: CommentFromApi[]): Comment[] {
       commentId: c.commentId != null ? String(c.commentId) : undefined,
       userId: c.userId,
       nickname: c.nickname,
+      deleted: c.deleted,
       content: c.content,
       likeCount: typeof c.likeCount === 'number' ? c.likeCount : 0,
       toggledLike: c.toggledLike === true,
@@ -93,22 +96,38 @@ export default function CommentSection({
   const [commentText, setCommentText] = useState('');
   const [commentOpen, setCommentOpen] = useState(false);
   const [commentMenuOpen, setCommentMenuOpen] = useState<string | null>(null);
+  const [commentMenuSource, setCommentMenuSource] = useState<'nickname' | 'ellipsis'>('ellipsis');
   const [showCommentDeleteModal, setShowCommentDeleteModal] = useState<string | null>(null);
   const [showCommentReportModal, setShowCommentReportModal] = useState<string | null>(null);
   const [commentReportReason, setCommentReportReason] = useState('');
   const [commentLikeLoading, setCommentLikeLoading] = useState<string | null>(null);
   const [commentSubmitLoading, setCommentSubmitLoading] = useState(false);
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const [commentEditLoading, setCommentEditLoading] = useState<string | null>(null);
   const [messageModalTarget, setMessageModalTarget] = useState<{
     userId: number;
     nickname: string;
+    deleted?: boolean;
   } | null>(null);
 
   const commentMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const didAutoScrollRef = useRef(false);
+  const pendingHashIdRef = useRef<string | null>(null);
   const currentUserId =
     typeof window !== 'undefined' ? tokenUtils.getUserIdFromToken() : null;
+
+  // 해시가 #comment-로 시작하면 댓글 섹션 자동 펼침
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash;
+    if (hash.startsWith('#comment-')) {
+      const targetId = hash.slice(1);
+      pendingHashIdRef.current = targetId;
+      setCommentOpen(true);
+    }
+  }, []);
 
   // ===== 댓글 조회 =====
   useEffect(() => {
@@ -134,6 +153,38 @@ export default function CommentSection({
         setCountComment(0);
       });
   }, [boardId]);
+
+  // 댓글 목록 렌더 후 해시 대상으로 스크롤
+  useEffect(() => {
+    if (
+      !didAutoScrollRef.current &&
+      pendingHashIdRef.current &&
+      commentOpen
+    ) {
+      const targetId = pendingHashIdRef.current;
+      let attempt = 0;
+      const maxAttempts = 12;
+      const intervalMs = 150;
+      const tryScroll = () => {
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.scrollIntoView({ block: 'start' });
+          didAutoScrollRef.current = true;
+          pendingHashIdRef.current = null;
+          // 스크롤 후 해당 댓글 하이라이트 애니메이션
+          const commentId = targetId.replace('comment-', '');
+          setHighlightedCommentId(commentId);
+          setTimeout(() => setHighlightedCommentId(null), 2000);
+          return;
+        }
+        attempt += 1;
+        if (attempt < maxAttempts) {
+          setTimeout(tryScroll, intervalMs);
+        }
+      };
+      tryScroll();
+    }
+  }, [commentOpen, comments.length]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -349,24 +400,63 @@ export default function CommentSection({
               const isCommentLikeLoading = commentLikeLoading === apiCommentId;
 
               return (
-                <div key={c.commentId ?? c.id} className={styles.commentItem}>
-                  <div className={styles.commentHead}>
+                <div
+                  key={c.commentId ?? c.id}
+                  id={apiCommentId != null ? `comment-${apiCommentId}` : undefined}
+                  className={`${styles.commentItem}${highlightedCommentId === apiCommentId ? ` ${styles.commentItemHighlight}` : ''}`}
+                >
+                  <div
+                    className={styles.commentHead}
+                    ref={(el) => {
+                      if (el) commentMenuRefs.current[c.id] = el;
+                      else delete commentMenuRefs.current[c.id];
+                    }}
+                  >
                     {isCommentAuthor ? (
-                      <span className={styles.commentAuthor}>{c.nickname}</span>
+                      <span className={`${styles.commentAuthor} ${c.deleted ? 'authorDeleted' : ''}`}>{formatNickname(c.nickname, c.deleted, '-')}</span>
                     ) : (
-                      <button
-                        type="button"
-                        className={styles.commentAuthorBtn}
-                        onClick={() => {
-                          if (!isAuthenticated) {
-                            onLoginRequired();
-                            return;
-                          }
-                          setCommentMenuOpen(commentMenuOpen === c.id ? null : c.id);
-                        }}
-                      >
-                        {c.nickname}
-                      </button>
+                      <div className={styles.menuWrapper}>
+                        <button
+                          type="button"
+                          className={styles.commentAuthorBtn}
+                          onClick={() => {
+                            if (!isAuthenticated) {
+                              onLoginRequired();
+                              return;
+                            }
+                            const nextOpen = commentMenuOpen === c.id && commentMenuSource === 'nickname' ? null : c.id;
+                            setCommentMenuOpen(nextOpen);
+                            setCommentMenuSource('nickname');
+                          }}
+                        >
+                          <span className={c.deleted ? 'authorDeleted' : ''}>{formatNickname(c.nickname, c.deleted, '-')}</span>
+                        </button>
+                        {commentMenuOpen === c.id && commentMenuSource === 'nickname' && (
+                          <div className={`${styles.menuDropdown} ${styles.menuDropdownRight}`}>
+                            {c.userId != null && (
+                              <button
+                                className={styles.menuItem}
+                                onClick={() => {
+                                  setCommentMenuOpen(null);
+                                  setMessageModalTarget({
+                                    userId: c.userId!,
+                                    nickname: c.nickname,
+                                    deleted: c.deleted,
+                                  });
+                                }}
+                              >
+                                쪽지
+                              </button>
+                            )}
+                            <button
+                              className={styles.menuItem}
+                              onClick={() => handleCommentReportClick(c.id)}
+                            >
+                              신고
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     )}
                     <button
                       type="button"
@@ -380,24 +470,20 @@ export default function CommentSection({
                     <span className={styles.commentDate}>
                       {formatCreatedDateTimeFull(c.createdDateTime)}
                     </span>
-                    <div
-                      className={styles.menuWrapper}
-                      ref={(el) => {
-                        if (el) commentMenuRefs.current[c.id] = el;
-                        else delete commentMenuRefs.current[c.id];
-                      }}
-                    >
+                    <div className={styles.menuWrapper}>
                       <button
                         type="button"
                         className={styles.iconBtn}
-                        onClick={() =>
-                          setCommentMenuOpen(commentMenuOpen === c.id ? null : c.id)
-                        }
+                        onClick={() => {
+                          const nextOpen = commentMenuOpen === c.id && commentMenuSource === 'ellipsis' ? null : c.id;
+                          setCommentMenuOpen(nextOpen);
+                          setCommentMenuSource('ellipsis');
+                        }}
                         style={{ padding: '2px 6px' }}
                       >
                         <MoreVertical size={16} />
                       </button>
-                      {commentMenuOpen === c.id && (
+                      {commentMenuOpen === c.id && commentMenuSource === 'ellipsis' && (
                         <div className={styles.menuDropdown}>
                           {isCommentAuthor ? (
                             <>
@@ -426,6 +512,7 @@ export default function CommentSection({
                                     setMessageModalTarget({
                                       userId: c.userId!,
                                       nickname: c.nickname,
+                                      deleted: c.deleted,
                                     });
                                   }}
                                 >
@@ -497,7 +584,7 @@ export default function CommentSection({
           open={!!messageModalTarget}
           onClose={() => setMessageModalTarget(null)}
           targetUserId={messageModalTarget.userId}
-          targetNickname={messageModalTarget.nickname}
+          targetNickname={formatNickname(messageModalTarget.nickname, messageModalTarget.deleted)}
           onLoginRequired={onLoginRequired}
         />
       )}
