@@ -62,6 +62,7 @@ export function DashboardSection() {
           <div className={`${styles.tableGrid} ${styles.inquiriesGrid}`}>
             <div className={`${styles.tableGrid} ${styles.inquiriesGrid} ${styles.tableHeader}`}>
               <div>No</div>
+              <div>닉네임</div>
               <div>유형</div>
               <div>제목</div>
               <div>상세</div>
@@ -70,6 +71,7 @@ export function DashboardSection() {
             {recentInquiries.map((q, i) => (
               <div key={i} className={`${styles.tableGrid} ${styles.inquiriesGrid} ${styles.tableRow}`}>
                 <div className={styles.tableCell}>{i + 1}</div>
+                <div className={styles.tableCell}>{str(get(q, 'nickName'))}</div>
                 <div className={styles.tableCell}>{str(get(q, 'inquiryType'))}</div>
                 <div className={styles.tableCellLeft}>{str(get(q, 'title'))}</div>
                 <div className={styles.tableCell}>{str(get(q, 'details') ?? get(q, 'content'))}</div>
