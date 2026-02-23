@@ -1,26 +1,54 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { announcementApi } from '@/api/announcementApi';
-import type { Announcement } from '@/api/announcementTypes';
-import { formatCreatedDateTimeFull } from '@/utils/createdDateTime';
-import { getAnnounceTypeLabel, formatAnnouncePeriod } from '@/utils/announcementUtils';
+import { getAnnouncementDetail } from './announcementsService';
+import { getAnnounceTypeLabel } from '@/utils/announcementUtils';
 import { ToastUtils } from '@/utils/toastUtils';
+import type { AnnouncementItem } from '@/api/adminApi';
+import type { AnnounceType } from '@/api/announcementTypes';
+import { formatAnnouncementDate } from './formatAnnouncementDate';
 import styles from '@/components/board/BoardFormLayout/BoardFormLayout.module.css';
-import detailStyles from './AnnouncementDetail.module.css';
+import detailStyles from './AnnouncementsDetailSection.module.css';
+
+/** ISO 날짜 문자열 → YYYY.MM.DD */
+function formatIsoToDisplay(iso: string | null | undefined): string {
+  if (!iso || typeof iso !== 'string') return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}.${m}.${day}`;
+}
+
+/** API 응답(ISO 문자열 또는 배열) → YYYY.MM.DD, 없으면 '-' */
+function toDisplayDate(value: unknown): string {
+  if (value === null || value === undefined) return '-';
+  const iso = typeof value === 'string' && value.includes('T') ? formatIsoToDisplay(value) : '';
+  const arr = formatAnnouncementDate(value);
+  return iso || arr || '-';
+}
+
+/** 게시 기간: startedAt ~ endedAt (날짜만) */
+function formatPeriodDisplay(startedAt: unknown, endedAt: unknown): string {
+  const start = toDisplayDate(startedAt);
+  if (start === '-') return '-';
+  const end = toDisplayDate(endedAt);
+  return end === '-' ? `${start} ~` : `${start} ~ ${end}`;
+}
 
 const IMAGE_EXT = /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i;
 function isImageUrl(url: string): boolean {
   return IMAGE_EXT.test(url);
 }
 
-interface AnnouncementDetailProps {
-  announceId: string;
+interface AnnouncementsDetailSectionProps {
+  announceId: number;
 }
 
-export default function AnnouncementDetail({ announceId }: AnnouncementDetailProps) {
-  const [detail, setDetail] = useState<Announcement | null>(null);
+export function AnnouncementsDetailSection({ announceId }: AnnouncementsDetailSectionProps) {
+  const [detail, setDetail] = useState<AnnouncementItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<false | 'not_found' | 'server'>(false);
   const [retryTrigger, setRetryTrigger] = useState(0);
@@ -40,7 +68,7 @@ export default function AnnouncementDetail({ announceId }: AnnouncementDetailPro
     setImageIndex(0);
   }, [imageUrls.length]);
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     const id = Number(announceId);
     if (!Number.isInteger(id) || id < 1) {
       setLoading(false);
@@ -48,32 +76,29 @@ export default function AnnouncementDetail({ announceId }: AnnouncementDetailPro
       setFetchError('not_found');
       return;
     }
-
     setLoading(true);
     setFetchError(false);
-
-    announcementApi
-      .getDetail(id)
-      .then(({ data }) => {
-        const d = data?.data;
-        if (d) setDetail(d as Announcement);
-        else setDetail(null);
+    try {
+      const item = await getAnnouncementDetail(id);
+      if (item) {
+        setDetail(item);
         setFetchError(false);
-      })
-      .catch((err: unknown) => {
-        const e = err as { response?: { status?: number } };
-        const status = e?.response?.status;
-        if (status === 404) {
-          ToastUtils.error('삭제되었거나 존재하지 않는 공지입니다.');
-          setFetchError('not_found');
-        } else {
-          ToastUtils.error('공지사항을 불러올 수 없습니다.');
-          setFetchError('server');
-        }
+      } else {
         setDetail(null);
-      })
-      .finally(() => setLoading(false));
+        setFetchError('not_found');
+      }
+    } catch {
+      ToastUtils.error('공지사항을 불러올 수 없습니다.');
+      setDetail(null);
+      setFetchError('server');
+    } finally {
+      setLoading(false);
+    }
   }, [announceId, retryTrigger]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   if (loading) {
     return <div className={styles.loading}>로딩 중…</div>;
@@ -84,7 +109,7 @@ export default function AnnouncementDetail({ announceId }: AnnouncementDetailPro
       return (
         <div className={styles.loading}>
           <p>공지사항을 불러올 수 없습니다.</p>
-          <Link href="/announcement" className={styles.retryBtn}>
+          <Link href="/adm1n/announcements" className={styles.retryBtn}>
             목록
           </Link>
         </div>
@@ -107,11 +132,18 @@ export default function AnnouncementDetail({ announceId }: AnnouncementDetailPro
         </div>
       );
     }
-    return <div className={styles.loading}>공지가 없습니다.</div>;
+    return (
+      <div className={styles.loading}>
+        <p>공지가 없습니다.</p>
+        <Link href="/adm1n/announcements" className={styles.retryBtn}>
+          목록
+        </Link>
+      </div>
+    );
   }
 
-  const typeLabel = getAnnounceTypeLabel(detail.announceType);
-  const hasLink = detail.linkUrl != null && String(detail.linkUrl).trim() !== '';
+  const typeLabel = getAnnounceTypeLabel((detail.announceType as AnnounceType) || 'GENERAL');
+  const hasLink = detail.linkUrl && String(detail.linkUrl).trim() !== '';
 
   return (
     <div style={{ maxWidth: 720, margin: '0 auto' }}>
@@ -124,10 +156,10 @@ export default function AnnouncementDetail({ announceId }: AnnouncementDetailPro
           <h1 className={styles.title}>{detail.title}</h1>
           <div className={styles.actions}>
             <span className={styles.iconBtn} style={{ cursor: 'default' }}>
-              {formatAnnouncePeriod(detail.startedAt, detail.endedAt)}
+              {formatPeriodDisplay(detail.startedAt, detail.endedAt)}
             </span>
             <span className={styles.iconBtn} style={{ cursor: 'default' }}>
-              {formatCreatedDateTimeFull(detail.createdAt)}
+              {toDisplayDate(detail.createdAt)}
             </span>
           </div>
         </div>
@@ -205,9 +237,16 @@ export default function AnnouncementDetail({ announceId }: AnnouncementDetailPro
         )}
       </article>
 
-      <div style={{ padding: '0 40px', marginTop: 24, display: 'flex', justifyContent: 'flex-end' }}>
-        <Link href="/announcement" className={styles.retryBtn}>
+      <div style={{ padding: '0 40px', marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+        <Link href="/adm1n/announcements" className={styles.retryBtn}>
           목록
+        </Link>
+        <Link
+          href={`/adm1n/announcements/${detail.announceId}/edit`}
+          className={styles.retryBtn}
+          style={{ textDecoration: 'none' }}
+        >
+          수정
         </Link>
       </div>
     </div>

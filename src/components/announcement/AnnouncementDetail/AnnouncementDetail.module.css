@@ -1,0 +1,15 @@
+/* 페이지 이동 영역 카드 (관리자 공지 상세와 동일) */
+.pageMoveCard {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 24px;
+  margin-bottom: 0;
+  padding: 11px;
+  background: #fafafa;
+  border-radius: 12px;
+}
+
+:global(.dark) .pageMoveCard {
+  background: #242422;
+}

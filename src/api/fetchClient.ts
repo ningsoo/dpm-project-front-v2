@@ -147,6 +147,16 @@ fetchClient.interceptors.response.use(
       return Promise.reject(err);
     }
 
+    // 관리자 API 401 → refresh 없이 관리자 로그인으로 이동 (관리자 전용 refresh 미사용 가정)
+    if (config.url?.startsWith('/api/adm1n/')) {
+      tokenUtils.clearTokens();
+      store.dispatch(clearAuth());
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth/adm1n/login';
+      }
+      return Promise.reject(err);
+    }
+
     config._retry = true;
 
     try {
