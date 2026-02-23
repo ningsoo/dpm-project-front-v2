@@ -67,10 +67,10 @@ const PWLS_WITHDRAWAL_GUIDE =
 
 const PROFILE_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
 
-/** POP 충전 일일 한도 (원) */
-const DAILY_CHARGE_LIMIT = 3_000_000;
+/** POP 충전 1회 한도 (원) */
+const PER_CHARGE_LIMIT = 3_000_000;
 
-const DAILY_CHARGE_LIMIT_MSG = '일일 충전 한도 금액은 300만원입니다.';
+const PER_CHARGE_LIMIT_MSG = '1회 충전 한도 금액은 300만원입니다.';
 
 /** 오늘 날짜를 YYYY-MM-DD 형식으로 반환 */
 function getTodayDateString(): string {
@@ -1071,8 +1071,8 @@ function MypagePageContent() {
       return '1000원 이상 입력해 주세요';
     }
 
-    if (amount > DAILY_CHARGE_LIMIT) {
-      return DAILY_CHARGE_LIMIT_MSG;
+    if (amount > PER_CHARGE_LIMIT) {
+      return PER_CHARGE_LIMIT_MSG;
     }
 
     if (amount % 100 !== 0) {
@@ -1096,8 +1096,8 @@ function MypagePageContent() {
     creditValidationTimerRef.current = setTimeout(() => {
       const error = validateCreditAmount(value);
       setCreditError(error);
-      if (error === DAILY_CHARGE_LIMIT_MSG) {
-        ToastUtils.error(DAILY_CHARGE_LIMIT_MSG);
+      if (error === PER_CHARGE_LIMIT_MSG) {
+        ToastUtils.error(PER_CHARGE_LIMIT_MSG);
       }
     }, 500);
   };
@@ -1129,8 +1129,8 @@ function MypagePageContent() {
     creditValidationTimerRef.current = setTimeout(() => {
       const error = validateCreditAmount(nextAmountString);
       setCreditError(error);
-      if (error === DAILY_CHARGE_LIMIT_MSG) {
-        ToastUtils.error(DAILY_CHARGE_LIMIT_MSG);
+      if (error === PER_CHARGE_LIMIT_MSG) {
+        ToastUtils.error(PER_CHARGE_LIMIT_MSG);
       }
     }, 500);
   };
@@ -1140,8 +1140,8 @@ function MypagePageContent() {
     const error = validateCreditAmount(creditAmount);
     if (error) {
       setCreditError(error);
-      if (error === DAILY_CHARGE_LIMIT_MSG) {
-        ToastUtils.error(DAILY_CHARGE_LIMIT_MSG);
+      if (error === PER_CHARGE_LIMIT_MSG) {
+        ToastUtils.error(PER_CHARGE_LIMIT_MSG);
       }
       return;
     }
