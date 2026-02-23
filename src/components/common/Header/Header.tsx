@@ -55,16 +55,11 @@ export default function Header() {
   const notificationBtnRef = useRef<HTMLButtonElement>(null);
   const currentBoardCategory = useSelector((s: RootState) => s.ui.currentBoardCategory);
 
-  /* 인증 resolve 후 실제 UI를 opacity 전환으로 노출 (깜빡임 제거) */
-  const [contentVisible, setContentVisible] = useState(false);
+  /* 로그인/로그아웃 시 data-auth 동기화 (CSS 표시 제어용) */
   useEffect(() => {
-    if (!authInitialized) {
-      setContentVisible(false);
-      return;
-    }
-    const id = requestAnimationFrame(() => setContentVisible(true));
-    return () => cancelAnimationFrame(id);
-  }, [authInitialized]);
+    if (typeof document === 'undefined') return;
+    document.documentElement.setAttribute('data-auth', isAuthenticated ? 'true' : 'false');
+  }, [isAuthenticated]);
 
   /* 로그인 시에만 unread 메시지/알림 개수 조회 (중복 호출 방지: isAuthenticated true일 때 1회) */
   useEffect(() => {
@@ -159,59 +154,48 @@ export default function Header() {
       <div
         className={styles.actions}
         style={{ width: ACTIONS_WIDTH_PX, minWidth: ACTIONS_WIDTH_PX }}
-        aria-busy={!authInitialized}
       >
-        {!authInitialized ? (
-          /* 인증 확인 전: 고정 폭 투명 placeholder (스켈레톤/쉼머 없음, 레이아웃만 유지) */
-          <span className={styles.actionsPlaceholder} aria-hidden />
-        ) : (
-          <div
-            className={`${styles.actionsContent} ${contentVisible ? styles.actionsContentVisible : ''}`}
-          >
-            <button type="button" className={styles.iconBtn} onClick={handleDarkMode} aria-label="다크 모드">
-              <Moon size={20} />
+        <div className={styles.actionsContent}>
+          <button type="button" className={styles.iconBtn} onClick={handleDarkMode} aria-label="다크 모드">
+            <Moon size={20} />
+          </button>
+          <div className={styles.actionsLoggedIn}>
+            <button
+              ref={messageBtnRef}
+              type="button"
+              className={`${styles.msgWrapper} ${styles.iconBtn}`}
+              onClick={() => setShowMessageListModal(true)}
+              aria-label="메시지"
+            >
+              <MailIcon size={20} unreadCount={unreadCount} />
             </button>
-            {isAuthenticated ? (
-              <>
-                <button
-                  ref={messageBtnRef}
-                  type="button"
-                  className={`${styles.msgWrapper} ${styles.iconBtn}`}
-                  onClick={() => setShowMessageListModal(true)}
-                  aria-label="메시지"
-                >
-                  <MailIcon size={20} unreadCount={unreadCount} />
-                </button>
-                <div className={styles.msgWrapper}>
-                  <button
-                    ref={notificationBtnRef}
-                    type="button"
-                    className={styles.iconBtn}
-                    onClick={() => setShowNotificationDropdown((p) => !p)}
-                    aria-label="알림"
-                  >
-                    <NotificationIcon size={20} unreadCount={unreadNotificationCount} />
-                  </button>
-                  <NotificationDropdown
-                    open={showNotificationDropdown}
-                    onClose={() => setShowNotificationDropdown(false)}
-                    anchorRef={notificationBtnRef}
-                  />
-                </div>
-                <Link href="/mypage" className={styles.iconBtn} aria-label="마이페이지">
-                  <User size={20} />
-                </Link>
-                <button type="button" className={styles.iconBtn} onClick={handleLogout} aria-label="로그아웃">
-                  <LogOut size={20} />
-                </button>
-              </>
-            ) : (
-              <Link href="/auth/login" className={styles.iconBtn} aria-label="로그인">
-                <LogIn size={20} />
-              </Link>
-            )}
+            <div className={styles.msgWrapper}>
+              <button
+                ref={notificationBtnRef}
+                type="button"
+                className={styles.iconBtn}
+                onClick={() => setShowNotificationDropdown((p) => !p)}
+                aria-label="알림"
+              >
+                <NotificationIcon size={20} unreadCount={unreadNotificationCount} />
+              </button>
+              <NotificationDropdown
+                open={showNotificationDropdown}
+                onClose={() => setShowNotificationDropdown(false)}
+                anchorRef={notificationBtnRef}
+              />
+            </div>
+            <Link href="/mypage" className={styles.iconBtn} aria-label="마이페이지">
+              <User size={20} />
+            </Link>
+            <button type="button" className={styles.iconBtn} onClick={handleLogout} aria-label="로그아웃">
+              <LogOut size={20} />
+            </button>
           </div>
-        )}
+          <Link href="/auth/login" className={`${styles.actionsLoggedOut} ${styles.iconBtn}`} aria-label="로그인">
+            <LogIn size={20} />
+          </Link>
+        </div>
       </div>
 
       <MessageListModal

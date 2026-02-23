@@ -254,11 +254,7 @@ export default function SpotlightCarousel() {
         <div className={`${styles.skeletonLayer} ${showSkeleton ? styles.skeletonVisible : styles.skeletonHidden}`}>
           <div className={styles.skeletonTrack}>
             {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className={styles.skeletonCard}
-                style={cardWidth ? { width: cardWidth } : undefined}
-              />
+              <div key={i} className={styles.skeletonCard} />
             ))}
           </div>
         </div>
