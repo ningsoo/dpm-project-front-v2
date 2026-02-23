@@ -1,60 +1,134 @@
 /* theme: html.dark 단일 소스 → 최초 페인트부터 다크 적용, 전환 시 즉시 반영 */
+
 .footer {
-  padding: 32px 24px;
+  padding: 40px 24px;
   background: #fafafa;
   border-top: 1px solid #eee;
 }
 
 :global(html.dark) .footer {
-  background: #1D1D1B;
-  border-top-color: #3A3A38;
+  background: #1d1d1b;
+  border-top-color: #3a3a38;
 }
 
 .inner {
   max-width: 1200px;
   margin: 0 auto;
-  text-align: center;
+}
+
+.top {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 0.8fr;
+  gap: 40px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .top {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+.col {
+  text-align: left;
 }
 
 .brand {
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 1.3rem;
+  font-weight: 700;
   color: #333;
+  letter-spacing: 0.2px;
 }
 
 :global(html.dark) .brand {
-  color: #B5B3A7;
+  color: #b5b3a7;
 }
 
-.inquiryLink {
-  margin-top: 10px;
+.sectionTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
 }
 
-.inquiryLink a {
+:global(html.dark) .sectionTitle {
+  color: #b5b3a7;
+}
+
+.infoList,
+.linkList {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0 0;
+  display: grid;
+  gap: 8px;
+}
+
+.infoList li {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 10px;
   font-size: 0.85rem;
-  font-weight: 500;
+  color: #666;
+  line-height: 1.4;
+}
+
+:global(html.dark) .infoList li {
+  color: #8a877d;
+}
+
+.label {
+  color: #777;
+}
+
+:global(html.dark) .label {
+  color: #8a877d;
+}
+
+.value {
   color: #555;
 }
 
-.inquiryLink a:hover {
+:global(html.dark) .value {
+  color: #b5b3a7;
+}
+
+.link {
+  font-size: 0.85rem;
+  color: #555;
+  text-decoration: none;
+}
+
+.link:hover {
   color: #111;
   text-decoration: underline;
 }
 
-:global(html.dark) .inquiryLink a {
-  color: #8A877D;
+:global(html.dark) .link {
+  color: #8a877d;
 }
 
-:global(html.dark) .inquiryLink a:hover {
-  color: #B5B3A7;
+:global(html.dark) .link:hover {
+  color: #b5b3a7;
+}
+
+.bottom {
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid #eee;
+}
+
+:global(html.dark) .bottom {
+  border-top-color: #3a3a38;
 }
 
 .copyright {
-  margin-top: 8px;
+  text-align: left;
   font-size: 0.85rem;
   color: #666;
 }
 
 :global(html.dark) .copyright {
-  color: #8A877D;
+  color: #8a877d;
 }
