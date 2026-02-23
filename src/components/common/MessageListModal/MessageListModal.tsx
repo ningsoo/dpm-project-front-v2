@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
@@ -78,6 +78,24 @@ export default function MessageListModal({
   const [detailData, setDetailData] = useState<MessageItem | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [showReplyModal, setShowReplyModal] = useState(false);
+  /** 상세 보기 진입 시 탭 저장 → 뒤로가기 시 해당 탭(받은/보낸) 목록 재조회용 */
+  const detailFromTabRef = useRef<MessageType>('RECEIVED');
+
+  /** 목록으로 돌아가면서 현재 상세가 있던 탭(받은/보낸) 목록 재조회 — 읽음 등 반영 */
+  const refetchListAndBack = useCallback(() => {
+    const tabToRefetch = detailFromTabRef.current;
+    setViewMode('list');
+    setDetailData(null);
+    setLoading(true);
+    messageApi
+      .getMessageList(tabToRefetch)
+      .then(({ data }) => {
+        const list = data?.data;
+        setMessages(Array.isArray(list) ? list : []);
+      })
+      .catch(() => setMessages((prev) => prev))
+      .finally(() => setLoading(false));
+  }, []);
 
   // ESC 키로 모달 닫기
   useEffect(() => {
@@ -90,10 +108,9 @@ export default function MessageListModal({
           setShowReplyModal(false);
           return;
         }
-        // 상세 화면이면 목록으로 돌아가기
+        // 상세 화면이면 목록으로 돌아가기 + 해당 탭 목록 재조회
         if (viewMode === 'detail') {
-          setViewMode('list');
-          setDetailData(null);
+          refetchListAndBack();
           return;
         }
         // 목록 화면이면 모달 닫기
@@ -103,7 +120,7 @@ export default function MessageListModal({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [open, showReplyModal, viewMode, onClose]);
+  }, [open, showReplyModal, viewMode, onClose, refetchListAndBack]);
 
   // 모달 닫힐 때 view & 탭 초기화
   useEffect(() => {
@@ -150,6 +167,7 @@ export default function MessageListModal({
   };
 
   const handleListItemClick = (messageId: number) => {
+    detailFromTabRef.current = activeTab;
     setViewMode('detail');
     setDetailData(null);
     setDetailLoading(true);
@@ -187,8 +205,7 @@ export default function MessageListModal({
   };
 
   const handleBackToList = () => {
-    setViewMode('list');
-    setDetailData(null);
+    refetchListAndBack();
   };
 
   const handleBackdropClick = (e: React.MouseEvent) => {
