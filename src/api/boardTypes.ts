@@ -7,6 +7,8 @@ export interface BoardListItem {
   title: string;
   content: string | null;
   nickname: string;
+  /** 탈퇴 여부 (백엔드 isDeleted → Jackson 직렬화 시 deleted로 내려옴) */
+  deleted?: boolean;
   views: number;
   likes: number;
   /** 댓글 수 (목록/상세 API 응답) */
@@ -94,6 +96,8 @@ export interface CommentItem {
   commentId?: number | string;
   userId?: number;
   nickname: string;
+  /** 탈퇴 여부 (백엔드 isDeleted → Jackson 직렬화 시 deleted로 내려옴) */
+  deleted?: boolean;
   likeCount: number;
   toggledLike: boolean;
   content: string;

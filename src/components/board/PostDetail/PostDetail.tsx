@@ -12,7 +12,7 @@ import { s3Api } from '@/api/s3Api';
 import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
 import { formatCreatedDateTimeFull } from '@/utils/createdDateTime';
-import { formatViews } from '@/utils/displayFormatters';
+import { formatViews, formatNickname } from '@/utils/displayFormatters';
 import { extractYouTubeVideoId, getYouTubeEmbedUrl } from '@/utils/youtubeUtils';
 import type { BoardDetail } from '@/api/boardApi';
 import CommentSection from './CommentSection';
@@ -388,7 +388,9 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
         <div className={postDetailStyles.profileCardText}>
           <div className={styles.menuWrapper} ref={nicknameMenuRef}>
             {isAuthor ? (
-              <span className={postDetailStyles.author}>{post.nickname || '—'}</span>
+              <span className={`${postDetailStyles.author} ${post.deleted ? 'authorDeleted' : ''}`}>{formatNickname(post.nickname, post.deleted)}</span>
+            ) : post.deleted ? (
+              <span className={`${postDetailStyles.author} ${post.deleted ? 'authorDeleted' : ''}`}>{formatNickname(post.nickname, post.deleted, '—')}</span>
             ) : (
               <>
                 <button
@@ -402,7 +404,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
                     setNicknameMenuOpen((p) => !p);
                   }}
                 >
-                  {post.nickname || '—'}
+                  {formatNickname(post.nickname, post.deleted, '—')}
                 </button>
                 {nicknameMenuOpen && isAuthenticated && post.userId != null && (
                   <div className={styles.menuDropdown}>
@@ -422,7 +424,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
           </div>
         </div>
         <div className={postDetailStyles.profileCardActions}>
-          {!isAuthor && post.userId != null && (
+          {!isAuthor && post.userId != null && !post.deleted && (
             <>
               <button
                 type="button"
@@ -464,7 +466,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
           open={showMessageModal}
           onClose={() => setShowMessageModal(false)}
           targetUserId={Number(post.userId)}
-          targetNickname={post.nickname || '—'}
+          targetNickname={formatNickname(post.nickname, post.deleted)}
           onLoginRequired={() => setShowLoginRequiredModal(true)}
         />
       )}
@@ -474,7 +476,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
           open={showDonationModal}
           onClose={() => setShowDonationModal(false)}
           targetUserId={Number(post.userId)}
-          targetNickname={post.nickname || '—'}
+          targetNickname={formatNickname(post.nickname, post.deleted)}
           boardId={boardId ? Number(boardId) : undefined}
           onSuccess={() => {
             setShowDonationModal(false);
