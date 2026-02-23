@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { Search } from 'lucide-react';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import styles from '../mypage.module.css';
@@ -31,9 +30,7 @@ interface MyPostLikesSectionProps {
 
 export function MyPostLikesSection({ onLoadingChange }: MyPostLikesSectionProps = {}) {
   const router = useRouter();
-  const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
-  const [searchQuery, setSearchQuery] = useState('');
   const [items, setItems] = useState<LikedPost[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -63,56 +60,8 @@ export function MyPostLikesSection({ onLoadingChange }: MyPostLikesSectionProps 
       .finally(() => setLoading(false));
   }, [isAuthenticated, router]);
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      // TODO: 실제 검색 API 호출
-      console.log('Searching liked:', searchQuery);
-    }
-  };
-
   return (
     <div>
-      <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>
-        <input
-          type="text"
-          placeholder="검색어 입력"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          style={{
-            width: '100%',
-            padding: '8px 40px 8px 12px',
-            border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
-            borderRadius: 8,
-            fontSize: 14,
-            background: darkMode ? '#242422' : '#fff',
-            color: darkMode ? '#B5B3A7' : '#333',
-          }}
-        />
-        <button
-          type="button"
-          onClick={handleSearch}
-          onMouseEnter={(e) => { e.currentTarget.style.color = darkMode ? '#3A3934' : '#111'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = '#666'; }}
-          style={{
-            position: 'absolute',
-            right: 8,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 4,
-            color: '#666',
-            transition: 'color 0.2s',
-          }}
-        >
-          <Search size={18} />
-        </button>
-      </div>
       <div className={styles.popTableWrap}>
         <div style={{ overflowX: 'auto' }}>
           <div className={`${styles.tableGrid} ${styles.likedGrid5} ${styles.tableHeader}`}>

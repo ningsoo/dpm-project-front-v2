@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useRef, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { boardApi } from '@/api/boardApi';
 import type { BoardCategory } from '@/api/boardApi';
@@ -30,10 +30,14 @@ function toBoardCategory(category: string): BoardCategory {
 
 interface CreatePostProps {
   category: string;
+  /** 수정 모드일 때 전달. Spotlight 수정 시 POP 추가 입력(기간 연장) 가능 */
+  boardId?: string;
 }
 
-export default function CreatePost({ category }: CreatePostProps) {
+export default function CreatePost({ category, boardId }: CreatePostProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isEditMode = Boolean(boardId);
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -44,13 +48,27 @@ export default function CreatePost({ category }: CreatePostProps) {
     useState<MyPlaylistItem | null>(null);
   const [showPlaylistModal, setShowPlaylistModal] = useState(false);
   const [photos, setPhotos] = useState<File[]>([]);
+  const [spotlightPopAmount, setSpotlightPopAmount] = useState<number>(100);
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showSpotlightSuccessModal, setShowSpotlightSuccessModal] = useState(false);
+  const [spotlightSuccessAmount, setSpotlightSuccessAmount] = useState(0);
 
   const photoInputRef = useRef<HTMLInputElement>(null);
   const attachmentInputRef = useRef<HTMLInputElement>(null);
   const dragPhotoIndex = useRef<number | null>(null);
+
+  const popFromUrl = searchParams.get('popAmount');
+  useEffect(() => {
+    if (category !== 'spotlight') return;
+    if (isEditMode) {
+      setSpotlightPopAmount((prev) => (prev < 1000 ? 1000 : prev));
+    } else if (popFromUrl != null) {
+      const n = Math.floor(Number(popFromUrl)) || 1000;
+      setSpotlightPopAmount(n >= 1000 ? n : 1000);
+    }
+  }, [category, isEditMode, popFromUrl]);
 
   const SPOTLIGHT_IMAGE_TYPES = [
     'image/jpeg',
@@ -243,14 +261,25 @@ export default function CreatePost({ category }: CreatePostProps) {
             setLoading(false);
             return;
           }
+          if (spotlightPopAmount < 1000) {
+            ToastUtils.error('최소 1000 POP 이상 입력해주세요.');
+            setLoading(false);
+            return;
+          }
           const formData = new FormData();
-          appendCreateRequest(formData, {
-            title: trimmedTitle,
-            content: trimmedContent,
-          });
+          formData.append(
+            'data',
+            new Blob(
+              [JSON.stringify({ title: trimmedTitle, content: trimmedContent, popAmount: spotlightPopAmount })],
+              { type: 'application/json' }
+            )
+          );
           photos.forEach((file) => formData.append('files', file));
           await boardApi.createPostSpotlight(formData);
-          break;
+          setSpotlightSuccessAmount(spotlightPopAmount);
+          setShowSpotlightSuccessModal(true);
+          setLoading(false);
+          return;
         }
 
         case 'community':
@@ -304,6 +333,23 @@ export default function CreatePost({ category }: CreatePostProps) {
 
   return (
     <div className={styles.wrap}>
+      {showSpotlightSuccessModal && (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true" onClick={() => { setShowSpotlightSuccessModal(false); router.push('/boards/category/spotlight'); }}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <p className={styles.modalMessage}>
+              {spotlightSuccessAmount.toLocaleString('ko-KR')} POP이 차감되었습니다.
+              <br />
+              잔여 재화 내역은 마이페이지 내 
+              <br />재화 사용 내역에서 확인 가능합니다.
+            </p>
+            <div className={styles.modalButtons}>
+              <button type="button" className={`${styles.modalButton} ${styles.modalButtonConfirm}`} onClick={() => { setShowSpotlightSuccessModal(false); router.push('/boards/category/spotlight'); }}>
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <Link
         href={`/boards/category/${safeCat}`}
         className={styles.categoryLink}
@@ -400,8 +446,30 @@ export default function CreatePost({ category }: CreatePostProps) {
         )}
         
 
-        {/* Spotlight: 파일선택 + 썸네일 미리보기 */}
+        {/* Spotlight: POP 소모량 + 파일선택 + 썸네일 미리보기 */}
         {category === 'spotlight' && (
+          <>
+          <div className={styles.fieldGroup}>
+            <label className={styles.label} htmlFor="spotlight-pop">
+              {isEditMode ? '추가 소모 POP (기간 연장)' : '소모 POP'}
+              <span className={styles.required}>*</span>
+            </label>
+            <input
+              id="spotlight-pop"
+              type="number"
+              min={1000}
+              value={spotlightPopAmount}
+              readOnly={!isEditMode}
+              className={`${styles.input} ${isEditMode ? '' : styles.inputReadOnly}`}
+              aria-readonly={!isEditMode}
+              onChange={isEditMode ? (e) => setSpotlightPopAmount(Number(e.target.value) || 1000) : undefined}
+            />
+            <p className={styles.helper}>
+              {isEditMode
+                ? '추가 POP을 입력하면 게시 기간이 연장됩니다. (최소 1,000 POP)'
+                : '목록에서 설정한 사용량입니다. 수정할 수 없습니다.'}
+            </p>
+          </div>
           <div className={styles.attachmentGroup}>
             <label className={styles.label}>
               첨부파일 <span className={styles.optional}>(1 - 5장)</span>
@@ -457,6 +525,7 @@ export default function CreatePost({ category }: CreatePostProps) {
               </div>
             )}
           </div>
+          </>
         )}
 
         {/* Community / Reviews: 첨부파일 */}

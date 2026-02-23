@@ -114,8 +114,8 @@ export const mypageApi = {
   getPopPurchaseHistory: () =>
     fetchClient.get<ApiResponse<unknown>>('/api/mypage/pop-purchase'),
 
-  /** POP 사용취소 - POST /mypage/pop-usage/cancel */
-  cancelPopUsage: (body: { userId: number; popHistoryId: number; boardId?: number | null; cancelReason: string }) =>
+  /** POP 사용취소 - POST /mypage/pop-usage/cancel. popHistoryId 필수, boardId 선택 */
+  cancelPopUsage: (body: { userId: number; boardId?: number | null; popHistoryId: number; cancelReason: string }) =>
     fetchClient.post<ApiResponse<unknown>>('/api/mypage/pop-usage/cancel', body),
 
   getInquiries: (params?: { page?: number; size?: number; startDate?: string; endDate?: string;}) =>

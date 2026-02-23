@@ -19,6 +19,7 @@ import CommentSection from './CommentSection';
 import PlaylistDetailSection from './PlaylistDetailSection';
 import DonationModal from './DonationModal';
 import MessageSendModal from './MessageSendModal';
+import SpotlightExtendModal from './SpotlightExtendModal';
 import { PopIcon } from '@/assets/site/paths';
 import { MailIcon } from '@/assets/site/MailIcon';
 import defaultProfileImg from '@/assets/site/profile.png';
@@ -73,6 +74,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState('');
   const [showDonationModal, setShowDonationModal] = useState(false);
+  const [showExtendModal, setShowExtendModal] = useState(false);
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
   const [nicknameMenuOpen, setNicknameMenuOpen] = useState(false);
@@ -143,6 +145,20 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
     return () => controller.abort();
   }, [boardId, retryTrigger]);
+
+  // Spotlight: 창 포커스 시 게시글 재조회 (마이페이지에서 사용취소 후 돌아왔을 때 잔여 Pop 반영)
+  const isSpotlightPage = (category || (post?.categoryType ?? post?.category ?? '')).toString().toLowerCase() === 'spotlight';
+  useEffect(() => {
+    if (typeof window === 'undefined' || !isSpotlightPage || !boardId) return;
+    const handleFocus = () => {
+      boardApi.getPost(boardId).then(({ data }) => {
+        const postData = data?.data as BoardDetail | undefined;
+        if (postData) setPost({ ...postData } as Post);
+      }).catch(() => {});
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [boardId, isSpotlightPage]);
 
   // 게시글 로드 시 헤더 네비에 현재 카테고리 active 표시용 (로딩 중에는 진입 카테고리 유지)
   useEffect(() => {
@@ -349,16 +365,33 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
                   <>
                     <button
                       className={styles.menuItem}
-                      onClick={() => router.push(`/boards/${boardId}/edit`)}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        router.push(`/boards/${boardId}/edit`);
+                      }}
                     >
                       수정
                     </button>
                     <button
                       className={styles.menuItem}
-                      onClick={() => setShowDeleteModal(true)}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setShowDeleteModal(true);
+                      }}
                     >
                       삭제
                     </button>
+                    {categorySlug === 'spotlight' && (
+                      <button
+                        className={styles.menuItem}
+                        onClick={() => {
+                          setMenuOpen(false);
+                          setShowExtendModal(true);
+                        }}
+                      >
+                        연장하기
+                      </button>
+                    )}
                   </>
                 ) : (
                   <button
@@ -492,6 +525,26 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
         />
       )}
 
+      {showExtendModal && categorySlug === 'spotlight' && (
+        <SpotlightExtendModal
+          open={showExtendModal}
+          onClose={() => setShowExtendModal(false)}
+          boardId={boardId}
+          remainingPop={typeof post.remainingPop === 'number' ? post.remainingPop : 0}
+          onSuccess={() => {
+            setShowExtendModal(false);
+            boardApi.getPost(boardId).then(({ data }) => {
+              const postData = data?.data as BoardDetail | undefined;
+              if (postData) setPost({ ...postData } as Post);
+            }).catch(() => {});
+          }}
+          onOpenCharge={() => {
+            setShowExtendModal(false);
+            router.push('/mypage?tab=pop&openCharge=1');
+          }}
+        />
+      )}
+
       <div className={styles.contentBlock}>
         {categorySlug === 'showcase' && (() => {
           const linkUrl = post.linkUrl ?? post.fileUrl ?? null;
@@ -591,6 +644,33 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
         <div className={styles.text}>{post.content}</div>
 
+        {categorySlug === 'spotlight' && isAuthor && (
+          <div className={postDetailStyles.spotlightRemainingBlock}>
+            <p className={postDetailStyles.spotlightRemainingText}>
+              잔여 Pop: {(typeof post.remainingPop === 'number' ? post.remainingPop : 0).toLocaleString('ko-KR')}
+              {(typeof post.remainingPop === 'number' && post.remainingPop === 0) ? ' (만료됨)' : ''}
+            </p>
+            {typeof post.remainingPop === 'number' && post.remainingPop === 0 && (
+              <div className={postDetailStyles.spotlightExpiredActions}>
+                <button
+                  type="button"
+                  className={postDetailStyles.spotlightExpiredBtn}
+                  onClick={() => router.push(`/boards/${boardId}/edit`)}
+                >
+                  수정
+                </button>
+                <button
+                  type="button"
+                  className={postDetailStyles.spotlightExpiredBtn}
+                  onClick={() => setShowExtendModal(true)}
+                >
+                  재등록
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {['community', 'reviews'].includes(categorySlug) &&
           (() => {
             const att = post.attachment;
@@ -659,17 +739,17 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
             <div className={styles.modalButtons}>
               <button
                 type="button"
-                className={`${styles.modalButton} ${styles.modalButtonDelete}`}
-                onClick={handleDeleteConfirm}
-              >
-                예
-              </button>
-              <button
-                type="button"
                 className={`${styles.modalButton} ${styles.modalButtonCancel}`}
                 onClick={() => setShowDeleteModal(false)}
               >
                 아니요
+              </button>
+              <button
+                type="button"
+                className={`${styles.modalButton} ${styles.modalButtonDelete}`}
+                onClick={handleDeleteConfirm}
+              >
+                예
               </button>
             </div>
           </div>
@@ -691,13 +771,6 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
               maxLength={200}
             />
             <div className={styles.modalButtons}>
-            <button
-                type="button"
-                className={`${styles.modalButton} ${styles.modalButtonConfirm}`}
-                onClick={handleReportSubmit}
-              >
-                신고
-              </button>
               <button
                 type="button"
                 className={`${styles.modalButton} ${styles.modalButtonCancel}`}
@@ -708,7 +781,13 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
               >
                 취소
               </button>
-
+              <button
+                type="button"
+                className={`${styles.modalButton} ${styles.modalButtonConfirm}`}
+                onClick={handleReportSubmit}
+              >
+                신고
+              </button>
             </div>
           </div>
         </div>

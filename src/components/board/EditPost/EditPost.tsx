@@ -627,19 +627,21 @@ export default function EditPost({ category, boardId }: EditPostProps) {
 
         {isSpotlight && (
           <div className={styles.label}>
-            <span>사진 (필수, 1~5장)</span>
-            <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input
-                id="edit-spotlight-photos-input"
-                type="file"
-                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                multiple
-                onChange={handleSpotlightPhotos}
-                className={styles.fileInputHidden}
-              />
-              <label htmlFor="edit-spotlight-photos-input" className={styles.fileSelectBtn}>
-                파일선택
-              </label>
+            <div className={styles.attachmentLabelRow}>
+              <span>사진 (필수, 1~5장)</span>
+              <div>
+                <input
+                  id="edit-spotlight-photos-input"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                  multiple
+                  onChange={handleSpotlightPhotos}
+                  className={styles.fileInputHidden}
+                />
+                <label htmlFor="edit-spotlight-photos-input" className={styles.fileSelectBtn}>
+                  파일선택
+                </label>
+              </div>
             </div>
             <span className={styles.helper}>jpg, jpeg, png, webp 형식만 업로드 가능합니다. 첫 사진이 메인에 사용됩니다. 드래그하여 순서 변경 가능.</span>
             {errors.photos && <span className={styles.error}>{errors.photos}</span>}
@@ -688,19 +690,21 @@ export default function EditPost({ category, boardId }: EditPostProps) {
 
         {isCommunityOrReviews && communityLoadMode === 'image' && (
           <div className={styles.label}>
-            <span>사진 (선택)</span>
-            <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <input
-                id="edit-community-photos-input"
-                type="file"
-                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                multiple
-                onChange={handleCommunityImages}
-                className={styles.fileInputHidden}
-              />
-              <label htmlFor="edit-community-photos-input" className={styles.fileSelectBtn}>
-                파일선택
-              </label>
+            <div className={styles.attachmentLabelRow}>
+              <span>사진 (선택)</span>
+              <div>
+                <input
+                  id="edit-community-photos-input"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                  multiple
+                  onChange={handleCommunityImages}
+                  className={styles.fileInputHidden}
+                />
+                <label htmlFor="edit-community-photos-input" className={styles.fileSelectBtn}>
+                  파일선택
+                </label>
+              </div>
             </div>
             <span className={styles.helper}>
               jpg, jpeg, png, webp 형식. 삭제/교체 시 기존 이미지는 삭제됩니다. 신규 업로드 가능.
@@ -733,19 +737,21 @@ export default function EditPost({ category, boardId }: EditPostProps) {
         )}
 
         {isCommunityOrReviews && communityLoadMode === 'attachment' && (
-          <label className={styles.label}>
-            첨부 (선택, 1개)
-            <input
-              type="file"
-              accept=".jpg,.jpeg,.png,.webp,.pdf,.txt,.doc,.docx,.zip,image/jpeg,image/png,image/webp"
-              onChange={handleCommunityAttachment}
-              className={styles.fileInputHidden}
-              id="edit-community-attachment-input"
-            />
-            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <label htmlFor="edit-community-attachment-input" className={styles.fileSelectBtn}>
-                파일선택
-              </label>
+          <div className={styles.label}>
+            <div className={styles.attachmentLabelRow}>
+              <span>첨부 (선택, 1개)</span>
+              <div>
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,.pdf,.txt,.doc,.docx,.zip,image/jpeg,image/png,image/webp"
+                  onChange={handleCommunityAttachment}
+                  className={styles.fileInputHidden}
+                  id="edit-community-attachment-input"
+                />
+                <label htmlFor="edit-community-attachment-input" className={styles.fileSelectBtn}>
+                  파일선택
+                </label>
+              </div>
             </div>
             <span className={styles.helper}>이미지(jpg, png, webp) 또는 일반 파일(pdf, txt, doc, docx, zip)</span>
             {(communityExistingAttachment || communityNewAttachmentFile) && (
@@ -788,7 +794,7 @@ export default function EditPost({ category, boardId }: EditPostProps) {
                 </button>
               </div>
             )}
-          </label>
+          </div>
         )}
 
         {!isShowcase && !isPlaylists && !isSpotlight && !isCommunityOrReviews && (

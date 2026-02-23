@@ -215,6 +215,7 @@
   display: none;
 }
 
+/* 프로필 카드와 동일한 radius(12px) 적용 */
 .tableHeader {
   background: #f5f5f5;
   border-bottom: 2px solid #ddd;
@@ -222,6 +223,7 @@
   font-size: 14px;
   padding: 12px;
   text-align: center;
+  border-radius: 12px 12px 0 0;
 }
 
 .tableHeader > div {
