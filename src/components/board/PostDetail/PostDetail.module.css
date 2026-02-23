@@ -136,6 +136,45 @@
   margin-bottom: 24px;
 }
 
+/* Spotlight 잔여 Pop / 만료 시 수정·재등록 */
+.spotlightRemainingBlock {
+  margin-top: 20px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #f8f8f8;
+  border-radius: 12px;
+  border: 1px solid #eee;
+}
+
+.spotlightRemainingText {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.spotlightExpiredActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.spotlightExpiredBtn {
+  padding: 10px 18px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #111;
+  color: #fff;
+}
+
+.spotlightExpiredBtn:hover {
+  background: #000;
+}
+
 .videoWrap {
   position: relative;
   padding-top: 56.25%;
@@ -948,4 +987,22 @@
 :global(.dark) .profileCardIconLink:hover {
   background: #2E2E2C;
   color: #B5B3A7;
+}
+
+:global(.dark) .spotlightRemainingBlock {
+  background: #252523;
+  border-color: #3a3a38;
+}
+
+:global(.dark) .spotlightRemainingText {
+  color: #b5b3a7;
+}
+
+:global(.dark) .spotlightExpiredBtn {
+  background: #3a3934;
+  color: #fff;
+}
+
+:global(.dark) .spotlightExpiredBtn:hover {
+  background: #42413b;
 }

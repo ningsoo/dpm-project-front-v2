@@ -37,6 +37,7 @@ export type PopUsageRow = {
   popTarget?: string;
   popStatus?: string;
   related?: { id?: number | null; name?: string | null };
+  transactionId?: string | null;
 };
 
 export type PopPurchaseRow = {
@@ -54,15 +55,103 @@ export type PopPurchaseRow = {
 };
 
 function parsePopResponse(res: unknown): unknown[] {
-  if (Array.isArray(res)) return res;
+  if (Array.isArray(res)) return normalizeUsageRows(res);
   if (!res || typeof res !== 'object') return [];
   const obj = res as Record<string, unknown>;
-  if (obj.data && Array.isArray(obj.data)) return obj.data;
+  // 응답이 { data: [...] } 형태
+  if (obj.data && Array.isArray(obj.data)) return normalizeUsageRows(obj.data);
   if (obj.data && typeof obj.data === 'object' && obj.data !== null) {
-    const innerData = (obj.data as Record<string, unknown>).data;
-    if (Array.isArray(innerData)) return innerData;
+    const inner = obj.data as Record<string, unknown>;
+    const innerData = inner.data;
+    if (Array.isArray(innerData)) return normalizeUsageRows(innerData);
+    if (Array.isArray(inner.content)) return normalizeUsageRows(inner.content);
+    if (Array.isArray(inner.usage)) return normalizeUsageRows(inner.usage);
+    if (Array.isArray(inner.usageList)) return normalizeUsageRows(inner.usageList);
+    const merged = collectAllArraysFromObject(inner);
+    if (merged.length > 0) return sortUsageByDateDesc(normalizeUsageRows(merged));
   }
+  // 최상위 content / usage (Spring Page 등)
+  if (Array.isArray(obj.content)) return normalizeUsageRows(obj.content);
+  if (Array.isArray(obj.usage)) return normalizeUsageRows(obj.usage);
   return [];
+}
+
+/**
+ * 백엔드 PopHistoryResponse: related는 createRelatedInfo로 채워짐.
+ * - FEATURED_BOARD: related에 boardId/제목, DONATION: related에 수령자 정보.
+ * related.id가 없고 related.boardId만 있으면 id로 통일(사용취소 시 boardId 필드 사용).
+ */
+function normalizeUsageRows(rows: unknown[]): unknown[] {
+  return rows.map((row) => {
+    if (!row || typeof row !== 'object') return row;
+    const r = row as Record<string, unknown>;
+    let related = r.related;
+    if (related && typeof related === 'object') {
+      const rel = related as Record<string, unknown>;
+      const id = rel.id ?? rel.boardId ?? rel.board_id;
+      if (id !== undefined) related = { ...rel, id };
+    } else if (r.board && typeof r.board === 'object') {
+      const b = r.board as Record<string, unknown>;
+      related = { id: b.boardId ?? b.board_id, name: b.title ?? b.name };
+    }
+    if (related && typeof related === 'object') return { ...r, related };
+    return r;
+  });
+}
+
+function collectAllArraysFromObject(o: Record<string, unknown>): unknown[] {
+  const out: unknown[] = [];
+  for (const v of Object.values(o)) {
+    if (Array.isArray(v)) out.push(...v);
+  }
+  return out;
+}
+
+function sortUsageByDateDesc(rows: unknown[]): unknown[] {
+  return [...rows].sort((a, b) => {
+    const dateA = (a as Record<string, unknown>)?.requestedDatetime ?? (a as Record<string, unknown>)?.createdDatetime ?? '';
+    const dateB = (b as Record<string, unknown>)?.requestedDatetime ?? (b as Record<string, unknown>)?.createdDatetime ?? '';
+    return String(dateB).localeCompare(String(dateA));
+  });
+}
+
+/**
+ * 백엔드는 취소 시 기존 PENDING 건을 수정하지 않고 CANCELED 새 건만 추가함.
+ * 같은 "한 번의 사용"(같은 boardId + 같은 requestedDatetime)에 대해 PENDING과 CANCELED가 둘 다 오면
+ * popHistoryId 큰 것(취소 건)만 표시 → 사용상태 취소, 사용취소 버튼 숨김.
+ * 작성/연장은 requestedDatetime이 달라서 각각 별도 행으로 유지됨.
+ */
+function deduplicateUsageByLatestState(rows: PopUsageRow[]): PopUsageRow[] {
+  const isFeatured = (r: PopUsageRow) =>
+    r.popTarget === 'FEATURED_BOARD' || r.popTarget === 'FEATURE_BOARD';
+
+  const keyOf = (r: PopUsageRow): string => {
+    if (isFeatured(r)) {
+      const id = r.related?.id ?? (r as Record<string, unknown>).boardId ?? (r as Record<string, unknown>).board_id;
+      const req = r.requestedDatetime ?? r.createdDatetime ?? '';
+      return id != null ? `BOARD_${id}_${req}` : `ID_${r.popHistoryId ?? 0}`;
+    }
+    const tx = r.transactionId ?? (r as Record<string, unknown>).transactionId;
+    return tx != null && tx !== '' ? `TX_${tx}` : `ID_${r.popHistoryId ?? 0}`;
+  };
+
+  const byKey = new Map<string, PopUsageRow>();
+  for (const row of rows) {
+    const key = keyOf(row);
+    const existing = byKey.get(key);
+    const existingId = existing?.popHistoryId ?? 0;
+    const rowId = row.popHistoryId ?? 0;
+    if (!existing || rowId > existingId) byKey.set(key, row);
+  }
+
+  const list = Array.from(byKey.values());
+  return list.sort((a, b) => {
+    const dateA = a.requestedDatetime ?? a.createdDatetime ?? '';
+    const dateB = b.requestedDatetime ?? b.createdDatetime ?? '';
+    const cmp = String(dateB).localeCompare(String(dateA));
+    if (cmp !== 0) return cmp;
+    return (b.popHistoryId ?? 0) - (a.popHistoryId ?? 0);
+  });
 }
 
 function formatPopDate(dt?: string): string {
@@ -91,10 +180,11 @@ function PopUsageDateCell({ dt }: { dt?: string }) {
   );
 }
 
-/** popTarget -> 한글 라벨 */
+/** popTarget -> 한글 라벨 (백엔드 FEATURE_BOARD / FEATURED_BOARD 모두 표시) */
 const POP_TARGET_MAP: Record<string, string> = {
   CHARGE: '충전',
   DONATION: '후원',
+  FEATURE_BOARD: '게시글 홍보',
   FEATURED_BOARD: '게시글 홍보',
   RECEIVED: '수령',
   EVENT: '이벤트',
@@ -184,6 +274,20 @@ function getDate30DaysAgo(): string {
   return `${year}-${month}-${day}`;
 }
 
+/** API 에러 응답에서 사용자에게 보여줄 메시지 추출 (Spring message, errorMessage, detail 등) */
+function getErrorMessageFromResponse(err: unknown): string | undefined {
+  const res = (err as { response?: { data?: Record<string, unknown>; status?: number } })?.response;
+  if (!res?.data || typeof res.data !== 'object') return undefined;
+  const d = res.data as Record<string, unknown>;
+  const msg = d.message ?? d.errorMessage ?? d.error ?? d.detail ?? d.msg;
+  if (typeof msg === 'string' && msg.trim()) return msg.trim();
+  if (Array.isArray(msg)) {
+    const first = msg[0];
+    if (typeof first === 'string' && first.trim()) return first.trim();
+  }
+  return undefined;
+}
+
 const SUB_TAB_FADE_MS = 150;
 
 function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onChargeClick, onLoadingChange }: PopSectionProps) {
@@ -237,7 +341,8 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
       .getPopUsageHistory()
       .then((res) => {
         const rows = parsePopResponse(res.data) as PopUsageRow[];
-        setUsageList(Array.isArray(rows) ? rows : []);
+        const list = Array.isArray(rows) ? rows : [];
+        setUsageList(deduplicateUsageByLatestState(list));
       })
       .finally(() => setUsageLoading(false));
   }, []);
@@ -337,16 +442,26 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
     const target = cancelTarget;
     if (!target) return;
 
-    const popHistoryId = target.popHistoryId;
-    if (popHistoryId == null || typeof popHistoryId !== 'number' || Number.isNaN(popHistoryId)) {
-      ToastUtils.error('취소할 내역을 확인할 수 없습니다.');
-      return;
-    }
-
     const uid = tokenUtils.getUserIdFromAccessToken();
     if (uid === null) {
       ToastUtils.error('로그인 정보를 확인할 수 없습니다. 다시 로그인해주세요.');
       return;
+    }
+
+    if (target.popTarget === 'DONATION') {
+      const popHistoryId = target.popHistoryId;
+      if (popHistoryId == null || typeof popHistoryId !== 'number' || Number.isNaN(popHistoryId)) {
+        ToastUtils.error('취소할 내역을 확인할 수 없습니다.');
+        return;
+      }
+    } else {
+      // 게시글 홍보(FEATURED_BOARD) 취소: 백엔드는 boardId로 게시글·PopHistory 조회. boardId 필수.
+      const rawBoardId = target.related?.id ?? (target as Record<string, unknown>).boardId ?? (target as Record<string, unknown>).board_id;
+      const boardIdNum = rawBoardId != null ? Number(rawBoardId) : NaN;
+      if (!Number.isInteger(boardIdNum) || Number.isNaN(boardIdNum)) {
+        ToastUtils.error('게시글 정보를 확인할 수 없어 취소할 수 없습니다.');
+        return;
+      }
     }
 
     setShowConfirmModal(false);
@@ -355,6 +470,7 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
 
     try {
       if (target.popTarget === 'DONATION') {
+        const popHistoryId = target.popHistoryId!;
         await fetchClient.post<unknown>(`/api/users/${uid}/donations/cancel`, {
           popHistoryId,
           changeAmount: Math.abs(target.changeAmount ?? 0),
@@ -362,23 +478,28 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
         });
         ToastUtils.success('후원이 취소되었습니다.');
       } else {
-        await mypageApi.cancelPopUsage({
+        // 게시글 홍보 취소: 백엔드는 userId, boardId로 검증 후 해당 board의 최신 PopHistory 기준 취소 금액만 remainingPop에서 차감, 0이 되면 만료 처리
+        const rawBoardId = target.related?.id ?? (target as Record<string, unknown>).boardId ?? (target as Record<string, unknown>).board_id;
+        const boardIdNum = Number(rawBoardId);
+        const body: { userId: number; boardId: number; cancelReason: string; popHistoryId?: number } = {
           userId: uid,
-          popHistoryId,
-          boardId: target.related?.id ?? null,
+          boardId: boardIdNum,
           cancelReason: FEATURED_CANCEL_REASON,
-        });
+        };
+        const phId = target.popHistoryId;
+        if (typeof phId === 'number' && !Number.isNaN(phId) && phId > 0) body.popHistoryId = phId;
+        await mypageApi.cancelPopUsage(body);
         ToastUtils.success('재화 사용 취소가 완료되었습니다.');
       }
       fetchUsage();
+      await onPopBalanceRefresh?.();
     } catch (err: unknown) {
-      const data = (err as { response?: { data?: { message?: string } } })?.response?.data;
-      const msg = typeof data?.message === 'string' ? data.message : undefined;
+      const msg = getErrorMessageFromResponse(err);
       ToastUtils.error(msg || '취소 요청에 실패했습니다.');
     } finally {
       setCancelSubmitting(false);
     }
-  }, [cancelTarget, fetchUsage]);
+  }, [cancelTarget, fetchUsage, onPopBalanceRefresh]);
 
   const handleCancelPurchaseClick = (row: PopPurchaseRow) => {
     setPurchaseCancelTarget(row);
@@ -688,14 +809,6 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
             <div className={styles.settlementConfirmActions}>
               <button
                 type="button"
-                className={styles.settlementConfirmBtn}
-                disabled={cancelSubmitting}
-                onClick={handleConfirmCancel}
-              >
-                {cancelSubmitting ? '처리 중…' : '확인'}
-              </button>
-              <button
-                type="button"
                 className={styles.settlementConfirmCancelBtn}
                 disabled={cancelSubmitting}
                 onClick={() => {
@@ -704,6 +817,14 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
                 }}
               >
                 취소
+              </button>
+              <button
+                type="button"
+                className={styles.settlementConfirmBtn}
+                disabled={cancelSubmitting}
+                onClick={handleConfirmCancel}
+              >
+                {cancelSubmitting ? '처리 중…' : '확인'}
               </button>
             </div>
           </div>
@@ -731,14 +852,6 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
             <div className={styles.settlementConfirmActions}>
               <button
                 type="button"
-                className={styles.settlementConfirmBtn}
-                disabled={purchaseCancelSubmitting}
-                onClick={handleConfirmPurchaseCancel}
-              >
-                {purchaseCancelSubmitting ? '처리 중…' : '확인'}
-              </button>
-              <button
-                type="button"
                 className={styles.settlementConfirmCancelBtn}
                 disabled={purchaseCancelSubmitting}
                 onClick={() => {
@@ -747,6 +860,14 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
                 }}
               >
                 취소
+              </button>
+              <button
+                type="button"
+                className={styles.settlementConfirmBtn}
+                disabled={purchaseCancelSubmitting}
+                onClick={handleConfirmPurchaseCancel}
+              >
+                {purchaseCancelSubmitting ? '처리 중…' : '확인'}
               </button>
             </div>
           </div>

@@ -107,6 +107,13 @@ export const boardApi = {
     fetchClient.delete<ApiResponse<string>>(
       `/api/boards/${boardId}`
     ),
+
+  /** 5-1. Spotlight 게시글 연장 - POST /api/spotlight/[boardId]/extend (재화 추가 소모로 기간 연장) */
+  extendSpotlight: (boardId: string, popAmount: number) =>
+    fetchClient.post<ApiResponse<unknown>>(
+      `/api/spotlight/${boardId}/extend`,
+      { popAmount }
+    ),
   
   /** 6. Top 8 카테고리별 월간 인기 게시글 조회 - GET /api/boards/hot/main */
   getHotMainBoard: (categoryType: BoardCategory) =>
