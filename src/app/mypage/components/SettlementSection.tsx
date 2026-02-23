@@ -496,8 +496,8 @@ export function SettlementSection({ user, subTab, onChangeSubTab, onLoadingChang
           <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <h3 className={styles.modalTitle}>정산을 요청하시겠습니까?</h3>
             <div className={styles.settlementConfirmActions}>
-              <button className={styles.settlementConfirmBtn} onClick={handleRequestConfirmOk} disabled={requestSubmitting}>확인</button>
               <button className={styles.settlementConfirmCancelBtn} onClick={handleRequestConfirmCancel} disabled={requestSubmitting}>취소</button>
+              <button className={styles.settlementConfirmBtn} onClick={handleRequestConfirmOk} disabled={requestSubmitting}>확인</button>
             </div>
           </div>
         </div>

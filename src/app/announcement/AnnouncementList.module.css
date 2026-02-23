@@ -1,0 +1,246 @@
+/* REVIEWS 목록과 동일한 테이블 UI */
+.section {
+  padding: 30px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.listContentWrap {
+  position: relative;
+  display: grid;
+}
+
+.listLayer {
+  grid-area: 1 / 1;
+  transition: opacity 0.45s ease;
+}
+
+.layerVisible {
+  opacity: 1;
+}
+
+.layerHidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tableWrap {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 32px 24px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  font-family: "Monda", sans-serif;
+  overflow: hidden;
+}
+
+.table th,
+.table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e5e5e5;
+  vertical-align: middle;
+}
+
+.table th:first-child {
+  border-top-left-radius: 20px;
+}
+
+.table th:last-child {
+  border-top-right-radius: 20px;
+}
+
+/* 번호 */
+.table th:nth-child(1),
+.table td:nth-child(1) {
+  width: 70px;
+  text-align: center;
+}
+
+/* 제목 */
+.table th:nth-child(2),
+.table td:nth-child(2) {
+  width: auto;
+  min-width: 120px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 공지(타입) */
+.table th:nth-child(3),
+.table td:nth-child(3) {
+  width: 100px;
+  text-align: center;
+}
+
+/* 기간 */
+.table th:nth-child(4),
+.table td:nth-child(4) {
+  width: 200px;
+  text-align: center;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+.periodSep {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* 등록일 */
+.table th:nth-child(5),
+.table td:nth-child(5) {
+  width: 120px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.table th {
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #111;
+  background: #fafafa;
+}
+
+.table tr:hover td {
+  background: #fafafa;
+}
+
+.table td {
+  color: #333;
+}
+
+.table a {
+  color: #333;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.table a:hover {
+  text-decoration: underline;
+}
+
+.empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: #666;
+}
+
+@keyframes loadingBounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.loadingMore {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 24px;
+}
+
+.loadingDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #999;
+  animation: loadingBounce 1.4s infinite ease-in-out both;
+}
+
+.loadingDot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loadingDot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+.loadingDot:nth-child(3) {
+  animation-delay: 0s;
+}
+
+.infiniteScrollSentinel {
+  height: 1px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* 스켈레톤 */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.skeletonRow td {
+  padding: 14px 16px;
+}
+
+.skeletonCell {
+  height: calc(0.95rem * 1.4);
+  border-radius: 4px;
+  margin: 0 auto;
+  background: linear-gradient(90deg, #eee 25%, #e0e0e0 50%, #eee 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite ease-in-out;
+}
+
+/* Dark Mode */
+:global(.dark) .tableWrap {
+  background: #242422;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .table th {
+  background: #2e2e2c;
+  color: #b5b3a7;
+  border-bottom-color: #3a3a38;
+}
+
+:global(.dark) .table td {
+  color: #b5b3a7;
+  border-bottom-color: #3a3a38;
+}
+
+:global(.dark) .table tr:hover td {
+  background: #2e2e2c;
+}
+
+:global(.dark) .table a {
+  color: #b5b3a7;
+}
+
+:global(.dark) .empty {
+  color: #8a877d;
+}
+
+:global(.dark) .loadingDot {
+  background: #5a5850;
+}
+
+:global(.dark) .skeletonCell {
+  background: linear-gradient(90deg, #2e2e2c 25%, #3a3a38 50%, #2e2e2c 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite ease-in-out;
+}

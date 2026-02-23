@@ -37,10 +37,10 @@ export default function SpotlightCarousel() {
   const isTransitingRef = useRef(false);
   const [autoplayKey, setAutoplayKey] = useState(0);
 
-  /** 데이터 조회 */
+  /** 데이터 조회 - GET /api/spotlight/carousel (백엔드에서 반환한 순서 그대로 사용) */
   const fetchSpotlights = useCallback(async () => {
     try {
-      const { data } = await boardApi.getBoardByCategory('SPOTLIGHT');
+      const { data } = await boardApi.getCarouselSpotlights();
       const list = extractBoardListFromResponse(data);
       setPosts(list);
     } catch {

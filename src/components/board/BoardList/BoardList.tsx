@@ -22,6 +22,7 @@ import YouTubeHoverThumbnail from '@/components/board/YouTubeHoverThumbnail';
 import ShowcaseFeaturedSection from '@/components/board/ShowcaseFeaturedSection';
 import CommonBoardCarousel from '@/components/board/CommonBoardCarousel';
 import { BoardCard } from '@/components/board/BoardCard';
+import DonationModal from '@/components/board/PostDetail/DonationModal';
 import styles from './BoardList.module.css';
 
 interface BoardListProps {
@@ -62,6 +63,8 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
   } | null>(null);
   const [showLoginRequiredModal, setShowLoginRequiredModal] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
+  const [showSpotlightModal1, setShowSpotlightModal1] = useState(false);
+  const [showSpotlightPopModal, setShowSpotlightPopModal] = useState(false);
 
   const filterRef = useRef<HTMLDivElement>(null);
 
@@ -298,7 +301,21 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
       setShowLoginRequiredModal(true);
       return;
     }
+    if (category === 'spotlight') {
+      setShowSpotlightModal1(true);
+      return;
+    }
     router.push(`/boards/category/${safeCat}/new`);
+  };
+
+  const handleSpotlightModal1Confirm = () => {
+    setShowSpotlightModal1(false);
+    setShowSpotlightPopModal(true);
+  };
+
+  const handleSpotlightPopConfirm = (amount: number) => {
+    setShowSpotlightPopModal(false);
+    router.push(`/boards/category/spotlight/new?popAmount=${amount}`);
   };
 
   const handleGoToLogin = () => {
@@ -527,6 +544,33 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
           )}
         </div>
       </div>
+
+      {/* Spotlight: 1단계 환불 불가 안내 */}
+      {showSpotlightModal1 && (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true" onClick={() => setShowSpotlightModal1(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <p className={styles.modalMessage}>
+              글 작성 시 POP 사용이 필요한 카테고리입니다. <br /> 작성 완료 후 10분 이내에 한해 POP 사용 취소가 가능합니다. <br /> 게시글을 작성하시겠습니까?
+            </p>
+            <div className={styles.modalButtons}>
+              <button type="button" className={`${styles.modalButton} ${styles.modalButtonCancel}`} onClick={() => setShowSpotlightModal1(false)}>취소</button>
+              <button type="button" className={`${styles.modalButton} ${styles.modalButtonConfirm}`} onClick={handleSpotlightModal1Confirm}>확인</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Spotlight: 2단계 재화 사용량 입력 (후원하기 모달 재사용) */}
+      <DonationModal
+        open={showSpotlightPopModal}
+        onClose={() => setShowSpotlightPopModal(false)}
+        mode="spotlight"
+        onSpotlightConfirm={handleSpotlightPopConfirm}
+        onOpenCharge={() => {
+          setShowSpotlightPopModal(false);
+          router.push('/mypage?tab=pop&openCharge=1');
+        }}
+      />
 
       {showLoginRequiredModal && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true">

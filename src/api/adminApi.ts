@@ -70,4 +70,46 @@ export const adminApi = {
 
   approveSettlement: (boardId: string, body?: { memo?: string }) =>
     fetchClient.post<ApiResponse<unknown>>(`${ADMIN_BASE}/settlements/${boardId}`, body || {}),
+
+  /** 공지사항 목록 (GET /api/adm1n/announcement) - Pageable */
+  getAnnouncements: (params?: { page?: number; size?: number }) =>
+    fetchClient.get<ApiResponse<AnnouncementPageData>>(`${ADMIN_BASE}/announcement`, { params }),
+
+  /** 공지사항 상세 (GET /api/adm1n/announcement/{announceId}) - 수정 폼 초기값용 */
+  getAnnouncement: (announceId: number) =>
+    fetchClient.get<ApiResponse<AnnouncementItem>>(`${ADMIN_BASE}/announcement/${announceId}`),
+
+  /** 공지사항 삭제 (DELETE /api/adm1n/announcement/{announceId}) */
+  deleteAnnouncement: (announceId: number) =>
+    fetchClient.delete<ApiResponse<unknown>>(`${ADMIN_BASE}/announcement/${announceId}`),
+
+  /** 공지사항 공지상태(priority)만 변경 (PATCH /api/adm1n/announcement/{announceId}, body: { data: { priority } }) */
+  updateAnnouncementPriority: (announceId: number, priority: number) =>
+    fetchClient.patch<ApiResponse<unknown>>(`${ADMIN_BASE}/announcement/${announceId}`, { data: { priority } }),
 };
+
+/** 공지사항 목록 API data.data 구조 */
+export interface AnnouncementItem {
+  announceId: number;
+  announceType?: string;
+  title: string;
+  content?: string;
+  linkUrl?: string;
+  priority: number;
+  isActive?: boolean;
+  startedAt?: string;
+  endedAt?: string;
+  createdAt?: string;
+  fileUrls?: string[];
+  attachmentIds?: string[];
+}
+
+export interface AnnouncementPageData {
+  totalElements: number;
+  totalPages: number;
+  numberOfElements: number;
+  size: number;
+  content: AnnouncementItem[];
+  number: number;
+  last?: boolean;
+}

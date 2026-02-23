@@ -76,6 +76,8 @@ export interface BoardDetail extends BoardListItem {
   playlistTitle?: string | null;
   /** 플레이리스트 영상 목록 (PLAYLISTS) */
   playlistItems?: PlaylistItem[] | null;
+  /** Spotlight 잔여 Pop (캐러셀 노출 기간 연장용, 0이면 만료) */
+  remainingPop?: number;
 }
 
 /** 게시글 좋아요 API 응답 data 필드 */
