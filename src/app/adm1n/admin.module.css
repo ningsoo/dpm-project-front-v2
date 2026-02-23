@@ -73,9 +73,9 @@
 /* ============================================= */
 
 .contentArea {
-  flex: 0 0 800px;
+  flex: 0 0 880px;
   min-width: 0;
-  width: 800px;
+  width: 880px;
   max-width: 100%;
 }
 
@@ -102,14 +102,14 @@
 /* Stat Cards (Dashboard)                        */
 /* ============================================= */
 
-/* 대시보드 전용: 테이블바 전체 너비(800px)에 맞춰 4등분 */
+/* 대시보드 전용: 테이블바 전체 너비(880px)에 맞춰 4등분 */
 .dashContent {
   width: 100%;
 }
 
-/* 카드 영역: 정확히 800px, 4등분 */
+/* 카드 영역: 880px, 4등분 */
 .dashCardsWrap {
-  width: 800px;
+  width: 880px;
   max-width: 100%;
   margin-bottom: 24px;
 }
@@ -286,14 +286,14 @@
   text-align: center !important;
 }
 
-/* Section-specific grid columns (전부 합계 800px) */
-.usersGrid       { grid-template-columns: 50px 200px 100px 100px 100px 100px 150px; }  /* 800 */
-.boardsGrid      { grid-template-columns: 50px 120px 280px 200px 150px; }              /* 800 */
-.commentsGrid    { grid-template-columns: 50px 150px 300px 150px 150px; }              /* 800 */
-.inquiriesGrid   { grid-template-columns: 50px 120px 280px 200px 150px; }              /* 800 */
-.reportsGrid     { grid-template-columns: 50px 100px 250px 100px 300px; }              /* 800 */
-.penaltiesGrid       { grid-template-columns: 50px 150px 300px 150px 150px; }              /* 800 */
-.settlementsGrid     { grid-template-columns: 50px 150px 300px 150px 150px; }              /* 800 */
+/* Section-specific grid columns (문의관리 기준 전부 합계 880px) */
+.usersGrid       { grid-template-columns: 50px 210px 110px 110px 110px 110px 160px; }  /* 880 */
+.boardsGrid      { grid-template-columns: 50px 130px 300px 220px 180px; }              /* 880 */
+.commentsGrid    { grid-template-columns: 50px 170px 330px 170px 160px; }               /* 880 */
+.inquiriesGrid   { grid-template-columns: 50px 90px 120px 270px 200px 150px; }         /* 880: No, 닉네임, 유형, 제목, 상세, 처리 상태 */
+.reportsGrid     { grid-template-columns: 50px 110px 270px 110px 340px; }               /* 880 */
+.penaltiesGrid   { grid-template-columns: 50px 170px 330px 170px 160px; }               /* 880 */
+.settlementsGrid { grid-template-columns: 50px 170px 330px 170px 160px; }               /* 880 */
 .cancelRequestsTableWrap {
   width: 100%;
   overflow-x: auto;
@@ -301,7 +301,7 @@
   border: 1px solid #eee;
 }
 
-.cancelRequestsGrid  { grid-template-columns: 50px 150px 150px 130px 240px 80px; width: 800px; } /* 800: No|요청자|수혜자|후원금액|요청일시|승인 */
+.cancelRequestsGrid  { grid-template-columns: 50px 170px 170px 140px 250px 100px; width: 880px; } /* 880: No|요청자|수혜자|후원금액|요청일시|승인 */
 
 .announcementsSectionHeader {
   display: flex;
@@ -329,7 +329,7 @@
   border: 1px solid #eee;
 }
 
-.announcementsGrid { grid-template-columns: 50px 180px 180px 120px 90px 100px 80px; width: 800px; } /* NO|제목|기간|작성일|공지타입|공지상태|수정삭제 */
+.announcementsGrid { grid-template-columns: 50px 190px 190px 130px 100px 100px 120px; width: 880px; } /* 880: NO|제목|기간|작성일|공지타입|공지상태|수정삭제 */
 
 .announcementMenuWrap {
   position: relative;

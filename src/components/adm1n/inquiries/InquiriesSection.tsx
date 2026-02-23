@@ -33,6 +33,7 @@ export function InquiriesSection() {
         <div className={`${styles.tableGrid} ${styles.inquiriesGrid}`}>
           <div className={`${styles.tableGrid} ${styles.inquiriesGrid} ${styles.tableHeader}`}>
             <div>No</div>
+            <div>닉네임</div>
             <div>유형</div>
             <div>제목</div>
             <div>상세</div>
@@ -45,6 +46,7 @@ export function InquiriesSection() {
                 className={`${styles.tableGrid} ${styles.inquiriesGrid} ${styles.tableRow}`}
               >
                 <div className={styles.tableCell}>{page * 20 + i + 1}</div>
+                <div className={styles.tableCell}>{str(get(q, 'nickName'))}</div>
                 <div className={styles.tableCell}>{str(get(q, 'inquiryType'))}</div>
                 <div className={styles.tableCellLeft}>{str(get(q, 'title'))}</div>
                 <div className={styles.tableCell}>
@@ -104,6 +106,10 @@ export function InquiriesSection() {
               ) : detail ? (
                 <>
                   <div className={styles.detailRow}>
+                    <span className={styles.detailLabel}>닉네임</span>
+                    <span className={styles.detailValue}>{str(get(detail, 'nickName'))}</span>
+                  </div>
+                  <div className={styles.detailRow}>
                     <span className={styles.detailLabel}>유형</span>
                     <span className={styles.detailValue}>{str(detail.inquiryType)}</span>
                   </div>
@@ -147,7 +153,7 @@ export function InquiriesSection() {
                             className={styles.modalTextarea}
                             value={reply}
                             onChange={(e) => setReply(e.target.value)}
-                            placeholder="답변을 입력하세요..."
+                            placeholder="답변을 입력하세요."
                           />
                         </div>
                         <div className={styles.modalActions}>
