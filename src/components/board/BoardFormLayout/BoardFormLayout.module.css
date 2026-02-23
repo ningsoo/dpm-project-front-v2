@@ -1054,6 +1054,14 @@
   overflow: hidden;
 }
 
+/* 닉네임 오른쪽에 표시 (댓글 닉네임 클릭 시) */
+.menuDropdownRight {
+  top: 0;
+  left: 100%;
+  margin-top: 0;
+  margin-left: 4px;
+}
+
 .menuItem {
   display: block;
   width: 100%;
