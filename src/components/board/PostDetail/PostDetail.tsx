@@ -644,13 +644,13 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
 
         <div className={styles.text}>{post.content}</div>
 
-        {categorySlug === 'spotlight' && (
+        {categorySlug === 'spotlight' && isAuthor && (
           <div className={postDetailStyles.spotlightRemainingBlock}>
             <p className={postDetailStyles.spotlightRemainingText}>
               잔여 Pop: {(typeof post.remainingPop === 'number' ? post.remainingPop : 0).toLocaleString('ko-KR')}
               {(typeof post.remainingPop === 'number' && post.remainingPop === 0) ? ' (만료됨)' : ''}
             </p>
-            {isAuthor && typeof post.remainingPop === 'number' && post.remainingPop === 0 && (
+            {typeof post.remainingPop === 'number' && post.remainingPop === 0 && (
               <div className={postDetailStyles.spotlightExpiredActions}>
                 <button
                   type="button"
