@@ -32,8 +32,7 @@ connect-src 'self'
   https://api.soundock.live
   https://www.googleapis.com
   https://www.google.com
-  https://api.tosspayments.com
-  https://log.tosspayments.com
+  https://*.tosspayments.com
   wss://www.soundock.live;
 
 frame-src
@@ -77,6 +76,10 @@ const nextConfig = {
           {
             key: 'Content-Security-Policy',
             value: csp,
+          },
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
           },
         ],
       },
