@@ -55,7 +55,10 @@ export function useInquiries() {
         setDetail(null);
         load(page);
       })
-      .catch(() => ToastUtils.error('답변 등록에 실패했습니다.'))
+      .catch((err: unknown) => {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+        ToastUtils.error(msg || '답변 등록에 실패했습니다.');
+      })
       .finally(() => setSubmitting(false));
   };
 
