@@ -1,21 +1,44 @@
 /** @type {import('next').NextConfig} */
-const csp = `
+const isDev = process.env.NODE_ENV !== 'production';
+
+const prodCsp = `
 default-src 'self';
 base-uri 'self';
 form-action 'self';
 object-src 'none';
 frame-ancestors 'self';
 
-script-src 'self' https://accounts.google.com https://apis.google.com;
+script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com;
 
 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
 font-src 'self' https://fonts.gstatic.com data:;
 
-img-src 'self' data: https://soundock-dev-uploads.s3.amazonaws.com https://i.ytimg.com https://yt3.ggpht.com;
+img-src 'self' data:
+  https://soundock-dev-uploads.s3.amazonaws.com
+  https://i.ytimg.com
+  https://img.youtube.com
+  https://yt3.ggpht.com
+  https://*.googleusercontent.com;
 
-connect-src 'self' https://www.googleapis.com https://www.google.com;
+connect-src 'self'
+  https://www.googleapis.com
+  https://www.google.com
+  https://api.soundock.live
+  wss://www.soundock.live;
 
-frame-src https://accounts.google.com https://www.youtube.com https://www.youtube-nocookie.com;
+frame-src
+  https://accounts.google.com
+  https://www.youtube.com
+  https://www.youtube-nocookie.com;
+`;
+
+const devCsp = `
+default-src 'self' http: https:;
+script-src 'self' 'unsafe-inline' 'unsafe-eval' http: https:;
+style-src 'self' 'unsafe-inline' http: https:;
+img-src 'self' data: blob: http: https:;
+connect-src 'self' http: https: ws: wss:;
+frame-src http: https:;
 `;
 
 const nextConfig = {
@@ -32,7 +55,7 @@ const nextConfig = {
   },
 
   async headers() {
-    const cspHeaderValue = csp
+    const csp = (isDev ? devCsp : prodCsp)
       .replace(/\n/g, ' ')
       .replace(/\s{2,}/g, ' ')
       .trim();
@@ -40,9 +63,7 @@ const nextConfig = {
     return [
       {
         source: '/(.*)',
-        headers: [
-          { key: 'Content-Security-Policy', value: cspHeaderValue },
-        ],
+        headers: [{ key: 'Content-Security-Policy', value: csp }],
       },
     ];
   },
