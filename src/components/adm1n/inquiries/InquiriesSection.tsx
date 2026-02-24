@@ -121,6 +121,24 @@ export function InquiriesSection() {
                     <span className={styles.detailLabel}>내용</span>
                     <span className={styles.detailValue}>{str(detail.content)}</span>
                   </div>
+                  {detail.fileUrl && (
+                    <div className={styles.detailRow}>
+                      <span className={styles.detailLabel}>첨부파일</span>
+                      <span className={styles.detailValue}>
+                        {detail.isImage ? (
+                          <img
+                            src={str(detail.fileUrl)}
+                            alt="첨부 이미지"
+                            style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 4 }}
+                          />
+                        ) : (
+                          <a href={str(detail.fileUrl)} target="_blank" rel="noopener noreferrer">
+                            첨부파일 다운로드
+                          </a>
+                        )}
+                      </span>
+                    </div>
+                  )}
                   <div className={styles.detailRow}>
                     <span className={styles.detailLabel}>처리 상태</span>
                     <span className={styles.detailValue}>
