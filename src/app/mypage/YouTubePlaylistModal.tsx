@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
+import { useNonce } from '@/contexts/NonceContext';
 
 interface PlaylistItem {
   playlistId: number;
@@ -23,6 +24,7 @@ interface YouTubePlaylistModalProps {
 }
 
 export function YouTubePlaylistModal({ isOpen, onClose, onSuccess }: YouTubePlaylistModalProps) {
+  const nonce = useNonce();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const [playlists, setPlaylists] = useState<PlaylistItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -159,7 +161,7 @@ export function YouTubePlaylistModal({ isOpen, onClose, onSuccess }: YouTubePlay
                 animation: 'spin 1s linear infinite',
               }}
             />
-            <style>{`
+            <style {...(nonce ? { nonce } : {})}>{`
               @keyframes spin {
                 0% { transform: rotate(0deg); }
                 100% { transform: rotate(360deg); }

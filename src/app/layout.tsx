@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import Providers from './providers/Providers';
+import { NonceProvider } from '@/contexts/NonceContext';
 import Header from '@/components/common/Header/Header';
 import Footer from '@/components/common/Footer/Footer';
 import ToastRoot from '@/components/common/Toast/Toast';
@@ -43,26 +45,34 @@ const scrollInitScript = `
 })();
 `;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const headersList = await headers();
+  const nonce = headersList.get('x-nonce') ?? undefined;
+
+  const scriptProps = (html: string) =>
+    nonce ? { nonce, dangerouslySetInnerHTML: { __html: html } } : { dangerouslySetInnerHTML: { __html: html } };
+
   return (
     <html lang="ko" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: scrollInitScript }} />
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        <script dangerouslySetInnerHTML={{ __html: authScript }} />
+        <script {...scriptProps(scrollInitScript)} />
+        <script {...scriptProps(themeScript)} />
+        <script {...scriptProps(authScript)} />
       </head>
       <body>
-        <Providers>
-          <ThemeSync />
-          <ScrollToTop />
-          <Header />
-          <main style={{ paddingTop: 64, minHeight: 'calc(100vh - 64px - 120px)', position: 'relative' }}>
-            {children}
-            <TopButton />
-          </main>
-          <Footer />
-          <ToastRoot />
-        </Providers>
+        <NonceProvider nonce={nonce}>
+          <Providers>
+            <ThemeSync />
+            <ScrollToTop />
+            <Header />
+            <main className="mainLayout">
+              {children}
+              <TopButton />
+            </main>
+            <Footer />
+            <ToastRoot />
+          </Providers>
+        </NonceProvider>
       </body>
     </html>
   );

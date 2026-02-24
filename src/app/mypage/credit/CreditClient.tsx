@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import Link from 'next/link';
-import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
+import { loadTossPayments, ANONYMOUS } from '@tosspayments/tosspayments-sdk';
 import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
@@ -47,6 +47,7 @@ export default function CreditClient() {
   const [queryValid, setQueryValid] = useState<boolean | null>(null);
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodId>('CARD');
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [sdkReady, setSdkReady] = useState(false);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const paymentRef = useRef<any>(null);
@@ -110,20 +111,30 @@ export default function CreditClient() {
     loadTossPayments(clientKey)
       .then((tossPayments) => {
         if (cancelled) return;
-        const payment = tossPayments.payment({ customerKey: 'ANONYMOUS' });
+        const payment = tossPayments.payment({ customerKey: ANONYMOUS });
         paymentRef.current = payment;
+        setSdkReady(true);
       })
-      .catch(() => {
-        if (!cancelled) ToastUtils.error('결제 모듈 로딩에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      .catch((err) => {
+        if (!cancelled) {
+          console.error('[POP충전] 토스페이먼츠 SDK 로드 실패:', err);
+          ToastUtils.error('결제 모듈 로딩에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        }
       });
 
     return () => {
       cancelled = true;
       paymentRef.current = null;
+      setSdkReady(false);
     };
   }, [queryValid, router]);
 
-  const canSubmit = queryValid === true && changeAmount != null && amount != null && !paymentLoading;
+  const canSubmit =
+    queryValid === true &&
+    changeAmount != null &&
+    amount != null &&
+    sdkReady &&
+    !paymentLoading;
 
   const handlePurchase = async () => {
     // 중복 요청 방지 가드
@@ -293,7 +304,11 @@ export default function CreditClient() {
           disabled={!canSubmit}
           onClick={handlePurchase}
         >
-          {paymentLoading ? '결제 진행 중...' : '구매하기'}
+          {!sdkReady
+            ? '결제 모듈 로딩 중...'
+            : paymentLoading
+              ? '결제 진행 중...'
+              : '구매하기'}
         </button>
       </div>
     </div>
