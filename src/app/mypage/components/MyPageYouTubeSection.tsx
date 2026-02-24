@@ -127,7 +127,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
       fetchPlaylists();
     } catch (error) {
       console.error('플레이리스트 삭제 실패:', error);
-      ToastUtils.error('플레이리스트 삭제에 실패했습니다.');
+      ToastUtils.error('게시글에 등록된 플레이리스트는 삭제할 수 없습니다.');
     }
   };
 

@@ -389,7 +389,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
                           setShowExtendModal(true);
                         }}
                       >
-                        연장하기
+                        연장
                       </button>
                     )}
                   </>
