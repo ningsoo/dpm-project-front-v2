@@ -8,28 +8,40 @@ form-action 'self';
 object-src 'none';
 frame-ancestors 'self';
 
-script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com;
+script-src 'self' 'unsafe-inline'
+  https://accounts.google.com
+  https://apis.google.com
+  https://ssl.gstatic.com
+  https://js.tosspayments.com;
 
-style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-font-src 'self' https://fonts.gstatic.com data:;
+style-src 'self' 'unsafe-inline'
+  https://fonts.googleapis.com;
+
+font-src 'self'
+  https://fonts.gstatic.com
+  data:;
 
 img-src 'self' data:
   https://soundock-dev-uploads.s3.amazonaws.com
+  https://soundock-prod-uploads.s3.amazonaws.com
   https://i.ytimg.com
   https://img.youtube.com
   https://yt3.ggpht.com
   https://*.googleusercontent.com;
 
 connect-src 'self'
+  https://api.soundock.live
   https://www.googleapis.com
   https://www.google.com
-  https://api.soundock.live
+  https://api.tosspayments.com
+  https://js.tosspayments.com
   wss://www.soundock.live;
 
 frame-src
   https://accounts.google.com
   https://www.youtube.com
-  https://www.youtube-nocookie.com;
+  https://www.youtube-nocookie.com
+  https://js.tosspayments.com;
 `;
 
 const devCsp = `
@@ -63,7 +75,12 @@ const nextConfig = {
     return [
       {
         source: '/(.*)',
-        headers: [{ key: 'Content-Security-Policy', value: csp }],
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: csp,
+          },
+        ],
       },
     ];
   },
