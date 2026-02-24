@@ -553,7 +553,7 @@ export default function SignupPage() {
             {!errors.email && emailHangulError ? <span className={styles.error}>{emailHangulError}</span> : null}
             {!errors.email && !emailHangulError && emailFormatError ? <span className={styles.error}>{emailFormatError}</span> : null}
             {!errors.email && !emailHangulError && !emailFormatError && emailVerificationTimeoutMessage ? <span style={{ color: '#c62828' }}>{emailVerificationTimeoutMessage}</span> : null}
-            {!errors.email && !emailHangulError && !emailFormatError && !emailVerificationTimeoutMessage && emailVerificationInfoMessage && !emailVerified ? <span className={styles.emailVerificationInfo}>{emailVerificationInfoMessage}</span> : null}
+            {!errors.email && !emailHangulError && !emailFormatError && !emailVerificationTimeoutMessage && emailVerificationInfoMessage && !emailVerified ? <span style={{ color: '#f57f17', fontSize: '0.9rem', lineHeight: 1.4 }}>{emailVerificationInfoMessage}</span> : null}
           </div>
         </label>
 

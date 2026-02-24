@@ -1,0 +1,525 @@
+/* 유튜브 섹션: 인라인 스타일 제거 → CSP style-src 'nonce' 대응 */
+
+.root {
+  /* wrapper for dark mode */
+}
+
+/* ---- 미연동 플레이스홀더 ---- */
+.placeholderWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+.placeholderIconBox {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.root.dark .placeholderIconBox {
+  background: #2e2e2c;
+}
+
+.placeholderText {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.root.dark .placeholderText {
+  color: #8a877d;
+}
+
+.placeholderBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #fff;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.placeholderBtn:hover {
+  background: #f8f8f8;
+  border-color: #999;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+.root.dark .placeholderBtn {
+  background: #242422;
+  color: #b5b3a7;
+  border-color: #3a3a38;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.root.dark .placeholderBtn:hover {
+  background: #2e2e2c;
+  border-color: #8a877d;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.placeholderBtn:disabled {
+  color: #aaa;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.root.dark .placeholderBtn:disabled {
+  color: #666;
+}
+
+/* ---- 헤더 행 ---- */
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.headerActions {
+  display: flex;
+  gap: 8px;
+}
+
+.navWrap {
+  display: flex;
+  gap: 8px;
+  min-width: 88px;
+}
+
+.navBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: inherit;
+}
+
+.navBtn:hover {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+.root.dark .navBtn {
+  background: #242422;
+  border-color: #3a3a38;
+  color: #b5b3a7;
+}
+
+.root.dark .navBtn:hover {
+  background: #2e2e2c;
+  border-color: #8a877d;
+}
+
+.navBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* 등록 버튼 (playlistActionBtn 보완) */
+.btnRegister {
+  background: #111;
+}
+
+.root.dark .btnRegister {
+  background: #3a3934;
+}
+
+/* 관리 버튼 */
+.btnDeleteMode {
+  background: #a6534f;
+}
+
+/* ---- 스켈레톤 / 트랙 ---- */
+.skeletonRow {
+  display: flex;
+  gap: 24px;
+  padding: 4px 4px 8px;
+}
+
+.sliderTrackWrap {
+  overflow: hidden;
+  padding: 4px 4px 8px;
+}
+
+.sliderTrack {
+  display: flex;
+  gap: 24px;
+  transition: transform 0.4s ease-out;
+}
+
+/* 슬라이드 인덱스별 transform (CARDS_PER_VIEW=3, CARD_GAP=24) */
+.ytSlide0 { transform: translateX(0); }
+.ytSlide1 { transform: translateX(calc(-33.333333% - 8px)); }
+.ytSlide2 { transform: translateX(calc(-66.666667% - 16px)); }
+.ytSlide3 { transform: translateX(calc(-100% - 24px)); }
+.ytSlide4 { transform: translateX(calc(-133.333333% - 32px)); }
+.ytSlide5 { transform: translateX(calc(-166.666667% - 40px)); }
+.ytSlide6 { transform: translateX(calc(-200% - 48px)); }
+.ytSlide7 { transform: translateX(calc(-233.333333% - 56px)); }
+.ytSlide8 { transform: translateX(calc(-266.666667% - 64px)); }
+.ytSlide9 { transform: translateX(calc(-300% - 72px)); }
+.ytSlide10 { transform: translateX(calc(-333.333333% - 80px)); }
+.ytSlide11 { transform: translateX(calc(-366.666667% - 88px)); }
+.ytSlide12 { transform: translateX(calc(-400% - 96px)); }
+.ytSlide13 { transform: translateX(calc(-433.333333% - 104px)); }
+.ytSlide14 { transform: translateX(calc(-466.666667% - 112px)); }
+.ytSlide15 { transform: translateX(calc(-500% - 120px)); }
+.ytSlide16 { transform: translateX(calc(-533.333333% - 128px)); }
+.ytSlide17 { transform: translateX(calc(-566.666667% - 136px)); }
+.ytSlide18 { transform: translateX(calc(-600% - 144px)); }
+.ytSlide19 { transform: translateX(calc(-633.333333% - 152px)); }
+.ytSlide20 { transform: translateX(calc(-666.666667% - 160px)); }
+.ytSlide21 { transform: translateX(calc(-700% - 168px)); }
+.ytSlide22 { transform: translateX(calc(-733.333333% - 176px)); }
+.ytSlide23 { transform: translateX(calc(-766.666667% - 184px)); }
+.ytSlide24 { transform: translateX(calc(-800% - 192px)); }
+.ytSlide25 { transform: translateX(calc(-833.333333% - 200px)); }
+.ytSlide26 { transform: translateX(calc(-866.666667% - 208px)); }
+.ytSlide27 { transform: translateX(calc(-900% - 216px)); }
+.ytSlide28 { transform: translateX(calc(-933.333333% - 224px)); }
+.ytSlide29 { transform: translateX(calc(-966.666667% - 232px)); }
+
+.emptyState {
+  text-align: center;
+  color: #666;
+  padding: 60px;
+}
+
+.root.dark .emptyState {
+  color: #8a877d;
+}
+
+/* ---- 카드 ---- */
+.card {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  width: calc((100% - 48px) / 3);
+  min-width: calc((100% - 48px) / 3);
+  flex-shrink: 0;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.root.dark .card {
+  background: #242422;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.root.dark .card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.cardDeleteMode {
+  cursor: default;
+}
+
+.cardDeleteMode:hover {
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.root.dark .cardDeleteMode:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.cardDeleteBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #a6534f;
+  border: 2px solid #fff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: background 0.2s, transform 0.2s;
+}
+
+.cardDeleteBtn:hover {
+  background: #954a47;
+  transform: scale(1.1);
+}
+
+.thumbWrap {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+
+.root.dark .thumbWrap {
+  background: #2e2e2c;
+}
+
+.thumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 14px;
+}
+
+.thumbOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+.card:not(.cardDeleteMode):hover .thumbOverlay {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.cardBody {
+  padding: 16px;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+  min-height: 2.8em;
+}
+
+.root.dark .cardTitle {
+  color: #b5b3a7;
+}
+
+.cardMeta {
+  font-size: 14px;
+  color: #666;
+  margin-top: auto;
+}
+
+.root.dark .cardMeta {
+  color: #8a877d;
+}
+
+/* ---- 모달 공통 ---- */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modalBox {
+  padding: 32px;
+  background: #fff;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+}
+
+.root.dark .modalBox {
+  background: #2e2e2c;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.modalTitle {
+  margin: 0 0 16px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+.root.dark .modalTitle {
+  color: #b5b3a7;
+}
+
+.modalText {
+  margin: 0 0 24px;
+  font-size: 15px;
+  color: #666;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.root.dark .modalText {
+  color: #8a877d;
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btnDanger {
+  padding: 10px 24px;
+  background: #a6534f;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btnDanger:hover {
+  background: #954a47;
+}
+
+.btnCancel {
+  padding: 10px 24px;
+  background: #fff;
+  color: #666;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btnCancel:hover {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+.root.dark .btnCancel {
+  background: #3a3a38;
+  color: #a19e94;
+  border-color: #3a3a38;
+}
+
+.root.dark .btnCancel:hover {
+  background: #4a4a48;
+  border-color: #8a877d;
+}
+
+/* OAuth 결과 모달 */
+.oauthModalBox {
+  text-align: center;
+}
+
+.oauthIconWrap {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #e8f5e9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.oauthIconWrap.error {
+  background: #fbe9e7;
+}
+
+.root.dark .oauthIconWrap {
+  background: #1a2e1a;
+}
+
+.root.dark .oauthIconWrap.error {
+  background: #3a1f1f;
+}
+
+.oauthMessage {
+  margin: 0 0 24px;
+  font-size: 16px;
+  color: #333;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.root.dark .oauthMessage {
+  color: #b5b3a7;
+}
+
+.btnOauthOk {
+  padding: 10px 32px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.btnOauthOk.error {
+  background: #666;
+}
+
+.skeletonCardFlex {
+  flex: 0 0 calc((100% - 48px) / 3);
+}
+
+.skeletonBar80 {
+  width: 80%;
+  height: 16px;
+}
+
+.skeletonBar50 {
+  width: 50%;
+}

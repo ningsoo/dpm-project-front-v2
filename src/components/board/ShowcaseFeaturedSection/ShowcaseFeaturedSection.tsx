@@ -77,40 +77,12 @@ export default function ShowcaseFeaturedSection() {
     setActiveIndex(null);
   };
 
-  /**
-   * active 카드: 50% 너비 + 16:9 비율로 확장, 좌우 카드 위에 겹침
-   * 비활성 카드: 기본 25% 너비
-   */
-  const getCardStyle = (index: number): React.CSSProperties => {
-    const isActive = index === activeIndex;
-
-    if (!isActive) {
-      return {
-        left: `${index * 25}%`,
-        width: '25%',
-        height: 380,
-        transform: 'translateY(-50%)',
-      };
-    }
-
-    // active: 50% 너비, 16:9 비율 높이
-    // left를 재계산해서 카드 중심이 원래 위치에 유지되도록
-    const originalCenterPercent = index * 25 + 12.5; // 원래 중심(%)
-    let leftPercent = originalCenterPercent - 25;     // 50%의 절반 = 25
-
-    // 좌측/우측 끝 클램프
-    if (leftPercent < 0) leftPercent = 0;
-    if (leftPercent + 50 > 100) leftPercent = 50;
-
-    return {
-      left: `${leftPercent}%`,
-      width: '50%',
-      height: 380,
-      transform: 'translateY(-50%)',
-    };
-  };
-
   const hasEnoughPosts = posts.length >= TOTAL;
+
+  const getCardPositionClass = (index: number) =>
+    index === activeIndex
+      ? (styles as Record<string, string>)[`cardActive${index}`]
+      : (styles as Record<string, string>)[`cardInactive${index}`];
 
   return (
     <section
@@ -122,18 +94,12 @@ export default function ShowcaseFeaturedSection() {
         <div className={styles.cardWrapper}>
           {/* 스켈레톤: 로딩 중에만 표시, crossfade */}
           <div
-            className={styles.skeletonLayer}
-            style={{
-              opacity: isLoading ? 1 : 0,
-              pointerEvents: isLoading ? 'auto' : 'none',
-              transition: 'opacity 0.25s ease',
-            }}
+            className={`${styles.skeletonLayer} ${isLoading ? styles.skeletonLayerVisible : styles.skeletonLayerHidden}`}
           >
             {Array.from({ length: TOTAL }).map((_, i) => (
               <div
                 key={`skeleton-${i}`}
-                className={styles.skeletonCard}
-                style={{ left: `${i * 25}%` }}
+                className={`${styles.skeletonCard} ${(styles as Record<string, string>)[`skeletonPos${i}`]}`}
               >
                 <div className={styles.skeletonThumb} />
               </div>
@@ -152,8 +118,7 @@ export default function ShowcaseFeaturedSection() {
             return (
               <div
                 key={post.boardId}
-                className={`${styles.card} ${isActive ? styles.active : ''}`}
-                style={getCardStyle(i)}
+                className={`${styles.card} ${isActive ? styles.active : ''} ${getCardPositionClass(i)}`}
                 onMouseEnter={() => onEnter(i)}
                 onMouseLeave={() => onLeave(i)}
                 onClick={() =>

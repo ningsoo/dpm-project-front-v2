@@ -12,6 +12,7 @@ import { checkAuth } from '@/store/slices/authSlice';
 import { YouTubePlaylistModal } from '../YouTubePlaylistModal';
 import { PlaylistDetailModal } from '../PlaylistDetailModal';
 import styles from '../mypage.module.css';
+import ytStyles from './MyPageYouTubeSection.module.css';
 
 interface UserInfo {
   id: string;
@@ -127,44 +128,22 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
       fetchPlaylists();
     } catch (error) {
       console.error('플레이리스트 삭제 실패:', error);
-      ToastUtils.error('플레이리스트 삭제에 실패했습니다.');
+      ToastUtils.error('게시글에 등록된 플레이리스트는 삭제할 수 없습니다.');
     }
   };
 
   return (
     <>
-      <div>
+      <div className={`${ytStyles.root} ${darkMode ? ytStyles.dark : ''}`}>
         {!user?.youtubeConnected ? (
-          /* 유튜브 미연동 상태 플레이스홀더 */
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '60px 20px',
-            textAlign: 'center',
-          }}>
-            <div style={{
-              width: 80,
-              height: 80,
-              borderRadius: '50%',
-              background: '#f5f5f5',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 20,
-            }}>
+          <div className={ytStyles.placeholderWrap}>
+            <div className={ytStyles.placeholderIconBox}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
                 <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19.1c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.43z" fill="#ccc"/>
                 <polygon points="9.75,15.02 15.5,11.75 9.75,8.48" fill="#fff"/>
               </svg>
             </div>
-            <p style={{
-              fontSize: 16,
-              color: '#666',
-              marginBottom: 24,
-              lineHeight: 1.6,
-            }}>
+            <p className={ytStyles.placeholderText}>
               유튜브를 연동하고 나만의 플레이리스트를 관리해보세요!
             </p>
             <button
@@ -175,34 +154,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
                 const encodedEmail = encodeURIComponent(user.email);
                 window.location.href = `/oauth2/authorization/google?email=${encodedEmail}`;
               }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '12px 24px',
-                background: darkMode ? '#242422' : '#fff',
-                color: !user?.email ? (darkMode ? '#666' : '#aaa') : (darkMode ? '#B5B3A7' : '#333'),
-                border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
-                borderRadius: 8,
-                cursor: !user?.email ? 'not-allowed' : 'pointer',
-                fontSize: 15,
-                fontWeight: 500,
-                transition: 'all 0.2s',
-                boxShadow: darkMode ? '0 1px 3px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.08)',
-                opacity: !user?.email ? 0.6 : 1,
-              }}
-              onMouseEnter={(e) => {
-                if (!user?.email) return;
-                e.currentTarget.style.background = darkMode ? '#2E2E2C' : '#f8f8f8';
-                e.currentTarget.style.borderColor = darkMode ? '#8A877D' : '#999';
-                e.currentTarget.style.boxShadow = darkMode ? '0 2px 6px rgba(0,0,0,0.25)' : '0 2px 6px rgba(0,0,0,0.12)';
-              }}
-              onMouseLeave={(e) => {
-                if (!user?.email) return;
-                e.currentTarget.style.background = darkMode ? '#242422' : '#fff';
-                e.currentTarget.style.borderColor = darkMode ? '#3A3A38' : '#ddd';
-                e.currentTarget.style.boxShadow = darkMode ? '0 1px 3px rgba(0,0,0,0.2)' : '0 1px 3px rgba(0,0,0,0.08)';
-              }}
+              className={ytStyles.placeholderBtn}
             >
               <svg width="18" height="18" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -215,15 +167,12 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
           </div>
         ) : (
         <>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
+        <div className={ytStyles.headerRow}>
+          <div className={ytStyles.headerActions}>
             <button
               type="button"
               onClick={() => setShowYouTubePlaylistModal(true)}
-              className={styles.playlistActionBtn}
-              style={{
-                background: darkMode ? '#3A3934' : '#111',
-              }}
+              className={`${styles.playlistActionBtn} ${ytStyles.btnRegister}`}
             >
               <Plus size={18} />
               등록
@@ -238,44 +187,18 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
                   setPlaylistToDelete(null);
                 }
               }}
-              className={styles.playlistActionBtn}
-              style={{
-                background: isDeleteMode ? '#A6534F' : (darkMode ? '#3A3934' : '#111'),
-                cursor: playlistsLoading || playlists.length === 0 ? 'not-allowed' : 'pointer',
-              }}
+              className={`${styles.playlistActionBtn} ${isDeleteMode ? ytStyles.btnDeleteMode : ytStyles.btnRegister}`}
             >
               <Trash2 size={18} />
               {isDeleteMode ? '완료' : '관리'}
             </button>
           </div>
-          <div style={{ display: 'flex', gap: 8, minWidth: 88 }}>
+          <div className={ytStyles.navWrap}>
               <button
                 type="button"
                 onClick={slidePrev}
                 disabled={playlistsLoading || sliderIndex === 0}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 36,
-                  height: 36,
-                  background: darkMode ? '#242422' : '#fff',
-                  border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
-                  borderRadius: '50%',
-                  cursor: playlistsLoading || sliderIndex === 0 ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
-                  opacity: playlistsLoading || sliderIndex === 0 ? 0.4 : 1,
-                  color: darkMode ? '#B5B3A7' : undefined,
-                }}
-                onMouseEnter={(e) => {
-                  if (playlistsLoading || sliderIndex === 0) return;
-                  e.currentTarget.style.background = darkMode ? '#2E2E2C' : '#f5f5f5';
-                  e.currentTarget.style.borderColor = darkMode ? '#8A877D' : '#999';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = darkMode ? '#242422' : '#fff';
-                  e.currentTarget.style.borderColor = darkMode ? '#3A3A38' : '#ddd';
-                }}
+                className={ytStyles.navBtn}
               >
                 <ChevronLeft size={20} />
               </button>
@@ -283,29 +206,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
                 type="button"
                 onClick={slideNext}
                 disabled={playlistsLoading || sliderIndex >= maxSliderIndex}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 36,
-                  height: 36,
-                  background: darkMode ? '#242422' : '#fff',
-                  border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
-                  borderRadius: '50%',
-                  cursor: playlistsLoading || sliderIndex >= maxSliderIndex ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s',
-                  opacity: playlistsLoading || sliderIndex >= maxSliderIndex ? 0.4 : 1,
-                  color: darkMode ? '#B5B3A7' : undefined,
-                }}
-                onMouseEnter={(e) => {
-                  if (playlistsLoading || sliderIndex >= maxSliderIndex) return;
-                  e.currentTarget.style.background = darkMode ? '#2E2E2C' : '#f5f5f5';
-                  e.currentTarget.style.borderColor = darkMode ? '#8A877D' : '#999';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = darkMode ? '#242422' : '#fff';
-                  e.currentTarget.style.borderColor = '#ddd';
-                }}
+                className={ytStyles.navBtn}
               >
                 <ChevronRight size={20} />
               </button>
@@ -314,13 +215,13 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
         <div className={styles.fadeWrap}>
           {/* 스켈레톤 카드 레이어 */}
           <div className={`${styles.fadeLayer} ${playlistsLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
-            <div style={{ display: 'flex', gap: CARD_GAP, padding: '4px 4px 8px' }}>
+            <div className={ytStyles.skeletonRow}>
               {Array.from({ length: CARDS_PER_VIEW }).map((_, i) => (
-                <div key={i} className={styles.skeletonCard} style={{ flex: `0 0 calc((100% - ${CARD_GAP * (CARDS_PER_VIEW - 1)}px) / ${CARDS_PER_VIEW})` }}>
+                <div key={i} className={`${styles.skeletonCard} ${ytStyles.skeletonCardFlex}`}>
                   <div className={styles.skeletonCardThumb} />
                   <div className={styles.skeletonCardBody}>
-                    <div className={styles.skeletonBar} style={{ width: '80%', height: 16 }} />
-                    <div className={styles.skeletonBar} style={{ width: '50%' }} />
+                    <div className={`${styles.skeletonBar} ${ytStyles.skeletonBar80}`} />
+                    <div className={`${styles.skeletonBar} ${ytStyles.skeletonBar50}`} />
                   </div>
                 </div>
               ))}
@@ -329,49 +230,29 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
           {/* 실제 콘텐츠 레이어 */}
           <div className={`${styles.fadeLayer} ${!playlistsLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
         {playlists.length === 0 && !playlistsLoading ? (
-          <div style={{ textAlign: 'center', color: '#666', padding: 60 }}>
+          <div className={ytStyles.emptyState}>
             등록된 플레이리스트가 없습니다.
           </div>
         ) : (
-          <div style={{ overflow: 'hidden', padding: '4px 4px 8px' }}>
+          <div className={ytStyles.sliderTrackWrap}>
             <div
-              style={{
-                display: 'flex',
-                gap: CARD_GAP,
-                transition: 'transform 0.4s ease-out',
-                transform: `translateX(calc(${-sliderIndex * 100 / CARDS_PER_VIEW}% - ${sliderIndex * CARD_GAP / CARDS_PER_VIEW}px))`,
-              }}
+              className={`${ytStyles.sliderTrack} ${(ytStyles as Record<string, string>)[`ytSlide${Math.min(sliderIndex, 29)}`] ?? ''}`}
             >
             {playlists.map((playlist) => (
               <div
                 key={playlist.youtubeListId}
-                style={{
-                  position: 'relative',
-                  background: darkMode ? '#242422' : 'white',
-                  borderRadius: 12,
-                  overflow: 'hidden',
-                  boxShadow: darkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.1)',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                  cursor: isDeleteMode ? 'default' : 'pointer',
-                  width: `calc((100% - ${CARD_GAP * (CARDS_PER_VIEW - 1)}px) / ${CARDS_PER_VIEW})`,
-                  minWidth: `calc((100% - ${CARD_GAP * (CARDS_PER_VIEW - 1)}px) / ${CARDS_PER_VIEW})`,
-                  flexShrink: 0,
-                }}
-                onMouseEnter={(e) => {
-                  if (!isDeleteMode) {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = darkMode ? '0 4px 16px rgba(0,0,0,0.4)' : '0 4px 16px rgba(0,0,0,0.15)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isDeleteMode) {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = darkMode ? '0 2px 8px rgba(0,0,0,0.3)' : '0 2px 8px rgba(0,0,0,0.1)';
-                  }
-                }}
+                className={`${ytStyles.card} ${isDeleteMode ? ytStyles.cardDeleteMode : ''}`}
                 onClick={() => {
                   if (!isDeleteMode) {
                     setSelectedPlaylist(playlist);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    if (!isDeleteMode) setSelectedPlaylist(playlist);
                   }
                 }}
               >
@@ -382,108 +263,30 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
                       e.stopPropagation();
                       setPlaylistToDelete(playlist);
                     }}
-                    style={{
-                      position: 'absolute',
-                      top: 8,
-                      right: 8,
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      background: '#A6534F',
-                      border: '2px solid #fff',
-                      color: '#fff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      zIndex: 10,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#954A47';
-                      e.currentTarget.style.transform = 'scale(1.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = '#A6534F';
-                      e.currentTarget.style.transform = 'scale(1)';
-                    }}
+                    className={ytStyles.cardDeleteBtn}
                   >
                     <X size={18} strokeWidth={3} />
                   </button>
                 )}
-                {/* Thumbnail */}
-                <div
-                  style={{
-                    position: 'relative',
-                    width: '100%',
-                    height: 180,
-                    borderRadius: '12px 12px 0 0',
-                    overflow: 'hidden',
-                    background: darkMode ? '#2E2E2C' : '#f0f0f0',
-                  }}
-                >
+                <div className={ytStyles.thumbWrap}>
                   {playlist.thumbnailUrl ? (
                     <img
                       src={playlist.thumbnailUrl}
                       alt={playlist.title}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                      }}
+                      className={ytStyles.thumbImg}
                     />
                   ) : (
-                    <div style={{
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#999',
-                      fontSize: 14,
-                    }}>
+                    <div className={ytStyles.thumbPlaceholder}>
                       썸네일 없음
                     </div>
                   )}
-                  {/* Hover overlay */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: '100%',
-                      background: 'transparent',
-                      transition: 'background 0.2s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isDeleteMode) e.currentTarget.style.background = 'rgba(0,0,0,0.2)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'transparent';
-                    }}
-                  />
+                  <div className={ytStyles.thumbOverlay} aria-hidden />
                 </div>
-                <div style={{ padding: 16, minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div
-                    style={{
-                      fontSize: 16,
-                      fontWeight: 600,
-                      color: darkMode ? '#B5B3A7' : '#333',
-                      marginBottom: 8,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      lineHeight: 1.4,
-                      minHeight: '2.8em',
-                    }}
-                  >
+                <div className={ytStyles.cardBody}>
+                  <div className={ytStyles.cardTitle}>
                     {playlist.title}
                   </div>
-                  <div style={{ fontSize: 14, color: darkMode ? '#8A877D' : '#666', marginTop: 'auto' }}>
+                  <div className={ytStyles.cardMeta}>
                     {playlist.itemCount}곡
                   </div>
                 </div>
@@ -520,85 +323,25 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
       {/* 삭제 확인 모달 */}
       {playlistToDelete && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0,0,0,0.5)',
-          }}
+          className={ytStyles.modalBackdrop}
           onClick={() => setPlaylistToDelete(null)}
           role="dialog"
           aria-modal="true"
         >
-          <div
-            style={{
-              padding: 32,
-              background: darkMode ? '#2E2E2C' : '#fff',
-              borderRadius: 12,
-              maxWidth: 400,
-              width: '90%',
-              boxShadow: darkMode ? '0 4px 24px rgba(0,0,0,0.4)' : '0 4px 24px rgba(0,0,0,0.2)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ margin: '0 0 16px', fontSize: 20, fontWeight: 600, color: darkMode ? '#B5B3A7' : '#333', textAlign: 'center' }}>
+          <div className={ytStyles.modalBox} onClick={(e) => e.stopPropagation()}>
+            <h3 className={ytStyles.modalTitle}>
               플레이리스트 삭제
             </h3>
-            <p style={{ margin: '0 0 24px', fontSize: 15, color: darkMode ? '#8A877D' : '#666', lineHeight: 1.6, textAlign: 'center' }}>
+            <p className={ytStyles.modalText}>
               <strong>{playlistToDelete.title}</strong>
               <br />
               정말로 삭제하시겠습니까?
             </p>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button
-                type="button"
-                onClick={handleDeletePlaylist}
-                style={{
-                  padding: '10px 24px',
-                  background: '#A6534F',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: 15,
-                  fontWeight: 500,
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#954A47';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#A6534F';
-                }}
-              >
+            <div className={ytStyles.modalActions}>
+              <button type="button" onClick={handleDeletePlaylist} className={ytStyles.btnDanger}>
                 삭제
               </button>
-              <button
-                type="button"
-                onClick={() => setPlaylistToDelete(null)}
-                style={{
-                  padding: '10px 24px',
-                  background: darkMode ? '#3A3A38' : '#fff',
-                  color: darkMode ? '#A19E94' : '#666',
-                  border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: 15,
-                  fontWeight: 500,
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = darkMode ? '#4A4A48' : '#f5f5f5';
-                  e.currentTarget.style.borderColor = darkMode ? '#8A877D' : '#999';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = darkMode ? '#3A3A38' : '#fff';
-                  e.currentTarget.style.borderColor = darkMode ? '#3A3A38' : '#ddd';
-                }}
-              >
+              <button type="button" onClick={() => setPlaylistToDelete(null)} className={ytStyles.btnCancel}>
                 취소
               </button>
             </div>
@@ -609,54 +352,23 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
       {/* OAuth 결과 모달 */}
       {oauthResultModal && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0,0,0,0.5)',
-          }}
+          className={ytStyles.modalBackdrop}
           onClick={() => setOauthResultModal(null)}
           role="dialog"
           aria-modal="true"
         >
           <div
-            style={{
-              padding: 32,
-              background: darkMode ? '#2E2E2C' : '#fff',
-              borderRadius: 12,
-              maxWidth: 400,
-              width: '90%',
-              boxShadow: darkMode ? '0 4px 24px rgba(0,0,0,0.4)' : '0 4px 24px rgba(0,0,0,0.2)',
-              textAlign: 'center',
-            }}
+            className={`${ytStyles.modalBox} ${ytStyles.oauthModalBox}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{
-              width: 56,
-              height: 56,
-              borderRadius: '50%',
-              background: oauthResultModal.type === 'success' ? (darkMode ? '#1a2e1a' : '#e8f5e9') : (darkMode ? '#3a1f1f' : '#fbe9e7'),
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 16px',
-            }}>
+            <div className={`${ytStyles.oauthIconWrap} ${oauthResultModal.type === 'error' ? ytStyles.error : ''}`}>
               {oauthResultModal.type === 'success' ? (
                 <Check size={28} color="#2e7d32" />
               ) : (
                 <X size={28} color="#A6534F" />
               )}
             </div>
-            <p style={{
-              margin: '0 0 24px',
-              fontSize: 16,
-              color: darkMode ? '#B5B3A7' : '#333',
-              lineHeight: 1.6,
-              whiteSpace: 'pre-line',
-            }}>
+            <p className={ytStyles.oauthMessage}>
               {oauthResultModal.message}
             </p>
             <button
@@ -665,16 +377,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
                 setOauthResultModal(null);
                 window.history.replaceState({}, '', '/mypage');
               }}
-              style={{
-                padding: '10px 32px',
-                background: oauthResultModal.type === 'success' ? '#111' : '#666',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 8,
-                cursor: 'pointer',
-                fontSize: 15,
-                fontWeight: 500,
-              }}
+              className={`${ytStyles.btnOauthOk} ${oauthResultModal.type === 'error' ? ytStyles.error : ''}`}
             >
               확인
             </button>

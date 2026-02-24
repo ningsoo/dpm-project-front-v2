@@ -6,6 +6,7 @@ import { X } from 'lucide-react';
 import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
+import { useNonce } from '@/contexts/NonceContext';
 
 interface TrackItem {
   videoId: string;
@@ -28,6 +29,7 @@ declare global {
 }
 
 export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle }: PlaylistDetailModalProps) {
+  const nonce = useNonce();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const [tracks, setTracks] = useState<TrackItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -252,7 +254,7 @@ export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle
                   animation: 'spin 1s linear infinite',
                 }}
               />
-              <style>{`
+              <style {...(nonce ? { nonce } : {})}>{`
                 @keyframes spin {
                   0% { transform: rotate(0deg); }
                   100% { transform: rotate(360deg); }
@@ -411,7 +413,7 @@ export function PlaylistDetailModal({ isOpen, onClose, playlistId, playlistTitle
                     borderRadius: 8,
                   }}
                 >
-                  <style>{`
+                  <style {...(nonce ? { nonce } : {})}>{`
                     .track-list-container::-webkit-scrollbar {
                       width: 8px;
                     }
