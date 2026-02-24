@@ -37,7 +37,7 @@ connect-src 'self'
   wss://www.soundock.live;
 
 frame-src
-  https://js.tosspayments.com
+  https://*.tosspayments.com
   https://accounts.google.com
   https://www.youtube.com
   https://www.youtube-nocookie.com;
