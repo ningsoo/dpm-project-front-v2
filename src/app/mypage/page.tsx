@@ -1158,7 +1158,9 @@ function MypagePageContent() {
         const orderId = body.data.orderId;
         setShowCreditChargeModal(false);
         setCreditError('');
-        router.push(`/mypage/credit?orderId=${encodeURIComponent(orderId)}&changeAmount=${changeAmount}&amount=${amount}`);
+        // 결제창은 전체 페이지 이동. router.push() 시 스크롤 복원 로직이 fixed/sticky 요소와 충돌해 결제창이 안 뜨거나 콘솔 경고 발생.
+        const creditUrl = `/mypage/credit?orderId=${encodeURIComponent(orderId)}&changeAmount=${changeAmount}&amount=${amount}`;
+        window.location.href = creditUrl;
       } else {
         ToastUtils.error(body?.message ?? '결제 준비에 실패했습니다.');
       }

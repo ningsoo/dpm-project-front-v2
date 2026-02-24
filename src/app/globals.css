@@ -90,6 +90,12 @@ button {
   cursor: pointer;
 }
 
+.mainLayout {
+  padding-top: 64px;
+  min-height: calc(100vh - 64px - 120px);
+  position: relative;
+}
+
 input,
 textarea {
   font-family: inherit;

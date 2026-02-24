@@ -1,11 +1,14 @@
 'use client';
 
+import { useNonce } from '@/contexts/NonceContext';
+
 interface PopIconProps {
   size?: number;
   className?: string;
 }
 
 export function PopIcon({ size = 64, className = '' }: PopIconProps) {
+  const nonce = useNonce();
   return (
     <svg
       width={size}
@@ -16,7 +19,7 @@ export function PopIcon({ size = 64, className = '' }: PopIconProps) {
       className={className}
       style={{ overflow: 'visible' }}
     >
-      <style>
+      <style {...(nonce ? { nonce } : {})}>
         {`
           @keyframes pop {
             0%, 100% { transform: translate(0, -14px) scale(1); opacity: 1; }
