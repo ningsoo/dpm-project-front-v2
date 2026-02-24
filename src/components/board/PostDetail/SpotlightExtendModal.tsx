@@ -167,7 +167,7 @@ export default function SpotlightExtendModal({
                 onClick={handleSubmit}
                 disabled={loading || !isValid || popBalance === 0}
               >
-                {loading ? '처리 중…' : '충전'}
+                {loading ? '처리 중…' : '연장'}
               </button>
             </div>
           </>
