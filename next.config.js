@@ -11,8 +11,7 @@ frame-ancestors 'self';
 script-src 'self' 'unsafe-inline'
   https://accounts.google.com
   https://apis.google.com
-  https://ssl.gstatic.com
-  https://js.tosspayments.com;
+  https://ssl.gstatic.com;
 
 style-src 'self' 'unsafe-inline'
   https://fonts.googleapis.com;
@@ -34,14 +33,13 @@ connect-src 'self'
   https://www.googleapis.com
   https://www.google.com
   https://api.tosspayments.com
-  https://js.tosspayments.com
+  https://log.tosspayments.com
   wss://www.soundock.live;
 
 frame-src
   https://accounts.google.com
   https://www.youtube.com
-  https://www.youtube-nocookie.com
-  https://js.tosspayments.com;
+  https://www.youtube-nocookie.com;
 `;
 
 const devCsp = `
