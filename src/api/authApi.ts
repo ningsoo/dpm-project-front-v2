@@ -73,11 +73,21 @@ export const authApi = {
   findEmail: (name: string, phoneNumber: string) =>
     fetchClient.post<ApiResponse<{ email: string }>>('/api/auth/find-email', { name, phoneNumber }, { timeout: 30000 }),
 
+  /** 비밀번호 찾기 인증 메일 발송 (6자리 인증번호 발송). 1분 이내 재요청 시 400 */
   findPassword: (email: string) =>
-    fetchClient.patch<ApiResponse<unknown>>('/api/auth/findpassword', { email }),
+    fetchClient.post<ApiResponse<unknown>>('/api/auth/send/find-password', { email }),
 
-  resetPassword: (token: string, newPassword: string) =>
-    fetchClient.patch<ApiResponse<unknown>>('/api/auth/findpassword', { token, newPassword }),
+  /** 비밀번호 찾기 인증번호 검증. 성공 시 data에 5분간 유효한 resetToken 반환 */
+  verifyFindPasswordCode: (email: string, code: string) =>
+    fetchClient.post<ApiResponse<string>>('/api/auth/verify/find-password', { email, code }),
+
+  /** 비밀번호 재설정(찾기 완료). email + resetToken + password 필요. 성공 시 해당 토큰 파기 */
+  resetPassword: (email: string, resetToken: string, password: string) =>
+    fetchClient.patch<ApiResponse<unknown>>('/api/auth/reset-password', {
+      email,
+      resetToken,
+      password,
+    }),
 
   // --- Passwordless (noAuthClient) ---
   // 실패 공통 JSON: { success: false, message: "", data: null }. 에러 메시지는 response.data.message만 사용.
