@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
-import { KeyRound, UserCog, Plus, Search, Pencil, Heart, X, Check, Unplug } from 'lucide-react';
+import { KeyRound, UserCog, Plus, Search, Pencil, Heart, X, Check, Unplug, Fingerprint } from 'lucide-react';
 import { AppDispatch, RootState } from '@/store';
 import { authApi } from '@/api/authApi';
 import { mypageApi } from '@/api/mypageApi';
@@ -196,6 +196,24 @@ function MypagePageContent() {
   const [passwordVerifyTarget, setPasswordVerifyTarget] = useState<string | null>(null);
   const [showPwlsWithdrawalModal, setShowPwlsWithdrawalModal] = useState(false);
   const [pwlsWithdrawalLoading, setPwlsWithdrawalLoading] = useState(false);
+
+  // 패스워드리스 등록 모달
+  const [pwlsQrModalOpen, setPwlsQrModalOpen] = useState(false);
+  const [pwlsRegisterDoneModalOpen, setPwlsRegisterDoneModalOpen] = useState(false);
+  const [pwlsQrUrl, setPwlsQrUrl] = useState<string | null>(null);
+  const [pwlsTotalSec, setPwlsTotalSec] = useState(180);
+  const [pwlsRemainSec, setPwlsRemainSec] = useState(180);
+  const [pwlsModalError, setPwlsModalError] = useState<string | null>(null);
+  const [pwlsRegisterLoading, setPwlsRegisterLoading] = useState(false);
+  const [pwlsServerUrl, setPwlsServerUrl] = useState<string | null>(null);
+  const [pwlsRegisterKey, setPwlsRegisterKey] = useState<string | null>(null);
+  const [pwlsRegPollingEmail, setPwlsRegPollingEmail] = useState('');
+  const pwlsTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pwlsRegPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pwlsRegPollingConsecutiveErrorsRef = useRef(0);
+  const pwlsRegPollingEmailRef = useRef('');
+  const pwlsRegPollStartRef = useRef(0);
+  const pwlsRegPollTimeoutSecRef = useRef(180);
 
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
@@ -412,6 +430,108 @@ function MypagePageContent() {
       window.removeEventListener('mouseup', onMouseUp);
     };
   }, [isDragging]);
+
+  const resetPwlsRegisterState = useCallback(() => {
+    if (pwlsTimerRef.current) {
+      clearInterval(pwlsTimerRef.current);
+      pwlsTimerRef.current = null;
+    }
+    if (pwlsRegPollingRef.current) {
+      clearInterval(pwlsRegPollingRef.current);
+      pwlsRegPollingRef.current = null;
+    }
+    setPwlsQrModalOpen(false);
+    setPwlsRegisterDoneModalOpen(false);
+    setPwlsQrUrl(null);
+    setPwlsModalError(null);
+    setPwlsRegisterLoading(false);
+    setPwlsServerUrl(null);
+    setPwlsRegisterKey(null);
+    setPwlsRegPollingEmail('');
+    pwlsRegPollingEmailRef.current = '';
+    pwlsRegPollingConsecutiveErrorsRef.current = 0;
+    setPwlsTotalSec(180);
+    setPwlsRemainSec(180);
+  }, []);
+
+  // ESC 키로 QR 모달 닫기
+  useEffect(() => {
+    if (!pwlsQrModalOpen && !pwlsRegisterDoneModalOpen) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (pwlsRegisterDoneModalOpen) setPwlsRegisterDoneModalOpen(false);
+      else resetPwlsRegisterState();
+    };
+    window.addEventListener('keydown', onEsc);
+    return () => window.removeEventListener('keydown', onEsc);
+  }, [pwlsQrModalOpen, pwlsRegisterDoneModalOpen, resetPwlsRegisterState]);
+
+  // 등록 완료 폴링
+  useEffect(() => {
+    if (!pwlsQrModalOpen || !pwlsRegPollingEmail) return;
+    const PWLS_REG_POLL_INTERVAL_MS = 2000;
+    const isRegistered = (data: unknown): boolean => {
+      if (data === true) return true;
+      if (data === 'true') return true;
+      if (data != null && typeof data === 'object' && 'exist' in data) return (data as { exist?: unknown }).exist === true;
+      return false;
+    };
+    const stopRegPollingAndOpenDone = () => {
+      if (pwlsTimerRef.current) { clearInterval(pwlsTimerRef.current); pwlsTimerRef.current = null; }
+      if (pwlsRegPollingRef.current) { clearInterval(pwlsRegPollingRef.current); pwlsRegPollingRef.current = null; }
+      setPwlsQrModalOpen(false);
+      setPwlsRegisterDoneModalOpen(true);
+      setPwlsRegPollingEmail('');
+      pwlsRegPollingEmailRef.current = '';
+    };
+    const id = setInterval(async () => {
+      const elapsed = (Date.now() - pwlsRegPollStartRef.current) / 1000;
+      if (elapsed >= pwlsRegPollTimeoutSecRef.current) {
+        if (pwlsRegPollingRef.current) { clearInterval(pwlsRegPollingRef.current); pwlsRegPollingRef.current = null; }
+        setPwlsRegPollingEmail('');
+        pwlsRegPollingEmailRef.current = '';
+        ToastUtils.error('등록 확인 시간이 만료되었습니다');
+        return;
+      }
+      const userId = pwlsRegPollingEmailRef.current;
+      if (!userId) return;
+      try {
+        const data = await authApi.getPasswordlessStatus(userId);
+        pwlsRegPollingConsecutiveErrorsRef.current = 0;
+        if (isRegistered(data)) stopRegPollingAndOpenDone();
+      } catch (err) {
+        const status = (err as Error & { status?: number })?.status;
+        if (status === 404) {
+          if (pwlsRegPollingRef.current) { clearInterval(pwlsRegPollingRef.current); pwlsRegPollingRef.current = null; }
+          setPwlsRegPollingEmail('');
+          pwlsRegPollingEmailRef.current = '';
+          setPwlsQrModalOpen(false);
+          if (pwlsTimerRef.current) { clearInterval(pwlsTimerRef.current); pwlsTimerRef.current = null; }
+          ToastUtils.error('존재하지 않는 유저입니다.');
+        } else if (status === 500) {
+          pwlsRegPollingConsecutiveErrorsRef.current += 1;
+          if (pwlsRegPollingConsecutiveErrorsRef.current >= 3) {
+            if (pwlsRegPollingRef.current) { clearInterval(pwlsRegPollingRef.current); pwlsRegPollingRef.current = null; }
+            setPwlsRegPollingEmail('');
+            pwlsRegPollingEmailRef.current = '';
+            ToastUtils.error('서빙 API 통신 실패');
+          }
+        } else {
+          pwlsRegPollingConsecutiveErrorsRef.current += 1;
+        }
+      }
+    }, PWLS_REG_POLL_INTERVAL_MS);
+    pwlsRegPollingRef.current = id;
+    return () => { clearInterval(id); pwlsRegPollingRef.current = null; };
+  }, [pwlsQrModalOpen, pwlsRegPollingEmail]);
+
+  // 언마운트 시 등록 타이머·폴링 정리
+  useEffect(() => {
+    return () => {
+      if (pwlsTimerRef.current) { clearInterval(pwlsTimerRef.current); pwlsTimerRef.current = null; }
+      if (pwlsRegPollingRef.current) { clearInterval(pwlsRegPollingRef.current); pwlsRegPollingRef.current = null; }
+    };
+  }, []);
 
   if (!user) {
     if (!initialized || loading) {
@@ -931,6 +1051,92 @@ function MypagePageContent() {
       ToastUtils.error(message);
       setShowPwlsWithdrawalModal(false);
       setPwlsWithdrawalLoading(false);
+    }
+  };
+
+  const startPwlsTimer = () => {
+    if (pwlsTimerRef.current) clearInterval(pwlsTimerRef.current);
+    const id = setInterval(() => {
+      setPwlsRemainSec((prev) => {
+        if (prev <= 1) { clearInterval(id); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    pwlsTimerRef.current = id;
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      ToastUtils.success('복사되었습니다');
+    } catch {
+      ToastUtils.error('복사에 실패했습니다');
+    }
+  };
+
+  const PWLS_REGISTER_TOTAL_SEC = 180;
+
+  const openPwlsRegister = async (email: string) => {
+    if (pwlsTimerRef.current) { clearInterval(pwlsTimerRef.current); pwlsTimerRef.current = null; }
+    setPwlsQrUrl(null);
+    setPwlsModalError(null);
+    setPwlsServerUrl(null);
+    setPwlsRegisterKey(null);
+    setPwlsTotalSec(PWLS_REGISTER_TOTAL_SEC);
+    setPwlsRemainSec(PWLS_REGISTER_TOTAL_SEC);
+    setPwlsRegisterLoading(true);
+    try {
+      const res = await authApi.postPasswordlessRegister(email);
+      const sec = typeof res.terms === 'number' && res.terms > 0 ? res.terms : 180;
+      setPwlsQrUrl(res.qrUrl || null);
+      setPwlsServerUrl(res.serverUrl ?? null);
+      setPwlsRegisterKey(res.registerKey ?? null);
+      setPwlsTotalSec(sec);
+      setPwlsRemainSec(sec);
+      setPwlsQrModalOpen(true);
+      startPwlsTimer();
+      pwlsRegPollingEmailRef.current = email;
+      pwlsRegPollTimeoutSecRef.current = sec;
+      pwlsRegPollStartRef.current = Date.now();
+      setPwlsRegPollingEmail(email);
+    } catch (err) {
+      const status = (err as Error & { status?: number })?.status;
+      const msg = err instanceof Error ? err.message : undefined;
+      if (status === 400) ToastUtils.info(msg || '이미 패스워드리스 서비스를 사용 중입니다.');
+      else if (status === 404) ToastUtils.error(msg || '존재하지 않는 유저입니다.');
+      else if (status === 500) ToastUtils.error(msg || '서빙 API 통신 실패');
+      else ToastUtils.error(msg || '등록 요청에 실패했습니다');
+    } finally {
+      setPwlsRegisterLoading(false);
+    }
+  };
+
+  const requestPwlsQR = async (email: string) => {
+    if (pwlsTimerRef.current) { clearInterval(pwlsTimerRef.current); pwlsTimerRef.current = null; }
+    setPwlsModalError(null);
+    setPwlsRegisterLoading(true);
+    try {
+      const res = await authApi.postPasswordlessRegister(email);
+      const sec = typeof res.terms === 'number' && res.terms > 0 ? res.terms : 180;
+      setPwlsQrUrl(res.qrUrl || null);
+      setPwlsServerUrl(res.serverUrl ?? null);
+      setPwlsRegisterKey(res.registerKey ?? null);
+      setPwlsTotalSec(sec);
+      setPwlsRemainSec(sec);
+      startPwlsTimer();
+      pwlsRegPollingEmailRef.current = email;
+      pwlsRegPollTimeoutSecRef.current = sec;
+      pwlsRegPollStartRef.current = Date.now();
+      setPwlsRegPollingEmail(email);
+    } catch (err) {
+      const status = (err as Error & { status?: number })?.status;
+      const msg = err instanceof Error ? err.message : undefined;
+      if (status === 400) { setPwlsQrModalOpen(false); ToastUtils.info(msg || '이미 패스워드리스 서비스를 사용 중입니다.'); }
+      else if (status === 404) { setPwlsQrModalOpen(false); ToastUtils.error(msg || '존재하지 않는 유저입니다.'); }
+      else if (status === 500) { setPwlsQrModalOpen(false); ToastUtils.error(msg || '서빙 API 통신 실패'); }
+      else { setPwlsModalError(msg || 'QR 발급에 실패했습니다'); ToastUtils.error(msg || 'QR 발급에 실패했습니다'); }
+    } finally {
+      setPwlsRegisterLoading(false);
     }
   };
 
@@ -1686,7 +1892,7 @@ function MypagePageContent() {
           >
             <UserCog size={22} />
           </button>
-          {user?.passwordless === true && (
+          {user?.passwordless === true ? (
             <button
               type="button"
               className={styles.iconLink}
@@ -1695,6 +1901,16 @@ function MypagePageContent() {
               onClick={() => setShowPwlsWithdrawalModal(true)}
             >
               <Unplug size={22} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={styles.iconLink}
+              title="패스워드리스 등록"
+              disabled={pwlsRegisterLoading}
+              onClick={() => openPwlsRegister(user.email)}
+            >
+              <Fingerprint size={22} />
             </button>
           )}
         </div>
@@ -2222,6 +2438,124 @@ function MypagePageContent() {
                 onClick={handlePwlsWithdrawalConfirm}
               >
                 {pwlsWithdrawalLoading ? '처리 중…' : '확인'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pwlsQrModalOpen && (
+        <div
+          className={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pwls-register-modal-title"
+          onClick={resetPwlsRegisterState}
+        >
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className={styles.closeBtn}
+              onClick={resetPwlsRegisterState}
+              aria-label="닫기"
+            >
+              <X size={20} />
+            </button>
+            <h2 id="pwls-register-modal-title" className={styles.modalTitle} style={{ marginBottom: 8 }}>
+              Passwordless 설정
+            </h2>
+            <p style={{ fontSize: '0.9rem', color: '#888', marginBottom: 8 }}>
+              휴대폰 앱으로 QR을 스캔해 등록하세요
+            </p>
+            <div className={styles.pwlsQrBox}>
+              {pwlsRegisterLoading && <div className={styles.pwlsSpinner} />}
+              {!pwlsRegisterLoading && pwlsModalError && !pwlsQrUrl && (
+                <span style={{ color: '#A6534F', fontSize: '0.875rem' }}>{pwlsModalError}</span>
+              )}
+              {!pwlsRegisterLoading && pwlsQrUrl && (
+                <img src={pwlsQrUrl} alt="QR 코드" />
+              )}
+            </div>
+            {pwlsServerUrl && (
+              <div className={styles.pwlsCopyRow}>
+                <span className={styles.pwlsCopyLabel}>serverUrl</span>
+                <span className={styles.pwlsCopyValue}>{pwlsServerUrl}</span>
+                <button type="button" className={styles.pwlsCopyBtn} onClick={() => copyToClipboard(pwlsServerUrl!)}>복사</button>
+              </div>
+            )}
+            {pwlsRegisterKey && (
+              <div className={styles.pwlsCopyRow}>
+                <span className={styles.pwlsCopyLabel}>registerKey</span>
+                <span className={styles.pwlsCopyValue}>{pwlsRegisterKey}</span>
+                <button type="button" className={styles.pwlsCopyBtn} onClick={() => copyToClipboard(pwlsRegisterKey!)}>복사</button>
+              </div>
+            )}
+            {pwlsQrUrl && pwlsRemainSec > 0 && (
+              <>
+                <div className={styles.pwlsTimerRow}>
+                  {Math.floor(pwlsRemainSec / 60)}:{String(pwlsRemainSec % 60).padStart(2, '0')}
+                </div>
+                <div className={styles.pwlsProgressTrack}>
+                  <div
+                    className={styles.pwlsProgressBar}
+                    style={{ width: `${pwlsTotalSec > 0 ? (pwlsRemainSec / pwlsTotalSec) * 100 : 0}%` }}
+                  />
+                </div>
+              </>
+            )}
+            {pwlsRemainSec === 0 && pwlsQrUrl && (
+              <div className={styles.pwlsExpiredRow}>
+                <p className={styles.pwlsExpiredMsg}>만료됨</p>
+                <button
+                  type="button"
+                  className={styles.settlementConfirmBtn}
+                  disabled={pwlsRegisterLoading}
+                  onClick={() => requestPwlsQR(user.email)}
+                >
+                  {pwlsRegisterLoading ? '발급 중…' : 'QR 재발급'}
+                </button>
+              </div>
+            )}
+            {pwlsModalError && !pwlsQrUrl && !pwlsRegisterLoading && (
+              <div className={styles.pwlsExpiredRow}>
+                <p className={styles.pwlsExpiredMsg}>{pwlsModalError}</p>
+                <button
+                  type="button"
+                  className={styles.settlementConfirmBtn}
+                  disabled={pwlsRegisterLoading}
+                  onClick={() => requestPwlsQR(user.email)}
+                >
+                  재시도
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {pwlsRegisterDoneModalOpen && (
+        <div
+          className={styles.modalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pwls-register-done-title"
+          onClick={() => setPwlsRegisterDoneModalOpen(false)}
+        >
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
+            <h3 id="pwls-register-done-title" className={styles.modalTitle}>등록 완료</h3>
+            <p className={styles.pwlsRegisterDoneText}>
+              Passwordless 서비스가 등록되었습니다.
+            </p>
+            <div className={styles.settlementConfirmActions}>
+              <button
+                type="button"
+                className={styles.settlementConfirmBtn}
+                onClick={() => {
+                  setPwlsRegisterDoneModalOpen(false);
+                  setUser((prev) => prev ? { ...prev, passwordless: true } : prev);
+                }}
+              >
+                확인
               </button>
             </div>
           </div>
