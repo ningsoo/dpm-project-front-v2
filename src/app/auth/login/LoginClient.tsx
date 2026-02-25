@@ -3,7 +3,7 @@
 import { useId, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Eye, EyeOff, X } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store';
 import { useNonce } from '@/contexts/NonceContext';
@@ -28,15 +28,6 @@ export default function LoginClient() {
   const [emailHangulError, setEmailHangulError] = useState('');
   const [emailFormatError, setEmailFormatError] = useState('');
   const [loginMode, setLoginMode] = useState<'password' | 'passwordless'>('password');
-  const [qrModalOpen, setQrModalOpen] = useState(false);
-  const [registerDoneModalOpen, setRegisterDoneModalOpen] = useState(false);
-  const [pwlsQrUrl, setPwlsQrUrl] = useState<string | null>(null);
-  const [pwlsTotalSec, setPwlsTotalSec] = useState(180);
-  const [pwlsRemainSec, setPwlsRemainSec] = useState(180);
-  const [pwlsModalError, setPwlsModalError] = useState<string | null>(null);
-  const [pwlsRegisterLoading, setPwlsRegisterLoading] = useState(false);
-  const [pwlsServerUrl, setPwlsServerUrl] = useState<string | null>(null);
-  const [pwlsRegisterKey, setPwlsRegisterKey] = useState<string | null>(null);
   const [pwlsCode6, setPwlsCode6] = useState<string | null>(null);
   const [pwlsUserId, setPwlsUserId] = useState('');
   const [pwlsSessionId, setPwlsSessionId] = useState('');
@@ -44,7 +35,6 @@ export default function LoginClient() {
   const PWLS_LOGIN_TOTAL_SEC = 60;
   const [pwlsLoginRemainSec, setPwlsLoginRemainSec] = useState(0);
   const emailDebounceRef = useRef<NodeJS.Timeout | null>(null);
-  const pwlsTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pwlsPollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pwlsLoginTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pwlsUserIdRef = useRef('');
@@ -52,52 +42,25 @@ export default function LoginClient() {
   const pwlsPollingConsecutiveErrorsRef = useRef(0);
   const pwlsResultPollingInFlightRef = useRef(false);
   const pwlsResultPollingCompletedRef = useRef(false);
-  const PWLS_REG_POLL_INTERVAL_MS = 2000;
-  const pwlsRegPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const pwlsRegPollingConsecutiveErrorsRef = useRef(0);
-  const pwlsRegPollingEmailRef = useRef('');
-  const pwlsRegPollStartRef = useRef(0);
-  const pwlsRegPollTimeoutSecRef = useRef(180);
-  const [pwlsRegPollingEmail, setPwlsRegPollingEmail] = useState('');
 
-  /** 모달 타이머 + 승인 폴링(timeout id) + 로그인 60초 타이머 + 등록 폴링 정리. 호출: 모달 닫기, 모드 전환, 언마운트. */
+  /** 승인 폴링(timeout id) + 로그인 60초 타이머 정리. 호출: 모드 전환, 언마운트. */
   const resetPasswordlessState = () => {
     pwlsResultPollingCompletedRef.current = true;
-    if (pwlsTimerRef.current) {
-      clearInterval(pwlsTimerRef.current);
-      pwlsTimerRef.current = null;
-    }
     if (pwlsPollingRef.current) {
       clearTimeout(pwlsPollingRef.current);
       pwlsPollingRef.current = null;
-    }
-    if (pwlsRegPollingRef.current) {
-      clearInterval(pwlsRegPollingRef.current);
-      pwlsRegPollingRef.current = null;
     }
     if (pwlsLoginTimerRef.current) {
       clearInterval(pwlsLoginTimerRef.current);
       pwlsLoginTimerRef.current = null;
     }
-    setQrModalOpen(false);
-    setRegisterDoneModalOpen(false);
-    setPwlsQrUrl(null);
-    setPwlsModalError(null);
-    setPwlsRegisterLoading(false);
-    setPwlsServerUrl(null);
-    setPwlsRegisterKey(null);
     setPwlsCode6(null);
     setPwlsUserId('');
     setPwlsSessionId('');
     setPwlsLoginRemainSec(0);
-    setPwlsRegPollingEmail('');
     pwlsUserIdRef.current = '';
     pwlsSessionIdRef.current = '';
     pwlsPollingConsecutiveErrorsRef.current = 0;
-    pwlsRegPollingEmailRef.current = '';
-    pwlsRegPollingConsecutiveErrorsRef.current = 0;
-    setPwlsTotalSec(180);
-    setPwlsRemainSec(180);
   };
 
   /** 60초 만료 시: 폴링/타이머 종료, 코드·userId·sessionId 초기화, 토스트 */
@@ -153,20 +116,6 @@ export default function LoginClient() {
     }
   };
 
-  const startPwlsTimer = () => {
-    if (pwlsTimerRef.current) clearInterval(pwlsTimerRef.current);
-    const id = setInterval(() => {
-      setPwlsRemainSec((prev) => {
-        if (prev <= 1) {
-          clearInterval(id);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    pwlsTimerRef.current = id;
-  };
-
   /** 로그인 6자리 코드 표시 시 60초 카운트다운. 0이 되면 clearPwlsLoginAndToastExpired */
   const startPwlsLoginTimer = () => {
     if (pwlsLoginTimerRef.current) {
@@ -186,119 +135,6 @@ export default function LoginClient() {
     }, 1000);
     pwlsLoginTimerRef.current = id;
   };
-
-  const PWLS_REGISTER_TOTAL_SEC = 180;
-
-  /** 모달 내 QR 재발급/재시도. openPwlsModal과 동일 status 분기(400 info "이미 사용 중", 404/500 error). 성공 시 timer/qr + 폴링 이메일·시각·timeoutSec 갱신. */
-  const requestPwlsQR = async () => {
-    if (!email.trim()) return;
-    if (pwlsTimerRef.current) {
-      clearInterval(pwlsTimerRef.current);
-      pwlsTimerRef.current = null;
-    }
-    setPwlsModalError(null);
-    setPwlsRegisterLoading(true);
-    try {
-      const res = await authApi.postPasswordlessRegister(email.trim());
-      const sec = typeof res.terms === 'number' && res.terms > 0 ? res.terms : 180;
-      setPwlsQrUrl(res.qrUrl || null);
-      setPwlsServerUrl(res.serverUrl ?? null);
-      setPwlsRegisterKey(res.registerKey ?? null);
-      setPwlsTotalSec(sec);
-      setPwlsRemainSec(sec);
-      startPwlsTimer();
-      pwlsRegPollingEmailRef.current = email.trim();
-      pwlsRegPollTimeoutSecRef.current = sec;
-      pwlsRegPollStartRef.current = Date.now();
-      setPwlsRegPollingEmail(email.trim());
-    } catch (err) {
-      const status = (err as Error & { status?: number })?.status;
-      const msg = err instanceof Error ? err.message : undefined;
-      if (status === 400) {
-        setQrModalOpen(false);
-        ToastUtils.info(msg || '이미 패스워드리스 서비스를 사용 중입니다.');
-      } else if (status === 404) {
-        setQrModalOpen(false);
-        ToastUtils.error(msg || '존재하지 않는 유저입니다.');
-      } else if (status === 500) {
-        setQrModalOpen(false);
-        ToastUtils.error(msg || '서빙 API 통신 실패');
-      } else {
-        setPwlsModalError(msg || 'QR 발급에 실패했습니다');
-        ToastUtils.error(msg || 'QR 발급에 실패했습니다');
-      }
-    } finally {
-      setPwlsRegisterLoading(false);
-    }
-  };
-
-  /** Passwordless설정 클릭: POST /passwordless/register. 200일 때만 qrModalOpen·QR·타이머·등록 폴링 시작. 400 info, 404/500 error, 모달 오픈 금지. */
-  const openPwlsModal = async () => {
-    if (!email.trim()) {
-      ToastUtils.error('이메일을 입력하세요');
-      return;
-    }
-    if (pwlsTimerRef.current) {
-      clearInterval(pwlsTimerRef.current);
-      pwlsTimerRef.current = null;
-    }
-    setPwlsQrUrl(null);
-    setPwlsModalError(null);
-    setPwlsServerUrl(null);
-    setPwlsRegisterKey(null);
-    setPwlsTotalSec(PWLS_REGISTER_TOTAL_SEC);
-    setPwlsRemainSec(PWLS_REGISTER_TOTAL_SEC);
-    setPwlsRegisterLoading(true);
-    try {
-      const res = await authApi.postPasswordlessRegister(email.trim());
-      const sec = typeof res.terms === 'number' && res.terms > 0 ? res.terms : 180;
-      setPwlsQrUrl(res.qrUrl || null);
-      setPwlsServerUrl(res.serverUrl ?? null);
-      setPwlsRegisterKey(res.registerKey ?? null);
-      setPwlsTotalSec(sec);
-      setPwlsRemainSec(sec);
-      setQrModalOpen(true);
-      startPwlsTimer();
-      pwlsRegPollingEmailRef.current = email.trim();
-      pwlsRegPollTimeoutSecRef.current = sec;
-      pwlsRegPollStartRef.current = Date.now();
-      setPwlsRegPollingEmail(email.trim());
-    } catch (err) {
-      const status = (err as Error & { status?: number })?.status;
-      const msg = err instanceof Error ? err.message : undefined;
-      if (status === 400) {
-        ToastUtils.info(msg || '이미 패스워드리스 서비스를 사용 중입니다.');
-      } else if (status === 404) {
-        ToastUtils.error(msg || '존재하지 않는 유저입니다.');
-      } else if (status === 500) {
-        ToastUtils.error(msg || '서빙 API 통신 실패');
-      } else {
-        ToastUtils.error(msg || '등록 요청에 실패했습니다');
-      }
-    } finally {
-      setPwlsRegisterLoading(false);
-    }
-  };
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      ToastUtils.success('복사되었습니다');
-    } catch {
-      ToastUtils.error('복사에 실패했습니다');
-    }
-  };
-
-  useEffect(() => {
-    if (!qrModalOpen && !registerDoneModalOpen) return;
-    const onEsc = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      if (registerDoneModalOpen) setRegisterDoneModalOpen(false);
-      else resetPasswordlessState();
-    };
-    window.addEventListener('keydown', onEsc);
-    return () => window.removeEventListener('keydown', onEsc);
-  }, [qrModalOpen, registerDoneModalOpen]);
 
   /**
    * GET /passwordless/result 직렬 폴링. 트리거는 pwlsCode6만. userId/sessionId는 ref만 사용.
@@ -453,106 +289,12 @@ export default function LoginClient() {
     };
   }, [pwlsCode6, dispatch, searchParams, router]);
 
-  /** 등록 완료 폴링: qrModalOpen && pwlsRegPollingEmail 일 때 2초마다 getPasswordlessStatus. data.exist===true 또는 data===true/'true'(하위호환)면 QR 모달 닫고 등록 완료 모달. 400 무토스트 계속, 404 즉시 중단+모달 닫기, 500 연속 3회 시 중단. */
-  useEffect(() => {
-    if (!qrModalOpen || !pwlsRegPollingEmail) return;
-
-    const isRegistered = (data: unknown): boolean => {
-      if (data === true) return true;
-      if (data === 'true') return true;
-      if (data != null && typeof data === 'object' && 'exist' in data) return (data as { exist?: unknown }).exist === true;
-      return false;
-    };
-
-    const stopRegPollingAndOpenDone = () => {
-      if (pwlsTimerRef.current) {
-        clearInterval(pwlsTimerRef.current);
-        pwlsTimerRef.current = null;
-      }
-      if (pwlsRegPollingRef.current) {
-        clearInterval(pwlsRegPollingRef.current);
-        pwlsRegPollingRef.current = null;
-      }
-      setQrModalOpen(false);
-      setRegisterDoneModalOpen(true);
-      setPwlsRegPollingEmail('');
-      pwlsRegPollingEmailRef.current = '';
-    };
-
-    const id = setInterval(async () => {
-      const elapsed = (Date.now() - pwlsRegPollStartRef.current) / 1000;
-      if (elapsed >= pwlsRegPollTimeoutSecRef.current) {
-        if (pwlsRegPollingRef.current) {
-          clearInterval(pwlsRegPollingRef.current);
-          pwlsRegPollingRef.current = null;
-        }
-        setPwlsRegPollingEmail('');
-        pwlsRegPollingEmailRef.current = '';
-        ToastUtils.error('등록 확인 시간이 만료되었습니다');
-        return;
-      }
-      const userId = pwlsRegPollingEmailRef.current;
-      if (!userId) return;
-      try {
-        const data = await authApi.getPasswordlessStatus(userId);
-        pwlsRegPollingConsecutiveErrorsRef.current = 0;
-        if (isRegistered(data)) {
-          stopRegPollingAndOpenDone();
-        }
-      } catch (err) {
-        const status = (err as Error & { status?: number })?.status;
-        if (status === 400) {
-          // 일시적 실패로 간주, 토스트 없이 계속
-        } else if (status === 404) {
-          if (pwlsRegPollingRef.current) {
-            clearInterval(pwlsRegPollingRef.current);
-            pwlsRegPollingRef.current = null;
-          }
-          setPwlsRegPollingEmail('');
-          pwlsRegPollingEmailRef.current = '';
-          setQrModalOpen(false);
-          if (pwlsTimerRef.current) {
-            clearInterval(pwlsTimerRef.current);
-            pwlsTimerRef.current = null;
-          }
-          ToastUtils.error('존재하지 않는 유저입니다.');
-        } else if (status === 500) {
-          pwlsRegPollingConsecutiveErrorsRef.current += 1;
-          if (pwlsRegPollingConsecutiveErrorsRef.current >= 3) {
-            if (pwlsRegPollingRef.current) {
-              clearInterval(pwlsRegPollingRef.current);
-              pwlsRegPollingRef.current = null;
-            }
-            setPwlsRegPollingEmail('');
-            pwlsRegPollingEmailRef.current = '';
-            ToastUtils.error('서빙 API 통신 실패');
-          }
-        } else {
-          pwlsRegPollingConsecutiveErrorsRef.current += 1;
-        }
-      }
-    }, PWLS_REG_POLL_INTERVAL_MS);
-    pwlsRegPollingRef.current = id;
-    return () => {
-      clearInterval(id);
-      pwlsRegPollingRef.current = null;
-    };
-  }, [qrModalOpen, pwlsRegPollingEmail]);
-
-  /** 언마운트 시 모달 타이머 + 승인 폴링(timeout) + 로그인 60초 타이머 + 등록 폴링 interval 정리 */
+  /** 언마운트 시 승인 폴링(timeout) + 로그인 60초 타이머 정리 */
   useEffect(() => {
     return () => {
-      if (pwlsTimerRef.current) {
-        clearInterval(pwlsTimerRef.current);
-        pwlsTimerRef.current = null;
-      }
       if (pwlsPollingRef.current) {
         clearTimeout(pwlsPollingRef.current);
         pwlsPollingRef.current = null;
-      }
-      if (pwlsRegPollingRef.current) {
-        clearInterval(pwlsRegPollingRef.current);
-        pwlsRegPollingRef.current = null;
       }
       if (pwlsLoginTimerRef.current) {
         clearInterval(pwlsLoginTimerRef.current);
@@ -841,10 +583,6 @@ export default function LoginClient() {
           <Link href="/auth/findemail">이메일 찾기</Link>
           <span className={styles.linkSep}>|</span>
           <Link href="/auth/findpassword">비밀번호 찾기</Link>
-          <span className={styles.linkSep}>|</span>
-          <a href="#" className={styles.linksAnchor} onClick={(e) => { e.preventDefault(); openPwlsModal(); }}>
-            Passwordless설정
-          </a>
         </div>
       </form>
 

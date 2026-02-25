@@ -2273,3 +2273,157 @@
 .donationTitle { font-size: 1.1rem; margin-bottom: 12px; }
 .preLine { white-space: pre-line; }
 .sentinelBlock { min-height: 1px; padding: 8px; }
+/* 패스워드리스 등록 QR 모달 */
+.pwlsQrBox {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+  margin: 12px 0;
+  border-radius: 8px;
+  background: #f8f8f8;
+}
+
+.pwlsQrBox img {
+  max-width: 180px;
+  max-height: 180px;
+}
+
+.pwlsSpinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #eee;
+  border-top-color: #111;
+  border-radius: 50%;
+  animation: pwlsSpin 0.8s linear infinite;
+}
+
+@keyframes pwlsSpin {
+  to { transform: rotate(360deg); }
+}
+
+.pwlsCopyRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.pwlsCopyLabel {
+  flex-shrink: 0;
+  font-weight: 500;
+  color: #555;
+  min-width: 80px;
+}
+
+.pwlsCopyValue {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #333;
+}
+
+.pwlsCopyBtn {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.pwlsCopyBtn:hover {
+  background: #111;
+  color: #fff;
+}
+
+.pwlsTimerRow {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+  margin: 12px 0 8px;
+}
+
+.pwlsProgressTrack {
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.pwlsProgressBar {
+  height: 100%;
+  background: #111;
+  border-radius: 4px;
+  transition: width 1s linear;
+}
+
+.pwlsExpiredRow {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.pwlsExpiredMsg {
+  font-size: 0.95rem;
+  color: #A6534F;
+  margin-bottom: 12px;
+}
+
+.pwlsRegisterDoneText {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #333;
+  margin: 0 0 8px;
+}
+
+:global(.dark) .pwlsQrBox {
+  background: #2e2e2c;
+}
+
+:global(.dark) .pwlsSpinner {
+  border-color: #3A3A38;
+  border-top-color: #B5B3A7;
+}
+
+:global(.dark) .pwlsCopyLabel {
+  color: #8A877D;
+}
+
+:global(.dark) .pwlsCopyValue {
+  color: #B5B3A7;
+}
+
+:global(.dark) .pwlsCopyBtn {
+  background: #2e2e2c;
+  border-color: #3A3A38;
+  color: #B5B3A7;
+}
+
+:global(.dark) .pwlsCopyBtn:hover {
+  background: #3A3934;
+  color: #E8E6DE;
+}
+
+:global(.dark) .pwlsTimerRow {
+  color: #B5B3A7;
+}
+
+:global(.dark) .pwlsProgressTrack {
+  background: #3A3A38;
+}
+
+:global(.dark) .pwlsProgressBar {
+  background: #B5B3A7;
+}
+
+:global(.dark) .pwlsRegisterDoneText {
+  color: #B5B3A7;
+}
