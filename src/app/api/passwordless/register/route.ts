@@ -24,11 +24,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const cookieHeader = request.headers.get('cookie') ?? undefined;
+    const authHeader = request.headers.get('authorization') ?? undefined;
     const res = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+        ...(authHeader ? { Authorization: authHeader } : {}),
       },
       body: JSON.stringify(body),
       signal: controller.signal,
