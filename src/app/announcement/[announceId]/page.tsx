@@ -17,7 +17,7 @@ export default function AnnouncementDetailPage() {
 
   if (!announceId) {
     return (
-      <div style={{ padding: 48, textAlign: 'center', color: '#666' }}>
+      <div className="loadingFallback">
         로딩 중…
       </div>
     );

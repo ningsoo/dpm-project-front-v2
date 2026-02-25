@@ -19,6 +19,15 @@
   color: #111;
 }
 
+.h1Mb8 { margin-bottom: 8px; }
+.h1Mb16 { margin-bottom: 16px; }
+
+.pwlsModalSubtext {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 8px;
+}
+
 .label {
   display: block;
   margin-bottom: 16px;
@@ -342,6 +351,150 @@
   color: #333;
   text-decoration: none;
 }
+
+/* 인라인 스타일 제거용 유틸 클래스 */
+.flexRow8 {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.flexRowCenter8 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.inputFullHeight {
+  flex: 1;
+  height: 48px;
+  box-sizing: border-box;
+  margin-top: 0;
+}
+
+.messageRow {
+  min-height: 20px;
+  margin-top: 4px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.textError { color: #c62828; }
+.textWarning { color: #f57f17; font-size: 0.9rem; line-height: 1.4; }
+
+.pwdHelperRow {
+  margin-top: 4px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  min-height: 18px;
+}
+
+.pwdError { color: #c62828; }
+.pwdOk { color: #4caf50; }
+
+.emailVerifyBtnReady { background-color: #111; cursor: pointer; }
+.emailVerifyBtnDone { background-color: #4caf50; cursor: not-allowed; }
+.emailVerifyBtnPending { background-color: #999; cursor: not-allowed; }
+:global(.dark) .emailVerifyBtnReady { background-color: #3A3934; }
+
+.actionBtnReady { background: #111; cursor: pointer; }
+.actionBtnDisabled { background: #ccc; cursor: not-allowed; }
+:global(.dark) .actionBtnReady { background: #3A3934; }
+
+.phoneRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 6px;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.phonePart0 { width: 50px; min-width: 50px; text-align: center; padding: 0 4px; border: none; outline: none; font-size: 1rem; font-family: inherit; background: transparent; }
+.phonePart1,
+.phonePart2 { width: 60px; min-width: 60px; text-align: center; padding: 0 4px; border: none; outline: none; font-size: 1rem; font-family: inherit; background: transparent; }
+.phoneDash { width: 8px; flex-shrink: 0; text-align: center; color: #333; font-size: 1rem; }
+.phoneErrorRow { min-height: 22px; margin-top: 4px; }
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modalCard {
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  max-width: 480px;
+  width: 90%;
+  text-align: center;
+}
+
+.modalCardNarrow {
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+}
+
+.modalCardSm {
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  max-width: 360px;
+  width: 90%;
+  text-align: center;
+}
+
+.submitRow { text-align: right; margin-top: 8px; }
+
+.termsBlock {
+  margin-bottom: 20px;
+  padding: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  text-align: left;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.modalBtnSecondary { background: #999; }
+
+.pwdWrapMb8 { margin-bottom: 8px; }
+
+.findEmailModalTitle { margin-bottom: 16px; font-size: 1.25rem; }
+.findEmailModalP { margin: 0 0 8px; line-height: 1.6; }
+.findEmailModalPLast { margin: 0 0 16px; line-height: 1.6; }
+.findEmailStrong { color: #111; font-weight: 700; }
+
+.modalMessage { margin: 0 0 16px; }
+.modalMessagePre { margin: 0 0 16px; line-height: 1.6; white-space: pre-line; }
+
+.linksParagraph { margin-top: 16px; font-size: 14px; text-align: center; }
+
+.loadingFallback { padding: 24px; text-align: center; }
+
+.labelMt16 { margin-top: 16px; }
 
 .spinnerWrap {
   position: fixed;

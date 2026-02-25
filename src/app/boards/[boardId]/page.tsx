@@ -19,7 +19,7 @@ export default function PostDetailPage() {
 
   // boardId가 확정되기 전까지는 로딩 표시 (useParams 초기값/StrictMode 이중 마운트 방지)
   if (!boardId) {
-    return <div style={{ padding: 48, textAlign: 'center', color: '#666' }}>로딩 중…</div>;
+    return <div className="loadingFallback">로딩 중…</div>;
   }
 
   return <PostDetail category={category} boardId={boardId} />;

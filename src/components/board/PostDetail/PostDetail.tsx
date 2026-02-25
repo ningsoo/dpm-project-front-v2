@@ -287,8 +287,8 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
     if (fetchError) {
       return (
         <div className={styles.loading}>
-          <p style={{ marginBottom: 12 }}>일시적인 오류가 발생했습니다.</p>
-          <p style={{ marginBottom: 16, fontSize: '0.9rem', color: '#666' }}>
+          <p className={styles.errorMessage}>일시적인 오류가 발생했습니다.</p>
+          <p className={styles.errorSubtext}>
             서버에서 응답하지 않습니다. 잠시 후 다시 시도해 주세요.
           </p>
           <button
@@ -342,7 +342,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
             {formatViews(post.views)}
           </span>
 
-          <span className={styles.iconBtn} style={{ cursor: 'default' }}>
+          <span className={`${styles.iconBtn} ${styles.iconBtnDefault}`}>
             {formatCreatedDateTimeFull(
               Array.isArray(post.createdDateTime)
                 ? post.createdDateTime
@@ -760,7 +760,7 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
       {showReportModal && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true">
           <div className={styles.modalContent}>
-            <p className={styles.modalMessage} style={{ marginBottom: '12px' }}>
+            <p className={`${styles.modalMessage} ${styles.modalMessageMb12}`}>
               신고 사유를 입력해주세요.
             </p>
             <textarea

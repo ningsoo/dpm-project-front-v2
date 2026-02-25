@@ -89,7 +89,7 @@ export default function AdminLoginPage() {
           {loading ? '로그인 중…' : '로그인'}
         </button>
 
-        <p style={{ marginTop: 16, fontSize: 14, textAlign: 'center' }}>
+        <p className={styles.linksParagraph}>
           <Link href="/auth/login">일반 로그인으로 돌아가기</Link>
         </p>
       </form>

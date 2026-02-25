@@ -79,9 +79,9 @@ export function PenaltiesSection() {
               </button>
               <h3 className={styles.modalTitle}>제재 상세</h3>
               {detailLoading ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div className={styles.skeletonBar} style={{ width: '100%', height: 16 }} />
-                  <div className={styles.skeletonBar} style={{ width: '80%', height: 16 }} />
+                <div className={styles.skeletonCol}>
+                  <div className={`${styles.skeletonBar} ${styles.skeletonBarH16} ${styles.skeletonBarW100}`} />
+                  <div className={`${styles.skeletonBar} ${styles.skeletonBarH16} ${styles.skeletonBarW80}`} />
                 </div>
               ) : detail ? (
                 <>

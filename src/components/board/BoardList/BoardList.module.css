@@ -407,6 +407,13 @@
   animation: shimmer 1.5s infinite ease-in-out;
 }
 
+.skeletonCellW30 { width: 30px; }
+.skeletonCellW40 { width: 40px; }
+.skeletonCellW60 { width: 60px; }
+.skeletonCellW70 { width: 70px; }
+.skeletonCellW70pct { width: 70%; }
+.cursorPointer { cursor: pointer; }
+
 /* 스켈레톤 Dark Mode */
 :global(.dark) .skeletonCard {
   background: #242422;

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useId, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, X } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store';
+import { useNonce } from '@/contexts/NonceContext';
 import { authApi } from '@/api/authApi';
 import { checkAuth } from '@/store/slices/authSlice';
 import { ToastUtils } from '@/utils/toastUtils';
@@ -17,6 +18,8 @@ export default function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useDispatch<AppDispatch>();
+  const nonce = useNonce();
+  const baseId = useId().replace(/:/g, '');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
@@ -738,10 +741,14 @@ export default function LoginClient() {
                 <p className={styles.codeHint}>인증 코드: {pwlsCode6}</p>
                 <div className={styles.codeGaugeTrack} aria-hidden="true">
                   <div
-                    className={styles.codeGaugeBar}
-                    style={{
-                      width: `${PWLS_LOGIN_TOTAL_SEC > 0 ? (pwlsLoginRemainSec / PWLS_LOGIN_TOTAL_SEC) * 100 : 0}%`,
-                    }}
+                    className={`${styles.codeGaugeBar} ${nonce ? `pwls-login-gauge-${baseId}` : ''}`}
+                    style={
+                      !nonce
+                        ? {
+                            width: `${PWLS_LOGIN_TOTAL_SEC > 0 ? (pwlsLoginRemainSec / PWLS_LOGIN_TOTAL_SEC) * 100 : 0}%`,
+                          }
+                        : undefined
+                    }
                   />
                 </div>
               </div>
@@ -864,10 +871,10 @@ export default function LoginClient() {
             >
               <X size={20} />
             </button>
-            <h2 id="pwls-modal-title" className={styles.h1} style={{ marginBottom: 8 }}>
+            <h2 id="pwls-modal-title" className={`${styles.h1} ${styles.h1Mb8}`}>
               Passwordless 설정
             </h2>
-            <p style={{ fontSize: '0.95rem', color: '#555', marginBottom: 8 }}>
+            <p className={styles.pwlsModalSubtext}>
               휴대폰 앱으로 QR을 스캔해 등록하세요
             </p>
 
@@ -915,10 +922,14 @@ export default function LoginClient() {
                 </div>
                 <div className={styles.pwlsProgressTrack}>
                   <div
-                    className={styles.pwlsProgressBar}
-                    style={{
-                      width: `${pwlsTotalSec > 0 ? (pwlsRemainSec / pwlsTotalSec) * 100 : 0}%`,
-                    }}
+                    className={`${styles.pwlsProgressBar} ${nonce ? `pwls-reg-gauge-${baseId}` : ''}`}
+                    style={
+                      !nonce
+                        ? {
+                            width: `${pwlsTotalSec > 0 ? (pwlsRemainSec / pwlsTotalSec) * 100 : 0}%`,
+                          }
+                        : undefined
+                    }
                   />
                 </div>
               </>
@@ -963,7 +974,7 @@ export default function LoginClient() {
           onClick={() => setRegisterDoneModalOpen(false)}
         >
           <div className={styles.pwlsModalCard} onClick={(e) => e.stopPropagation()}>
-            <h2 id="pwls-register-done-title" className={styles.h1} style={{ marginBottom: 16 }}>
+            <h2 id="pwls-register-done-title" className={`${styles.h1} ${styles.h1Mb16}`}>
               등록 완료
             </h2>
             <p className={styles.pwlsRegisterDoneText}>
@@ -980,6 +991,17 @@ export default function LoginClient() {
             </div>
           </div>
         </div>
+      )}
+      {nonce && (
+        <style
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: [
+              `.pwls-login-gauge-${baseId}{width:${PWLS_LOGIN_TOTAL_SEC > 0 ? (pwlsLoginRemainSec / PWLS_LOGIN_TOTAL_SEC) * 100 : 0}%;}`,
+              `.pwls-reg-gauge-${baseId}{width:${pwlsTotalSec > 0 ? (pwlsRemainSec / pwlsTotalSec) * 100 : 0}%;}`,
+            ].join(''),
+          }}
+        />
       )}
     </div>
   );

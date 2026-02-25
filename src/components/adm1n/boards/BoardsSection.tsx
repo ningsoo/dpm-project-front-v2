@@ -88,7 +88,7 @@ export function BoardsSection() {
                 <X size={18} />
               </button>
               <h3 className={styles.modalTitle}>게시글 삭제</h3>
-              <p style={{ fontSize: 14, color: '#666', marginBottom: 20 }}>
+              <p className={styles.subtext}>
                 이 게시글을 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
               </p>
               <div className={styles.modalActions}>

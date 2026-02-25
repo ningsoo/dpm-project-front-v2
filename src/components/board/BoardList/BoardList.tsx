@@ -437,16 +437,16 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                   {Array.from({ length: 6 }).map((_, i) => (
                     <tr key={i} className={styles.skeletonRow}>
                       {shouldShowNumbers && (
-                        <td><div className={styles.skeletonCell} style={{ width: 30 }} /></td>
+                        <td><div className={`${styles.skeletonCell} ${styles.skeletonCellW30}`} /></td>
                       )}
-                      <td><div className={styles.skeletonCell} style={{ width: '70%' }} /></td>
-                      <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
-                      <td><div className={styles.skeletonCell} style={{ width: 30 }} /></td>
+                      <td><div className={`${styles.skeletonCell} ${styles.skeletonCellW70pct}`} /></td>
+                      <td><div className={`${styles.skeletonCell} ${styles.skeletonCellW60}`} /></td>
+                      <td><div className={`${styles.skeletonCell} ${styles.skeletonCellW30}`} /></td>
                       {shouldShowNumbers && (
-                        <td><div className={styles.skeletonCell} style={{ width: 30 }} /></td>
+                        <td><div className={`${styles.skeletonCell} ${styles.skeletonCellW30}`} /></td>
                       )}
-                      <td><div className={styles.skeletonCell} style={{ width: 40 }} /></td>
-                      <td><div className={styles.skeletonCell} style={{ width: 70 }} /></td>
+                      <td><div className={`${styles.skeletonCell} ${styles.skeletonCellW40}`} /></td>
+                      <td><div className={`${styles.skeletonCell} ${styles.skeletonCellW70}`} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -510,8 +510,8 @@ export default function BoardList({ category, viewMode }: BoardListProps) {
                   {displayedPosts.map((p, idx) => (
                     <tr
                       key={`${p.boardId}-${idx}`}
+                      className={styles.cursorPointer}
                       onClick={() => router.push(`/boards/${p.boardId}`)}
-                      style={{ cursor: 'pointer' }}
                     >
                       {shouldShowNumbers && <td>{p.displayNumber}</td>}
                       <td>

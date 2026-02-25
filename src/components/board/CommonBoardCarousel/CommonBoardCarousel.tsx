@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useId, useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { useNonce } from '@/contexts/NonceContext';
 import { boardApi } from '@/api/boardApi';
 import type { BoardCategory } from '@/api/boardApi';
 import type { BoardListItem } from '@/api/boardTypes';
@@ -16,6 +17,10 @@ import { ChevronLeft, ChevronRight, Heart, Eye } from 'lucide-react';
 import { formatViews, formatNickname } from '@/utils/displayFormatters';
 import styles from './CommonBoardCarousel.module.css';
 
+function escapeCssUrl(url: string): string {
+  return url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
 const CARD_GAP = 20;
 const TRANSITION_MS = 650;
 
@@ -25,6 +30,8 @@ interface CommonBoardCarouselProps {
 
 export default function CommonBoardCarousel({ category }: CommonBoardCarouselProps) {
   const router = useRouter();
+  const nonce = useNonce();
+  const baseId = useId().replace(/:/g, '');
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
 
   const [posts, setPosts] = useState<BoardListItem[]>([]);
@@ -234,6 +241,14 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
   /** 스켈레톤: 로딩 중이거나, 레이아웃 미준비이거나, 이미지 미로드 시 표시 */
   const showSkeleton = isLoading || (posts.length > 0 && (!layoutReady || !imagesLoaded));
 
+  const trackClass = `cbc-track-${baseId}`;
+  const cardClass = `cbc-card-${baseId}`;
+  const trackRule =
+    nonce &&
+    `.${trackClass}{transform:${trackTransform};transition:${transitionEnabled ? 'transform 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none'};}`;
+  const cardRule = nonce && `.${cardClass}{width:${cardWidth}px;min-width:${cardWidth}px;}`;
+  const thumbRules: string[] = [];
+
   /* ── empty ── */
   if (!isLoading && posts.length === 0) {
     return (
@@ -264,7 +279,7 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
 
         {/* 실제 캐러셀: 항상 마운트, 스켈레톤 뒤에서 대기 → 크기 점프 방지 */}
         {len > 0 && (
-          <div style={{ visibility: showSkeleton ? 'hidden' : 'visible' }}>
+          <div className={showSkeleton ? styles.carouselLayerHidden : styles.carouselLayerVisible}>
             <button type="button" className={styles.prevBtn} onClick={movePrev} aria-label="이전">
               <ChevronLeft size={48} />
             </button>
@@ -272,16 +287,26 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
               <ChevronRight size={48} />
             </button>
             <div
-              className={styles.track}
-              style={{
-                transform: trackTransform,
-                transition: transitionEnabled ? undefined : 'none',
-              }}
+              className={`${styles.track} ${nonce ? trackClass : ''}`}
+              style={
+                !nonce
+                  ? {
+                      transform: trackTransform,
+                      transition: transitionEnabled ? undefined : 'none',
+                    }
+                  : undefined
+              }
             >
               {displayPosts.map((post, index) => {
                 const isCenter = index === center;
                 const categorySlug = String(category).toLowerCase() as BoardCategorySlug;
                 const imageUrl = getBoardThumbnailUrl(post, categorySlug);
+                const thumbClass = `cbc-thumb-${baseId}-${index}`;
+                if (nonce) {
+                  thumbRules.push(
+                    `.${thumbClass}{background-image:url('${escapeCssUrl(imageUrl)}');}`
+                  );
+                }
                 return (
                   <div
                     key={`${post.boardId}-${index}`}
@@ -289,14 +314,19 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
                     tabIndex={0}
                     className={`${styles.card} ${isCenter ? styles.center : ''} ${
                       hoveredCenter && isCenter ? styles.expanded : ''
-                    }`}
-                    style={{ width: cardWidth, minWidth: cardWidth }}
+                    } ${nonce ? cardClass : ''}`}
+                    style={
+                      !nonce ? { width: cardWidth, minWidth: cardWidth } : undefined
+                    }
                     onMouseEnter={() => isCenter && setHoveredCenter(true)}
                     onMouseLeave={() => isCenter && setHoveredCenter(false)}
                     onClick={() => goToPost(post.boardId)}
                     onKeyDown={(e) => e.key === 'Enter' && goToPost(post.boardId)}
                   >
-                    <div className={styles.thumb} style={{ backgroundImage: `url(${imageUrl})` }}>
+                    <div
+                      className={`${styles.thumb} ${nonce ? thumbClass : ''}`}
+                      style={!nonce ? { backgroundImage: `url(${imageUrl})` } : undefined}
+                    >
                       <div className={styles.overlay}>
                         <div className={styles.cardTitle}>{post.title}</div>
                         <div className={styles.overlayMetaRow}>
@@ -322,6 +352,14 @@ export default function CommonBoardCarousel({ category }: CommonBoardCarouselPro
           </div>
         )}
       </div>
+      {nonce && trackRule && (
+        <style
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: [trackRule, cardRule, ...thumbRules].filter(Boolean).join(''),
+          }}
+        />
+      )}
     </section>
   );
 }

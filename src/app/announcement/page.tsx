@@ -127,11 +127,11 @@ export default function AnnouncementPage() {
               <tbody>
                 {Array.from({ length: 6 }).map((_, i) => (
                   <tr key={i} className={styles.skeletonRow}>
-                    <td><div className={styles.skeletonCell} style={{ width: 40 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: '40%' }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 70 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 120 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
+                    <td><div className={`${styles.skeletonCell} ${styles.skeletonCellW40}`} /></td>
+                    <td><div className={`${styles.skeletonCell} ${styles.skeletonCellW40pct}`} /></td>
+                    <td><div className={`${styles.skeletonCell} ${styles.skeletonCellW70}`} /></td>
+                    <td><div className={`${styles.skeletonCell} ${styles.skeletonCellW120}`} /></td>
+                    <td><div className={`${styles.skeletonCell} ${styles.skeletonCellW80}`} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -158,8 +158,8 @@ export default function AnnouncementPage() {
                 {list.map((row) => (
                   <tr
                     key={row.announceId}
+                    className={styles.cursorPointer}
                     onClick={() => router.push(`/announcement/${row.announceId}`)}
-                    style={{ cursor: 'pointer' }}
                   >
                     <td>{row.displayNumber}</td>
                     <td>{row.title}</td>

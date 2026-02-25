@@ -118,8 +118,8 @@ export function AnnouncementsDetailSection({ announceId }: AnnouncementsDetailSe
     if (fetchError === 'server') {
       return (
         <div className={styles.loading}>
-          <p style={{ marginBottom: 12 }}>일시적인 오류가 발생했습니다.</p>
-          <p style={{ marginBottom: 16, fontSize: '0.9rem', color: '#666' }}>
+          <p className={styles.errorP}>일시적인 오류가 발생했습니다.</p>
+          <p className={styles.errorSub}>
             잠시 후 다시 시도해 주세요.
           </p>
           <button
@@ -146,7 +146,7 @@ export function AnnouncementsDetailSection({ announceId }: AnnouncementsDetailSe
   const hasLink = detail.linkUrl && String(detail.linkUrl).trim() !== '';
 
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto' }}>
+    <div className={styles.maxW720}>
       <article className={styles.wrap}>
         <div className={styles.categoryRow}>
           <span className={styles.h1}>{typeLabel}</span>
@@ -155,10 +155,10 @@ export function AnnouncementsDetailSection({ announceId }: AnnouncementsDetailSe
         <div className={styles.titleRow}>
           <h1 className={styles.title}>{detail.title}</h1>
           <div className={styles.actions}>
-            <span className={styles.iconBtn} style={{ cursor: 'default' }}>
+            <span className={`${styles.iconBtn} ${styles.iconBtnDefault}`}>
               {formatPeriodDisplay(detail.startedAt, detail.endedAt)}
             </span>
-            <span className={styles.iconBtn} style={{ cursor: 'default' }}>
+            <span className={`${styles.iconBtn} ${styles.iconBtnDefault}`}>
               {toDisplayDate(detail.createdAt)}
             </span>
           </div>
@@ -223,13 +223,13 @@ export function AnnouncementsDetailSection({ announceId }: AnnouncementsDetailSe
 
         {hasLink && (
           <section className={detailStyles.pageMoveCard}>
-            <span style={{ flex: 1 }} />
+            <span className={styles.flex1} />
             <a
               href={detail.linkUrl!}
               target="_blank"
               rel="noopener noreferrer"
               className={styles.retryBtn}
-              style={{ textDecoration: 'none', flexShrink: 0 }}
+              className={styles.linkNoUnderline}
             >
               링크 이동
             </a>
@@ -237,14 +237,14 @@ export function AnnouncementsDetailSection({ announceId }: AnnouncementsDetailSe
         )}
       </article>
 
-      <div style={{ padding: '0 40px', marginTop: 24, display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+      <div className={styles.endRow}>
         <Link href="/adm1n/announcements" className={styles.retryBtn}>
           목록
         </Link>
         <Link
           href={`/adm1n/announcements/${detail.announceId}/edit`}
           className={styles.retryBtn}
-          style={{ textDecoration: 'none' }}
+          className={styles.linkNoUnderline}
         >
           수정
         </Link>

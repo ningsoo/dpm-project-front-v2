@@ -84,21 +84,13 @@ export function PasswordVerifyModal({ isOpen, onClose, targetPath, onSuccess }: 
         <h2 id="password-verify-title" className={styles.modalTitle}>
           비밀번호를 입력하세요
         </h2>
-        <div className={authStyles.pwdWrap} style={{ marginBottom: 8 }}>
+        <div className={`${authStyles.pwdWrap} ${authStyles.pwdWrapMb8}`}>
           <input
             type={showPassword ? 'text' : 'password'}
             value={password}
             onChange={handlePasswordChange}
             placeholder="비밀번호 입력"
-            style={{
-              display: 'block',
-              width: '100%',
-              padding: '12px 44px 12px 14px',
-              fontSize: '1rem',
-              border: '1px solid #ddd',
-              borderRadius: 8,
-              outline: 'none',
-            }}
+            className={authStyles.input}
             disabled={verifying}
             onKeyDown={(e) => e.key === 'Enter' && handleConfirm()}
           />

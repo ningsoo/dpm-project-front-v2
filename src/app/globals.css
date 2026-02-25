@@ -102,6 +102,13 @@ textarea {
   font-size: inherit;
 }
 
+/* 로딩/폴백 메시지 (인라인 스타일 제거용) */
+.loadingFallback {
+  padding: 48px;
+  text-align: center;
+  color: #666;
+}
+
 /* 탈퇴 회원 닉네임 색상 (컴포넌트 스타일보다 우선 적용) */
 .authorDeleted {
   color: rgb(200, 198, 200) !important;

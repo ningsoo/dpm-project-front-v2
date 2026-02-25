@@ -16,11 +16,11 @@ export function PopIcon({ size = 64, className = '' }: PopIconProps) {
       viewBox="0 0 100 100"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      style={{ overflow: 'visible' }}
+      className={`pop-icon-svg ${className}`.trim()}
     >
       <style {...(nonce ? { nonce } : {})}>
         {`
+          .pop-icon-svg { overflow: visible; }
           @keyframes pop {
             0%, 100% { transform: translate(0, -14px) scale(1); opacity: 1; }
             50% { transform: translate(0, -14px) scale(1.1); opacity: 0.8; }

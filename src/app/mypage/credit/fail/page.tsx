@@ -1,9 +1,10 @@
 import { Suspense } from 'react';
 import FailClient from './FailClient';
+import CreditLoadingFallback from '../CreditLoadingFallback';
 
 export default function Page() {
   return (
-    <Suspense fallback={<div style={{ padding: 24 }}>로딩 중...</div>}>
+    <Suspense fallback={<CreditLoadingFallback />}>
       <FailClient />
     </Suspense>
   );

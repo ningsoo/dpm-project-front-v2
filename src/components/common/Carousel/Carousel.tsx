@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useId } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { boardApi } from '@/api/boardApi';
 import type { BoardCategory } from '@/api/boardApi';
+import { useNonce } from '@/contexts/NonceContext';
 import styles from './Carousel.module.css';
 
 const VISIBLE = 7;
@@ -26,7 +27,13 @@ interface CarouselProps {
   autoSlideInterval?: number;
 }
 
+function escapeCssUrl(url: string): string {
+  return url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
 export default function Carousel({ category, variant = 'spotlight', autoSlideInterval = 4000 }: CarouselProps) {
+  const nonce = useNonce();
+  const baseId = useId().replace(/:/g, '');
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const [posts, setPosts] = useState<CarouselPost[]>([]);
   const [center, setCenter] = useState(0);
@@ -132,6 +139,9 @@ export default function Carousel({ category, variant = 'spotlight', autoSlideInt
 
   if (posts.length === 0) return null;
 
+  const cardRules: string[] = [];
+  const thumbRules: string[] = [];
+
   return (
     <section className={`${styles.section} ${styles[variant]} ${darkMode ? 'dark' : ''}`}>
       <div className={styles.wrapper}>
@@ -143,7 +153,7 @@ export default function Carousel({ category, variant = 'spotlight', autoSlideInt
 
             const isCenter = i === CENTER_INDEX;
             const cardWidth = hoveredCenter && isCenter && variant !== 'showcase'
-              ? cardWidths.base * 1.5  // 호버 시 1.5배 확장 (Showcase 제외)
+              ? cardWidths.base * 1.5
               : cardWidths.base;
 
             const thumbnail = post.thumbnail || 
@@ -151,17 +161,31 @@ export default function Carousel({ category, variant = 'spotlight', autoSlideInt
                 ? `https://img.youtube.com/vi/${extractYoutubeId(post.youtubeUrl)}/mqdefault.jpg`
                 : post.image);
 
+            const cardClass = `carousel-card-${baseId}-${i}`;
+            const thumbClass = `carousel-thumb-${baseId}-${i}`;
+
+            if (nonce) {
+              cardRules.push(
+                `.${cardClass}{width:${cardWidth}px;margin-left:${getCardMargin(i)}px;z-index:${getCardZIndex(i)};}`
+              );
+              if (thumbnail) {
+                thumbRules.push(
+                  `.${thumbClass}{background-image:url('${escapeCssUrl(thumbnail)}');background-size:cover;background-position:center;}`
+                );
+              }
+            }
+
             return (
               <div
                 key={`${post.id}-${i}-${center}`}
                 role="button"
                 tabIndex={0}
-                className={`${styles.card} ${isCenter ? styles.center : ''}`}
-                style={{
+                className={`${styles.card} ${isCenter ? styles.center : ''} ${nonce ? cardClass : ''}`}
+                style={!nonce ? {
                   width: `${cardWidth}px`,
                   marginLeft: `${getCardMargin(i)}px`,
                   zIndex: getCardZIndex(i),
-                }}
+                } : undefined}
                 onMouseEnter={() => handleCenterHover(true, post)}
                 onMouseLeave={() => handleCenterHover(false, post)}
                 onClick={() => onCardClick(i)}
@@ -176,8 +200,8 @@ export default function Carousel({ category, variant = 'spotlight', autoSlideInt
                   />
                 ) : (
                   <div
-                    className={styles.thumb}
-                    style={thumbnail ? { backgroundImage: `url(${thumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}}
+                    className={`${styles.thumb} ${nonce && thumbnail ? thumbClass : ''}`}
+                    style={!nonce && thumbnail ? { backgroundImage: `url(${thumbnail})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
                   >
                     <div className={styles.overlay}>
                       <div className={styles.cardTitle}>{post.title}</div>
@@ -192,6 +216,14 @@ export default function Carousel({ category, variant = 'spotlight', autoSlideInt
           })}
         </div>
       </div>
+      {nonce && (cardRules.length > 0 || thumbRules.length > 0) && (
+        <style
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: [cardRules.join(''), thumbRules.join('')].filter(Boolean).join(''),
+          }}
+        />
+      )}
     </section>
   );
 }

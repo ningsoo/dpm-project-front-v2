@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useId, useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
+import { useNonce } from '@/contexts/NonceContext';
 import { boardApi } from '@/api/boardApi';
 import type { BoardListItem } from '@/api/boardTypes';
 import {
@@ -14,11 +15,17 @@ import { ChevronLeft, ChevronRight, Heart, Eye } from 'lucide-react';
 import { formatViews, formatNickname } from '@/utils/displayFormatters';
 import styles from './SpotlightCarousel.module.css';
 
+function escapeCssUrl(url: string): string {
+  return url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
 const CARD_GAP = 20;
 const TRANSITION_MS = 650;
 
 export default function SpotlightCarousel() {
   const router = useRouter();
+  const nonce = useNonce();
+  const baseId = useId().replace(/:/g, '');
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
 
   const [posts, setPosts] = useState<BoardListItem[]>([]);
@@ -227,6 +234,18 @@ export default function SpotlightCarousel() {
   /** 스켈레톤: 로딩 중이거나, 레이아웃 미준비이거나, 이미지 미로드 시 표시 */
   const showSkeleton = isLoading || (posts.length > 0 && (!layoutReady || !imagesLoaded));
 
+  const trackClass = `spotlight-track-${baseId}`;
+  const cardClass = `spotlight-card-${baseId}`;
+  const trackTransition =
+    !transitionEnabled || !layoutReady
+      ? 'none'
+      : `transform ${TRANSITION_MS}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`;
+  const trackRule =
+    nonce &&
+    `.${trackClass}{transform:${trackTransform};transition:${trackTransition};}`;
+  const cardRule = nonce && `.${cardClass}{width:${cardWidth}px;min-width:${cardWidth}px;}`;
+  const thumbRules: string[] = [];
+
   /* ── empty ── */
   if (!isLoading && posts.length === 0) {
     return (
@@ -261,7 +280,7 @@ export default function SpotlightCarousel() {
 
         {/* 실제 캐러셀: 항상 마운트, 스켈레톤 뒤에서 대기 → 크기 점프 방지 */}
         {len > 0 && (
-          <div style={{ visibility: showSkeleton ? 'hidden' : 'visible' }}>
+          <div className={showSkeleton ? styles.carouselLayerHidden : styles.carouselLayerVisible}>
             <button
               type="button"
               className={styles.prevBtn}
@@ -279,35 +298,38 @@ export default function SpotlightCarousel() {
             </button>
 
             <div
-              className={styles.track}
-              style={{
-                transform: trackTransform,
-                transition:
-                  !transitionEnabled || !layoutReady
-                    ? 'none'
-                    : `transform ${TRANSITION_MS}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
-              }}
+              className={`${styles.track} ${nonce ? trackClass : ''}`}
+              style={
+                !nonce
+                  ? {
+                      transform: trackTransform,
+                      transition:
+                        !transitionEnabled || !layoutReady
+                          ? 'none'
+                          : `transform ${TRANSITION_MS}ms cubic-bezier(0.25, 0.46, 0.45, 0.94)`,
+                    }
+                  : undefined
+              }
             >
               {displayPosts.map((post, index) => {
                 const isCenter = index === center;
-
+                const imageUrl = getBoardThumbnailUrl(post, 'spotlight');
+                const thumbClass = `spotlight-thumb-${baseId}-${index}`;
+                if (nonce) {
+                  thumbRules.push(`.${thumbClass}{background-image:url('${escapeCssUrl(imageUrl)}');}`);
+                }
                 return (
                   <div
                     key={`${post.boardId}-${index}`}
                     className={`${styles.card} ${
                       isCenter ? styles.center : ''
-                    }`}
-                    style={{ width: cardWidth, minWidth: cardWidth }}
+                    } ${nonce ? cardClass : ''}`}
+                    style={!nonce ? { width: cardWidth, minWidth: cardWidth } : undefined}
                     onClick={() => goToPost(post.boardId)}
                   >
                     <div
-                      className={styles.thumb}
-                      style={{
-                        backgroundImage: `url(${getBoardThumbnailUrl(
-                          post,
-                          'spotlight'
-                        )})`,
-                      }}
+                      className={`${styles.thumb} ${nonce ? thumbClass : ''}`}
+                      style={!nonce ? { backgroundImage: `url(${imageUrl})` } : undefined}
                     >
                       <div className={styles.overlay}>
                         <div className={styles.cardTitle}>
@@ -338,6 +360,14 @@ export default function SpotlightCarousel() {
           </div>
         )}
       </div>
+      {nonce && trackRule && (
+        <style
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: [trackRule, cardRule, ...thumbRules].filter(Boolean).join(''),
+          }}
+        />
+      )}
     </section>
   );
 }

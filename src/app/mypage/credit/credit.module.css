@@ -8,6 +8,8 @@
   overflow-x: hidden;
 }
 
+.loadingFallback { padding: 24px; }
+
 .inner {
   max-width: 480px;
   margin: 0 auto;
@@ -119,6 +121,16 @@
   width: 100%;
   text-align: center;
 }
+
+.summaryBoxPadded {
+  padding: 20px;
+  line-height: 1.6;
+}
+
+.summaryParagraph { margin: 0; }
+
+.failMessage { margin: 16px 0; color: #666; }
+.failActions { display: flex; gap: 12px; flex-wrap: wrap; }
 
 .summaryRow {
   display: flex;
