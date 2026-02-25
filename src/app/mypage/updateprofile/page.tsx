@@ -17,7 +17,7 @@ interface UserInfo {
   email: string;
   nickname: string;
   phoneNumber: string;
-  profileImage?: string;
+  profileUrl?: string | null;
 }
 
 export default function UpdateProfilePage() {

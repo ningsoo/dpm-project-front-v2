@@ -90,6 +90,10 @@
   object-fit: cover;
 }
 
+.avatarImgContain {
+  object-fit: contain;
+}
+
 
 .author {
   font-size: 2rem;
