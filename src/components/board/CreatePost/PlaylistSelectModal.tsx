@@ -1,11 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useId, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
+import { useNonce } from '@/contexts/NonceContext';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import styles from './PlaylistSelectModal.module.css';
+
+function escapeCssUrl(url: string): string {
+  return url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
 
 export interface MyPlaylistItem {
   playlistId: number;
@@ -27,6 +32,8 @@ export function PlaylistSelectModal({
   onSelect,
 }: PlaylistSelectModalProps) {
   const router = useRouter();
+  const nonce = useNonce();
+  const baseId = useId().replace(/:/g, '');
   const [playlists, setPlaylists] = useState<MyPlaylistItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -132,36 +139,59 @@ export function PlaylistSelectModal({
           </div>
         ) : (
           <>
-            <ul className={styles.list}>
-              {playlists.map((playlist) => (
-                <li
-                  key={playlist.playlistId}
-                  className={`${styles.item} ${selectedId === playlist.playlistId ? styles.itemSelected : ''}`}
-                  onClick={() => setSelectedId(playlist.playlistId)}
-                >
-                  <label className={styles.radioWrap}>
-                    <input
-                      type="radio"
-                      name="playlist"
-                      checked={selectedId === playlist.playlistId}
-                      onChange={() => setSelectedId(playlist.playlistId)}
-                      className={styles.radio}
+            {(() => {
+              const thumbRules = playlists
+                .map((playlist, index) => {
+                  const thumbUrl = playlist.thumbnailUrl;
+                  if (!nonce || !thumbUrl) return '';
+                  return `.psm-thumb-${baseId}-${index}{background-image:url('${escapeCssUrl(thumbUrl)}');}`;
+                })
+                .filter(Boolean);
+              return (
+                <>
+                  {nonce && thumbRules.length > 0 && (
+                    <style
+                      nonce={nonce}
+                      dangerouslySetInnerHTML={{ __html: thumbRules.join('') }}
                     />
-                  </label>
-                  <div
-                    className={styles.thumb}
-                    style={{
-                      backgroundImage: playlist.thumbnailUrl
-                        ? `url(${playlist.thumbnailUrl})`
-                        : undefined,
-                    }}
-                  />
-                  <div className={styles.info}>
-                    <span className={styles.playlistTitle}>{playlist.title}</span>
-                    <span className={styles.itemCount}>(곡 {playlist.itemCount}개)</span>
-                  </div>
-                </li>
-              ))}
+                  )}
+                </>
+              );
+            })()}
+            <ul className={styles.list}>
+              {playlists.map((playlist, index) => {
+                const thumbClass = `psm-thumb-${baseId}-${index}`;
+                const thumbUrl = playlist.thumbnailUrl;
+                return (
+                  <li
+                    key={playlist.playlistId}
+                    className={`${styles.item} ${selectedId === playlist.playlistId ? styles.itemSelected : ''}`}
+                    onClick={() => setSelectedId(playlist.playlistId)}
+                  >
+                    <label className={styles.radioWrap}>
+                      <input
+                        type="radio"
+                        name="playlist"
+                        checked={selectedId === playlist.playlistId}
+                        onChange={() => setSelectedId(playlist.playlistId)}
+                        className={styles.radio}
+                      />
+                    </label>
+                    <div
+                      className={`${styles.thumb} ${nonce && thumbUrl ? thumbClass : ''}`}
+                      style={
+                        !nonce && thumbUrl
+                          ? { backgroundImage: `url(${thumbUrl})` }
+                          : undefined
+                      }
+                    />
+                    <div className={styles.info}>
+                      <span className={styles.playlistTitle}>{playlist.title}</span>
+                      <span className={styles.itemCount}>(곡 {playlist.itemCount}개)</span>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
             <div className={styles.footer}>
               <button

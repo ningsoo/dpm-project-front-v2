@@ -140,17 +140,7 @@ export default function FindEmailPage() {
 
         <label className={styles.label}>
           연락처
-          <div
-            className={styles.input}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-start',
-              marginTop: 6,
-              gap: '4px',
-              padding: '12px 14px',
-            }}
-          >
+          <div className={`${styles.input} ${styles.phoneRow}`}>
             <input
               ref={phonePart0Ref}
               type="tel"
@@ -187,20 +177,10 @@ export default function FindEmailPage() {
               onKeyDown={(e) => {
                 if (e.key === 'Backspace' && phonePart0.length === 0) e.preventDefault();
               }}
-              style={{
-                width: '50px',
-                minWidth: '50px',
-                textAlign: 'center',
-                padding: '0 4px',
-                border: 'none',
-                outline: 'none',
-                fontSize: '1rem',
-                fontFamily: 'inherit',
-                background: 'transparent',
-              }}
+              className={styles.phonePart0}
               maxLength={3}
             />
-            <span style={{ width: '8px', flexShrink: 0, textAlign: 'center', color: '#333', fontSize: '1rem' }}>-</span>
+            <span className={styles.phoneDash}>-</span>
             <input
               ref={phonePart1Ref}
               type="tel"
@@ -240,20 +220,10 @@ export default function FindEmailPage() {
                   phonePart0Ref.current?.focus();
                 }
               }}
-              style={{
-                width: '60px',
-                minWidth: '60px',
-                textAlign: 'center',
-                padding: '0 4px',
-                border: 'none',
-                outline: 'none',
-                fontSize: '1rem',
-                fontFamily: 'inherit',
-                background: 'transparent',
-              }}
+              className={styles.phonePart1}
               maxLength={4}
             />
-            <span style={{ width: '8px', flexShrink: 0, textAlign: 'center', color: '#333', fontSize: '1rem' }}>-</span>
+            <span className={styles.phoneDash}>-</span>
             <input
               ref={phonePart2Ref}
               type="tel"
@@ -289,21 +259,11 @@ export default function FindEmailPage() {
                   phonePart1Ref.current?.focus();
                 }
               }}
-              style={{
-                width: '60px',
-                minWidth: '60px',
-                textAlign: 'center',
-                padding: '0 4px',
-                border: 'none',
-                outline: 'none',
-                fontSize: '1rem',
-                fontFamily: 'inherit',
-                background: 'transparent',
-              }}
+              className={styles.phonePart2}
               maxLength={4}
             />
           </div>
-          <div style={{ minHeight: '22px', marginTop: 4 }}>
+          <div className={styles.phoneErrorRow}>
             {(submitAttempted || (phoneTouched && phoneComplete)) && phoneErrorUx ? (
               <span className={styles.error}>{phoneErrorUx}</span>
             ) : null}
@@ -321,38 +281,22 @@ export default function FindEmailPage() {
 
       {showModal && foundEmail && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0,0,0,0.5)',
-          }}
+          className={styles.modalOverlay}
           role="dialog"
           aria-modal="true"
           aria-labelledby="find-email-modal-title"
         >
-          <div
-            style={{
-              padding: 24,
-              background: '#fff',
-              borderRadius: 12,
-              maxWidth: 400,
-              textAlign: 'center',
-            }}
-          >
-            <h2 id="find-email-modal-title" className={styles.h1} style={{ marginBottom: 16, fontSize: '1.25rem' }}>
+          <div className={styles.modalCardNarrow}>
+            <h2 id="find-email-modal-title" className={`${styles.h1} ${styles.findEmailModalTitle}`}>
               이메일 찾기 결과
             </h2>
-            <p style={{ margin: '0 0 8px', lineHeight: 1.6 }}>
+            <p className={styles.findEmailModalP}>
               {successMessage}
             </p>
-            <p style={{ margin: '0 0 8px', lineHeight: 1.6 }}>
-              <strong style={{ color: '#111', fontWeight: 700 }}>{foundEmail}</strong>
+            <p className={styles.findEmailModalP}>
+              <strong className={styles.findEmailStrong}>{foundEmail}</strong>
             </p>
-            <p style={{ margin: '0 0 16px', lineHeight: 1.6 }}>
+            <p className={styles.findEmailModalPLast}>
               확인 클릭시 로그인 페이지로 이동합니다.
             </p>
             <button type="button" className={styles.submit} onClick={handleModalConfirm}>

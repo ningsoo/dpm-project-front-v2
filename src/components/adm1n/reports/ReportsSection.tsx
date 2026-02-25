@@ -114,9 +114,9 @@ export function ReportsSection() {
               </button>
               <h3 className={styles.modalTitle}>신고 상세</h3>
               {detailLoading ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div className={styles.skeletonBar} style={{ width: '100%', height: 16 }} />
-                  <div className={styles.skeletonBar} style={{ width: '80%', height: 16 }} />
+                <div className={styles.skeletonCol}>
+                  <div className={`${styles.skeletonBar} ${styles.skeletonBarH16} ${styles.skeletonBarW100}`} />
+                  <div className={`${styles.skeletonBar} ${styles.skeletonBarH16} ${styles.skeletonBarW80}`} />
                 </div>
               ) : detail ? (
                 <>
@@ -147,13 +147,7 @@ export function ReportsSection() {
 
                   {str(detail.reportStatus ?? detail.status).toUpperCase() !== 'COMPLETED' && (
                     <>
-                      <h4
-                        style={{
-                          margin: '20px 0 12px',
-                          fontSize: '0.95rem',
-                          fontWeight: 600,
-                        }}
-                      >
+                      <h4 className={styles.modalSubheading}>
                         제재 적용
                       </h4>
                       <div className={styles.modalField}>

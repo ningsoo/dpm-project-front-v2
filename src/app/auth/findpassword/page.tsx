@@ -143,33 +143,26 @@ export default function FindPasswordPage() {
 
         <label className={styles.label}>
           이메일
-          <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
+          <div className={styles.flexRow8}>
             <input
               type="text"
               inputMode="email"
               placeholder="example@gmail.com"
               value={email}
               onChange={handleEmailChange}
-              className={styles.input}
-              style={{ flex: 1, height: '48px', boxSizing: 'border-box', marginTop: 0 }}
+              className={`${styles.input} ${styles.inputFullHeight}`}
               disabled={loading}
             />
             <button
               type="button"
               onClick={handleSendEmail}
               disabled={!sendButtonEnabled || loading}
-              className={styles.emailVerifyBtn}
-              style={{
-                minWidth: 100,
-                backgroundColor:
-                  sendButtonEnabled && !loading ? '#111' : '#ccc',
-                cursor: sendButtonEnabled && !loading ? 'pointer' : 'not-allowed',
-              }}
+              className={`${styles.emailVerifyBtn} ${sendButtonEnabled && !loading ? styles.emailVerifyBtnReady : styles.emailVerifyBtnPending}`}
             >
               {loading ? '전송 중…' : sendButtonInCooldown ? formatCountdown(remainingSec) : '인증번호'}
             </button>
           </div>
-          <div style={{ minHeight: 20, marginTop: 4, fontSize: '0.9rem', lineHeight: 1.4 }}>
+          <div className={styles.messageRow}>
             {errors.email ? <span className={styles.error}>{errors.email}</span> : null}
             {!errors.email && emailHangulError ? (
               <span className={styles.error}>{emailHangulError}</span>
@@ -178,16 +171,16 @@ export default function FindPasswordPage() {
               <span className={styles.error}>{emailFormatError}</span>
             ) : null}
             {!errors.email && !emailHangulError && !emailFormatError && emailSentMessage ? (
-              <span style={{ color: '#f57f17', fontSize: '0.9rem', lineHeight: 1.4 }}>{emailSentMessage}</span>
+              <span className={styles.textWarning}>{emailSentMessage}</span>
             ) : null}
           </div>
         </label>
 
         {emailSent && (
           <>
-            <label className={styles.label} style={{ marginTop: 16 }}>
+            <label className={`${styles.label} ${styles.labelMt16}`}>
               인증번호
-              <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
+              <div className={styles.flexRow8}>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -196,22 +189,14 @@ export default function FindPasswordPage() {
                   value={verifyCode}
                   onChange={handleVerifyCodeChange}
                   maxLength={6}
-                  className={styles.input}
-                  style={{ flex: 1, height: '48px', boxSizing: 'border-box', marginTop: 0 }}
+                  className={`${styles.input} ${styles.inputFullHeight}`}
                   disabled={verifyLoading}
                 />
                 <button
                   type="button"
                   onClick={handleConfirmVerify}
                   disabled={!confirmButtonEnabled || verifyLoading}
-                  className={styles.emailVerifyBtn}
-                  style={{
-                    minWidth: 100,
-                    backgroundColor:
-                      confirmButtonEnabled && !verifyLoading ? '#111' : '#ccc',
-                    cursor:
-                      confirmButtonEnabled && !verifyLoading ? 'pointer' : 'not-allowed',
-                  }}
+                  className={`${styles.emailVerifyBtn} ${confirmButtonEnabled && !verifyLoading ? styles.emailVerifyBtnReady : styles.emailVerifyBtnPending}`}
                 >
                   {verifyLoading ? '확인 중…' : '확인'}
                 </button>

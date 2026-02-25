@@ -73,7 +73,7 @@ export function SettlementsSection() {
                     openDetail(str(get(s, 'boardId') ?? get(s, 'id')));
                   }
                 }}
-                style={{ cursor: 'pointer' }}
+                className={styles.cursorPointer}
               >
                 <div className={styles.tableCell}>{page * 10 + i + 1}</div>
                 <div className={styles.tableCell}>
@@ -135,9 +135,9 @@ export function SettlementsSection() {
               </button>
               <h3 className={styles.modalTitle}>정산 상세</h3>
               {detailLoading ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div className={styles.skeletonBar} style={{ width: '100%', height: 16 }} />
-                  <div className={styles.skeletonBar} style={{ width: '80%', height: 16 }} />
+                <div className={styles.skeletonCol}>
+                  <div className={`${styles.skeletonBar} ${styles.skeletonBarH16} ${styles.skeletonBarW100}`} />
+                  <div className={`${styles.skeletonBar} ${styles.skeletonBarH16} ${styles.skeletonBarW80}`} />
                 </div>
               ) : detail ? (
                 <>
@@ -177,7 +177,7 @@ export function SettlementsSection() {
                   {str(detail.settlementStatus ?? detail.status).toUpperCase() ===
                     'PENDING' && (
                     <>
-                      <div className={styles.modalField} style={{ marginTop: 16 }}>
+                      <div className={`${styles.modalField} ${styles.modalFieldMt16}`}>
                         <label className={styles.modalLabel}>메모 (선택)</label>
                         <textarea
                           className={styles.modalTextarea}

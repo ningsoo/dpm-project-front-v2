@@ -63,7 +63,7 @@ export function MyPostLikesSection({ onLoadingChange }: MyPostLikesSectionProps 
   return (
     <div>
       <div className={styles.popTableWrap}>
-        <div style={{ overflowX: 'auto' }}>
+        <div className={styles.overflowXAuto}>
           <div className={`${styles.tableGrid} ${styles.likedGrid5} ${styles.tableHeader}`}>
             <div>게시판</div>
             <div>제목</div>
@@ -76,11 +76,11 @@ export function MyPostLikesSection({ onLoadingChange }: MyPostLikesSectionProps 
             <div className={`${styles.fadeLayer} ${loading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className={`${styles.tableGrid} ${styles.likedGrid5} ${styles.tableRow}`}>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '40%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '35%' }} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW85}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW50}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW40}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW35}`} /></div>
                 </div>
               ))}
             </div>

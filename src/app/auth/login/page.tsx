@@ -1,9 +1,10 @@
 import { Suspense } from 'react';
 import LoginClient from './LoginClient';
+import AuthLoadingFallback from '../AuthLoadingFallback';
 
 export default function Page() {
   return (
-    <Suspense fallback={<p style={{ padding: 24, textAlign: 'center' }}>로딩 중...</p>}>
+    <Suspense fallback={<AuthLoadingFallback />}>
       <LoginClient />
     </Suspense>
   );

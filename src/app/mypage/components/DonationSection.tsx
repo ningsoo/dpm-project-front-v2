@@ -441,10 +441,10 @@ export function DonationSection({ subTab, onChangeSubTab, onLoadingChange }: Don
           </button>
         </div>
 
-        <div style={{ opacity: subTabVisible ? 1 : 0, transition: `opacity ${SUB_TAB_FADE_MS}ms ease` }}>
+        <div className={subTabVisible ? styles.subTabContentVisible : styles.subTabContentHidden}>
         {displayedSubTab === 'sent' && (
           <div ref={scrollContainerRef} className={styles.donationScrollArea}>
-            <div style={{ overflowX: 'auto' }}>
+            <div className={styles.overflowXAuto}>
               <div className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableHeader}`}>
                 <div>후원일</div>
                 <div>요청일</div>
@@ -459,14 +459,14 @@ export function DonationSection({ subTab, onChangeSubTab, onLoadingChange }: Don
                 <div className={`${styles.fadeLayer} ${sentLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableRow}`}>
-                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
                     </div>
                   ))}
                 </div>
@@ -509,7 +509,7 @@ export function DonationSection({ subTab, onChangeSubTab, onLoadingChange }: Don
                         </div>
                       ))}
                       {hasMoreSent && (
-                        <div ref={sentinelRef} style={{ minHeight: 1, padding: 8 }} aria-hidden="true" />
+                        <div ref={sentinelRef} className={styles.sentinelBlock} aria-hidden="true" />
                       )}
                     </>
                   )}
@@ -521,7 +521,7 @@ export function DonationSection({ subTab, onChangeSubTab, onLoadingChange }: Don
 
         {displayedSubTab === 'received' && (
           <div>
-            <div style={{ overflowX: 'auto' }}>
+            <div className={styles.overflowXAuto}>
               <div className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableHeader}`}>
                 <div>후원일</div>
                 <div>요청일</div>
@@ -535,13 +535,13 @@ export function DonationSection({ subTab, onChangeSubTab, onLoadingChange }: Don
                 <div className={`${styles.fadeLayer} ${receivedLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableRow}`}>
-                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
                     </div>
                   ))}
                 </div>
@@ -587,7 +587,7 @@ export function DonationSection({ subTab, onChangeSubTab, onLoadingChange }: Don
             <h3
               id="donation-cancel-modal-title"
               className={styles.modalTitle}
-              style={{ fontSize: '1.1rem', marginBottom: 12 }}
+              className={styles.donationTitle}
             >
               후원 취소 확인
             </h3>

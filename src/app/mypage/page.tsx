@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useRef, useEffect, useCallback } from 'react';
+import { Suspense, useState, useRef, useEffect, useCallback, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -22,6 +22,7 @@ import { MyPostsSection } from './components/MyPostsSection';
 import { MyCommentsSection } from './components/MyCommentsSection';
 import { MyPostLikesSection } from './components/MyPostLikesSection';
 import defaultProfileImg from '@/assets/site/profile.png';
+import { useNonce } from '@/contexts/NonceContext';
 import styles from './mypage.module.css';
 
 interface UserInfo {
@@ -99,6 +100,8 @@ function MypagePageContent() {
   const tabParam = searchParams.get('tab');
   const isAuthenticated = useSelector((s: RootState) => s.auth.isAuthenticated);
   const initialized = useSelector((s: RootState) => s.auth.initialized);
+  const nonce = useNonce();
+  const cropModalId = useId().replace(/:/g, '');
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
@@ -537,81 +540,34 @@ function MypagePageContent() {
     if (!initialized || loading) {
       const t = getValidTab(tabParam);
       if (tabParam) {
+        const getSkeletonBarWidthClass = (w: string) => {
+          const key = `skeletonBarW${(w || '60%').replace('%', '')}`;
+          return (styles as Record<string, string>)[key] || styles.skeletonBarW60;
+        };
         const skeletonTableRow = (gridClass: string, cols: number, widths: string[]) => (
           Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className={`${styles.tableGrid} ${gridClass} ${styles.tableRow}`}>
               {Array.from({ length: cols }).map((__, c) => (
                 <div key={c} className={styles.tableCell}>
-                  <div className={styles.skeletonBar} style={{ width: widths[c] || '60%' }} />
+                  <div className={`${styles.skeletonBar} ${getSkeletonBarWidthClass(widths[c])}`} />
                 </div>
               ))}
             </div>
           ))
         );
         const searchBarEl = (
-          <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>
-            <input
-              type="text"
-              placeholder="검색어 입력"
-              disabled
-              style={{
-                width: '100%',
-                padding: '8px 40px 8px 12px',
-                border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
-                borderRadius: 8,
-                fontSize: 14,
-                background: darkMode ? '#242422' : '#fff',
-                color: darkMode ? '#B5B3A7' : '#333',
-              }}
-            />
-            <span style={{
-              position: 'absolute',
-              right: 8,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 4,
-              color: '#666',
-            }}>
-              <Search size={18} />
-            </span>
+          <div className={styles.searchBarWrap}>
+            <input type="text" placeholder="검색어 입력" disabled className={styles.searchInput} />
+            <span className={styles.searchInputIcon}><Search size={18} /></span>
           </div>
         );
 
         const dateRowEl = (
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
-            <input
-              type="date"
-              defaultValue={getDate30DaysAgo()}
-              disabled
-              max={getTodayDateString()}
-              style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
-            />
-            <span style={{ color: darkMode ? '#8A877D' : undefined }}>~</span>
-            <input
-              type="date"
-              defaultValue={getTodayDateString()}
-              disabled
-              max={getTodayDateString()}
-              style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
-            />
-            <button
-              type="button"
-              disabled
-              style={{
-                padding: '8px 16px',
-                background: darkMode ? '#3A3934' : '#111',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 8,
-                cursor: 'not-allowed',
-                fontSize: 14,
-              }}
-            >
-              조회
-            </button>
+          <div className={styles.dateRow}>
+            <input type="date" defaultValue={getDate30DaysAgo()} disabled max={getTodayDateString()} className={styles.dateInput} />
+            <span className={styles.dateTilde}>~</span>
+            <input type="date" defaultValue={getTodayDateString()} disabled max={getTodayDateString()} className={styles.dateInput} />
+            <button type="button" disabled className={styles.filterBtn}>조회</button>
           </div>
         );
 
@@ -629,17 +585,17 @@ function MypagePageContent() {
           tabSkeleton = (
             <div>
               {searchBarEl}
-              <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+              <div className={styles.popTableWrap}><div className={styles.overflowXAuto}>
                 <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableHeader}`}>
                   <div>날짜</div><div>게시판</div><div>제목</div><div>조회</div><div>추천</div>
                 </div>
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableRow}`}>
-                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '80%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '45%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW85}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW65}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW80}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW50}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW45}`} /></div>
                   </div>
                 ))}
               </div></div>
@@ -649,17 +605,17 @@ function MypagePageContent() {
           tabSkeleton = (
             <div>
               {searchBarEl}
-              <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+              <div className={styles.popTableWrap}><div className={styles.overflowXAuto}>
                 <div className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableHeader}`}>
                   <div>날짜</div><div>게시판</div><div>댓글</div><div>원문 글 제목</div><div>추천</div>
                 </div>
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableRow}`}>
-                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '80%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '45%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW85}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW75}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW80}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW45}`} /></div>
                   </div>
                 ))}
               </div></div>
@@ -669,7 +625,7 @@ function MypagePageContent() {
           tabSkeleton = (
             <div>
               {searchBarEl}
-              <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+              <div className={styles.popTableWrap}><div className={styles.overflowXAuto}>
                 <div className={`${styles.tableGrid} ${styles.likedGrid5} ${styles.tableHeader}`}>
                   <div>게시판</div><div>제목</div><div>작성자</div><div>조회</div><div>추천</div>
                 </div>
@@ -681,7 +637,7 @@ function MypagePageContent() {
           tabSkeleton = (
             <div>
               {dateRowEl}
-              <div style={{ overflowX: 'auto' }}>
+              <div className={styles.overflowXAuto}>
                 <div className={`${styles.tableGrid} ${styles.reportsGrid} ${styles.tableHeader}`}>
                   <div /><div>신고일시</div><div>신고사유</div><div>상태</div><div>글 바로가기</div><div>신고 취소</div>
                 </div>
@@ -693,16 +649,16 @@ function MypagePageContent() {
           tabSkeleton = (
             <div>
               {dateRowEl}
-              <div style={{ overflowX: 'auto' }}>
+              <div className={styles.overflowXAuto}>
                 <div className={`${styles.tableGrid} ${styles.inquiryGrid} ${styles.tableHeader}`}>
-                  <div style={{ textAlign: 'center' }}>문의일시</div><div>문의유형</div><div>제목</div><div>상태</div>
+                  <div className={styles.tableHeaderCell}>문의일시</div><div>문의유형</div><div>제목</div><div>상태</div>
                 </div>
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className={`${styles.tableGrid} ${styles.inquiryGrid} ${styles.tableRow}`}>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW75}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW55}`} /></div>
                   </div>
                 ))}
               </div>
@@ -718,7 +674,7 @@ function MypagePageContent() {
                 <div className={styles.settlementSummaryRow}>
                   <span>보유 POP</span>
                   <span className={styles.settlementTotalAmount}>
-                    <div className={styles.skeletonBar} style={{ width: 80, height: 16, display: 'inline-block' }} />
+                    <div className={`${styles.skeletonBar} ${styles.skeletonBarInline80}`} />
                   </span>
                 </div>
                 <button type="button" className={styles.submitBtn} disabled>충전하기</button>
@@ -728,7 +684,7 @@ function MypagePageContent() {
                 <button type="button" className={popSub === 'usage' ? styles.settlementSubTabActive : styles.settlementSubTab}>사용내역{popSub === 'usage' && <span className={styles.settlementSubTabIndicator} />}</button>
               </div>
               {settlementDateRowEl}
-              <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+              <div className={styles.popTableWrap}><div className={styles.overflowXAuto}>
                 {isUsage ? (
                   <>
                     <div className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableHeader}`}>
@@ -736,12 +692,12 @@ function MypagePageContent() {
                     </div>
                     {Array.from({ length: 4 }).map((_, i) => (
                       <div key={i} className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableRow}`}>
-                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW55}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW55}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
                       </div>
                     ))}
                   </>
@@ -752,12 +708,12 @@ function MypagePageContent() {
                     </div>
                     {Array.from({ length: 4 }).map((_, i) => (
                       <div key={i} className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableRow}`}>
-                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW50}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW55}`} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
                       </div>
                     ))}
                   </>
@@ -776,7 +732,7 @@ function MypagePageContent() {
               </div>
               <div className={styles.settlementInnerContent}>
                 {settlementDateRowEl}
-                <div style={{ overflowX: 'auto' }}>
+                <div className={styles.overflowXAuto}>
                   {donSub === 'sent' ? (
                     <>
                       <div className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableHeader}`}>
@@ -784,14 +740,14 @@ function MypagePageContent() {
                       </div>
                       {Array.from({ length: 3 }).map((_, i) => (
                         <div key={i} className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableRow}`}>
-                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                          <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div>
+                          <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                          <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div>
+                          <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
                         </div>
                       ))}
                     </>
@@ -802,13 +758,13 @@ function MypagePageContent() {
                       </div>
                       {Array.from({ length: 3 }).map((_, i) => (
                         <div key={i} className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableRow}`}>
-                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                          <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                          <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                          <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div>
+                          <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                          <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
                         </div>
                       ))}
                     </>
@@ -825,17 +781,17 @@ function MypagePageContent() {
             settlementContent = (
               <div className={styles.settlementInnerContent}>
                 {settlementDateRowEl}
-                <div style={{ overflowX: 'auto' }}>
+                <div className={styles.overflowXAuto}>
                   <div className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableHeader}`}>
                     <div>정산요청일</div><div>정산승인일</div><div>변동 수량</div><div>정산금액</div><div>정산처리상태</div>
                   </div>
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableRow}`}>
-                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '65%' }} /></div></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '65%' }} /></div></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW85}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW65}`} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW85}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW65}`} /></div></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW65}`} /></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW65}`} /></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
                     </div>
                   ))}
                 </div>
@@ -848,10 +804,10 @@ function MypagePageContent() {
                   {['이메일', '이름', '연락처', '계좌번호'].map((label) => (
                     <div key={label} className={styles.settlementField}>
                       <label>{label}</label>
-                      <div className={styles.skeletonBar} style={{ width: '100%', height: 40, borderRadius: 8 }} />
+                      <div className={`${styles.skeletonBar} ${styles.skeletonBarPx100H40}`} />
                     </div>
                   ))}
-                  <div className={styles.skeletonBar} style={{ width: 80, height: 40, borderRadius: 8 }} />
+                  <div className={`${styles.skeletonBar} ${styles.skeletonBarPx80H40}`} />
                 </div>
               </div>
             );
@@ -862,20 +818,20 @@ function MypagePageContent() {
                   <div className={styles.settlementSummaryRow}>
                     <span>정산 가능 금액</span>
                     <span className={styles.settlementTotalAmount}>
-                      <div className={styles.skeletonBar} style={{ width: 80, height: 16, display: 'inline-block' }} />
+                      <div className={`${styles.skeletonBar} ${styles.skeletonBarInline80}`} />
                     </span>
                   </div>
                   <button type="button" className={styles.submitBtn} disabled>정산요청</button>
                 </div>
-                <div className={styles.settlementRequestTableWrap}><div style={{ overflowX: 'auto' }}>
+                <div className={styles.settlementRequestTableWrap}><div className={styles.overflowXAuto}>
                   <div className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableHeader}`}>
-                    <div style={{ textAlign: 'center' }}>후원금액</div>
-                    <div style={{ textAlign: 'center' }}>후원승인일</div>
+                    <div className={styles.settlementTableHeaderCell}>후원금액</div>
+                    <div className={styles.settlementTableHeaderCell}>후원승인일</div>
                   </div>
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
-                      <div className={styles.tableCell} style={{ textAlign: 'center' }}><div className={styles.skeletonBar} style={{ width: '40%' }} /></div>
-                      <div className={styles.tableCell} style={{ textAlign: 'center' }}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /><div className={styles.skeletonBar} style={{ width: '40%' }} /></div></div>
+                      <div className={`${styles.tableCell} ${styles.tableCellCenter}`}><div className={`${styles.skeletonBar} ${styles.skeletonBarW40}`} /></div>
+                      <div className={`${styles.tableCell} ${styles.tableCellCenter}`}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW50}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW40}`} /></div></div>
                     </div>
                   ))}
                 </div></div>
@@ -897,20 +853,20 @@ function MypagePageContent() {
         } else if (t === 'playlists') {
           tabSkeleton = (
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <div style={{ display: 'flex', gap: 8 }}><div className={styles.skeletonPlaylistActionBtn} /><div className={styles.skeletonPlaylistActionBtn} /></div>
-                <div style={{ display: 'flex', gap: 8, minWidth: 88 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
+              <div className={styles.flexBetweenMb16}>
+                <div className={styles.flexGap8}><div className={styles.skeletonPlaylistActionBtn} /><div className={styles.skeletonPlaylistActionBtn} /></div>
+                <div className={styles.flexGap8Min88}>
+                  <div className={styles.skeletonCircle} />
+                  <div className={styles.skeletonCircle} />
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 24, padding: '4px 4px 8px' }}>
+              <div className={styles.flexGap24Padding}>
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className={styles.skeletonCard} style={{ flex: '0 0 calc((100% - 48px) / 3)' }}>
-                    <div className={styles.skeletonCardThumb} style={{ height: 180, paddingTop: 0 }} />
-                    <div className={styles.skeletonCardBody} style={{ minHeight: 80 }}>
-                      <div className={styles.skeletonBar} style={{ width: '80%', height: 16 }} />
-                      <div className={styles.skeletonBar} style={{ width: '40%' }} />
+                  <div key={i} className={`${styles.skeletonCard} ${styles.skeletonCardThird}`}>
+                    <div className={`${styles.skeletonCardThumb} ${styles.skeletonCardThumbH180}`} />
+                    <div className={`${styles.skeletonCardBody} ${styles.skeletonCardBodyMin80}`}>
+                      <div className={`${styles.skeletonBar} ${styles.skeletonBarW80H16}`} />
+                      <div className={`${styles.skeletonBar} ${styles.skeletonBarW40}`} />
                     </div>
                   </div>
                 ))}
@@ -920,9 +876,9 @@ function MypagePageContent() {
         } else {
           tabSkeleton = (
             <div className={styles.skeletonContent}>
-              <div className={styles.skeletonContentRow} style={{ width: '100%' }} />
-              <div className={styles.skeletonContentRow} style={{ width: '85%' }} />
-              <div className={styles.skeletonContentRow} style={{ width: '92%' }} />
+              <div className={`${styles.skeletonContentRow} ${styles.skeletonContentRowW100}`} />
+              <div className={`${styles.skeletonContentRow} ${styles.skeletonContentRowW85}`} />
+              <div className={`${styles.skeletonContentRow} ${styles.skeletonContentRowW92}`} />
             </div>
           );
         }
@@ -931,10 +887,10 @@ function MypagePageContent() {
             <div className={styles.skeletonProfile}>
               <div className={styles.skeletonAvatar} />
               <div className={styles.skeletonProfileText}>
-                <div className={styles.skeletonBar} style={{ width: 120, height: 26 }} />
-                <div className={styles.skeletonBar} style={{ width: 200, height: 16 }} />
-                <div className={styles.skeletonBar} style={{ width: 140, height: 16 }} />
-                <div className={styles.skeletonBar} style={{ width: 110, height: 16 }} />
+                <div className={`${styles.skeletonBar} ${styles.skeletonBarPx120H26}`} />
+                <div className={`${styles.skeletonBar} ${styles.skeletonBarPx200H16}`} />
+                <div className={`${styles.skeletonBar} ${styles.skeletonBarPx140H16}`} />
+                <div className={`${styles.skeletonBar} ${styles.skeletonBarPx110H16}`} />
               </div>
             </div>
             <div className={styles.tabs}>
@@ -954,10 +910,10 @@ function MypagePageContent() {
           <div className={styles.skeletonProfile}>
             <div className={styles.skeletonAvatar} />
             <div className={styles.skeletonProfileText}>
-              <div className={styles.skeletonBar} style={{ width: 120, height: 26 }} />
-              <div className={styles.skeletonBar} style={{ width: 200, height: 16 }} />
-              <div className={styles.skeletonBar} style={{ width: 140, height: 16 }} />
-              <div className={styles.skeletonBar} style={{ width: 110, height: 16 }} />
+              <div className={`${styles.skeletonBar} ${styles.skeletonBarPx120H26}`} />
+              <div className={`${styles.skeletonBar} ${styles.skeletonBarPx200H16}`} />
+              <div className={`${styles.skeletonBar} ${styles.skeletonBarPx140H16}`} />
+              <div className={`${styles.skeletonBar} ${styles.skeletonBarPx110H16}`} />
             </div>
           </div>
           <div className={styles.tabs}>
@@ -967,18 +923,18 @@ function MypagePageContent() {
           </div>
           <div className={styles.content}>
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-                <div style={{ display: 'flex', gap: 8 }}><div className={styles.skeletonPlaylistActionBtn} /><div className={styles.skeletonPlaylistActionBtn} /></div>
-                <div style={{ display: 'flex', gap: 8, minWidth: 88 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
-                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
+              <div className={styles.flexBetweenMb16}>
+                <div className={styles.flexGap8}><div className={styles.skeletonPlaylistActionBtn} /><div className={styles.skeletonPlaylistActionBtn} /></div>
+                <div className={styles.flexGap8Min88}>
+                  <div className={styles.skeletonCircle} />
+                  <div className={styles.skeletonCircle} />
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 24, padding: '4px 4px 8px' }}>
+              <div className={styles.flexGap24Padding}>
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className={styles.skeletonCard} style={{ flex: '0 0 calc((100% - 48px) / 3)' }}>
-                    <div className={styles.skeletonCardThumb} style={{ height: 180, paddingTop: 0 }} />
-                    <div className={styles.skeletonCardBody} style={{ minHeight: 80 }}><div className={styles.skeletonBar} style={{ width: '80%', height: 16 }} /><div className={styles.skeletonBar} style={{ width: '40%' }} /></div>
+                  <div key={i} className={`${styles.skeletonCard} ${styles.skeletonCardThird}`}>
+                    <div className={`${styles.skeletonCardThumb} ${styles.skeletonCardThumbH180}`} />
+                    <div className={`${styles.skeletonCardBody} ${styles.skeletonCardBodyMin80}`}><div className={`${styles.skeletonBar} ${styles.skeletonBarW80H16}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW40}`} /></div>
                   </div>
                 ))}
               </div>
@@ -1392,53 +1348,32 @@ function MypagePageContent() {
   if (!pageReady) {
     const t = getValidTab(tabParam);
     if (tabParam) {
+      const getSkeletonBarWidthClass2 = (w: string) => {
+        const key = `skeletonBarW${(w || '60%').replace('%', '')}`;
+        return (styles as Record<string, string>)[key] || styles.skeletonBarW60;
+      };
       const skeletonTableRow = (gridClass: string, cols: number, widths: string[]) =>
         Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className={`${styles.tableGrid} ${gridClass} ${styles.tableRow}`}>
             {Array.from({ length: cols }).map((__, c) => (
               <div key={c} className={styles.tableCell}>
-                <div className={styles.skeletonBar} style={{ width: widths[c] || '60%' }} />
+                <div className={`${styles.skeletonBar} ${getSkeletonBarWidthClass2(widths[c])}`} />
               </div>
             ))}
           </div>
         ));
       const searchBarEl = (
-        <div style={{ position: 'relative', marginBottom: 16, width: '33.33%' }}>
-          <input
-            type="text"
-            placeholder="검색어 입력"
-            disabled
-            style={{
-              width: '100%',
-              padding: '8px 40px 8px 12px',
-              border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`,
-              borderRadius: 8,
-              fontSize: 14,
-              background: darkMode ? '#242422' : '#fff',
-              color: darkMode ? '#B5B3A7' : '#333',
-            }}
-          />
-          <span style={{
-            position: 'absolute',
-            right: 8,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 4,
-            color: '#666',
-          }}>
-            <Search size={18} />
-          </span>
+        <div className={styles.searchBarWrap}>
+          <input type="text" placeholder="검색어 입력" disabled className={styles.searchInput} />
+          <span className={styles.searchInputIcon}><Search size={18} /></span>
         </div>
       );
       const dateRowEl = (
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
-          <input type="date" defaultValue={getDate30DaysAgo()} disabled max={getTodayDateString()} style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }} />
-          <span style={{ color: darkMode ? '#8A877D' : undefined }}>~</span>
-          <input type="date" defaultValue={getTodayDateString()} disabled max={getTodayDateString()} style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }} />
-          <button type="button" disabled style={{ padding: '8px 16px', background: darkMode ? '#3A3934' : '#111', color: '#fff', border: 'none', borderRadius: 8, cursor: 'not-allowed', fontSize: 14 }}>조회</button>
+        <div className={styles.dateRow}>
+          <input type="date" defaultValue={getDate30DaysAgo()} disabled max={getTodayDateString()} className={styles.dateInput} />
+          <span className={styles.dateTilde}>~</span>
+          <input type="date" defaultValue={getTodayDateString()} disabled max={getTodayDateString()} className={styles.dateInput} />
+          <button type="button" disabled className={styles.filterBtn}>조회</button>
         </div>
       );
       const settlementDateRowEl = (
@@ -1453,18 +1388,18 @@ function MypagePageContent() {
       if (t === 'playlists') {
         tabSkeleton = (
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div style={{ display: 'flex', gap: 8 }}><div className={styles.skeletonPlaylistActionBtn} /><div className={styles.skeletonPlaylistActionBtn} /></div>
-              <div style={{ display: 'flex', gap: 8, minWidth: 88 }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
+            <div className={styles.flexBetweenMb16}>
+              <div className={styles.flexGap8}><div className={styles.skeletonPlaylistActionBtn} /><div className={styles.skeletonPlaylistActionBtn} /></div>
+              <div className={styles.flexGap8Min88}>
+                <div className={styles.skeletonCircle} />
+                <div className={styles.skeletonCircle} />
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 24, padding: '4px 4px 8px' }}>
+            <div className={styles.flexGap24Padding}>
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className={styles.skeletonCard} style={{ flex: '0 0 calc((100% - 48px) / 3)' }}>
-                  <div className={styles.skeletonCardThumb} style={{ height: 180, paddingTop: 0 }} />
-                  <div className={styles.skeletonCardBody} style={{ minHeight: 80 }}><div className={styles.skeletonBar} style={{ width: '80%', height: 16 }} /><div className={styles.skeletonBar} style={{ width: '40%' }} /></div>
+                <div key={i} className={`${styles.skeletonCard} ${styles.skeletonCardThird}`}>
+                  <div className={`${styles.skeletonCardThumb} ${styles.skeletonCardThumbH180}`} />
+                  <div className={`${styles.skeletonCardBody} ${styles.skeletonCardBodyMin80}`}><div className={`${styles.skeletonBar} ${styles.skeletonBarW80H16}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW40}`} /></div>
                 </div>
               ))}
             </div>
@@ -1474,17 +1409,17 @@ function MypagePageContent() {
         tabSkeleton = (
           <div>
             {searchBarEl}
-            <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+            <div className={styles.popTableWrap}><div className={styles.overflowXAuto}>
               <div className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableHeader}`}>
                 <div>날짜</div><div>게시판</div><div>제목</div><div>조회</div><div>추천</div>
               </div>
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className={`${styles.tableGrid} ${styles.postsGrid5} ${styles.tableRow}`}>
-                  <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '80%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '45%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW85}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW65}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW80}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW50}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW45}`} /></div>
                 </div>
               ))}
             </div></div>
@@ -1494,17 +1429,17 @@ function MypagePageContent() {
         tabSkeleton = (
           <div>
             {searchBarEl}
-            <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+            <div className={styles.popTableWrap}><div className={styles.overflowXAuto}>
               <div className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableHeader}`}>
                 <div>날짜</div><div>게시판</div><div>댓글</div><div>원문 글 제목</div><div>추천</div>
               </div>
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableRow}`}>
-                  <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '80%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '45%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW85}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW75}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW80}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW45}`} /></div>
                 </div>
               ))}
             </div></div>
@@ -1514,7 +1449,7 @@ function MypagePageContent() {
         tabSkeleton = (
           <div>
             {searchBarEl}
-            <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+            <div className={styles.popTableWrap}><div className={styles.overflowXAuto}>
               <div className={`${styles.tableGrid} ${styles.likedGrid5} ${styles.tableHeader}`}>
                 <div>게시판</div><div>제목</div><div>작성자</div><div>조회</div><div>추천</div>
               </div>
@@ -1526,7 +1461,7 @@ function MypagePageContent() {
         tabSkeleton = (
           <div>
             {dateRowEl}
-            <div style={{ overflowX: 'auto' }}>
+            <div className={styles.overflowXAuto}>
               <div className={`${styles.tableGrid} ${styles.reportsGrid} ${styles.tableHeader}`}>
                 <div /><div>신고일시</div><div>신고사유</div><div>상태</div><div>글 바로가기</div><div>신고 취소</div>
               </div>
@@ -1538,16 +1473,16 @@ function MypagePageContent() {
         tabSkeleton = (
           <div>
             {dateRowEl}
-            <div style={{ overflowX: 'auto' }}>
+            <div className={styles.overflowXAuto}>
               <div className={`${styles.tableGrid} ${styles.inquiryGrid} ${styles.tableHeader}`}>
-                <div style={{ textAlign: 'center' }}>문의일시</div><div>문의유형</div><div>제목</div><div>상태</div>
+                <div className={styles.tableHeaderCell}>문의일시</div><div>문의유형</div><div>제목</div><div>상태</div>
               </div>
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className={`${styles.tableGrid} ${styles.inquiryGrid} ${styles.tableRow}`}>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW75}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW55}`} /></div>
                 </div>
               ))}
             </div>
@@ -1563,7 +1498,7 @@ function MypagePageContent() {
               <div className={styles.settlementSummaryRow}>
                 <span>보유 POP</span>
                 <span className={styles.settlementTotalAmount}>
-                  <div className={styles.skeletonBar} style={{ width: 80, height: 16, display: 'inline-block' }} />
+                  <div className={`${styles.skeletonBar} ${styles.skeletonBarInline80}`} />
                 </span>
               </div>
               <button type="button" className={styles.submitBtn} disabled>충전하기</button>
@@ -1573,7 +1508,7 @@ function MypagePageContent() {
               <button type="button" className={popSub === 'usage' ? styles.settlementSubTabActive : styles.settlementSubTab}>사용내역{popSub === 'usage' && <span className={styles.settlementSubTabIndicator} />}</button>
             </div>
             {settlementDateRowEl}
-            <div className={styles.popTableWrap}><div style={{ overflowX: 'auto' }}>
+            <div className={styles.popTableWrap}><div className={styles.overflowXAuto}>
               {isUsage ? (
                 <>
                   <div className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableHeader}`}>
@@ -1581,12 +1516,12 @@ function MypagePageContent() {
                   </div>
                   {Array.from({ length: 4 }).map((_, i) => (
                     <div key={i} className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableRow}`}>
-                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW55}`} /></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW55}`} /></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
                     </div>
                   ))}
                 </>
@@ -1597,12 +1532,12 @@ function MypagePageContent() {
                   </div>
                   {Array.from({ length: 4 }).map((_, i) => (
                     <div key={i} className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableRow}`}>
-                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW50}`} /></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW55}`} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
                     </div>
                   ))}
                 </>
@@ -1621,7 +1556,7 @@ function MypagePageContent() {
             </div>
             <div className={styles.settlementInnerContent}>
               {settlementDateRowEl}
-              <div style={{ overflowX: 'auto' }}>
+              <div className={styles.overflowXAuto}>
                 {donSub === 'sent' ? (
                   <>
                     <div className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableHeader}`}>
@@ -1629,14 +1564,14 @@ function MypagePageContent() {
                     </div>
                     {Array.from({ length: 3 }).map((_, i) => (
                       <div key={i} className={`${styles.tableGrid} ${styles.donationSentGrid8} ${styles.tableRow}`}>
-                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
                       </div>
                     ))}
                   </>
@@ -1647,13 +1582,13 @@ function MypagePageContent() {
                     </div>
                     {Array.from({ length: 3 }).map((_, i) => (
                       <div key={i} className={`${styles.tableGrid} ${styles.donationReceivedGrid7} ${styles.tableRow}`}>
-                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                        <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
                       </div>
                     ))}
                   </>
@@ -1670,17 +1605,17 @@ function MypagePageContent() {
           settlementContent = (
             <div className={styles.settlementInnerContent}>
               {settlementDateRowEl}
-              <div style={{ overflowX: 'auto' }}>
+              <div className={styles.overflowXAuto}>
                 <div className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableHeader}`}>
                   <div>정산요청일</div><div>정산승인일</div><div>변동 수량</div><div>정산금액</div><div>정산처리상태</div>
                 </div>
                 {Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableRow}`}>
-                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '65%' }} /></div></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '65%' }} /></div></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW85}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW65}`} /></div></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW85}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW65}`} /></div></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW65}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW65}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
                   </div>
                 ))}
               </div>
@@ -1693,10 +1628,10 @@ function MypagePageContent() {
                 {['이메일', '이름', '연락처', '계좌번호'].map((label) => (
                   <div key={label} className={styles.settlementField}>
                     <label>{label}</label>
-                    <div className={styles.skeletonBar} style={{ width: '100%', height: 40, borderRadius: 8 }} />
+                    <div className={`${styles.skeletonBar} ${styles.skeletonBarPx100H40}`} />
                   </div>
                 ))}
-                <div className={styles.skeletonBar} style={{ width: 80, height: 40, borderRadius: 8 }} />
+                <div className={`${styles.skeletonBar} ${styles.skeletonBarPx80H40}`} />
               </div>
             </div>
           );
@@ -1707,20 +1642,20 @@ function MypagePageContent() {
                 <div className={styles.settlementSummaryRow}>
                   <span>정산 가능 금액</span>
                   <span className={styles.settlementTotalAmount}>
-                    <div className={styles.skeletonBar} style={{ width: 80, height: 16, display: 'inline-block' }} />
+                    <div className={`${styles.skeletonBar} ${styles.skeletonBarInline80}`} />
                   </span>
                 </div>
                 <button type="button" className={styles.submitBtn} disabled>정산요청</button>
               </div>
-              <div className={styles.settlementRequestTableWrap}><div style={{ overflowX: 'auto' }}>
+              <div className={styles.settlementRequestTableWrap}><div className={styles.overflowXAuto}>
                 <div className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableHeader}`}>
-                  <div style={{ textAlign: 'center' }}>후원금액</div>
-                  <div style={{ textAlign: 'center' }}>후원승인일</div>
+                  <div className={styles.settlementTableHeaderCell}>후원금액</div>
+                  <div className={styles.settlementTableHeaderCell}>후원승인일</div>
                 </div>
                 {Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
-                    <div className={styles.tableCell} style={{ textAlign: 'center' }}><div className={styles.skeletonBar} style={{ width: '40%' }} /></div>
-                    <div className={styles.tableCell} style={{ textAlign: 'center' }}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /><div className={styles.skeletonBar} style={{ width: '40%' }} /></div></div>
+                    <div className={`${styles.tableCell} ${styles.tableCellCenter}`}><div className={`${styles.skeletonBar} ${styles.skeletonBarW40}`} /></div>
+                    <div className={`${styles.tableCell} ${styles.tableCellCenter}`}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW50}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW40}`} /></div></div>
                   </div>
                 ))}
               </div></div>
@@ -1742,9 +1677,9 @@ function MypagePageContent() {
       } else {
         tabSkeleton = (
           <div className={styles.skeletonContent}>
-            <div className={styles.skeletonContentRow} style={{ width: '100%' }} />
-            <div className={styles.skeletonContentRow} style={{ width: '85%' }} />
-            <div className={styles.skeletonContentRow} style={{ width: '92%' }} />
+            <div className={`${styles.skeletonContentRow} ${styles.skeletonContentRowW100}`} />
+            <div className={`${styles.skeletonContentRow} ${styles.skeletonContentRowW85}`} />
+            <div className={`${styles.skeletonContentRow} ${styles.skeletonContentRowW92}`} />
           </div>
         );
       }
@@ -1753,10 +1688,10 @@ function MypagePageContent() {
           <div className={styles.skeletonProfile}>
             <div className={styles.skeletonAvatar} />
             <div className={styles.skeletonProfileText}>
-              <div className={styles.skeletonBar} style={{ width: 120, height: 26 }} />
-              <div className={styles.skeletonBar} style={{ width: 200, height: 16 }} />
-              <div className={styles.skeletonBar} style={{ width: 140, height: 16 }} />
-              <div className={styles.skeletonBar} style={{ width: 110, height: 16 }} />
+              <div className={`${styles.skeletonBar} ${styles.skeletonBarPx120H26}`} />
+              <div className={`${styles.skeletonBar} ${styles.skeletonBarPx200H16}`} />
+              <div className={`${styles.skeletonBar} ${styles.skeletonBarPx140H16}`} />
+              <div className={`${styles.skeletonBar} ${styles.skeletonBarPx110H16}`} />
             </div>
           </div>
           <div className={styles.tabs}>
@@ -1774,10 +1709,10 @@ function MypagePageContent() {
         <div className={styles.skeletonProfile}>
           <div className={styles.skeletonAvatar} />
           <div className={styles.skeletonProfileText}>
-            <div className={styles.skeletonBar} style={{ width: 120, height: 26 }} />
-            <div className={styles.skeletonBar} style={{ width: 200, height: 16 }} />
-            <div className={styles.skeletonBar} style={{ width: 140, height: 16 }} />
-            <div className={styles.skeletonBar} style={{ width: 110, height: 16 }} />
+            <div className={`${styles.skeletonBar} ${styles.skeletonBarPx120H26}`} />
+            <div className={`${styles.skeletonBar} ${styles.skeletonBarPx200H16}`} />
+            <div className={`${styles.skeletonBar} ${styles.skeletonBarPx140H16}`} />
+            <div className={`${styles.skeletonBar} ${styles.skeletonBarPx110H16}`} />
           </div>
         </div>
         <div className={styles.tabs}>
@@ -1787,18 +1722,18 @@ function MypagePageContent() {
         </div>
         <div className={styles.content}>
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <div style={{ display: 'flex', gap: 8 }}><div className={styles.skeletonPlaylistActionBtn} /><div className={styles.skeletonPlaylistActionBtn} /></div>
-              <div style={{ display: 'flex', gap: 8, minWidth: 88 }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: darkMode ? '#3A3A38' : '#eee', flexShrink: 0 }} />
+            <div className={styles.flexBetweenMb16}>
+              <div className={styles.flexGap8}><div className={styles.skeletonPlaylistActionBtn} /><div className={styles.skeletonPlaylistActionBtn} /></div>
+              <div className={styles.flexGap8Min88}>
+                <div className={styles.skeletonCircle} />
+                <div className={styles.skeletonCircle} />
               </div>
             </div>
-            <div style={{ display: 'flex', gap: 24, padding: '4px 4px 8px' }}>
+            <div className={styles.flexGap24Padding}>
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className={styles.skeletonCard} style={{ flex: '0 0 calc((100% - 48px) / 3)' }}>
-                  <div className={styles.skeletonCardThumb} style={{ height: 180, paddingTop: 0 }} />
-                  <div className={styles.skeletonCardBody} style={{ minHeight: 80 }}><div className={styles.skeletonBar} style={{ width: '80%', height: 16 }} /><div className={styles.skeletonBar} style={{ width: '40%' }} /></div>
+                <div key={i} className={`${styles.skeletonCard} ${styles.skeletonCardThird}`}>
+                  <div className={`${styles.skeletonCardThumb} ${styles.skeletonCardThumbH180}`} />
+                  <div className={`${styles.skeletonCardBody} ${styles.skeletonCardBodyMin80}`}><div className={`${styles.skeletonBar} ${styles.skeletonBarW80H16}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW40}`} /></div>
                 </div>
               ))}
             </div>
@@ -1809,41 +1744,23 @@ function MypagePageContent() {
   }
 
   return (
-    <div className={styles.wrap} style={{ opacity: pageReady ? 1 : 0, transition: 'opacity 0.35s ease' }}>
+    <div className={`${styles.wrap} ${pageReady ? styles.wrapVisible : styles.wrapHidden}`}>
       <section className={styles.profile}>
         <div
-          className={styles.avatarWrap}
+          className={`${styles.avatarWrap} ${styles.positionRelative}`}
           onMouseEnter={() => setShowPencilIcon(true)}
           onMouseLeave={() => setShowPencilIcon(false)}
-          style={{ position: 'relative' }}
         >
-          <div
-            className={styles.avatar}
-            style={{
-              backgroundImage: `url(${profileImage || defaultProfileImg.src})`,
-              backgroundSize: profileImage ? 'cover' : 'contain',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat',
-            }}
-          />
+          <div className={styles.avatar}>
+              <img src={profileImage || defaultProfileImg.src} alt="" className={`${styles.avatarImg} ${!profileImage ? styles.avatarImgContain : ''}`} />
+            </div>
           {showPencilIcon && (
             <button
               type="button"
+              className={styles.avatarPencilBtn}
               onClick={() => {
                 setShowImageUpload(true);
                 fileInputRef.current?.click();
-              }}
-              style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'rgba(0,0,0,0.5)',
-                border: 'none',
-                borderRadius: '50%',
-                cursor: 'pointer',
-                color: '#fff',
               }}
             >
               <Pencil size={24} />
@@ -1853,14 +1770,14 @@ function MypagePageContent() {
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            style={{ display: 'none' }}
+            className={styles.inputHidden}
             onChange={handleImageSelect}
           />
         </div>
         <div className={styles.profileText}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className={styles.flexAlignCenterGap8}>
             <h1 className={styles.nickname}>{user.nickname}</h1>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: '1rem', color: '#666', marginLeft: 12 }}>
+            <div className={styles.profileLikesRow}>
               <Heart size={18} />
               <span>{receivedLikes}</span>
             </div>
@@ -1941,57 +1858,32 @@ function MypagePageContent() {
         {displayedTab === 'liked' && <MyPostLikesSection onLoadingChange={setSectionLoading} />}
         {displayedTab === 'reports' && (
           <div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
+            <div className={styles.flexGap8Mb16}>
               <input
                 type="date"
                 value={dateRange.reports.start}
                 onChange={(e) => setDateRange({ ...dateRange, reports: { ...dateRange.reports, start: e.target.value } })}
                 max={getTodayDateString()}
-                style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
+                className={styles.dateInput}
               />
-              <span style={{ color: darkMode ? '#8A877D' : undefined }}>~</span>
+              <span className={styles.dateTilde}>~</span>
               <input
                 type="date"
                 value={dateRange.reports.end}
                 onChange={(e) => setDateRange({ ...dateRange, reports: { ...dateRange.reports, end: e.target.value } })}
                 max={getTodayDateString()}
-                style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
+                className={styles.dateInput}
               />
-              <button
-                type="button"
-                onClick={() => handleDateRangeSearch('reports')}
-                style={{
-                  padding: '8px 16px',
-                  background: darkMode ? '#3A3934' : '#111',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: 14,
-                }}
-              >
+              <button type="button" onClick={() => handleDateRangeSearch('reports')} className={styles.modalBtn}>
                 조회
               </button>
               {selectedReports.length > 0 && (
-                <button
-                  type="button"
-                  onClick={handleReportCancel}
-                  style={{
-                    padding: '8px 16px',
-                    background: '#A6534F',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 8,
-                    cursor: 'pointer',
-                    fontSize: 14,
-                    marginLeft: 'auto',
-                  }}
-                >
+                <button type="button" onClick={handleReportCancel} className={styles.modalBtnDanger}>
                   신고 취소
                 </button>
               )}
             </div>
-            <div style={{ overflowX: 'auto' }}>
+            <div className={styles.overflowXAuto}>
               <div>
                 <div className={styles.tableGrid + ' ' + styles.reportsGrid + ' ' + styles.tableHeader}>
                   <div>
@@ -2016,18 +1908,18 @@ function MypagePageContent() {
                   <div className={`${styles.fadeLayer} ${reportsLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                     {Array.from({ length: 3 }).map((_, i) => (
                       <div key={i} className={styles.tableGrid + ' ' + styles.reportsGrid + ' ' + styles.tableRow}>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: 16, height: 16 }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBar16}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW75}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW55}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW55}`} /></div>
                       </div>
                     ))}
                   </div>
                   <div className={`${styles.fadeLayer} ${!reportsLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                     {reportsList.length === 0 && !reportsLoading ? (
-                      <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+                      <div className={styles.padding24Center}>
                         신고 내역이 없습니다.
                       </div>
                     ) : (
@@ -2095,21 +1987,21 @@ function MypagePageContent() {
         })()}
         {displayedTab === 'inquiries' && (
           <div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'center' }}>
+            <div className={styles.flexGap8Mb16}>
               <input
                 type="date"
                 value={dateRange.inquiries.start}
                 onChange={(e) => setDateRange({ ...dateRange, inquiries: { ...dateRange.inquiries, start: e.target.value } })}
                 max={getTodayDateString()}
-                style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
+                className={styles.dateInput}
               />
-              <span style={{ color: darkMode ? '#8A877D' : undefined }}>~</span>
+              <span className={styles.dateTilde}>~</span>
               <input
                 type="date"
                 value={dateRange.inquiries.end}
                 onChange={(e) => setDateRange({ ...dateRange, inquiries: { ...dateRange.inquiries, end: e.target.value } })}
                 max={getTodayDateString()}
-                style={{ padding: '8px 12px', border: `1px solid ${darkMode ? '#3A3A38' : '#ddd'}`, borderRadius: 8, fontSize: 14, background: darkMode ? '#242422' : '#fff', color: darkMode ? '#B5B3A7' : '#333' }}
+                className={styles.dateInput}
               />
               <button
                 type="button"
@@ -2142,43 +2034,33 @@ function MypagePageContent() {
                       setInquiryLoading(false);
                     });
                 }}
-                style={{
-                  padding: '8px 16px',
-                  background: (inquiryLoading || (!!dateRange.inquiries.start !== !!dateRange.inquiries.end))
-                    ? '#b0b0b0'
-                    : darkMode ? '#3A3934' : '#111',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: (inquiryLoading || (!!dateRange.inquiries.start !== !!dateRange.inquiries.end)) ? 'not-allowed' : 'pointer',
-                  fontSize: 14,
-                }}
+                className={(inquiryLoading || (!!dateRange.inquiries.start !== !!dateRange.inquiries.end)) ? styles.inquiryFilterBtnDisabled : styles.modalBtn}
               >
                 조회
               </button>
             </div>
-            <div style={{ overflowX: 'auto' }}>
+            <div className={styles.overflowXAuto}>
               <div>
                 <div className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableHeader}>
-                  <div style={{ textAlign: 'center' }}>문의일시</div>
-                  <div style={{ textAlign: 'center' }}>문의유형</div>
-                  <div style={{ textAlign: 'center' }}>제목</div>
-                  <div style={{ textAlign: 'center' }}>상태</div>
+                  <div className={styles.tableHeaderCell}>문의일시</div>
+                  <div className={styles.tableHeaderCell}>문의유형</div>
+                  <div className={styles.tableHeaderCell}>제목</div>
+                  <div className={styles.tableHeaderCell}>상태</div>
                 </div>
                 <div className={styles.fadeWrap}>
                   <div className={`${styles.fadeLayer} ${inquiryLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                     {Array.from({ length: 3 }).map((_, i) => (
                       <div key={i} className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableRow}>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '70%' }} /></div>
-                        <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW75}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div>
+                        <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW55}`} /></div>
                       </div>
                     ))}
                   </div>
                   <div className={`${styles.fadeLayer} ${!inquiryLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                     {inquiries.length === 0 ? (
-                      <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+                      <div className={styles.padding24Center}>
                         문의 내역이 없습니다.
                       </div>
                     ) : (
@@ -2187,7 +2069,7 @@ function MypagePageContent() {
                           key={item.inquiryId}
                           className={styles.tableGrid + ' ' + styles.inquiryGrid + ' ' + styles.tableRow}
                         >
-                          <div className={styles.tableCell} style={{ textAlign: 'center' }}>
+                          <div className={`${styles.tableCell} ${styles.tableCellCenter}`}>
                             {(() => {
                               if (!item.createdAt) return '-';
                               // LocalDateTime 배열: [year, month, day, hour, minute, second]
@@ -2207,7 +2089,7 @@ function MypagePageContent() {
                               return `${y}.${mo}.${day} ${h}:${mi}`;
                             })()}
                           </div>
-                          <div className={styles.tableCell} style={{ textAlign: 'center' }}>
+                          <div className={`${styles.tableCell} ${styles.tableCellCenter}`}>
                             {(() => {
                               const map: Record<string, string> = {
                                 USER: '계정/제재',
@@ -2220,7 +2102,7 @@ function MypagePageContent() {
                               return map[item.inquiryType] ?? item.inquiryType;
                             })()}
                           </div>
-                          <div className={styles.tableCell} style={{ textAlign: 'center' }}>
+                          <div className={`${styles.tableCell} ${styles.tableCellCenter}`}>
                             <button
                               type="button"
                               className={styles.inquiryTitleLink}
@@ -2255,7 +2137,7 @@ function MypagePageContent() {
                               {item.title}
                             </button>
                           </div>
-                          <div className={styles.tableCell} style={{ textAlign: 'center' }}>
+                          <div className={`${styles.tableCell} ${styles.tableCellCenter}`}>
                             <span
                               className={
                                 styles.statusBadge + ' ' +
@@ -2347,58 +2229,14 @@ function MypagePageContent() {
       </div>
 
       {showReportCancelModal && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0,0,0,0.5)',
-          }}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            style={{
-              padding: 24,
-              background: darkMode ? '#2E2E2C' : '#fff',
-              borderRadius: 12,
-              maxWidth: 360,
-              textAlign: 'center',
-            }}
-          >
-            <p style={{ margin: '0 0 16px', color: darkMode ? '#B5B3A7' : undefined }}>이 신고를 취소하시겠어요?</p>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button
-                type="button"
-                onClick={() => setShowReportCancelModal(false)}
-                style={{
-                  padding: '8px 16px',
-                  background: '#999',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: 14,
-                }}
-              >
+        <div className={styles.modalOverlayCenter} role="dialog" aria-modal="true">
+          <div className={styles.modalCardSmall}>
+            <p className={`${styles.modalTitleMb16} ${styles.modalTitleMb16Dark}`}>이 신고를 취소하시겠어요?</p>
+            <div className={styles.flexGap12Center}>
+              <button type="button" onClick={() => setShowReportCancelModal(false)} className={styles.modalBtnCancel}>
                 취소
               </button>
-              <button
-                type="button"
-                onClick={handleReportCancelConfirm}
-                style={{
-                  padding: '8px 16px',
-                  background: darkMode ? '#3A3934' : '#111',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: 14,
-                }}
-              >
+              <button type="button" onClick={handleReportCancelConfirm} className={styles.modalBtn}>
                 예
               </button>
             </div>
@@ -2563,142 +2401,54 @@ function MypagePageContent() {
       )}
 
       {showCropModal && selectedImage && typeof document !== 'undefined' && createPortal(
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 10000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0,0,0,0.8)',
-          }}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            style={{
-              padding: 24,
-              background: darkMode ? '#2E2E2C' : '#fff',
-              borderRadius: 12,
-              maxWidth: 500,
-              width: '90%',
-            }}
-          >
-            <h2 style={{ margin: '0 0 16px', fontSize: 18, color: darkMode ? '#B5B3A7' : undefined }}>프로필 사진 영역 선택</h2>
-            <div
-              style={{
-                position: 'relative',
-                width: '100%',
-                maxHeight: 400,
-                marginBottom: 16,
-                overflow: 'hidden',
-                borderRadius: 8,
-                background: darkMode ? '#2E2E2C' : '#e5e5e5',
-              }}
-            >
-              <img
-                ref={imageRef}
-                src={selectedImage}
-                alt="Crop preview"
-                onLoad={handleImageLoad}
-                style={{
-                  width: '100%',
-                  height: 'auto',
-                  display: 'block',
-                }}
-              />
-              {/* 어둡게 처리할 전체 오버레이 (크롭 영역만 투명 구멍) */}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: 'rgba(0,0,0,0.6)',
-                  clipPath: `polygon(
-                    0% 0%, 100% 0%, 100% 100%, 0% 100%,
-                    0% ${cropArea.y}px,
-                    ${cropArea.x}px ${cropArea.y}px,
-                    ${cropArea.x}px ${cropArea.y + cropArea.size}px,
-                    ${cropArea.x + cropArea.size}px ${cropArea.y + cropArea.size}px,
-                    ${cropArea.x + cropArea.size}px ${cropArea.y}px,
-                    0% ${cropArea.y}px
-                  )`,
-                  pointerEvents: 'none',
-                }}
-              />
-              <div
-                style={{
-                  position: 'absolute',
-                  left: cropArea.x,
-                  top: cropArea.y,
-                  width: cropArea.size,
-                  height: cropArea.size,
-                  border: `2px solid rgba(255, 255, 255, 0.7)`,
-                  borderRadius: '50%',
-                  cursor: isDragging ? 'grabbing' : 'grab',
-                  boxSizing: 'border-box',
-                }}
-                onMouseDown={handleCropAreaMouseDown}
-              >
-                <div
-                  data-resize-handle="true"
-                  role="button"
-                  tabIndex={0}
-                  aria-label="크롭 영역 크기 조절"
-                  onMouseDown={handleResizeHandleMouseDown}
-                  style={{
-                    position: 'absolute',
-                    right: 0,
-                    bottom: 0,
-                    width: 12,
-                    height: 12,
-                    borderRight: '2px solid rgba(255,255,255,0.9)',
-                    borderBottom: '2px solid rgba(255,255,255,0.9)',
-                    borderRadius: '0 0 4px 0',
-                    cursor: 'nwse-resize',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              </div>
+        <div className={styles.modalOverlayCrop} role="dialog" aria-modal="true">
+          <div className={styles.modalCardCrop}>
+            <h2 className={`${styles.modalTitle18} ${styles.modalTitleMb16Dark}`}>프로필 사진 영역 선택</h2>
+            <div className={styles.cropPreviewWrap}>
+              <img ref={imageRef} src={selectedImage} alt="Crop preview" onLoad={handleImageLoad} className={styles.cropImg} />
+              {nonce ? (
+                <>
+                  <style
+                    nonce={nonce}
+                    dangerouslySetInnerHTML={{
+                      __html: [
+                        `.cropOverlay-${cropModalId}{position:absolute;inset:0;background:rgba(0,0,0,0.6);pointer-events:none;clip-path:polygon(0% 0%,100% 0%,100% 100%,0% 100%,0% ${cropArea.y}px,${cropArea.x}px ${cropArea.y}px,${cropArea.x}px ${cropArea.y + cropArea.size}px,${cropArea.x + cropArea.size}px ${cropArea.y + cropArea.size}px,${cropArea.x + cropArea.size}px ${cropArea.y}px,0% ${cropArea.y}px);}`,
+                        `.cropBox-${cropModalId}{position:absolute;left:${cropArea.x}px;top:${cropArea.y}px;width:${cropArea.size}px;height:${cropArea.size}px;border:2px solid rgba(255,255,255,0.7);border-radius:50%;box-sizing:border-box;cursor:${isDragging ? 'grabbing' : 'grab'};}`,
+                      ].join(''),
+                    }}
+                  />
+                  <div className={`cropOverlay-${cropModalId}`} aria-hidden />
+                  <div className={`cropBox-${cropModalId}`} onMouseDown={handleCropAreaMouseDown}>
+                    <div data-resize-handle="true" role="button" tabIndex={0} aria-label="크롭 영역 크기 조절" className={styles.cropResizeHandle} onMouseDown={handleResizeHandleMouseDown} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', pointerEvents: 'none',
+                      clipPath: `polygon(0% 0%,100% 0%,100% 100%,0% 100%,0% ${cropArea.y}px,${cropArea.x}px ${cropArea.y}px,${cropArea.x}px ${cropArea.y + cropArea.size}px,${cropArea.x + cropArea.size}px ${cropArea.y + cropArea.size}px,${cropArea.x + cropArea.size}px ${cropArea.y}px,0% ${cropArea.y}px)`,
+                    }}
+                    aria-hidden
+                  />
+                  <div
+                    style={{
+                      position: 'absolute', left: cropArea.x, top: cropArea.y, width: cropArea.size, height: cropArea.size,
+                      border: '2px solid rgba(255,255,255,0.7)', borderRadius: '50%', cursor: isDragging ? 'grabbing' : 'grab', boxSizing: 'border-box',
+                    }}
+                    onMouseDown={handleCropAreaMouseDown}
+                  >
+                    <div data-resize-handle="true" role="button" tabIndex={0} aria-label="크롭 영역 크기 조절" className={styles.cropResizeHandle} onMouseDown={handleResizeHandleMouseDown} />
+                  </div>
+                </>
+              )}
             </div>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                onClick={handleCropCancel}
-                style={{
-                  padding: '8px 16px',
-                  background: '#999',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: 14,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-              >
-                <X size={18} />
-                취소
+            <div className={styles.flexGap12End}>
+              <button type="button" onClick={handleCropCancel} className={`${styles.modalBtnWithIcon} ${styles.modalBtnWithIconCancel}`}>
+                <X size={18} /> 취소
               </button>
-              <button
-                type="button"
-                onClick={handleCropConfirm}
-                style={{
-                  padding: '8px 16px',
-                  background: darkMode ? '#3A3934' : '#111',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  cursor: 'pointer',
-                  fontSize: 14,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}
-              >
-                <Check size={18} />
-                확인
+              <button type="button" onClick={handleCropConfirm} className={`${styles.modalBtnWithIcon} ${styles.modalBtnWithIconConfirm}`}>
+                <Check size={18} /> 확인
               </button>
             </div>
           </div>
@@ -2745,15 +2495,15 @@ function MypagePageContent() {
             <h2 className={styles.modalTitle}>문의 상세</h2>
 
             {inquiryDetailLoading ? (
-              <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div className={styles.skeletonBar} style={{ width: '40%', height: 18 }} />
-                <div className={styles.skeletonBar} style={{ width: '60%' }} />
-                <div className={styles.skeletonBar} style={{ width: '80%' }} />
-                <div className={styles.skeletonBar} style={{ width: '50%' }} />
-                <div style={{ marginTop: 12 }}>
-                  <div className={styles.skeletonBar} style={{ width: '40%', height: 18 }} />
+              <div className={styles.padding24FlexCol}>
+                <div className={`${styles.skeletonBar} ${styles.skeletonBarW40H18}`} />
+                <div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} />
+                <div className={`${styles.skeletonBar} ${styles.skeletonBarW80}`} />
+                <div className={`${styles.skeletonBar} ${styles.skeletonBarW50}`} />
+                <div className={styles.mt12}>
+                  <div className={`${styles.skeletonBar} ${styles.skeletonBarW40H18}`} />
                 </div>
-                <div className={styles.skeletonBar} style={{ width: '30%' }} />
+                <div className={`${styles.skeletonBar} ${styles.skeletonBarW30}`} />
               </div>
             ) : inquiryDetail ? (
               <div className={styles.inquiryDetailBody}>
@@ -2786,12 +2536,12 @@ function MypagePageContent() {
                       })()}
                     </span>
                   </div>
-                  <div className={styles.inquiryDetailRow} style={{ alignItems: 'flex-start' }}>
+                  <div className={`${styles.inquiryDetailRow} ${styles.inquiryDetailAlignStart}`}>
                     <span className={styles.inquiryDetailLabel}>내용</span>
-                    <span className={styles.inquiryDetailValue} style={{ whiteSpace: 'pre-wrap' }}>{inquiryDetail.content}</span>
+                    <span className={`${styles.inquiryDetailValue} ${styles.preWrap}`}>{inquiryDetail.content}</span>
                   </div>
                   {inquiryDetail.fileUrl && (
-                    <div className={styles.inquiryDetailRow} style={{ alignItems: 'flex-start' }}>
+                    <div className={`${styles.inquiryDetailRow} ${styles.inquiryDetailAlignStart}`}>
                       <span className={styles.inquiryDetailLabel}>첨부파일</span>
                       <span className={styles.inquiryDetailValue}>
                         {inquiryDetail.isImage ? (
@@ -2837,9 +2587,9 @@ function MypagePageContent() {
                   </div>
                   {inquiryDetail.commentStatus === 'COMPLETED' && inquiryDetail.adminComment ? (
                     <>
-                      <div className={styles.inquiryDetailRow} style={{ alignItems: 'flex-start' }}>
+                      <div className={`${styles.inquiryDetailRow} ${styles.inquiryDetailAlignStart}`}>
                         <span className={styles.inquiryDetailLabel}>답변</span>
-                        <span className={styles.inquiryDetailValue} style={{ whiteSpace: 'pre-wrap' }}>{inquiryDetail.adminComment}</span>
+                        <span className={`${styles.inquiryDetailValue} ${styles.preWrap}`}>{inquiryDetail.adminComment}</span>
                       </div>
                       {inquiryDetail.commentCreatedAt && (
                         <div className={styles.inquiryDetailRow}>
@@ -2867,7 +2617,7 @@ function MypagePageContent() {
                 </div>
               </div>
             ) : (
-              <div style={{ padding: 24, textAlign: 'center', color: '#666' }}>
+              <div className={styles.padding24Center}>
                 정보를 불러올 수 없습니다.
               </div>
             )}
@@ -2898,7 +2648,7 @@ function MypagePageContent() {
               POP 충전
             </h2>
 
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.95rem', fontWeight: 500, color: '#333' }}>
+            <label className={styles.labelBlock}>
               충전할 POP
             </label>
             <div className={styles.inputRow}>
@@ -3008,22 +2758,22 @@ export default function MypagePage() {
           <div className={styles.skeletonProfile}>
             <div className={styles.skeletonAvatar} />
             <div className={styles.skeletonProfileText}>
-              <div className={styles.skeletonBar} style={{ width: 120, height: 20 }} />
-              <div className={styles.skeletonBar} style={{ width: 180 }} />
-              <div className={styles.skeletonBar} style={{ width: 140 }} />
+              <div className={`${styles.skeletonBar} ${styles.skeletonBarPx120H20}`} />
+              <div className={`${styles.skeletonBar} ${styles.skeletonBarPx180}`} />
+              <div className={`${styles.skeletonBar} ${styles.skeletonBarPx140}`} />
             </div>
           </div>
           <div className={styles.skeletonTabs}>
             {Array.from({ length: 9 }).map((_, i) => (
-              <div key={i} className={styles.skeletonTab} style={{ width: i % 3 === 0 ? 80 : i % 3 === 1 ? 64 : 56 }} />
+              <div key={i} className={`${styles.skeletonTab} ${i % 3 === 0 ? styles.skeletonTabW80 : i % 3 === 1 ? styles.skeletonTabW64 : styles.skeletonTabW56}`} />
             ))}
           </div>
           <div className={styles.skeletonContent}>
-            <div className={styles.skeletonContentRow} style={{ width: '100%' }} />
-            <div className={styles.skeletonContentRow} style={{ width: '85%' }} />
-            <div className={styles.skeletonContentRow} style={{ width: '92%' }} />
-            <div className={styles.skeletonContentRow} style={{ width: '78%' }} />
-            <div className={styles.skeletonContentRow} style={{ width: '88%' }} />
+            <div className={`${styles.skeletonContentRow} ${styles.skeletonContentRowW100}`} />
+            <div className={`${styles.skeletonContentRow} ${styles.skeletonContentRowW85}`} />
+            <div className={`${styles.skeletonContentRow} ${styles.skeletonContentRowW92}`} />
+            <div className={`${styles.skeletonContentRow} ${styles.skeletonContentRowW78}`} />
+            <div className={`${styles.skeletonContentRow} ${styles.skeletonContentRowW88}`} />
           </div>
         </div>
       }

@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useId, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store';
+import { useNonce } from '@/contexts/NonceContext';
 import { authApi } from '@/api/authApi';
 import { checkAuth } from '@/store/slices/authSlice';
 import { ToastUtils } from '@/utils/toastUtils';
@@ -17,6 +18,8 @@ export default function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dispatch = useDispatch<AppDispatch>();
+  const nonce = useNonce();
+  const baseId = useId().replace(/:/g, '');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
@@ -480,10 +483,14 @@ export default function LoginClient() {
                 <p className={styles.codeHint}>인증 코드: {pwlsCode6}</p>
                 <div className={styles.codeGaugeTrack} aria-hidden="true">
                   <div
-                    className={styles.codeGaugeBar}
-                    style={{
-                      width: `${PWLS_LOGIN_TOTAL_SEC > 0 ? (pwlsLoginRemainSec / PWLS_LOGIN_TOTAL_SEC) * 100 : 0}%`,
-                    }}
+                    className={`${styles.codeGaugeBar} ${nonce ? `pwls-login-gauge-${baseId}` : ''}`}
+                    style={
+                      !nonce
+                        ? {
+                            width: `${PWLS_LOGIN_TOTAL_SEC > 0 ? (pwlsLoginRemainSec / PWLS_LOGIN_TOTAL_SEC) * 100 : 0}%`,
+                          }
+                        : undefined
+                    }
                   />
                 </div>
               </div>
@@ -585,6 +592,155 @@ export default function LoginClient() {
         </div>
       )}
 
+      {qrModalOpen && (
+        <div
+          className={styles.pwlsModalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pwls-modal-title"
+          onClick={resetPasswordlessState}
+        >
+          <div className={styles.pwlsModalCard} onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className={styles.pwlsModalCloseBtn}
+              onClick={resetPasswordlessState}
+              aria-label="닫기"
+            >
+              <X size={20} />
+            </button>
+            <h2 id="pwls-modal-title" className={`${styles.h1} ${styles.h1Mb8}`}>
+              Passwordless 설정
+            </h2>
+            <p className={styles.pwlsModalSubtext}>
+              휴대폰 앱으로 QR을 스캔해 등록하세요
+            </p>
+
+            <div className={styles.pwlsQrBox}>
+              {pwlsRegisterLoading && <div className={styles.spinner} />}
+              {!pwlsRegisterLoading && pwlsModalError && (
+                <span className={styles.error}>{pwlsModalError}</span>
+              )}
+              {!pwlsRegisterLoading && pwlsQrUrl && !pwlsModalError && (
+                <img src={pwlsQrUrl} alt="QR 코드" />
+              )}
+            </div>
+
+            {pwlsServerUrl != null && pwlsServerUrl !== '' && (
+              <div className={styles.pwlsCopyRow}>
+                <span className={styles.pwlsCopyLabel}>serverUrl</span>
+                <span className={styles.pwlsCopyValue}>{pwlsServerUrl}</span>
+                <button
+                  type="button"
+                  className={styles.pwlsCopyBtn}
+                  onClick={() => copyToClipboard(pwlsServerUrl!)}
+                >
+                  복사
+                </button>
+              </div>
+            )}
+            {pwlsRegisterKey != null && pwlsRegisterKey !== '' && (
+              <div className={styles.pwlsCopyRow}>
+                <span className={styles.pwlsCopyLabel}>registerKey</span>
+                <span className={styles.pwlsCopyValue}>{pwlsRegisterKey}</span>
+                <button
+                  type="button"
+                  className={styles.pwlsCopyBtn}
+                  onClick={() => copyToClipboard(pwlsRegisterKey!)}
+                >
+                  복사
+                </button>
+              </div>
+            )}
+
+            {pwlsQrUrl && pwlsRemainSec > 0 && (
+              <>
+                <div className={styles.pwlsTimerRow}>
+                  {Math.floor(pwlsRemainSec / 60)}:{String(pwlsRemainSec % 60).padStart(2, '0')}
+                </div>
+                <div className={styles.pwlsProgressTrack}>
+                  <div
+                    className={`${styles.pwlsProgressBar} ${nonce ? `pwls-reg-gauge-${baseId}` : ''}`}
+                    style={
+                      !nonce
+                        ? {
+                            width: `${pwlsTotalSec > 0 ? (pwlsRemainSec / pwlsTotalSec) * 100 : 0}%`,
+                          }
+                        : undefined
+                    }
+                  />
+                </div>
+              </>
+            )}
+
+            {pwlsRemainSec === 0 && pwlsQrUrl && (
+              <div className={styles.pwlsExpiredRow}>
+                <p className={styles.pwlsExpiredMsg}>만료됨</p>
+                <button
+                  type="button"
+                  className={styles.submit}
+                  disabled={pwlsRegisterLoading}
+                  onClick={() => requestPwlsQR()}
+                >
+                  {pwlsRegisterLoading ? '발급 중…' : 'QR 재발급'}
+                </button>
+              </div>
+            )}
+            {pwlsModalError && !pwlsQrUrl && (
+              <div className={styles.pwlsExpiredRow}>
+                <p className={styles.pwlsExpiredMsg}>{pwlsModalError}</p>
+                <button
+                  type="button"
+                  className={styles.submit}
+                  disabled={pwlsRegisterLoading}
+                  onClick={() => requestPwlsQR()}
+                >
+                  {pwlsRegisterLoading ? '처리 중…' : '재시도'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {registerDoneModalOpen && (
+        <div
+          className={styles.pwlsModalOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pwls-register-done-title"
+          onClick={() => setRegisterDoneModalOpen(false)}
+        >
+          <div className={styles.pwlsModalCard} onClick={(e) => e.stopPropagation()}>
+            <h2 id="pwls-register-done-title" className={`${styles.h1} ${styles.h1Mb16}`}>
+              등록 완료
+            </h2>
+            <p className={styles.pwlsRegisterDoneText}>
+              Passwordless 서비스가 등록되었습니다.
+            </p>
+            <div className={styles.pwlsRegisterDoneActions}>
+              <button
+                type="button"
+                className={styles.submit}
+                onClick={() => setRegisterDoneModalOpen(false)}
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {nonce && (
+        <style
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: [
+              `.pwls-login-gauge-${baseId}{width:${PWLS_LOGIN_TOTAL_SEC > 0 ? (pwlsLoginRemainSec / PWLS_LOGIN_TOTAL_SEC) * 100 : 0}%;}`,
+              `.pwls-reg-gauge-${baseId}{width:${pwlsTotalSec > 0 ? (pwlsRemainSec / pwlsTotalSec) * 100 : 0}%;}`,
+            ].join(''),
+          }}
+        />
+      )}
     </div>
   );
 }

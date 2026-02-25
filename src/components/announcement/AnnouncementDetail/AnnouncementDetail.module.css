@@ -1,3 +1,11 @@
+.errorP { margin-bottom: 12px; }
+.errorSub { margin-bottom: 16px; font-size: 0.9rem; color: #666; }
+.maxW720 { max-width: 720px; margin: 0 auto; }
+.iconBtnDefault { cursor: default; }
+.flex1 { flex: 1; }
+.endRow { padding: 0 40px; margin-top: 24px; display: flex; justify-content: flex-end; }
+.linkNoUnderline { text-decoration: none; flex-shrink: 0; }
+
 /* 페이지 이동 영역 카드 (관리자 공지 상세와 동일) */
 .pageMoveCard {
   display: flex;

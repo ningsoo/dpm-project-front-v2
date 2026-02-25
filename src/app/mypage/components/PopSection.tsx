@@ -691,9 +691,9 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
         </button>
       </div>
 
-      <div className={styles.popTableWrap} style={{ opacity: subTabVisible ? 1 : 0, transition: `opacity ${SUB_TAB_FADE_MS}ms ease` }}>
+      <div className={`${styles.popTableWrap} ${subTabVisible ? styles.subTabContentVisible : styles.subTabContentHidden}`}>
         {displayedSubTab === 'usage' && (
-          <div style={{ overflowX: 'auto' }}>
+          <div className={styles.overflowXAuto}>
             <div className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableHeader}`}>
               {USAGE_COLUMNS.map((col) => (
                 <div key={col}>{col}</div>
@@ -703,12 +703,12 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
               <div className={`${styles.fadeLayer} ${usageLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className={`${styles.tableGrid} ${styles.popUsageGrid6} ${styles.tableRow}`}>
-                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW55}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW55}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
                   </div>
                 ))}
               </div>
@@ -757,7 +757,7 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
           </div>
         )}
         {displayedSubTab === 'purchase' && (
-          <div style={{ overflowX: 'auto' }}>
+          <div className={styles.overflowXAuto}>
             <div className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableHeader}`}>
               {PURCHASE_COLUMNS.map((col) => (
                 <div key={col}>{col}</div>
@@ -767,12 +767,12 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
               <div className={`${styles.fadeLayer} ${purchaseLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className={`${styles.tableGrid} ${styles.popPurchaseGrid6} ${styles.tableRow}`}>
-                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '55%' }} /></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                    <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW50}`} /></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW55}`} /></div>
+                    <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                    <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
                   </div>
                 ))}
               </div>
@@ -829,11 +829,11 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
             <h3
               id="pop-cancel-modal-title"
               className={styles.modalTitle}
-              style={{ fontSize: '1.1rem', marginBottom: 12 }}
+              className={styles.donationTitle}
             >
               {cancelTarget.popTarget === 'DONATION' ? '후원 취소 확인' : '게시글 홍보 취소 확인'}
             </h3>
-            <p className={styles.donationConfirmMessage} style={{ whiteSpace: 'pre-line' }}>
+            <p className={`${styles.donationConfirmMessage} ${styles.preLine}`}>
               {cancelTarget.popTarget === 'DONATION'
                 ? '정말 이 사용자에 대한 후원을 취소하시겠습니까?'
                 : (() => {
@@ -889,7 +889,7 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
             <h3
               id="pop-purchase-cancel-modal-title"
               className={styles.modalTitle}
-              style={{ fontSize: '1.1rem', marginBottom: 12 }}
+              className={styles.donationTitle}
             >
               구매 취소 확인
             </h3>

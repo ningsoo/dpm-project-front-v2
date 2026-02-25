@@ -628,6 +628,34 @@
   animation: adminShimmer 1.5s infinite ease-in-out;
 }
 
+.skeletonBarH16 { height: 16px; }
+.skeletonBarW100 { width: 100%; }
+.skeletonBarW80 { width: 80%; }
+.skeletonBarW60 { width: 60%; }
+.skeletonCol { display: flex; flex-direction: column; gap: 12px; }
+
+.detailImg { max-width: 100%; max-height: 300px; border-radius: 4px; }
+
+.cursorPointer { cursor: pointer; }
+.linkReset { color: inherit; text-decoration: none; width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.iconBtnBare { background: none; border: none; cursor: pointer; padding: 4px; display: flex; }
+.linkNoUnderline { text-decoration: none; }
+.sentinel { grid-column: 1 / -1; height: 1px; min-height: 1px; }
+.formRow { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: flex-end; margin-bottom: 24px; }
+.labelFlex { margin-bottom: 0; flex: 1 1 200px; }
+.colGap12Mt12 { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+.loadingP { text-align: center; padding: 40px; }
+.errorP { margin-bottom: 12px; }
+.errorSub { margin-bottom: 16px; font-size: 0.9rem; color: #666; }
+.maxW720 { max-width: 720px; margin: 0 auto; }
+.iconBtnDefault { cursor: default; }
+.flex1 { flex: 1; }
+.endRow { padding: 0 40px; margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px; }
+.subtext { font-size: 14px; color: #666; margin-bottom: 20px; }
+.modalSubheading { margin: 20px 0 12px; font-size: 0.95rem; font-weight: 600; }
+.layoutContent { transition: opacity 0.3s ease; }
+.layoutContentVisible { opacity: 1; }
+.layoutContentHidden { opacity: 0; }
 
 /* ============================================= */
 /* Modal                                         */
@@ -687,6 +715,8 @@
 .modalField {
   margin-bottom: 16px;
 }
+
+.modalFieldMt16 { margin-top: 16px; }
 
 .modalLabel {
   display: block;

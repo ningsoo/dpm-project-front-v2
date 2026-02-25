@@ -1,0 +1,366 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.5);
+  padding: 40px 20px;
+}
+
+.panel {
+  max-width: 400px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 85vh;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+:global(.dark) .card {
+  background: #2E2E2C;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.closeBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 20;
+  background: rgba(255,255,255,0.9);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+:global(.dark) .closeBtn {
+  background: rgba(30,30,28,0.9);
+}
+
+.loadingWrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #f0f0f0;
+  border-top: 4px solid #FF0000;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+:global(.dark) .spinner {
+  border-color: #333;
+  border-top-color: #3A3934;
+}
+
+.emptyMessage {
+  text-align: center;
+  padding: 60px;
+  color: #666;
+}
+
+.playerWrap {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  background: #000;
+  min-height: 270px;
+}
+
+.playerInner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.playerContainer {
+  width: 100%;
+  height: 100%;
+}
+
+.thumbWrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  z-index: 1;
+}
+
+.thumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.thumbOverlay:hover {
+  background: rgba(0,0,0,0.5);
+}
+
+.playBtn {
+  width: 72px;
+  height: 72px;
+  background: rgba(255,255,255,0.95);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.thumbOverlay:hover .playBtn {
+  transform: scale(1.1);
+}
+
+.playTriangle {
+  width: 0;
+  height: 0;
+  border-left: 24px solid #333;
+  border-top: 16px solid transparent;
+  border-bottom: 16px solid transparent;
+  margin-left: 6px;
+}
+
+.infoSection {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.infoHeader {
+  margin-bottom: 16px;
+}
+
+.infoTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+:global(.dark) .infoTitle {
+  color: #B5B3A7;
+}
+
+.infoMeta {
+  font-size: 14px;
+  color: #666;
+}
+
+:global(.dark) .infoMeta {
+  color: #8A877D;
+}
+
+.trackList {
+  flex: 1;
+  max-height: 400px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-radius: 8px;
+}
+
+.trackList::-webkit-scrollbar { width: 8px; }
+.trackList::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 4px; }
+.trackList::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+:global(.dark) .trackList::-webkit-scrollbar-track { background: #2E2E2C; }
+:global(.dark) .trackList::-webkit-scrollbar-thumb { background: #555; }
+
+.trackListInner {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.trackItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-radius: 6px;
+  margin-bottom: 4px;
+}
+
+:global(.dark) .trackItem {
+  border-bottom-color: #3A3A38;
+}
+
+.trackItem:last-child {
+  border-bottom: none;
+}
+
+.trackItem:hover {
+  background: #f9f9f9;
+}
+
+:global(.dark) .trackItem:hover {
+  background: #2E2E2C;
+}
+
+.trackItemActive {
+  background: #f0f0f0;
+  font-weight: 500;
+  color: #111;
+}
+
+:global(.dark) .trackItemActive {
+  background: #3A3A38;
+  color: #B5B3A7;
+}
+
+.trackItem:not(.trackItemActive) {
+  color: #555;
+}
+
+:global(.dark) .trackItem:not(.trackItemActive) {
+  color: #A19E94;
+}
+
+.trackThumb {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #000;
+}
+
+.trackThumbImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.trackInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.trackTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:global(.dark) .trackTitle {
+  color: #B5B3A7;
+}
+
+.trackIndex {
+  font-size: 12px;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.youtubeBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 0 0;
+  border-top: 1px solid #e0e0e0;
+  font-size: 13px;
+  color: #666;
+}
+
+.youtubeBadge svg {
+  height: 18px;
+}
+
+.youtubeBadge {
+  background: #f9f9f9;
+  margin-left: -20px;
+  margin-right: -20px;
+  margin-bottom: -20px;
+}
+
+:global(.dark) .youtubeBadge {
+  background: #242422;
+  border-top-color: #3A3A38;
+}
+
+.trackIndex {
+  min-width: 24px;
+  font-size: 13px;
+  color: #999;
+}
+
+.trackItemActive .trackIndex {
+  color: #111;
+}
+
+:global(.dark) .trackIndex { color: #8A877D; }
+:global(.dark) .trackItemActive .trackIndex { color: #B5B3A7; }
+
+.trackTitle { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.equalizer {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+
+.equalizerBar {
+  width: 3px;
+  height: 14px;
+  background: #111;
+  border-radius: 2px;
+  animation: wave 1.2s ease-in-out infinite;
+}
+
+.equalizerBar:nth-child(2) { animation-delay: 0.1s; }
+.equalizerBar:nth-child(3) { animation-delay: 0.2s; }
+
+:global(.dark) .equalizerBar { background: #B5B3A7; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

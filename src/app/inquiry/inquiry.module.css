@@ -144,6 +144,8 @@
 }
 
 /* 파일 업로드 */
+.fileInputHidden { display: none; }
+
 .fileUploadWrapper {
   display: flex;
   align-items: center;

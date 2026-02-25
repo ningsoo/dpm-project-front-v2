@@ -50,7 +50,7 @@ export default function BoardCard({
       <div className={styles.cardBody}>
         <div className={styles.cardTitle}>
           {displayNumber != null && (
-            <span style={{ marginRight: 8, fontWeight: 'bold' }}>{displayNumber}.</span>
+            <span className={styles.displayNumber}>{displayNumber}.</span>
           )}
           {title}
         </div>
@@ -60,8 +60,7 @@ export default function BoardCard({
               <img
                 src={profileImage || defaultProfileImg.src}
                 alt=""
-                className={styles.avatarImg}
-                style={!profileImage ? { objectFit: 'contain' } : undefined}
+                className={`${styles.avatarImg} ${!profileImage ? styles.avatarImgContain : ''}`}
               />
             </span>
             <span className={`${styles.author} ${deleted ? 'authorDeleted' : ''}`}>{formatNickname(nickname, deleted)}</span>

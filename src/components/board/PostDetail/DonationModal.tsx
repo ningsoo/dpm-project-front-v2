@@ -229,7 +229,7 @@ export default function DonationModal({
             </div>
 
             {mode === 'spotlight' && (
-              <p className={styles.chargeNotice} style={{ marginTop: 4, marginBottom: 20 }}>
+              <p className={`${styles.chargeNotice} ${styles.chargeNoticeMt4Mb20}`}>
                 최소 {SPOTLIGHT_MIN_POP.toLocaleString('ko-KR')} POP 이상 입력해주세요.
               </p>
             )}

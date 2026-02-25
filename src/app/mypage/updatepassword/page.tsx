@@ -92,13 +92,13 @@ export default function UpdatePasswordPage() {
               {showNew ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          <div style={{ marginTop: 4, fontSize: '0.8rem', lineHeight: 1.5, minHeight: '18px' }}>
+          <div className={styles.pwdHelperRow}>
             {newPassword && (
               <>
                 {pwdErrors.length > 0 ? (
-                  <span style={{ color: '#c62828' }}>{pwdErrors.join(' / ')}</span>
+                  <span className={styles.pwdError}>{pwdErrors.join(' / ')}</span>
                 ) : (
-                  <span style={{ color: '#4caf50' }}>✓ 모든 조건을 만족합니다</span>
+                  <span className={styles.pwdOk}>✓ 모든 조건을 만족합니다</span>
                 )}
               </>
             )}
@@ -141,28 +141,12 @@ export default function UpdatePasswordPage() {
 
       {showSuccessModal && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0,0,0,0.5)',
-          }}
+          className={styles.modalOverlay}
           role="dialog"
           aria-modal="true"
         >
-          <div
-            style={{
-              padding: 24,
-              background: '#fff',
-              borderRadius: 12,
-              maxWidth: 360,
-              textAlign: 'center',
-            }}
-          >
-            <p style={{ margin: '0 0 16px' }}>정상적으로 수정되었습니다.</p>
+          <div className={styles.modalCardSm}>
+            <p className={styles.modalMessage}>정상적으로 수정되었습니다.</p>
             <button
               type="button"
               className={styles.submit}
