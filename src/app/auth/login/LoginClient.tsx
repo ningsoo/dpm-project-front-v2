@@ -3,7 +3,7 @@
 import { useId, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, X } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store';
 import { useNonce } from '@/contexts/NonceContext';
@@ -28,6 +28,8 @@ export default function LoginClient() {
   const [emailHangulError, setEmailHangulError] = useState('');
   const [emailFormatError, setEmailFormatError] = useState('');
   const [loginMode, setLoginMode] = useState<'password' | 'passwordless'>('password');
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [registerDoneModalOpen, setRegisterDoneModalOpen] = useState(false);
   const [pwlsCode6, setPwlsCode6] = useState<string | null>(null);
   const [pwlsUserId, setPwlsUserId] = useState('');
   const [pwlsSessionId, setPwlsSessionId] = useState('');
@@ -43,9 +45,10 @@ export default function LoginClient() {
   const pwlsResultPollingInFlightRef = useRef(false);
   const pwlsResultPollingCompletedRef = useRef(false);
 
-  /** 승인 폴링(timeout id) + 로그인 60초 타이머 정리. 호출: 모드 전환, 언마운트. */
+  /** 승인 폴링(timeout id) + 로그인 60초 타이머 정리. 호출: 모드 전환, 언마운트, QR 모달 닫기. */
   const resetPasswordlessState = () => {
     pwlsResultPollingCompletedRef.current = true;
+    setQrModalOpen(false);
     if (pwlsPollingRef.current) {
       clearTimeout(pwlsPollingRef.current);
       pwlsPollingRef.current = null;
