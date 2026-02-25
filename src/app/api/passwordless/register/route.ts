@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
+const BACKEND_URL = process.env.BACKEND_URL;
 const PROXY_TIMEOUT_MS = 60_000; // 백엔드 응답 대기 60초 (504 방지)
 
 /**

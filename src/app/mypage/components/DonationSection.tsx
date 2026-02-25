@@ -118,6 +118,7 @@ function isCancelable(row: PopHistoryResponseRow): boolean {
   if (row.approvedDatetime) return false;
   if (row.popStatus === 'COMPLETED') return false;
   if (row.popStatus === 'CANCELED') return false;
+  if (row.popStatus === 'CANCEL_REQUEST') return false;
   return true;
 }
 
