@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useSelector, useDispatch } from 'react-redux';
-import { KeyRound, UserCog, Plus, Search, Pencil, Heart, X, Check, Unplug, Fingerprint } from 'lucide-react';
+import { KeyRound, UserCog, Plus, Search, Pencil, Heart, X, Check, Unplug, Fingerprint, UserCircle } from 'lucide-react';
 import { AppDispatch, RootState } from '@/store';
 import { authApi } from '@/api/authApi';
 import { mypageApi } from '@/api/mypageApi';
@@ -30,7 +30,8 @@ interface UserInfo {
   email: string;
   nickname: string;
   phoneNumber: string;
-  profileImage?: string;
+  /** 프로필 이미지 URL (GET /api/mypage/me 응답의 profileUrl) */
+  profileUrl?: string | null;
   popBalance?: number;
   passwordless?: boolean;
   youtubeConnected?: boolean;
@@ -67,6 +68,16 @@ const PWLS_WITHDRAWAL_GUIDE =
   '패스워드리스 해지가 완료되었습니다.';
 
 const PROFILE_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
+
+/** 프로필 이미지 API 에러 메시지 추출. 서버 message가 없거나 axios 기본문구면 fallback 반환 */
+function getProfileImageErrorMessage(err: unknown, fallback: string): string {
+  const data = (err as { response?: { data?: { message?: string } } })?.response?.data;
+  const message = data?.message;
+  const trimmed = message != null && String(message).trim() !== '' ? String(message).trim() : '';
+  if (!trimmed) return fallback;
+  if (/request failed with status code\s*\d+/i.test(trimmed)) return fallback;
+  return trimmed;
+}
 
 /** POP 충전 1회 한도 (원) */
 const PER_CHARGE_LIMIT = 3_000_000;
@@ -184,6 +195,7 @@ function MypagePageContent() {
   const [showCropModal, setShowCropModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [cropArea, setCropArea] = useState({ x: 0, y: 0, size: 0 });
+  const [profileImageUploading, setProfileImageUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
   const [isResizing, setIsResizing] = useState(false);
@@ -218,7 +230,8 @@ function MypagePageContent() {
   const pwlsRegPollStartRef = useRef(0);
   const pwlsRegPollTimeoutSecRef = useRef(180);
 
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  /** GET /api/mypage/me data.profileUrl. null 또는 ''이면 기본 프로필 이미지 표시 */
+  const [profileUrl, setProfileUrl] = useState<string | null>(null);
 
   // 문의내역
   const [inquiries, setInquiries] = useState<{ createdAt: string; inquiryType: string; title: string; inquiryStatus: string; inquiryId: number }[]>([]);
@@ -291,7 +304,7 @@ function MypagePageContent() {
         const userData = data?.data as UserInfo | undefined;
         if (userData) {
           setUser(userData);
-          setProfileImage(userData.profileImage || null);
+          setProfileUrl(userData.profileUrl != null && userData.profileUrl !== '' ? userData.profileUrl : null);
         } else {
           ToastUtils.error('사용자 정보를 불러올 수 없습니다.');
           if (sessionStorage.getItem('soundock_logout_redirect') === '1') {
@@ -1125,7 +1138,7 @@ function MypagePageContent() {
   };
 
   const handleCropConfirm = () => {
-    if (!selectedImage || !imageRef.current) return;
+    if (!selectedImage || !imageRef.current || profileImageUploading) return;
 
     const displayWidth = imageRef.current.clientWidth;
     const displayHeight = imageRef.current.clientHeight;
@@ -1157,11 +1170,45 @@ function MypagePageContent() {
       );
 
       const croppedImageUrl = canvas.toDataURL('image/png');
-      setProfileImage(croppedImageUrl);
-      setShowCropModal(false);
-      setSelectedImage(null);
-      setCropArea({ x: 0, y: 0, size: 0 });
-      // TODO: API 호출하여 프로필 이미지 업데이트
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            ToastUtils.error('이미지 처리에 실패했습니다.');
+            return;
+          }
+          const file = new File([blob], 'profile.png', { type: 'image/png' });
+          const formData = new FormData();
+          formData.append('profileImage', file);
+
+          setProfileImageUploading(true);
+          mypageApi
+            .updateProfileImage(formData)
+            .then(async () => {
+              ToastUtils.success('프로필 사진이 변경되었습니다.');
+              setShowCropModal(false);
+              setSelectedImage(null);
+              setCropArea({ x: 0, y: 0, size: 0 });
+              try {
+                const { data } = await mypageApi.getMypage();
+                const userData = data?.data as UserInfo | undefined;
+                if (userData) {
+                  setUser(userData);
+                  const nextUrl = userData.profileUrl != null && userData.profileUrl !== '' ? userData.profileUrl : null;
+                  setProfileUrl(nextUrl);
+                }
+              } catch {
+                // 갱신 실패해도 업로드는 완료된 상태 유지
+              }
+            })
+            .catch((err) => {
+              const msg = getProfileImageErrorMessage(err, '프로필 이미지 변경에 실패했습니다.');
+              ToastUtils.error(msg);
+            })
+            .finally(() => setProfileImageUploading(false));
+        },
+        'image/png'
+      );
     };
     img.src = selectedImage;
   };
@@ -1170,6 +1217,27 @@ function MypagePageContent() {
     setShowCropModal(false);
     setSelectedImage(null);
     setCropArea({ x: 0, y: 0, size: 0 });
+  };
+
+  /** 기본 프로필로 변경: profileImage 없이 PATCH 요청 → 서버가 null로 처리 */
+  const handleSetDefaultProfile = () => {
+    if (profileImageUploading) return;
+    const formData = new FormData();
+    setProfileImageUploading(true);
+    mypageApi
+      .updateProfileImage(formData)
+      .then(() => {
+        ToastUtils.success('프로필 사진이 변경되었습니다.');
+        setProfileUrl(null);
+        setShowCropModal(false);
+        setSelectedImage(null);
+        setCropArea({ x: 0, y: 0, size: 0 });
+      })
+      .catch((err) => {
+        const msg = getProfileImageErrorMessage(err, '기본 프로필로 변경에 실패했습니다.');
+        alert(msg);
+      })
+      .finally(() => setProfileImageUploading(false));
   };
 
   const handleImageLoad = () => {
@@ -1752,7 +1820,7 @@ function MypagePageContent() {
           onMouseLeave={() => setShowPencilIcon(false)}
         >
           <div className={styles.avatar}>
-              <img src={profileImage || defaultProfileImg.src} alt="" className={`${styles.avatarImg} ${!profileImage ? styles.avatarImgContain : ''}`} />
+              <img src={profileUrl ? profileUrl : defaultProfileImg.src} alt="" className={`${styles.avatarImg} ${!profileUrl ? styles.avatarImgContain : ''}`} />
             </div>
           {showPencilIcon && (
             <button
@@ -2216,7 +2284,7 @@ function MypagePageContent() {
                   const userData = data?.data as UserInfo | undefined;
                   if (userData) {
                     setUser(userData);
-                    setProfileImage(userData.profileImage || null);
+                    setProfileUrl(userData.profileUrl != null && userData.profileUrl !== '' ? userData.profileUrl : null);
                   }
                 } catch (error) {
                   console.error('Failed to refresh pop balance:', error);
@@ -2444,11 +2512,14 @@ function MypagePageContent() {
               )}
             </div>
             <div className={styles.flexGap12End}>
+              <button type="button" onClick={handleSetDefaultProfile} disabled={profileImageUploading} className={`${styles.modalBtnWithIcon} ${styles.modalBtnWithIconDefault}`}>
+                <UserCircle size={18} /> 기본프로필
+              </button>
               <button type="button" onClick={handleCropCancel} className={`${styles.modalBtnWithIcon} ${styles.modalBtnWithIconCancel}`}>
                 <X size={18} /> 취소
               </button>
-              <button type="button" onClick={handleCropConfirm} className={`${styles.modalBtnWithIcon} ${styles.modalBtnWithIconConfirm}`}>
-                <Check size={18} /> 확인
+              <button type="button" onClick={handleCropConfirm} disabled={profileImageUploading} className={`${styles.modalBtnWithIcon} ${styles.modalBtnWithIconConfirm}`}>
+                <Check size={18} /> {profileImageUploading ? '업로드 중…' : '확인'}
               </button>
             </div>
           </div>

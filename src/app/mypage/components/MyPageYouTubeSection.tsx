@@ -19,7 +19,7 @@ interface UserInfo {
   email: string;
   nickname: string;
   phoneNumber: string;
-  profileImage?: string;
+  profileUrl?: string | null;
   credits?: number;
   youtubeConnected?: boolean;
 }

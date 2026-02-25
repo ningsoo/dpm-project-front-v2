@@ -2220,6 +2220,8 @@
   gap: 4px;
   color: #fff;
 }
+.modalBtnWithIconDefault { background: #666; }
+:global(.dark) .modalBtnWithIconDefault { background: #5A5A58; }
 .modalBtnWithIconCancel { background: #999; }
 .modalBtnWithIconConfirm { background: #111; }
 :global(.dark) .modalBtnWithIconConfirm { background: #3A3934; }

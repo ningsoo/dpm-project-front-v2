@@ -411,10 +411,9 @@ export default function PostDetail({ category, boardId }: PostDetailProps) {
         <div className={postDetailStyles.profileCardAvatarWrap}>
           <span className={postDetailStyles.avatar}>
             <img
-              src={post.profileImage || defaultProfileImg.src}
+              src={(post.profileUrl ?? post.profileImage) || defaultProfileImg.src}
               alt=""
-              className={postDetailStyles.avatarImg}
-              style={!post.profileImage ? { objectFit: 'contain' } : undefined}
+              className={`${postDetailStyles.avatarImg} ${!(post.profileUrl ?? post.profileImage) ? postDetailStyles.avatarImgContain : ''}`}
             />
           </span>
         </div>
