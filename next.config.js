@@ -11,18 +11,18 @@ frame-ancestors 'self';
 script-src 'self' 'nonce-NEXT_NONCE' 'strict-dynamic' https://accounts.google.com https://apis.google.com https://ssl.gstatic.com https://js.tosspayments.com;
 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
 font-src 'self' https://fonts.gstatic.com data:;
-img-src 'self' data: blob: https://soundock-dev-uploads.s3.amazonaws.com https://soundock-prod-uploads.s3.amazonaws.com https://i.ytimg.com https://img.youtube.com https://yt3.ggpht.com https://*.googleusercontent.com;
+img-src 'self' data: blob: https://soundock-dev-uploads.s3.amazonaws.com https://soundock-prod-uploads.s3.amazonaws.com https://i.ytimg.com https://img.youtube.com https://yt3.ggpht.com https://*.googleusercontent.com https://*.tosspayments.com https://static.toss.im;
 connect-src 'self' https://api.soundock.live https://www.googleapis.com https://www.google.com https://*.tosspayments.com wss://www.soundock.live;
 frame-src https://*.tosspayments.com https://accounts.google.com https://www.youtube.com https://www.youtube-nocookie.com;
 `;
 
 const devCsp = `
 default-src 'self' http: https:;
-script-src 'self' 'unsafe-inline' 'unsafe-eval' http: https:;
+script-src 'self' 'unsafe-inline' 'unsafe-eval' http: https: https://js.tosspayments.com;
 style-src 'self' 'unsafe-inline' http: https:;
-img-src 'self' data: blob: http: https:;
-connect-src 'self' http: https: ws: wss:;
-frame-src http: https:;
+img-src 'self' data: blob: http: https: https://*.tosspayments.com https://static.toss.im;
+connect-src 'self' http: https: ws: wss: https://*.tosspayments.com;
+frame-src http: https: https://*.tosspayments.com;
 `;
 
 const nextConfig = {

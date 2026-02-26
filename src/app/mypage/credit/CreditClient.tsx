@@ -99,6 +99,7 @@ export default function CreditClient() {
   useEffect(() => {
     if (queryValid !== true) return;
 
+    // 결제창(Standard) SDK용 → "API 개별 연동" 클라이언트 키 필요 (test_ck_... / live_ck_...). 결제위젯 키(gck) 사용 시 오류 발생.
     const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
     if (!clientKey) {
       ToastUtils.error('결제 설정이 누락되었습니다. 관리자에게 문의해주세요.');
@@ -111,14 +112,28 @@ export default function CreditClient() {
     loadTossPayments(clientKey)
       .then((tossPayments) => {
         if (cancelled) return;
+        if (!tossPayments?.payment) {
+          console.error('[POP충전] 토스페이먼츠 인스턴스에 payment가 없음:', tossPayments);
+          ToastUtils.error('결제 모듈 로딩에 실패했습니다. 잠시 후 다시 시도해주세요.');
+          return;
+        }
         const payment = tossPayments.payment({ customerKey: ANONYMOUS });
         paymentRef.current = payment;
         setSdkReady(true);
       })
       .catch((err) => {
         if (!cancelled) {
-          console.error('[POP충전] 토스페이먼츠 SDK 로드 실패:', err);
-          ToastUtils.error('결제 모듈 로딩에 실패했습니다. 잠시 후 다시 시도해주세요.');
+          const msg = err instanceof Error ? err.message : String(err);
+          const name = err instanceof Error ? err.name : '';
+          console.error('[POP충전] 토스페이먼츠 SDK 로드 실패:', name, msg, err);
+          const isWidgetKeyError =
+            /결제위젯 연동 키|API 개별 연동 키/.test(msg) || /지원하지 않습니다/.test(msg);
+          const toastMsg = isWidgetKeyError
+            ? '결제창에는 "API 개별 연동" 클라이언트 키가 필요합니다. 개발자센터에서 test_ck_... 형식 키를 발급해 .env.local의 NEXT_PUBLIC_TOSS_CLIENT_KEY에 넣고 서버를 재시작하세요.'
+            : process.env.NODE_ENV === 'development'
+              ? `결제 모듈 로딩 실패: ${msg}. (.env.local의 NEXT_PUBLIC_TOSS_CLIENT_KEY 확인 후 개발 서버 재시작)`
+              : '결제 모듈 로딩에 실패했습니다. 잠시 후 다시 시도해주세요.';
+          ToastUtils.error(toastMsg);
         }
       });
 
