@@ -62,6 +62,10 @@ export const adminApi = {
   getPenalty: (userId: string) =>
     fetchClient.get<ApiResponse<unknown>>(`${ADMIN_BASE}/reports/penalties/${userId}`),
 
+  /** 정산 요청 내역 조회 (GET /api/adm1n/settlements) - List<AdminSettlementResponse> */
+  getAdminSettlements: () =>
+    fetchClient.get<ApiResponse<AdminSettlementResponse[]>>(`${ADMIN_BASE}/settlements`),
+
   getSettlements: (params?: { page?: number; status?: string }) =>
     fetchClient.get<ApiResponse<unknown>>(`${ADMIN_BASE}/settlements`, { params }),
 
@@ -70,6 +74,14 @@ export const adminApi = {
 
   approveSettlement: (boardId: string, body?: { memo?: string }) =>
     fetchClient.post<ApiResponse<unknown>>(`${ADMIN_BASE}/settlements/${boardId}`, body || {}),
+
+  /** 정산 승인 (POST /settlements/approve/{popHistoryId}) */
+  approveSettlementByPopHistoryId: (popHistoryId: number) =>
+    fetchClient.post<ApiResponse<unknown>>(`${ADMIN_BASE}/settlements/approve/${popHistoryId}`),
+
+  /** 정산 거절 (POST /settlements/reject/{popHistoryId}) */
+  rejectSettlementByPopHistoryId: (popHistoryId: number) =>
+    fetchClient.post<ApiResponse<unknown>>(`${ADMIN_BASE}/settlements/reject/${popHistoryId}`),
 
   /** 공지사항 목록 (GET /api/adm1n/announcement) - Pageable */
   getAnnouncements: (params?: { page?: number; size?: number }) =>
@@ -87,6 +99,17 @@ export const adminApi = {
   updateAnnouncementPriority: (announceId: number, priority: number) =>
     fetchClient.patch<ApiResponse<unknown>>(`${ADMIN_BASE}/announcement/${announceId}`, { data: { priority } }),
 };
+
+/** 정산 요청 내역 단건 (AdminSettlementResponse) */
+export interface AdminSettlementResponse {
+  popHistoryId: number;
+  userId: number;
+  nickName: string;
+  changeAmount: number;
+  requestedDatetime: string | null;
+  approvedDatetime: string | null;
+  popStatus: string;
+}
 
 /** 공지사항 목록 API data.data 구조 */
 export interface AnnouncementItem {

@@ -7,6 +7,8 @@ import {
   fetchSettlements,
   fetchSettlement,
   approveSettlement,
+  approveSettlementByPopHistoryId,
+  rejectSettlementByPopHistoryId,
 } from './settlementsService';
 
 export function useSettlements() {
@@ -19,6 +21,11 @@ export function useSettlements() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [memo, setMemo] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [approvingPopHistoryId, setApprovingPopHistoryId] = useState<number | null>(null);
+  const [rejectingPopHistoryId, setRejectingPopHistoryId] = useState<number | null>(null);
+  /** 한 번의 정산 신청 단위(그룹) 승인/거절 시 해당 그룹 키 */
+  const [approvingGroupKey, setApprovingGroupKey] = useState<string | null>(null);
+  const [rejectingGroupKey, setRejectingGroupKey] = useState<string | null>(null);
 
   const load = useCallback((p: number, st?: string) => {
     setLoading(true);
@@ -62,6 +69,78 @@ export function useSettlements() {
       .finally(() => setSubmitting(false));
   };
 
+  /** 행 단위 정산 승인 (SETTLEMENT_REQUEST → 승인 버튼 클릭, popHistoryId로 호출) */
+  const handleApproveRow = useCallback(
+    (popHistoryId: number) => {
+      if (approvingPopHistoryId != null) return;
+      setApprovingPopHistoryId(popHistoryId);
+      approveSettlementByPopHistoryId(popHistoryId)
+        .then(() => {
+          ToastUtils.success('정산이 승인되었습니다.');
+          load(page, statusFilter);
+        })
+        .catch(() => ToastUtils.error('정산 승인에 실패했습니다.'))
+        .finally(() => setApprovingPopHistoryId(null));
+    },
+    [approvingPopHistoryId, load, page, statusFilter]
+  );
+
+  /** 행 단위 정산 거절 */
+  const handleRejectRow = useCallback(
+    (popHistoryId: number) => {
+      if (rejectingPopHistoryId != null) return;
+      setRejectingPopHistoryId(popHistoryId);
+      rejectSettlementByPopHistoryId(popHistoryId)
+        .then(() => {
+          ToastUtils.success('정산이 거절되었습니다.');
+          load(page, statusFilter);
+        })
+        .catch(() => ToastUtils.error('정산 거절에 실패했습니다.'))
+        .finally(() => setRejectingPopHistoryId(null));
+    },
+    [rejectingPopHistoryId, load, page, statusFilter]
+  );
+
+  /** 한 번의 정산 신청(그룹) 단위 승인 — 해당 그룹의 모든 popHistoryId 순차 승인 */
+  const handleApproveGroup = useCallback(
+    async (groupKey: string, popHistoryIds: number[]) => {
+      if (approvingGroupKey != null || popHistoryIds.length === 0) return;
+      setApprovingGroupKey(groupKey);
+      try {
+        for (const id of popHistoryIds) {
+          await approveSettlementByPopHistoryId(id);
+        }
+        ToastUtils.success('정산이 승인되었습니다.');
+        load(page, statusFilter);
+      } catch {
+        ToastUtils.error('정산 승인에 실패했습니다.');
+      } finally {
+        setApprovingGroupKey(null);
+      }
+    },
+    [approvingGroupKey, load, page, statusFilter]
+  );
+
+  /** 한 번의 정산 신청(그룹) 단위 거절 — 해당 그룹의 모든 popHistoryId 순차 거절 */
+  const handleRejectGroup = useCallback(
+    async (groupKey: string, popHistoryIds: number[]) => {
+      if (rejectingGroupKey != null || popHistoryIds.length === 0) return;
+      setRejectingGroupKey(groupKey);
+      try {
+        for (const id of popHistoryIds) {
+          await rejectSettlementByPopHistoryId(id);
+        }
+        ToastUtils.success('정산이 거절되었습니다.');
+        load(page, statusFilter);
+      } catch {
+        ToastUtils.error('정산 거절에 실패했습니다.');
+      } finally {
+        setRejectingGroupKey(null);
+      }
+    },
+    [rejectingGroupKey, load, page, statusFilter]
+  );
+
   return {
     data,
     page,
@@ -79,5 +158,13 @@ export function useSettlements() {
     load,
     openDetail,
     handleApprove,
+    handleApproveRow,
+    approvingPopHistoryId,
+    handleRejectRow,
+    rejectingPopHistoryId,
+    handleApproveGroup,
+    handleRejectGroup,
+    approvingGroupKey,
+    rejectingGroupKey,
   };
 }

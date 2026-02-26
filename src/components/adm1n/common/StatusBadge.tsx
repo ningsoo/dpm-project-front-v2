@@ -13,6 +13,8 @@ const STATUS_MAP: Record<string, { cls: string; label: string }> = {
   ANSWERED: { cls: styles.statusCompleted, label: '답변완료' },
   WAITING: { cls: styles.statusPending, label: '대기' },
   BANNED: { cls: styles.statusSuspended, label: '차단' },
+  SETTLEMENT_REQUEST: { cls: styles.statusPending, label: '대기' },
+  SETTLEMENT_COMPLETED: { cls: styles.statusCompleted, label: '완료' },
 };
 
 export function StatusBadge({ status }: { status: string }) {

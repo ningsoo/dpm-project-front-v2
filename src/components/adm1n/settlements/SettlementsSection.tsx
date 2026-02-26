@@ -26,7 +26,51 @@ export function SettlementsSection() {
     load,
     openDetail,
     handleApprove,
+    handleApproveGroup,
+    handleRejectGroup,
+    approvingGroupKey,
+    rejectingGroupKey,
   } = useSettlements();
+
+  /** 같은 userId + requestedDatetime = 한 번의 정산 신청 → 그룹화 */
+  const groupedRows = (() => {
+    const list = Array.isArray(data) ? data : [];
+    const keyOf = (s: unknown) => {
+      const uid = get(s, 'userId');
+      const req = get(s, 'requestedDatetime');
+      return `${uid ?? ''}_${str(req ?? '')}`;
+    };
+    const byKey = new Map<string, { rows: unknown[] }>();
+    for (const s of list) {
+      const key = keyOf(s);
+      if (!byKey.has(key)) byKey.set(key, { rows: [] });
+      byKey.get(key)!.rows.push(s);
+    }
+    return Array.from(byKey.entries()).map(([groupKey, { rows }]) => {
+      const first = rows[0] as Record<string, unknown>;
+      const nickName = str(first?.nickName ?? first?.nickname);
+      const totalAmount = rows.reduce(
+        (sum, r) => sum + num(get(r, 'changeAmount') ?? get(r, 'amount')),
+        0
+      );
+      const requestedDt = str(get(first, 'requestedDatetime'));
+      const approvedDt = rows.map((r) => str(get(r, 'approvedDatetime') ?? get(r, 'approvedAt'))).find((d) => d && d !== '-') ?? '-';
+      const popHistoryIds = rows.map((r) => num(get(r, 'popHistoryId'))).filter((id) => Number.isInteger(id));
+      const statuses = rows.map((r) => str(get(r, 'popStatus')).toUpperCase());
+      const isRequest = statuses.some((st) => st === 'SETTLEMENT_REQUEST');
+      const isCompleted = statuses.every((st) => st === 'SETTLEMENT_COMPLETED');
+      return {
+        groupKey,
+        nickName,
+        totalAmount,
+        requestedDatetime: requestedDt,
+        approvedDatetime: approvedDt,
+        popHistoryIds,
+        isRequest,
+        isCompleted,
+      };
+    });
+  })();
 
   return (
     <>
@@ -55,56 +99,70 @@ export function SettlementsSection() {
             <div>No</div>
             <div>사용자</div>
             <div>금액</div>
-            <div>승인날짜</div>
+            <div>신청일</div>
             <div>처리 상태</div>
+            <div>승인 / 완료</div>
           </div>
           {!loading &&
-            data.map((s, i) => (
-              <div
-                key={i}
-                className={`${styles.tableGrid} ${styles.settlementsGrid} ${styles.tableRow}`}
-                role="button"
-                tabIndex={0}
-                aria-label={`정산 상세 보기: ${str(get(s, 'boardTitle') ?? get(s, 'title'))}`}
-                onClick={() => openDetail(str(get(s, 'boardId') ?? get(s, 'id')))}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    openDetail(str(get(s, 'boardId') ?? get(s, 'id')));
-                  }
-                }}
-                className={styles.cursorPointer}
-              >
-                <div className={styles.tableCell}>{page * 10 + i + 1}</div>
-                <div className={styles.tableCell}>
-                  {str(
-                    get(s, 'nickname') ??
-                      get(s, 'authorNickname') ??
-                      get(s, 'boardTitle') ??
-                      get(s, 'title')
-                  )}
+            groupedRows.map((group, i) => {
+              const isApproving = approvingGroupKey === group.groupKey;
+              const isRejecting = rejectingGroupKey === group.groupKey;
+              const canApprove = group.isRequest && group.popHistoryIds.length > 0;
+              return (
+                <div
+                  key={group.groupKey}
+                  className={`${styles.tableGrid} ${styles.settlementsGrid} ${styles.tableRow}`}
+                >
+                  <div className={styles.tableCell}>{i + 1}</div>
+                  <div className={styles.tableCell}>{group.nickName}</div>
+                  <div className={styles.tableCell}>
+                    {group.totalAmount.toLocaleString()}원
+                  </div>
+                  <div className={styles.tableCell}>
+                    {group.isCompleted
+                      ? formatDate(group.approvedDatetime)
+                      : formatDate(group.requestedDatetime)}
+                  </div>
+                  <div className={styles.tableCell}>
+                    {group.isCompleted ? (
+                      <StatusBadge status="COMPLETED" />
+                    ) : (
+                      <StatusBadge status="SETTLEMENT_REQUEST" />
+                    )}
+                  </div>
+                  <div className={styles.tableCell}>
+                    {canApprove && (
+                      <>
+                        <button
+                          type="button"
+                          className={styles.approveBtn}
+                          disabled={isApproving || isRejecting}
+                          onClick={() =>
+                            handleApproveGroup(group.groupKey, group.popHistoryIds)
+                          }
+                        >
+                          {isApproving ? '처리중...' : '승인'}
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.deleteBtn}
+                          disabled={isApproving || isRejecting}
+                          onClick={() =>
+                            handleRejectGroup(group.groupKey, group.popHistoryIds)
+                          }
+                          style={{ marginLeft: 8 }}
+                        >
+                          {isRejecting ? '처리중...' : '거절'}
+                        </button>
+                      </>
+                    )}
+                    {group.isCompleted && <StatusBadge status="COMPLETED" />}
+                  </div>
                 </div>
-                <div className={styles.tableCell}>
-                  {num(get(s, 'amount')).toLocaleString()}원
-                </div>
-                <div className={styles.tableCell}>
-                  {formatDate(
-                    str(
-                      get(s, 'approvedAt') ??
-                        get(s, 'settlementApprovedAt') ??
-                        get(s, 'updatedAt')
-                    )
-                  )}
-                </div>
-                <div className={styles.tableCell}>
-                  <StatusBadge
-                    status={str(get(s, 'settlementStatus') ?? get(s, 'status'))}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
         </div>
-        {!loading && data.length === 0 && (
+        {!loading && groupedRows.length === 0 && (
           <div className={styles.emptyState}>정산 내역이 없습니다.</div>
         )}
         <Pagination
