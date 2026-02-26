@@ -210,11 +210,11 @@ export const authApi = {
   },
 
   /**
-   * GET /api/passwordless/result  query: { userId, sessionId }
+   * POST /api/passwordless/result  body: { userId, sessionId }
    * 200: 래핑 { result, msg, code, data: { auth, userId, hash, accessToken } } 또는 flat. data가 객체면 payload=res.data.data, 아니면 payload=res.data.
    * 실패: 공통 JSON message → throw Error(message) + status
    */
-  async getPasswordlessResult(params: { userId: string; sessionId: string }): Promise<{
+  async postPasswordlessResult(params: { userId: string; sessionId: string }): Promise<{
     auth: string | null;
     userId?: string;
     hash?: string | null;
@@ -222,10 +222,10 @@ export const authApi = {
   }> {
     const { userId, sessionId } = params;
     try {
-      const res = await noAuthClient.get<Record<string, unknown>>('/api/passwordless/result', {
-        params: { userId, sessionId },
-        timeout: 10000,
-      });
+      const res = await noAuthClient.post<Record<string, unknown>>('/api/passwordless/result', {
+        userId,
+        sessionId,
+      }, { timeout: 10000 });
       const raw = res.data as Record<string, unknown> | undefined;
       const payload =
         raw &&
@@ -255,14 +255,13 @@ export const authApi = {
   },
 
   /**
-   * GET /api/passwordless/status  query: { userId } (이메일 문자열)
+   * GET /api/passwordless/status  (@AuthenticationPrincipal → Authorization 헤더로 이메일 추출)
    * 200: 래핑 구조 { result, msg, code, data } 에서 data 값만 반환. data는 { exist: boolean } 또는 legacy boolean.
    * 실패: throw Error(message) + status
    */
-  async getPasswordlessStatus(userId: string): Promise<unknown> {
+  async getPasswordlessStatus(): Promise<unknown> {
     try {
-      const res = await noAuthClient.get<Record<string, unknown>>('/api/passwordless/status', {
-        params: { userId },
+      const res = await fetchClient.get<Record<string, unknown>>('/api/passwordless/status', {
         timeout: 10000,
       });
       const body = res.data as Record<string, unknown> | undefined;
