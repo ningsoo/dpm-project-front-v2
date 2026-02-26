@@ -19,11 +19,6 @@ export async function fetchSettlements(_params?: GetSettlementsParams): Promise<
       totalPages: list.length > 0 ? 1 : 0,
       number: 0,
       totalElements: list.length,
-      size: list.length,
-      numberOfElements: list.length,
-      first: true,
-      last: true,
-      empty: list.length === 0,
     };
   } catch {
     // 백엔드에서 정산 요청 내역 없을 때 예외(ResourceNotFoundException) 시 빈 목록 반환
@@ -32,11 +27,6 @@ export async function fetchSettlements(_params?: GetSettlementsParams): Promise<
       totalPages: 0,
       number: 0,
       totalElements: 0,
-      size: 0,
-      numberOfElements: 0,
-      first: true,
-      last: true,
-      empty: true,
     };
   }
 }

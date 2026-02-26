@@ -196,8 +196,7 @@ export default function AnnouncementDetail({ announceId }: AnnouncementDetailPro
               href={detail.linkUrl!}
               target="_blank"
               rel="noopener noreferrer"
-              className={styles.retryBtn}
-              className={detailStyles.linkNoUnderline}
+              className={`${styles.retryBtn} ${detailStyles.linkNoUnderline}`}
             >
               링크 이동
             </a>

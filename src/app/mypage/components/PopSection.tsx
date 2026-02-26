@@ -828,8 +828,7 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
           <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <h3
               id="pop-cancel-modal-title"
-              className={styles.modalTitle}
-              className={styles.donationTitle}
+              className={`${styles.modalTitle} ${styles.donationTitle}`}
             >
               {cancelTarget.popTarget === 'DONATION' ? '후원 취소 확인' : '게시글 홍보 취소 확인'}
             </h3>
@@ -888,8 +887,7 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
           <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <h3
               id="pop-purchase-cancel-modal-title"
-              className={styles.modalTitle}
-              className={styles.donationTitle}
+              className={`${styles.modalTitle} ${styles.donationTitle}`}
             >
               구매 취소 확인
             </h3>
