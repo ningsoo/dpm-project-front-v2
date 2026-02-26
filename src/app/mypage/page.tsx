@@ -512,7 +512,7 @@ function MypagePageContent() {
       const userId = pwlsRegPollingEmailRef.current;
       if (!userId) return;
       try {
-        const data = await authApi.getPasswordlessStatus(userId);
+        const data = await authApi.getPasswordlessStatus();
         pwlsRegPollingConsecutiveErrorsRef.current = 0;
         if (isRegistered(data)) stopRegPollingAndOpenDone();
       } catch (err) {
