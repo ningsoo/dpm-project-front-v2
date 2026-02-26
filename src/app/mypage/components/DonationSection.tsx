@@ -587,8 +587,7 @@ export function DonationSection({ subTab, onChangeSubTab, onLoadingChange }: Don
           <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
             <h3
               id="donation-cancel-modal-title"
-              className={styles.modalTitle}
-              className={styles.donationTitle}
+              className={`${styles.modalTitle} ${styles.donationTitle}`}
             >
               후원 취소 확인
             </h3>

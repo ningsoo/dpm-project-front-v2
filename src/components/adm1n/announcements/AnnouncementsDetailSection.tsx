@@ -228,8 +228,7 @@ export function AnnouncementsDetailSection({ announceId }: AnnouncementsDetailSe
               href={detail.linkUrl!}
               target="_blank"
               rel="noopener noreferrer"
-              className={styles.retryBtn}
-              className={styles.linkNoUnderline}
+              className={`${styles.retryBtn} ${styles.linkNoUnderline}`}
             >
               링크 이동
             </a>
@@ -243,8 +242,7 @@ export function AnnouncementsDetailSection({ announceId }: AnnouncementsDetailSe
         </Link>
         <Link
           href={`/adm1n/announcements/${detail.announceId}/edit`}
-          className={styles.retryBtn}
-          className={styles.linkNoUnderline}
+          className={`${styles.retryBtn} ${styles.linkNoUnderline}`}
         >
           수정
         </Link>
