@@ -30,6 +30,13 @@ export default function LoginClient() {
   const [loginMode, setLoginMode] = useState<'password' | 'passwordless'>('password');
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [registerDoneModalOpen, setRegisterDoneModalOpen] = useState(false);
+  const [pwlsRegisterLoading, setPwlsRegisterLoading] = useState(false);
+  const [pwlsModalError, setPwlsModalError] = useState('');
+  const [pwlsQrUrl, setPwlsQrUrl] = useState<string | null>(null);
+  const [pwlsServerUrl, setPwlsServerUrl] = useState('');
+  const [pwlsRegisterKey, setPwlsRegisterKey] = useState('');
+  const PWLS_REG_TOTAL_SEC = 60;
+  const [pwlsRemainSec, setPwlsRemainSec] = useState(0);
   const [pwlsCode6, setPwlsCode6] = useState<string | null>(null);
   const [pwlsUserId, setPwlsUserId] = useState('');
   const [pwlsSessionId, setPwlsSessionId] = useState('');
@@ -39,6 +46,7 @@ export default function LoginClient() {
   const emailDebounceRef = useRef<NodeJS.Timeout | null>(null);
   const pwlsPollingRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pwlsLoginTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pwlsRegTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pwlsUserIdRef = useRef('');
   const pwlsSessionIdRef = useRef('');
   const pwlsPollingConsecutiveErrorsRef = useRef(0);
@@ -57,10 +65,19 @@ export default function LoginClient() {
       clearInterval(pwlsLoginTimerRef.current);
       pwlsLoginTimerRef.current = null;
     }
+    if (pwlsRegTimerRef.current) {
+      clearInterval(pwlsRegTimerRef.current);
+      pwlsRegTimerRef.current = null;
+    }
     setPwlsCode6(null);
     setPwlsUserId('');
     setPwlsSessionId('');
     setPwlsLoginRemainSec(0);
+    setPwlsQrUrl(null);
+    setPwlsModalError('');
+    setPwlsServerUrl('');
+    setPwlsRegisterKey('');
+    setPwlsRemainSec(0);
     pwlsUserIdRef.current = '';
     pwlsSessionIdRef.current = '';
     pwlsPollingConsecutiveErrorsRef.current = 0;
@@ -137,6 +154,55 @@ export default function LoginClient() {
       });
     }, 1000);
     pwlsLoginTimerRef.current = id;
+  };
+
+  /** QR 등록 60초 카운트다운 */
+  const startPwlsRegTimer = () => {
+    if (pwlsRegTimerRef.current) {
+      clearInterval(pwlsRegTimerRef.current);
+      pwlsRegTimerRef.current = null;
+    }
+    const id = setInterval(() => {
+      setPwlsRemainSec((prev) => {
+        if (prev <= 1) {
+          clearInterval(id);
+          pwlsRegTimerRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    pwlsRegTimerRef.current = id;
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(
+      () => ToastUtils.info('복사되었습니다'),
+      () => ToastUtils.error('복사에 실패했습니다')
+    );
+  };
+
+  /** Passwordless 설정 모달: QR 발급/재발급 */
+  const requestPwlsQR = async () => {
+    if (!email.trim()) {
+      setPwlsModalError('이메일을 입력하세요');
+      return;
+    }
+    setPwlsRegisterLoading(true);
+    setPwlsModalError('');
+    try {
+      const res = await authApi.postPasswordlessRegister(email.trim());
+      setPwlsQrUrl(res.qrUrl);
+      setPwlsServerUrl(res.serverUrl ?? '');
+      setPwlsRegisterKey(res.registerKey ?? '');
+      setPwlsRemainSec(PWLS_REG_TOTAL_SEC);
+      startPwlsRegTimer();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'QR 발급에 실패했습니다';
+      setPwlsModalError(message);
+    } finally {
+      setPwlsRegisterLoading(false);
+    }
   };
 
   /**
@@ -292,7 +358,7 @@ export default function LoginClient() {
     };
   }, [pwlsCode6, dispatch, searchParams, router]);
 
-  /** 언마운트 시 승인 폴링(timeout) + 로그인 60초 타이머 정리 */
+  /** 언마운트 시 승인 폴링(timeout) + 로그인/등록 60초 타이머 정리 */
   useEffect(() => {
     return () => {
       if (pwlsPollingRef.current) {
@@ -302,6 +368,10 @@ export default function LoginClient() {
       if (pwlsLoginTimerRef.current) {
         clearInterval(pwlsLoginTimerRef.current);
         pwlsLoginTimerRef.current = null;
+      }
+      if (pwlsRegTimerRef.current) {
+        clearInterval(pwlsRegTimerRef.current);
+        pwlsRegTimerRef.current = null;
       }
     };
   }, []);
@@ -667,7 +737,7 @@ export default function LoginClient() {
                     style={
                       !nonce
                         ? {
-                            width: `${pwlsTotalSec > 0 ? (pwlsRemainSec / pwlsTotalSec) * 100 : 0}%`,
+                            width: `${PWLS_REG_TOTAL_SEC > 0 ? (pwlsRemainSec / PWLS_REG_TOTAL_SEC) * 100 : 0}%`,
                           }
                         : undefined
                     }
@@ -739,7 +809,7 @@ export default function LoginClient() {
           dangerouslySetInnerHTML={{
             __html: [
               `.pwls-login-gauge-${baseId}{width:${PWLS_LOGIN_TOTAL_SEC > 0 ? (pwlsLoginRemainSec / PWLS_LOGIN_TOTAL_SEC) * 100 : 0}%;}`,
-              `.pwls-reg-gauge-${baseId}{width:${pwlsTotalSec > 0 ? (pwlsRemainSec / pwlsTotalSec) * 100 : 0}%;}`,
+              `.pwls-reg-gauge-${baseId}{width:${PWLS_REG_TOTAL_SEC > 0 ? (pwlsRemainSec / PWLS_REG_TOTAL_SEC) * 100 : 0}%;}`,
             ].join(''),
           }}
         />
