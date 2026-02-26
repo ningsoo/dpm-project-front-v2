@@ -206,7 +206,7 @@ export default function LoginClient() {
   };
 
   /**
-   * GET /passwordless/result 직렬 폴링. 트리거는 pwlsCode6만. userId/sessionId는 ref만 사용.
+   * POST /passwordless/result 직렬 폴링. 트리거는 pwlsCode6만. userId/sessionId는 ref만 사용.
    * auth=Y 수신 즉시 completedRef=true + clear → 추가 요청 없음. auth=Y인데 토큰 없으면 실패 종료.
    */
   useEffect(() => {
@@ -255,7 +255,7 @@ export default function LoginClient() {
       if (pwlsResultPollingInFlightRef.current) return;
       pwlsResultPollingInFlightRef.current = true;
       try {
-        const res = await authApi.getPasswordlessResult({
+        const res = await authApi.postPasswordlessResult({
           userId: pwlsUserIdRef.current,
           sessionId: pwlsSessionIdRef.current,
         });
