@@ -293,7 +293,7 @@
 .inquiriesGrid   { grid-template-columns: 50px 90px 120px 270px 200px 150px; }         /* 880: No, 닉네임, 유형, 제목, 상세, 처리 상태 */
 .reportsGrid     { grid-template-columns: 50px 110px 270px 110px 340px; }               /* 880 */
 .penaltiesGrid   { grid-template-columns: 50px 170px 330px 170px 160px; }               /* 880 */
-.settlementsGrid { grid-template-columns: 50px 170px 330px 170px 160px; }               /* 880 */
+.settlementsGrid { grid-template-columns: 50px 150px 280px 150px 140px 110px; }        /* 880: No|사용자|금액|승인날짜|처리상태|승인/완료 */
 .cancelRequestsTableWrap {
   width: 100%;
   overflow-x: auto;

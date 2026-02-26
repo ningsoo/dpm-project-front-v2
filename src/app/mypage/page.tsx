@@ -2628,7 +2628,7 @@ function MypagePageContent() {
                             rel="noopener noreferrer"
                             className={styles.inquiryDetailAttachmentLink}
                           >
-                            첨부파일 다운로드
+                            첨부파일 열기
                           </a>
                         )}
                       </span>

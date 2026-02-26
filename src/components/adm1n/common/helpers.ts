@@ -2,7 +2,23 @@ import type { PageResponse } from './types';
 
 export function formatDate(d: string | null | undefined): string {
   if (!d) return '-';
-  return d.slice(0, 10);
+  const s = String(d).trim();
+  if (!s) return '-';
+  // 백엔드가 LocalDateTime을 배열로 보낸 경우 "2025,2,26,..." 형태
+  if (s.includes(',')) {
+    const parts = s.split(',').map((x) => parseInt(x.trim(), 10));
+    const y = parts[0];
+    const m = parts[1];
+    const day = parts[2];
+    if (Number.isFinite(y) && Number.isFinite(m) && Number.isFinite(day)) {
+      return `${y}.${String(m).padStart(2, '0')}.${String(day).padStart(2, '0')}`;
+    }
+  }
+  // ISO 등 "2025-02-26" 형태면 점으로 변환
+  if (s.length >= 10 && s[4] === '-' && s[7] === '-') {
+    return s.slice(0, 10).replace(/-/g, '.');
+  }
+  return s.slice(0, 10);
 }
 
 export function formatDateAndTime(d: string | null | undefined): { date: string; time: string } {
