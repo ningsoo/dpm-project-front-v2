@@ -20,6 +20,15 @@ const INQUIRY_TYPE_OPTIONS: { value: InquiryType; label: string }[] = [
 
 const FILENAME_REGEX = /^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ._-]+$/;
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const ALLOWED_EXTENSIONS = new Set([
+  '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp',
+  '.pdf', '.txt', '.doc', '.docx',
+]);
+
+function getFileExtension(filename: string): string {
+  const parts = filename.toLowerCase().split('.');
+  return parts.length > 1 ? '.' + parts[parts.length - 1] : '';
+}
 
 function countCharsNoWhitespace(str: string): number {
   return str.replace(/\s/g, '').length;
@@ -84,8 +93,9 @@ export default function InquiryPage() {
       const normalizedName = attachment.name.normalize('NFC').trim();
       if (!FILENAME_REGEX.test(normalizedName)) {
         errs.attachment = '파일명에 특수문자나 공백이 포함되어 있습니다.';
-      }
-      if (attachment.size > MAX_FILE_SIZE) {
+      } else if (!ALLOWED_EXTENSIONS.has(getFileExtension(normalizedName))) {
+        errs.attachment = '허용되지 않는 파일 형식입니다. (이미지, PDF, TXT, DOC, DOCX만 가능)';
+      } else if (attachment.size > MAX_FILE_SIZE) {
         errs.attachment = '파일 크기가 20MB를 초과합니다.';
       }
     }
@@ -103,6 +113,13 @@ export default function InquiryPage() {
     const normalizedName = file.name.normalize('NFC').trim();
     if (!FILENAME_REGEX.test(normalizedName)) {
       setErrors((prev) => ({ ...prev, attachment: '파일명에 특수문자나 공백이 포함되어 있습니다.' }));
+      e.target.value = '';
+      setAttachment(null);
+      return;
+    }
+
+    if (!ALLOWED_EXTENSIONS.has(getFileExtension(normalizedName))) {
+      setErrors((prev) => ({ ...prev, attachment: '허용되지 않는 파일 형식입니다. (이미지, PDF, TXT, DOC, DOCX만 가능)' }));
       e.target.value = '';
       setAttachment(null);
       return;
@@ -354,7 +371,7 @@ export default function InquiryPage() {
               <span className={styles.errorMessage}>{errors.attachment}</span>
             )}
             <p className={styles.fileInfo}>
-              ※ 파일명에 특수문자, 공백이 포함되거나 20MB를 초과하는 파일은 업로드할 수 없습니다.
+              ※ 허용 형식: 이미지(JPG, PNG, GIF, WEBP, BMP), PDF, TXT, DOC, DOCX / 최대 20MB / 파일명에 특수문자·공백 불가
             </p>
           </div>
 
