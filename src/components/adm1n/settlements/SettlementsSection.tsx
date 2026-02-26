@@ -119,9 +119,13 @@ export function SettlementsSection() {
                     {group.totalAmount.toLocaleString()}원
                   </div>
                   <div className={styles.tableCell}>
-                    {group.isCompleted
-                      ? formatDate(group.approvedDatetime)
-                      : formatDate(group.requestedDatetime)}
+                    {(() => {
+                      const d =
+                        group.isCompleted
+                          ? formatDate(group.approvedDatetime)
+                          : formatDate(group.requestedDatetime);
+                      return d === '-' ? d : `${d}.`;
+                    })()}
                   </div>
                   <div className={styles.tableCell}>
                     {group.isCompleted ? (
@@ -228,7 +232,10 @@ export function SettlementsSection() {
                   <div className={styles.detailRow}>
                     <span className={styles.detailLabel}>요청일</span>
                     <span className={styles.detailValue}>
-                      {formatDate(str(detail.requestedAt ?? detail.createdAt))}
+                      {(() => {
+                        const d = formatDate(str(detail.requestedAt ?? detail.createdAt));
+                        return d === '-' ? d : `${d}.`;
+                      })()}
                     </span>
                   </div>
 
