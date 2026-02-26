@@ -1,4 +1,5 @@
 import { fetchClient, noAuthClient } from './fetchClient';
+import { tokenUtils } from '@/utils/tokenUtils';
 
 /**
  * Passwordless API 실패 시 메시지 추출.
@@ -109,6 +110,19 @@ export const authApi = {
     userId?: string;
   }> {
     try {
+      // 운영에서 localStorage에 accessToken이 없는 경우(쿠키만 있을 수 있음) refresh로 채운 뒤 요청해 Authorization 포함 보장
+      if (!tokenUtils.getAccessToken()) {
+        try {
+          const refreshRes = await authApi.refresh();
+          const data = refreshRes.data as { data?: { accessToken?: string }; accessToken?: string } | undefined;
+          const accessToken = data?.data?.accessToken ?? data?.accessToken;
+          if (accessToken && typeof accessToken === 'string') {
+            tokenUtils.setAccessToken(accessToken);
+          }
+        } catch {
+          // refresh 실패 시 그대로 진행 → 401 시 사용자에게 로그인 필요 메시지
+        }
+      }
       // 마이페이지 등 로그인 상태에서는 Authorization 필요 → fetchClient 사용 (토큰 자동 첨부)
       const res = await fetchClient.post<Record<string, unknown> & { data?: Record<string, unknown> }>(
         '/api/passwordless/register',
