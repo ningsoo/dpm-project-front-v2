@@ -49,7 +49,7 @@ export function SettlementsSection() {
     return Array.from(byKey.entries()).map(([groupKey, { rows }]) => {
       const first = rows[0] as Record<string, unknown>;
       const nickName = str(first?.nickName ?? first?.nickname);
-      const totalAmount = rows.reduce(
+      const totalAmount = rows.reduce<number>(
         (sum, r) => sum + num(get(r, 'changeAmount') ?? get(r, 'amount')),
         0
       );

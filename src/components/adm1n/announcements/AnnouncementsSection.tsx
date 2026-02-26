@@ -278,8 +278,7 @@ export function AnnouncementsSection() {
           </select>
           <Link
             href={`/adm1n/announcements/write?announceType=${encodeURIComponent(selectedType)}`}
-            className={styles.filterBtn}
-            className={styles.linkNoUnderline}
+            className={`${styles.filterBtn} ${styles.linkNoUnderline}`}
           >
             작성
           </Link>
