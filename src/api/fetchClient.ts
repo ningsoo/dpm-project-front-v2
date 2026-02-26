@@ -22,6 +22,7 @@ fetchClient.interceptors.request.use(config => {
   if (!(config.data instanceof FormData)) {
     config.headers['Content-Type'] = 'application/json';
   }
+  config.headers['X-Requested-With'] = 'XMLHttpRequest';
   return config;
 });
 
@@ -34,6 +35,7 @@ export const noAuthClient = axios.create({
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
   },
   timeout: 10000,
 });
@@ -47,6 +49,7 @@ const refreshClient = axios.create({
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
   },
   timeout: 10000,
 });
