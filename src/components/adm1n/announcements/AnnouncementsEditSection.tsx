@@ -164,7 +164,7 @@ export function AnnouncementsEditSection({ announceId }: AnnouncementsEditSectio
   if (loadingDetail || !initial) {
     return (
       <div className={styles.wrap}>
-        <p style={{ textAlign: 'center', padding: 40 }}>로딩 중…</p>
+        <p className={styles.loadingP}>로딩 중…</p>
       </div>
     );
   }
@@ -207,8 +207,8 @@ export function AnnouncementsEditSection({ announceId }: AnnouncementsEditSectio
           />
         </label>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px 24px', alignItems: 'flex-end', marginBottom: 24 }}>
-          <label className={styles.label} style={{ marginBottom: 0, flex: '1 1 200px' }}>
+        <div className={styles.formRow}>
+          <label className={`${styles.label} ${styles.labelFlex}`}>
             시작일
             <input
               type="datetime-local"
@@ -217,7 +217,7 @@ export function AnnouncementsEditSection({ announceId }: AnnouncementsEditSectio
               className={styles.input}
             />
           </label>
-          <label className={styles.label} style={{ marginBottom: 0, flex: '1 1 200px' }}>
+          <label className={`${styles.label} ${styles.labelFlex}`}>
             종료일
             <input
               type="datetime-local"
@@ -249,7 +249,7 @@ export function AnnouncementsEditSection({ announceId }: AnnouncementsEditSectio
             </button>
           </div>
           {newFiles.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+            <div className={styles.colGap12Mt12}>
               {newFiles.map((file, i) => (
                 <div key={i} className={styles.attachmentPreview}>
                   {isImageFile(file) ? (

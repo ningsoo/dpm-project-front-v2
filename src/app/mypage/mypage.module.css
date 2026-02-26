@@ -42,6 +42,15 @@
   border: 2px solid #fafafa;
 }
 
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: inherit;
+}
+.avatarImgContain { object-fit: contain; }
+
 .profileText {
   flex: 1;
 }
@@ -1855,6 +1864,134 @@
   animation: mypageShimmer 1.5s infinite ease-in-out;
 }
 
+/* 스켈레톤 바 너비 (CSP 인라인 스타일 제거용) */
+.skeletonBarW35 { width: 35%; }
+.skeletonBarW40 { width: 40%; }
+.skeletonBarW45 { width: 45%; }
+.skeletonBarW50 { width: 50%; }
+.skeletonBarW55 { width: 55%; }
+.skeletonBarW60 { width: 60%; }
+.skeletonBarW65 { width: 65%; }
+.skeletonBarW70 { width: 70%; }
+.skeletonBarW75 { width: 75%; }
+.skeletonBarW80 { width: 80%; }
+.skeletonBarW85 { width: 85%; }
+.skeletonBarW90 { width: 90%; }
+.skeletonBarW100 { width: 100%; }
+.skeletonBarInline80 { width: 80px; height: 16px; display: inline-block; }
+.skeletonBarPx80H16 { width: 80px; height: 16px; }
+.skeletonBarPx120H26 { width: 120px; height: 26px; }
+.skeletonBarPx200H16 { width: 200px; height: 16px; }
+.skeletonBarPx140H16 { width: 140px; height: 16px; }
+.skeletonBarPx110H16 { width: 110px; height: 16px; }
+.skeletonBarPx80H40 { width: 80px; height: 40px; border-radius: 8px; }
+.skeletonBarPx100H40 { width: 100%; height: 40px; border-radius: 8px; }
+.skeletonBarW80H16 { width: 80%; height: 16px; }
+
+.overflowXAuto { overflow-x: auto; }
+.searchBarWrap { position: relative; margin-bottom: 16px; width: 33.33%; }
+.dateRow { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; }
+.dateTilde { color: #8A877D; }
+:global(.dark) .dateTilde { color: #8A877D; }
+.searchInput,
+.dateInput {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  color: #333;
+}
+.searchInput { width: 100%; padding-right: 40px; padding-left: 12px; }
+.searchInputIcon {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: #666;
+}
+:global(.dark) .searchInput,
+:global(.dark) .dateInput {
+  border-color: #3A3A38;
+  background: #242422;
+  color: #B5B3A7;
+}
+.filterBtn {
+  padding: 8px 16px;
+  background: #111;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: not-allowed;
+  font-size: 14px;
+}
+:global(.dark) .filterBtn { background: #3A3934; }
+.skeletonCircle { width: 36px; height: 36px; border-radius: 50%; background: #eee; flex-shrink: 0; }
+:global(.dark) .skeletonCircle { background: #3A3A38; }
+.skeletonCardThird { flex: 0 0 calc((100% - 48px) / 3); }
+.skeletonCardThumbH180 { height: 180px; padding-top: 0; }
+.skeletonCardBodyMin80 { min-height: 80px; }
+.skeletonContentRowW100 { width: 100%; }
+.skeletonContentRowW85 { width: 85%; }
+.skeletonContentRowW92 { width: 92%; }
+.flexGap8 { display: flex; gap: 8px; }
+.flexGap8Mb16 { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; }
+.flexBetweenMb16 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.flexGap8Min88 { display: flex; gap: 8px; min-width: 88px; }
+.flexGap24Padding { display: flex; gap: 24px; padding: 4px 4px 8px; }
+.tableHeaderCell { text-align: center; }
+.skeletonTableWrap { overflow-x: auto; }
+.settlementTableHeaderCell { text-align: center; }
+.tableCellCenter { text-align: center; }
+
+.wrapVisible { opacity: 1; transition: opacity 0.35s ease; }
+.wrapHidden { opacity: 0; transition: opacity 0.35s ease; }
+.positionRelative { position: relative; }
+.avatarPencilBtn {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.5);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #fff;
+}
+.inputHidden { display: none; }
+.flexAlignCenterGap8 { display: flex; align-items: center; gap: 8px; }
+.profileLikesRow { display: flex; align-items: center; gap: 4px; font-size: 1rem; color: #666; margin-left: 12px; }
+.displayNone { display: none; }
+.flexGap12Center { display: flex; gap: 12px; justify-content: center; }
+.flexGap12End { display: flex; gap: 12px; justify-content: flex-end; }
+.padding24Center { padding: 24px; text-align: center; color: #666; }
+.padding24FlexCol { padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.mt12 { margin-top: 12px; }
+.skeletonBarW30 { width: 30%; }
+.skeletonBarW40H18 { width: 40%; height: 18px; }
+.skeletonBarPx120H20 { width: 120px; height: 20px; }
+.skeletonBarPx180 { width: 180px; }
+.skeletonBarPx140 { width: 140px; }
+.skeletonContentRowW78 { width: 78%; }
+.skeletonContentRowW88 { width: 88%; }
+.inquiryDetailAlignStart { align-items: flex-start; }
+.preWrap { white-space: pre-wrap; }
+.labelBlock { display: block; margin-bottom: 8px; font-size: 0.95rem; font-weight: 500; color: #333; }
+.modalTitleMb16 { margin: 0 0 16px; }
+.modalTitleMb16Dark { color: #B5B3A7; }
+:global(.dark) .modalTitleMb16Dark { color: #B5B3A7; }
+.modalTitle18 { margin: 0 0 16px; font-size: 18px; }
+:global(.dark) .modalTitle18 { color: #B5B3A7; }
+.skeletonTabW80 { width: 80px; }
+.skeletonTabW64 { width: 64px; }
+.skeletonTabW56 { width: 56px; }
+.skeletonBar16 { width: 16px; height: 16px; }
+
 /* 날짜+시간 2줄 스켈레톤 (donationDateCell과 동일 구조) */
 .skeletonDateCell {
   display: flex;
@@ -2025,6 +2162,119 @@
   animation: mypageShimmer 1.5s infinite ease-in-out;
 }
 
+/* 모달 공통 (신고 취소, 크롭 등) */
+.modalOverlayCenter {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.5);
+}
+.modalOverlayCrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.8);
+}
+.modalCardSmall {
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  max-width: 360px;
+  text-align: center;
+}
+:global(.dark) .modalCardSmall { background: #2E2E2C; }
+.modalCardCrop {
+  padding: 24px;
+  background: #fff;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+}
+:global(.dark) .modalCardCrop { background: #2E2E2C; }
+.modalBtn {
+  padding: 8px 16px;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  background: #111;
+}
+:global(.dark) .modalBtn { background: #3A3934; }
+.modalBtnCancel { background: #999; }
+.modalBtnDanger { background: #A6534F; margin-left: auto; }
+.modalBtnWithIcon {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #fff;
+}
+.modalBtnWithIconDefault { background: #666; }
+:global(.dark) .modalBtnWithIconDefault { background: #5A5A58; }
+.modalBtnWithIconCancel { background: #999; }
+.modalBtnWithIconConfirm { background: #111; }
+:global(.dark) .modalBtnWithIconConfirm { background: #3A3934; }
+.cropPreviewWrap {
+  position: relative;
+  width: 100%;
+  max-height: 400px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #e5e5e5;
+}
+:global(.dark) .cropPreviewWrap { background: #2E2E2C; }
+.cropImg { width: 100%; height: auto; display: block; }
+.cropResizeHandle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  border-right: 2px solid rgba(255,255,255,0.9);
+  border-bottom: 2px solid rgba(255,255,255,0.9);
+  border-radius: 0 0 4px 0;
+  cursor: nwse-resize;
+  box-sizing: border-box;
+}
+.inquiryFilterBtnDisabled {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #b0b0b0;
+  color: #fff;
+  cursor: not-allowed;
+}
+
+.subTabContentVisible { opacity: 1; transition: opacity 150ms ease; }
+.subTabContentHidden { opacity: 0; transition: opacity 150ms ease; }
+.flexColCenter { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.errorBlock { display: block; margin-top: 4px; font-size: 0.875rem; color: #d32f2f; min-height: 20px; }
+.tableCellCenterGridCol { grid-column: 1 / -1; }
+.settlementCellCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  min-height: 40px;
+}
+.donationTitle { font-size: 1.1rem; margin-bottom: 12px; }
+.preLine { white-space: pre-line; }
+.sentinelBlock { min-height: 1px; padding: 8px; }
 /* 패스워드리스 등록 QR 모달 */
 .pwlsQrBox {
   display: flex;

@@ -78,6 +78,10 @@ export const mypageApi = {
   updateProfile: (body: { nickname?: string; phoneNumber?: string }) =>
     fetchClient.patch<ApiResponse<unknown>>('/api/mypage/me', body),
 
+  /** 프로필 이미지 변경 - PATCH /api/mypage/me/profile (multipart/form-data, key: profileImage) */
+  updateProfileImage: (formData: FormData) =>
+    fetchClient.patch<ApiResponse<unknown>>('/api/mypage/me/profile', formData),
+
   getMessages: (params?: { page?: number }) =>
     fetchClient.get<ApiResponse<unknown>>('/api/mypage/messages', { params }),
 

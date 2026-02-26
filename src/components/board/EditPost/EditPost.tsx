@@ -1,17 +1,22 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useId, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '@/store';
 import { setCurrentBoardCategory } from '@/store/slices/uiSlice';
+import { useNonce } from '@/contexts/NonceContext';
 import { boardApi } from '@/api/boardApi';
 import { mypageApi } from '@/api/mypageApi';
 import { ToastUtils } from '@/utils/toastUtils';
 import { extractYouTubeVideoId, getYouTubeThumbnailUrl } from '@/utils/youtubeUtils';
 import { PlaylistSelectModal, type MyPlaylistItem } from '@/components/board/CreatePost/PlaylistSelectModal';
 import styles from '../BoardFormLayout/BoardFormLayout.module.css';
+
+function escapeCssUrl(url: string): string {
+  return url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
 
 interface EditPostProps {
   category: string;
@@ -54,6 +59,8 @@ const COMMUNITY_ALLOWED_EXT = /\.(jpe?g|png|webp|pdf|txt|docx?|zip)$/i;
 export default function EditPost({ category, boardId }: EditPostProps) {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const nonce = useNonce();
+  const baseId = useId().replace(/:/g, '');
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
@@ -604,14 +611,32 @@ export default function EditPost({ category, boardId }: EditPostProps) {
             )}
             {selectedPlaylist && (
               <div className={styles.playlistPreview}>
-                <div
-                  className={styles.playlistPreviewThumb}
-                  style={{
-                    backgroundImage: (selectedPlaylist.thumbnailUrl ?? (selectedPlaylist as { thumbnail_url?: string }).thumbnail_url)
-                      ? `url(${selectedPlaylist.thumbnailUrl ?? (selectedPlaylist as { thumbnail_url?: string }).thumbnail_url})`
-                      : undefined,
-                  }}
-                />
+                {(() => {
+                  const thumbUrl = selectedPlaylist.thumbnailUrl ?? (selectedPlaylist as { thumbnail_url?: string }).thumbnail_url;
+                  const thumbClass = `editpost-preview-thumb-${baseId}`;
+                  const thumbRule =
+                    nonce && thumbUrl
+                      ? `.${thumbClass}{background-image:url('${escapeCssUrl(thumbUrl)}');}`
+                      : '';
+                  return (
+                    <>
+                      <div
+                        className={`${styles.playlistPreviewThumb} ${nonce && thumbUrl ? thumbClass : ''}`}
+                        style={
+                          !nonce && thumbUrl
+                            ? { backgroundImage: `url(${thumbUrl})` }
+                            : undefined
+                        }
+                      />
+                      {nonce && thumbRule && (
+                        <style
+                          nonce={nonce}
+                          dangerouslySetInnerHTML={{ __html: thumbRule }}
+                        />
+                      )}
+                    </>
+                  );
+                })()}
                 <div className={styles.playlistPreviewInfo}>
                   <span className={styles.playlistPreviewTitle}>
                     {selectedPlaylist.title}

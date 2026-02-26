@@ -1,9 +1,14 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useId, useState, useMemo } from 'react';
+import { useNonce } from '@/contexts/NonceContext';
 import type { PlaylistItem } from '@/api/boardTypes';
 import { getYouTubeEmbedUrl } from '@/utils/youtubeUtils';
 import styles from './PlaylistDetailSection.module.css';
+
+function escapeCssUrl(url: string): string {
+  return url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
 
 interface PlaylistDetailSectionProps {
   playlistTitle: string;
@@ -21,6 +26,8 @@ export default function PlaylistDetailSection({
   playlistTitle,
   playlistItems,
 }: PlaylistDetailSectionProps) {
+  const nonce = useNonce();
+  const baseId = useId().replace(/:/g, '');
   const sortedItems = useMemo(() => {
     if (!Array.isArray(playlistItems)) return [];
     return [...playlistItems].sort(
@@ -41,8 +48,22 @@ export default function PlaylistDetailSection({
 
   if (sortedItems.length === 0) return null;
 
+  const thumbRules = sortedItems
+    .map((track, index) => {
+      const thumbUrl = track.thumbnailUrl;
+      if (!nonce || !thumbUrl) return '';
+      return `.pds-thumb-${baseId}-${index}{background-image:url('${escapeCssUrl(thumbUrl)}');}`;
+    })
+    .filter(Boolean);
+
   return (
     <div className={styles.section}>
+      {nonce && thumbRules.length > 0 && (
+        <style
+          nonce={nonce}
+          dangerouslySetInnerHTML={{ __html: thumbRules.join('') }}
+        />
+      )}
       {/* Player Area */}
       <div className={styles.playerWrap}>
         {embedUrl ? (
@@ -69,7 +90,10 @@ export default function PlaylistDetailSection({
 
       {/* Track List */}
       <ul className={styles.trackList}>
-        {sortedItems.map((track, index) => (
+        {sortedItems.map((track, index) => {
+          const thumbClass = `pds-thumb-${baseId}-${index}`;
+          const thumbUrl = track.thumbnailUrl;
+          return (
           <li
             key={track.videoId + String(index)}
             className={`${styles.trackItem} ${currentIndex === index ? styles.active : ''}`}
@@ -77,12 +101,12 @@ export default function PlaylistDetailSection({
           >
             <span className={styles.trackNum}>{index + 1}</span>
             <div
-              className={styles.trackThumb}
-              style={{
-                backgroundImage: track.thumbnailUrl
-                  ? `url(${track.thumbnailUrl})`
-                  : undefined,
-              }}
+              className={`${styles.trackThumb} ${nonce && thumbUrl ? thumbClass : ''}`}
+              style={
+                !nonce && thumbUrl
+                  ? { backgroundImage: `url(${thumbUrl})` }
+                  : undefined
+              }
             />
             <span className={styles.trackTitle}>{track.title || '(제목 없음)'}</span>
             {currentIndex === index && (
@@ -93,7 +117,8 @@ export default function PlaylistDetailSection({
               </div>
             )}
           </li>
-        ))}
+          );
+        })}
       </ul>
     </div>
   );

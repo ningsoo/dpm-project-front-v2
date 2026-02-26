@@ -114,7 +114,7 @@ export default function SpotlightExtendModal({
           <div className={styles.loadingBlock}>내 정보를 불러오는 중…</div>
         ) : (
           <>
-            <div className={styles.balanceRow} style={{ marginBottom: 16 }}>
+            <div className={`${styles.balanceRow} ${styles.balanceRowMb16}`}>
               <p className={styles.balanceText}>
                 현재 잔여 Pop: {Number(remainingPop).toLocaleString('ko-KR')}
               </p>
@@ -132,7 +132,7 @@ export default function SpotlightExtendModal({
               />
               <span className={styles.unit}>POP</span>
             </div>
-            <p className={styles.chargeNotice} style={{ marginTop: 4, marginBottom: 16 }}>
+            <p className={`${styles.chargeNotice} ${styles.chargeNoticeMt4Mb16}`}>
               (최소 1,000 pop)
             </p>
 

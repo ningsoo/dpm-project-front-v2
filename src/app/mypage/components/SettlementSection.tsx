@@ -53,7 +53,7 @@ function formatDateTwoLines(dt?: string): { date: string; time: string } {
 function SettlementDateCell({ dt }: { dt?: string }) {
   const { date, time } = formatDateTwoLines(dt);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+    <div className={styles.flexColCenter}>
       <span>{date}</span>
       {time && <span>{time}</span>}
     </div>
@@ -315,16 +315,6 @@ export function SettlementSection({ user, subTab, onChangeSubTab, onLoadingChang
       .finally(() => setRequestSubmitting(false));
   };
 
-  const centerStyle: React.CSSProperties = {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    textAlign: 'center',
-    width: '100%',
-    height: '100%', // 높이 꽉 채우기
-    minHeight: '40px', // 최소 높이 보장
-  };
-
   return (
     <div className={styles.settlementSection}>
       <div className={styles.settlementSubTabs}>
@@ -342,7 +332,7 @@ export function SettlementSection({ user, subTab, onChangeSubTab, onLoadingChang
         ))}
       </div>
 
-      <div className={styles.settlementInnerContent} style={{ opacity: subTabVisible ? 1 : 0, transition: `opacity ${SUB_TAB_FADE_MS}ms ease` }}>
+      <div className={`${styles.settlementInnerContent} ${subTabVisible ? styles.subTabContentVisible : styles.subTabContentHidden}`}>
         {/* === 1. 정산 내역 탭 === */}
         {displayedSubTab === 'history' && (
           <div>
@@ -352,7 +342,7 @@ export function SettlementSection({ user, subTab, onChangeSubTab, onLoadingChang
                <input type="date" value={historyRange.end} onChange={e=>setHistoryRange(r=>({...r, end:e.target.value}))} max={getTodayDateString()} className={styles.settlementDateInput}/>
                <button className={styles.settlementSearchBtn} onClick={fetchHistory}>조회</button>
             </div>
-            <div style={{ overflowX: 'auto' }}>
+            <div className={styles.overflowXAuto}>
               <div className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableHeader}`}>
                 <div>정산요청일</div>
                 <div>정산승인일</div>
@@ -364,11 +354,11 @@ export function SettlementSection({ user, subTab, onChangeSubTab, onLoadingChang
                 <div className={`${styles.fadeLayer} ${loading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={i} className={`${styles.tableGrid} ${styles.settlementGrid5} ${styles.tableRow}`}>
-                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '65%' }} /></div></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '65%' }} /></div></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '65%' }} /></div>
-                      <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '60%' }} /></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW85}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW65}`} /></div></div>
+                      <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW85}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW65}`} /></div></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW65}`} /></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW65}`} /></div>
+                      <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW60}`} /></div>
                     </div>
                   ))}
                 </div>
@@ -409,7 +399,7 @@ export function SettlementSection({ user, subTab, onChangeSubTab, onLoadingChang
                 <div className={styles.settlementField}>
                   <label>계좌번호</label>
                   <input type="text" value={accountNumber} onChange={handleAccountNumberChange} className={styles.settlementInput} placeholder="파민 뱅크 계좌만 가능합니다" />
-                  <span className={styles.error} style={{ display: 'block', marginTop: 4, fontSize: '0.875rem', color: '#d32f2f', minHeight: '20px' }}>
+                  <span className={`${styles.error} ${styles.errorBlock}`}>
                     {!isAccountNumberTyping && accountNumberError ? accountNumberError : ''}
                   </span>
                 </div>
@@ -450,34 +440,34 @@ export function SettlementSection({ user, subTab, onChangeSubTab, onLoadingChang
             </div>
 
             <div className={styles.settlementRequestTableWrap}>
-              <div style={{ overflowX: 'auto' }}>
+              <div className={styles.overflowXAuto}>
                 <div className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableHeader}`}>
-                  <div style={centerStyle}>후원금액</div>
-                  <div style={centerStyle}>후원승인일</div>
+                  <div className={styles.settlementCellCenter}>후원금액</div>
+                  <div className={styles.settlementCellCenter}>후원승인일</div>
                 </div>
                 <div className={styles.fadeWrap}>
                   <div className={`${styles.fadeLayer} ${availableLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                     {Array.from({ length: 3 }).map((_, i) => (
                       <div key={i} className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
-                        <div className={styles.tableCell} style={centerStyle}><div className={styles.skeletonBar} style={{ width: '40%' }} /></div>
-                        <div className={styles.tableCell} style={centerStyle}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '50%' }} /><div className={styles.skeletonBar} style={{ width: '40%' }} /></div></div>
+                        <div className={`${styles.tableCell} ${styles.settlementCellCenter}`}><div className={`${styles.skeletonBar} ${styles.skeletonBarW40}`} /></div>
+                        <div className={`${styles.tableCell} ${styles.settlementCellCenter}`}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW50}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW40}`} /></div></div>
                       </div>
                     ))}
                   </div>
                   <div className={`${styles.fadeLayer} ${!availableLoading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
                     {availableRows.length === 0 && !availableLoading ? (
                       <div className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
-                        <div className={styles.tableCell} style={{ ...centerStyle, gridColumn: '1 / -1' }}>
+                        <div className={`${styles.tableCell} ${styles.settlementCellCenter} ${styles.tableCellCenterGridCol}`}>
                           내역이 없습니다.
                         </div>
                       </div>
                     ) : (
                       availableRows.map((row, idx) => (
                         <div key={row.transactionId ?? idx} className={`${styles.tableGrid} ${styles.settlementRequestGrid2} ${styles.tableRow}`}>
-                          <div className={styles.tableCell} style={centerStyle}>
+                          <div className={`${styles.tableCell} ${styles.settlementCellCenter}`}>
                             {formatSettlementAmount(typeof row.changeAmount === 'number' ? Math.abs(row.changeAmount) : undefined)}
                           </div>
-                          <div className={styles.tableCell} style={centerStyle}>
+                          <div className={`${styles.tableCell} ${styles.settlementCellCenter}`}>
                             <SettlementDateCell dt={row.approvedDatetime ?? row.createdDatetime} />
                           </div>
                         </div>

@@ -47,8 +47,7 @@ export function Adm1nLayout({ children }: Adm1nLayoutProps) {
 
   return (
     <div
-      className={styles.adminWrap}
-      style={{ opacity: pageReady ? 1 : 0, transition: 'opacity 0.3s ease' }}
+      className={`${styles.adminWrap} ${styles.layoutContent} ${pageReady ? styles.layoutContentVisible : styles.layoutContentHidden}`}
     >
       <Adm1nSidebar />
       <Adm1nHeader />

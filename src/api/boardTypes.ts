@@ -27,8 +27,10 @@ export interface BoardListItem {
   attachmentUrl?: string | null;
   /** 좋아요 여부 (상세 조회 시) */
   liked?: boolean;
-  /** 작성자 프로필 이미지 URL */
+  /** 작성자 프로필 이미지 URL (레거시) */
   profileImage?: string | null;
+  /** 작성자 프로필 이미지 URL (GET /api/boards 응답) */
+  profileUrl?: string | null;
 }
 
 /** 페이지네이션된 게시글 목록 API 응답 data 구조 */

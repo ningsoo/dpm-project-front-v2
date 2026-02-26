@@ -106,7 +106,7 @@ export function MyCommentsSection({ onLoadingChange }: MyCommentsSectionProps = 
   return (
     <div>
       <div className={styles.popTableWrap}>
-        <div style={{ overflowX: 'auto' }}>
+        <div className={styles.overflowXAuto}>
           <div className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableHeader}`}>
             <div>날짜</div>
             <div>게시판</div>
@@ -119,11 +119,11 @@ export function MyCommentsSection({ onLoadingChange }: MyCommentsSectionProps = 
             <div className={`${styles.fadeLayer} ${loading ? styles.fadeLayerVisible : styles.fadeLayerHidden}`}>
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className={`${styles.tableGrid} ${styles.commentsGrid5} ${styles.tableRow}`}>
-                  <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={styles.skeletonBar} style={{ width: '85%' }} /><div className={styles.skeletonBar} style={{ width: '70%' }} /></div></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '75%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '90%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '80%' }} /></div>
-                  <div className={styles.tableCell}><div className={styles.skeletonBar} style={{ width: '45%' }} /></div>
+                  <div className={styles.tableCell}><div className={styles.skeletonDateCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW85}`} /><div className={`${styles.skeletonBar} ${styles.skeletonBarW70}`} /></div></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW75}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW90}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW80}`} /></div>
+                  <div className={styles.tableCell}><div className={`${styles.skeletonBar} ${styles.skeletonBarW45}`} /></div>
                 </div>
               ))}
             </div>

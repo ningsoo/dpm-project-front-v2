@@ -1165,6 +1165,14 @@
   color: #333;
 }
 
+.modalMessageMb12 {
+  margin-bottom: 12px;
+}
+
+.iconBtnCompact {
+  padding: 2px 6px;
+}
+
 .modalButtons {
   display: flex;
   gap: 12px;

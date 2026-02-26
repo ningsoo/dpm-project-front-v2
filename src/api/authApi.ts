@@ -109,10 +109,11 @@ export const authApi = {
     userId?: string;
   }> {
     try {
-      const res = await noAuthClient.post<Record<string, unknown> & { data?: Record<string, unknown> }>(
+      // 마이페이지 등 로그인 상태에서는 Authorization 필요 → fetchClient 사용 (토큰 자동 첨부)
+      const res = await fetchClient.post<Record<string, unknown> & { data?: Record<string, unknown> }>(
         '/api/passwordless/register',
         { email },
-        { timeout: 15000 }
+        { timeout: 65000 }
       );
       const raw = res.data;
       const d =

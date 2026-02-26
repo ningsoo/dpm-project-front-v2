@@ -57,7 +57,7 @@ export default function FailClient() {
       <div className={creditStyles.inner}>
         <h1 className={creditStyles.title}>결제에 실패했습니다</h1>
         {lastAttempt ? (
-          <p style={{ margin: '16px 0', color: '#666' }}>
+          <p className={creditStyles.failMessage}>
             결제가 완료되지 않았습니다.
             <br />
             시도 금액: {lastAttempt.changeAmount.toLocaleString('ko-KR')}원
@@ -71,11 +71,11 @@ export default function FailClient() {
             다시 시도하거나 마이페이지에서 충전을 진행해 주세요.
           </p>
         ) : (
-          <p style={{ margin: '16px 0', color: '#666' }}>
+          <p className={creditStyles.failMessage}>
             결제가 완료되지 않았습니다. 다시 시도하거나 마이페이지에서 충전을 진행해 주세요.
           </p>
         )}
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div className={creditStyles.failActions}>
           <button type="button" className={creditStyles.submitBtn} onClick={handleBack}>
             뒤로가기
           </button>

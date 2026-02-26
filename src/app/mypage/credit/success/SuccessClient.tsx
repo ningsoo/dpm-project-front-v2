@@ -173,8 +173,8 @@ export default function SuccessClient() {
     <div className={creditStyles.wrap}>
       <div className={creditStyles.inner}>
         <h1 className={creditStyles.title}>결제 완료</h1>
-        <section className={`${creditStyles.summaryBox} ${creditStyles.summaryBoxCenter}`} style={{ padding: '20px', lineHeight: 1.6 }}>
-          <p style={{ margin: 0 }}>
+        <section className={`${creditStyles.summaryBox} ${creditStyles.summaryBoxCenter} ${creditStyles.summaryBoxPadded}`}>
+          <p className={creditStyles.summaryParagraph}>
             <span className={styles.successHighlight}>{approvedAt}</span>
             {' '}
             <span className={styles.successHighlight}>{method}</span>

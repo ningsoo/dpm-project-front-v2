@@ -98,10 +98,10 @@ export function InquiriesSection() {
               </button>
               <h3 className={styles.modalTitle}>문의 상세</h3>
               {detailLoading ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                  <div className={styles.skeletonBar} style={{ width: '100%', height: 16 }} />
-                  <div className={styles.skeletonBar} style={{ width: '80%', height: 16 }} />
-                  <div className={styles.skeletonBar} style={{ width: '60%', height: 16 }} />
+                <div className={styles.skeletonCol}>
+                  <div className={`${styles.skeletonBar} ${styles.skeletonBarH16} ${styles.skeletonBarW100}`} />
+                  <div className={`${styles.skeletonBar} ${styles.skeletonBarH16} ${styles.skeletonBarW80}`} />
+                  <div className={`${styles.skeletonBar} ${styles.skeletonBarH16} ${styles.skeletonBarW60}`} />
                 </div>
               ) : detail ? (
                 <>
@@ -129,7 +129,7 @@ export function InquiriesSection() {
                           <img
                             src={str(detail.fileUrl)}
                             alt="첨부 이미지"
-                            style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 4 }}
+                            className={styles.detailImg}
                           />
                         ) : (
                           <a href={str(detail.fileUrl)} target="_blank" rel="noopener noreferrer">
@@ -165,7 +165,7 @@ export function InquiriesSection() {
                     str(detail.commentStatus ?? detail.inquiryStatus ?? detail.status).toUpperCase() !==
                       'COMPLETED' && (
                       <>
-                        <div className={styles.modalField} style={{ marginTop: 16 }}>
+                        <div className={`${styles.modalField} ${styles.modalFieldMt16}`}>
                           <label className={styles.modalLabel}>답변 작성</label>
                           <textarea
                             className={styles.modalTextarea}

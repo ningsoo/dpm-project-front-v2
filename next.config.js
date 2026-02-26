@@ -11,7 +11,7 @@ frame-ancestors 'self';
 script-src 'self' 'nonce-NEXT_NONCE' 'strict-dynamic' https://accounts.google.com https://apis.google.com https://ssl.gstatic.com https://js.tosspayments.com;
 style-src 'self' 'nonce-NEXT_NONCE' https://fonts.googleapis.com;
 font-src 'self' https://fonts.gstatic.com data:;
-img-src 'self' data: https://soundock-dev-uploads.s3.amazonaws.com https://soundock-prod-uploads.s3.amazonaws.com https://i.ytimg.com https://img.youtube.com https://yt3.ggpht.com https://*.googleusercontent.com;
+img-src 'self' data: blob: https://soundock-dev-uploads.s3.amazonaws.com https://soundock-prod-uploads.s3.amazonaws.com https://i.ytimg.com https://img.youtube.com https://yt3.ggpht.com https://*.googleusercontent.com;
 connect-src 'self' https://api.soundock.live https://www.googleapis.com https://www.google.com https://*.tosspayments.com wss://www.soundock.live;
 frame-src https://*.tosspayments.com https://accounts.google.com https://www.youtube.com https://www.youtube-nocookie.com;
 `;
@@ -30,7 +30,7 @@ const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
 
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
+    const backendUrl = process.env.BACKEND_URL;
     return [
       { source: '/api/:path*', destination: `${backendUrl}/api/:path*` },
       { source: '/v1/:path*', destination: `${backendUrl}/v1/:path*` },

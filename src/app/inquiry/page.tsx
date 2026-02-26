@@ -327,7 +327,7 @@ export default function InquiryPage() {
                 ref={fileInputRef}
                 type="file"
                 accept="image/*,.pdf,.txt,.doc,.docx"
-                style={{ display: 'none' }}
+                className={styles.fileInputHidden}
                 onChange={handleFileChange}
               />
               <button

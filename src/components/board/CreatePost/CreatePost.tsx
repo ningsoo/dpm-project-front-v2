@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useId, useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useNonce } from '@/contexts/NonceContext';
 import { boardApi } from '@/api/boardApi';
 import type { BoardCategory } from '@/api/boardApi';
 import { ToastUtils } from '@/utils/toastUtils';
@@ -15,6 +16,10 @@ import {
   type MyPlaylistItem,
 } from './PlaylistSelectModal';
 import styles from '../BoardFormLayout/BoardFormLayout.module.css';
+
+function escapeCssUrl(url: string): string {
+  return url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
 
 function toBoardCategory(category: string): BoardCategory {
   const upper = category.toUpperCase();
@@ -37,6 +42,8 @@ interface CreatePostProps {
 export default function CreatePost({ category, boardId }: CreatePostProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const nonce = useNonce();
+  const baseId = useId().replace(/:/g, '');
   const isEditMode = Boolean(boardId);
 
   const [title, setTitle] = useState('');
@@ -422,14 +429,32 @@ export default function CreatePost({ category, boardId }: CreatePostProps) {
             </button>
             {selectedPlaylist && (
               <div className={styles.playlistPreview}>
-                <div
-                  className={styles.playlistPreviewThumb}
-                  style={{
-                    backgroundImage: selectedPlaylist.thumbnailUrl
-                      ? `url(${selectedPlaylist.thumbnailUrl})`
-                      : undefined,
-                  }}
-                />
+                {(() => {
+                  const thumbUrl = selectedPlaylist.thumbnailUrl;
+                  const thumbClass = `cpost-preview-thumb-${baseId}`;
+                  const thumbRule =
+                    nonce && thumbUrl
+                      ? `.${thumbClass}{background-image:url('${escapeCssUrl(thumbUrl)}');}`
+                      : '';
+                  return (
+                    <>
+                      <div
+                        className={`${styles.playlistPreviewThumb} ${nonce && thumbUrl ? thumbClass : ''}`}
+                        style={
+                          !nonce && thumbUrl
+                            ? { backgroundImage: `url(${thumbUrl})` }
+                            : undefined
+                        }
+                      />
+                      {nonce && thumbRule && (
+                        <style
+                          nonce={nonce}
+                          dangerouslySetInnerHTML={{ __html: thumbRule }}
+                        />
+                      )}
+                    </>
+                  );
+                })()}
                 <div className={styles.playlistPreviewInfo}>
                   <span className={styles.playlistPreviewTitle}>
                     {selectedPlaylist.title}

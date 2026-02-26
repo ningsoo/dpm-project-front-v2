@@ -90,6 +90,10 @@
   object-fit: cover;
 }
 
+.avatarImgContain {
+  object-fit: contain;
+}
+
 
 .author {
   font-size: 2rem;
@@ -578,6 +582,11 @@
   font-size: 1rem;
   color: #333;
 }
+
+.modalMessageMb12 { margin-bottom: 12px; }
+.errorMessage { margin-bottom: 12px; }
+.errorSubtext { margin-bottom: 16px; font-size: 0.9rem; color: #666; }
+.iconBtnDefault { cursor: default; }
 
 .modalButtons {
   display: flex;

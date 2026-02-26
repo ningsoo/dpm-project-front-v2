@@ -17,7 +17,7 @@ interface UserInfo {
   email: string;
   nickname: string;
   phoneNumber: string;
-  profileImage?: string;
+  profileUrl?: string | null;
 }
 
 export default function UpdateProfilePage() {
@@ -195,7 +195,7 @@ export default function UpdateProfilePage() {
 
         <label className={styles.label}>
           닉네임
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div className={styles.flexRowCenter8}>
             <input
               type="text"
               placeholder="특수문자 제외, 10자 이내"
@@ -206,18 +206,13 @@ export default function UpdateProfilePage() {
                 setIsComposing(false);
                 handleNicknameChange(e as any);
               }}
-              className={styles.input}
-              style={{ flex: 1, height: '48px', boxSizing: 'border-box', marginTop: 0 }}
+              className={`${styles.input} ${styles.inputFullHeight}`}
             />
             <button
               type="button"
               onClick={handleNicknameCheck}
               disabled={!nicknameFormatOk}
-              className={styles.actionBtn}
-              style={{
-                background: nicknameFormatOk ? (darkMode ? '#3A3934' : '#111') : '#ccc',
-                cursor: nicknameFormatOk ? 'pointer' : 'not-allowed',
-              }}
+              className={`${styles.actionBtn} ${nicknameFormatOk ? styles.actionBtnReady : styles.actionBtnDisabled}`}
             >
               중복확인
             </button>
@@ -227,17 +222,7 @@ export default function UpdateProfilePage() {
 
         <label className={styles.label}>
           연락처
-          <div
-            className={styles.input}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-start',
-              marginTop: 6,
-              gap: '4px',
-              padding: '12px 14px',
-            }}
-          >
+          <div className={`${styles.input} ${styles.phoneRow}`}>
             <input
               ref={phonePart0Ref}
               type="tel"
@@ -274,10 +259,10 @@ export default function UpdateProfilePage() {
               onKeyDown={(e) => {
                 if (e.key === 'Backspace' && phonePart0.length === 0) e.preventDefault();
               }}
-              style={{ width: '50px', minWidth: '50px', textAlign: 'center', padding: '0 4px', border: 'none', outline: 'none', fontSize: '1rem', fontFamily: 'inherit', background: 'transparent' }}
+              className={styles.phonePart0}
               maxLength={3}
             />
-            <span style={{ width: '8px', flexShrink: 0, textAlign: 'center', color: '#333', fontSize: '1rem' }}>-</span>
+            <span className={styles.phoneDash}>-</span>
             <input
               ref={phonePart1Ref}
               type="tel"
@@ -317,10 +302,10 @@ export default function UpdateProfilePage() {
                   phonePart0Ref.current?.focus();
                 }
               }}
-              style={{ width: '60px', minWidth: '60px', textAlign: 'center', padding: '0 4px', border: 'none', outline: 'none', fontSize: '1rem', fontFamily: 'inherit', background: 'transparent' }}
+              className={styles.phonePart1}
               maxLength={4}
             />
-            <span style={{ width: '8px', flexShrink: 0, textAlign: 'center', color: '#333', fontSize: '1rem' }}>-</span>
+            <span className={styles.phoneDash}>-</span>
             <input
               ref={phonePart2Ref}
               type="tel"
@@ -356,11 +341,11 @@ export default function UpdateProfilePage() {
                   phonePart1Ref.current?.focus();
                 }
               }}
-              style={{ width: '60px', minWidth: '60px', textAlign: 'center', padding: '0 4px', border: 'none', outline: 'none', fontSize: '1rem', fontFamily: 'inherit', background: 'transparent' }}
+              className={styles.phonePart2}
               maxLength={4}
             />
           </div>
-          <div style={{ minHeight: '22px', marginTop: 4 }}>
+          <div className={styles.phoneErrorRow}>
             {phoneChanged &&
             !phoneValidation.ok &&
             (submitAttempted ||
@@ -377,7 +362,7 @@ export default function UpdateProfilePage() {
           {submitting ? '저장 중…' : '수정하기'}
         </button>
 
-        <div style={{ textAlign: 'right', marginTop: 8 }}>
+        <div className={styles.submitRow}>
           <Link href="/mypage/withdraw" className={styles.withdrawLinkNoUnderline}>
             회원 탈퇴
           </Link>
@@ -387,28 +372,12 @@ export default function UpdateProfilePage() {
 
       {showSuccessModal && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0,0,0,0.5)',
-          }}
+          className={styles.modalOverlay}
           role="dialog"
           aria-modal="true"
         >
-          <div
-            style={{
-              padding: 24,
-              background: '#fff',
-              borderRadius: 12,
-              maxWidth: 360,
-              textAlign: 'center',
-            }}
-          >
-            <p style={{ margin: '0 0 16px' }}>정상적으로 수정되었습니다.</p>
+          <div className={styles.modalCardSm}>
+            <p className={styles.modalMessage}>정상적으로 수정되었습니다.</p>
             <button
               type="button"
               className={styles.submit}

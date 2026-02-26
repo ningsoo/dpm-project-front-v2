@@ -473,13 +473,12 @@ export default function CommentSection({
                     <div className={styles.menuWrapper}>
                       <button
                         type="button"
-                        className={styles.iconBtn}
+                        className={`${styles.iconBtn} ${styles.iconBtnCompact}`}
                         onClick={() => {
                           const nextOpen = commentMenuOpen === c.id && commentMenuSource === 'ellipsis' ? null : c.id;
                           setCommentMenuOpen(nextOpen);
                           setCommentMenuSource('ellipsis');
                         }}
-                        style={{ padding: '2px 6px' }}
                       >
                         <MoreVertical size={16} />
                       </button>
@@ -618,7 +617,7 @@ export default function CommentSection({
       {showCommentReportModal && (
         <div className={styles.modalOverlay} role="dialog" aria-modal="true">
           <div className={styles.modalContent}>
-            <p className={styles.modalMessage} style={{ marginBottom: '12px' }}>
+            <p className={`${styles.modalMessage} ${styles.modalMessageMb12}`}>
               신고 사유를 입력해주세요.
             </p>
             <textarea

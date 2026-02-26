@@ -206,6 +206,13 @@
   animation: shimmer 1.5s infinite ease-in-out;
 }
 
+.skeletonCellW40 { width: 40px; }
+.skeletonCellW40pct { width: 40%; }
+.skeletonCellW70 { width: 70px; }
+.skeletonCellW120 { width: 120px; }
+.skeletonCellW80 { width: 80px; }
+.cursorPointer { cursor: pointer; }
+
 /* Dark Mode */
 :global(.dark) .tableWrap {
   background: #242422;

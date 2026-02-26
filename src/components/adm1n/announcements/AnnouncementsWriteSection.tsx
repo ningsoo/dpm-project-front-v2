@@ -145,8 +145,8 @@ export function AnnouncementsWriteSection({ announceType }: AnnouncementsWriteSe
           />
         </label>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px 24px', alignItems: 'flex-end', marginBottom: 24 }}>
-          <label className={styles.label} style={{ marginBottom: 0, flex: '1 1 200px' }}>
+        <div className={styles.formRow}>
+          <label className={`${styles.label} ${styles.labelFlex}`}>
             시작일
             <input
               type="datetime-local"
@@ -155,7 +155,7 @@ export function AnnouncementsWriteSection({ announceType }: AnnouncementsWriteSe
               className={styles.input}
             />
           </label>
-          <label className={styles.label} style={{ marginBottom: 0, flex: '1 1 200px' }}>
+          <label className={`${styles.label} ${styles.labelFlex}`}>
             종료일
             <input
               type="datetime-local"
@@ -187,7 +187,7 @@ export function AnnouncementsWriteSection({ announceType }: AnnouncementsWriteSe
             </button>
           </div>
           {files.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+            <div className={styles.colGap12Mt12}>
               {files.map((file, i) => (
                 <div key={i} className={styles.attachmentPreview}>
                   {isImageFile(file) ? (

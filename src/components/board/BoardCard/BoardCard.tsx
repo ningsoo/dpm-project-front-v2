@@ -14,8 +14,10 @@ export interface BoardCardProps {
   nickname?: string | null;
   /** 탈퇴 여부 (API deleted 필드) */
   deleted?: boolean;
-  /** 작성자 프로필 이미지 URL */
+  /** 작성자 프로필 이미지 URL (profileUrl 우선, 없으면 profileImage) */
   profileImage?: string | null;
+  /** 작성자 프로필 이미지 URL (GET /api/boards 응답) */
+  profileUrl?: string | null;
   likeCount?: number | null;
   viewCount?: number | null;
   /** community/reviews용 번호 (선택) */
@@ -34,6 +36,7 @@ export default function BoardCard({
   nickname,
   deleted,
   profileImage,
+  profileUrl,
   likeCount = 0,
   viewCount = 0,
   displayNumber,
@@ -43,6 +46,7 @@ export default function BoardCard({
 }: BoardCardProps) {
   const likes = Number(likeCount) ?? 0;
   const views = Number(viewCount) ?? 0;
+  const profileImgSrc = profileUrl ?? profileImage;
 
   const content = (
     <>
@@ -50,7 +54,7 @@ export default function BoardCard({
       <div className={styles.cardBody}>
         <div className={styles.cardTitle}>
           {displayNumber != null && (
-            <span style={{ marginRight: 8, fontWeight: 'bold' }}>{displayNumber}.</span>
+            <span className={styles.displayNumber}>{displayNumber}.</span>
           )}
           {title}
         </div>
@@ -58,10 +62,9 @@ export default function BoardCard({
           <div className={styles.authorInfo}>
             <span className={styles.avatar}>
               <img
-                src={profileImage || defaultProfileImg.src}
+                src={profileImgSrc || defaultProfileImg.src}
                 alt=""
-                className={styles.avatarImg}
-                style={!profileImage ? { objectFit: 'contain' } : undefined}
+                className={`${styles.avatarImg} ${!profileImgSrc ? styles.avatarImgContain : ''}`}
               />
             </span>
             <span className={`${styles.author} ${deleted ? 'authorDeleted' : ''}`}>{formatNickname(nickname, deleted)}</span>

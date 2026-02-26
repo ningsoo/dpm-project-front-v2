@@ -127,6 +127,8 @@
   align-items: center;
   justify-content: flex-end;
   flex-shrink: 0;
+  width: 232px;
+  min-width: 232px;
 }
 
 /* data-auth 기반 표시: 새로고침 시 스크립트가 먼저 실행되어 즉시 올바른 아이콘 표시 */

@@ -176,6 +176,10 @@
   text-align: center;
 }
 
+.balanceRowMb16 { margin-bottom: 16px; }
+.chargeNoticeMt4Mb16 { margin-top: 4px; margin-bottom: 16px; }
+.chargeNoticeMt4Mb20 { margin-top: 4px; margin-bottom: 20px; }
+
 /* ===== 에러 ===== */
 
 .submitError {

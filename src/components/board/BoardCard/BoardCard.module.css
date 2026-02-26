@@ -102,6 +102,15 @@
   object-fit: cover;
 }
 
+.avatarImgContain {
+  object-fit: contain;
+}
+
+.displayNumber {
+  margin-right: 8px;
+  font-weight: bold;
+}
+
 .author {
   flex: 1;
   min-width: 0;

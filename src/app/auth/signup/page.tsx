@@ -525,35 +525,35 @@ export default function SignupPage() {
 
         <label className={styles.label}>
           이메일
-          <div style={{ display: 'flex', gap: 8, alignItems: 'stretch' }}>
+          <div className={styles.flexRow8}>
             <input
               type="text"
               inputMode="email"
               placeholder="example@gmail.com"
               value={email}
               onChange={handleEmailChange}
-              className={styles.input}
-              style={{ flex: 1, height: '48px', boxSizing: 'border-box', marginTop: 0 }}
+              className={`${styles.input} ${styles.inputFullHeight}`}
             />
             <button
               type="button"
               onClick={handleVerifyEmail}
               disabled={!emailAvailable || emailVerified || emailVerificationPending || !!errors.email || !!emailHangulError || !!emailFormatError || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)}
-              className={styles.emailVerifyBtn}
-              style={{
-                backgroundColor: emailVerified ? '#4caf50' : emailVerificationPending ? '#999' : (emailAvailable && !errors.email && !emailHangulError && !emailFormatError && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? (darkMode ? '#3A3934' : '#111') : '#ccc'),
-                cursor: emailVerified || emailVerificationPending ? 'not-allowed' : (emailAvailable && !errors.email && !emailHangulError && !emailFormatError && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'pointer' : 'not-allowed'),
-              }}
+              className={`${styles.emailVerifyBtn} ${
+                emailVerified ? styles.emailVerifyBtnDone
+                  : emailVerificationPending ? styles.emailVerifyBtnPending
+                  : (emailAvailable && !errors.email && !emailHangulError && !emailFormatError && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) ? styles.emailVerifyBtnReady
+                  : styles.emailVerifyBtnPending
+              }`}
             >
               {emailVerified ? '인증완료' : emailVerificationPending ? formatCountdown(remainingSec) : '인증하기'}
             </button>
           </div>
-          <div style={{ minHeight: 20, marginTop: 4, fontSize: '0.9rem', lineHeight: 1.4 }}>
+          <div className={styles.messageRow}>
             {errors.email ? <span className={styles.error}>{errors.email}</span> : null}
             {!errors.email && emailHangulError ? <span className={styles.error}>{emailHangulError}</span> : null}
             {!errors.email && !emailHangulError && emailFormatError ? <span className={styles.error}>{emailFormatError}</span> : null}
-            {!errors.email && !emailHangulError && !emailFormatError && emailVerificationTimeoutMessage ? <span style={{ color: '#c62828' }}>{emailVerificationTimeoutMessage}</span> : null}
-            {!errors.email && !emailHangulError && !emailFormatError && !emailVerificationTimeoutMessage && emailVerificationInfoMessage && !emailVerified ? <span style={{ color: '#f57f17', fontSize: '0.9rem', lineHeight: 1.4 }}>{emailVerificationInfoMessage}</span> : null}
+            {!errors.email && !emailHangulError && !emailFormatError && emailVerificationTimeoutMessage ? <span className={styles.textError}>{emailVerificationTimeoutMessage}</span> : null}
+            {!errors.email && !emailHangulError && !emailFormatError && !emailVerificationTimeoutMessage && emailVerificationInfoMessage && !emailVerified ? <span className={styles.textWarning}>{emailVerificationInfoMessage}</span> : null}
           </div>
         </label>
 
@@ -581,13 +581,13 @@ export default function SignupPage() {
               {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          <div style={{ marginTop: 4, fontSize: '0.8rem', lineHeight: 1.5, minHeight: '18px' }}>
+          <div className={styles.pwdHelperRow}>
             {password && (
               <>
                 {pwdErrors.length > 0 ? (
-                  <span style={{ color: '#c62828' }}>{pwdErrors.join(' / ')}</span>
+                  <span className={styles.pwdError}>{pwdErrors.join(' / ')}</span>
                 ) : (
-                  <span style={{ color: '#4caf50' }}>✓ 모든 조건을 만족합니다</span>
+                  <span className={styles.pwdOk}>✓ 모든 조건을 만족합니다</span>
                 )}
               </>
             )}
@@ -636,30 +636,24 @@ export default function SignupPage() {
 
         <label className={styles.label}>
           닉네임
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input
-            type="text"
+          <div className={styles.flexRowCenter8}>
+            <input
+              type="text"
               placeholder="특수문자 제외, 10자 이내"
-            value={nickname}
+              value={nickname}
               onChange={handleNicknameChange}
               onCompositionStart={() => setIsComposing(true)}
               onCompositionEnd={(e) => {
                 setIsComposing(false);
-                // 조합 종료 후 최종 값으로 다시 체크
                 handleNicknameChange(e as any);
               }}
-            className={styles.input}
-              style={{ flex: 1, height: '48px', boxSizing: 'border-box', marginTop: 0 }}
+              className={`${styles.input} ${styles.inputFullHeight}`}
             />
             <button
               type="button"
               onClick={handleNicknameCheck}
               disabled={!nicknameFormatOk}
-              className={styles.actionBtn}
-              style={{
-                background: nicknameFormatOk ? (darkMode ? '#3A3934' : '#111') : '#ccc',
-                cursor: nicknameFormatOk ? 'pointer' : 'not-allowed',
-              }}
+              className={`${styles.actionBtn} ${nicknameFormatOk ? styles.actionBtnReady : styles.actionBtnDisabled}`}
             >
               중복확인
             </button>
@@ -669,17 +663,7 @@ export default function SignupPage() {
 
         <label className={styles.label}>
           연락처
-          <div
-            className={styles.input}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-start',
-              marginTop: 6,
-              gap: '4px',
-              padding: '12px 14px',
-            }}
-          >
+          <div className={`${styles.input} ${styles.phoneRow}`}>
             <input
               ref={phonePart0Ref}
               type="tel"
@@ -716,10 +700,10 @@ export default function SignupPage() {
               onKeyDown={(e) => {
                 if (e.key === 'Backspace' && phonePart0.length === 0) e.preventDefault();
               }}
-              style={{ width: '50px', minWidth: '50px', textAlign: 'center', padding: '0 4px', border: 'none', outline: 'none', fontSize: '1rem', fontFamily: 'inherit', background: 'transparent' }}
+              className={styles.phonePart0}
               maxLength={3}
             />
-            <span style={{ width: '8px', flexShrink: 0, textAlign: 'center', color: '#333', fontSize: '1rem' }}>-</span>
+            <span className={styles.phoneDash}>-</span>
             <input
               ref={phonePart1Ref}
               type="tel"
@@ -759,10 +743,10 @@ export default function SignupPage() {
                   phonePart0Ref.current?.focus();
                 }
               }}
-              style={{ width: '60px', minWidth: '60px', textAlign: 'center', padding: '0 4px', border: 'none', outline: 'none', fontSize: '1rem', fontFamily: 'inherit', background: 'transparent' }}
+              className={styles.phonePart1}
               maxLength={4}
             />
-            <span style={{ width: '8px', flexShrink: 0, textAlign: 'center', color: '#333', fontSize: '1rem' }}>-</span>
+            <span className={styles.phoneDash}>-</span>
             <input
               ref={phonePart2Ref}
               type="tel"
@@ -798,11 +782,11 @@ export default function SignupPage() {
                   phonePart1Ref.current?.focus();
                 }
               }}
-              style={{ width: '60px', minWidth: '60px', textAlign: 'center', padding: '0 4px', border: 'none', outline: 'none', fontSize: '1rem', fontFamily: 'inherit', background: 'transparent' }}
+              className={styles.phonePart2}
               maxLength={4}
             />
           </div>
-          <div style={{ minHeight: '22px', marginTop: 4 }}>
+          <div className={styles.phoneErrorRow}>
             {(submitAttempted || (phoneTouched && phoneComplete)) && phoneErrorUx ? (
               <span className={styles.error}>{phoneErrorUx}</span>
             ) : null}
@@ -820,20 +804,12 @@ export default function SignupPage() {
 
       {showSuccessModal && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0,0,0,0.5)',
-          }}
+          className={styles.modalOverlay}
           role="dialog"
           aria-modal="true"
         >
-          <div style={{ padding: 24, background: '#fff', borderRadius: 12, maxWidth: 480, width: '90%', textAlign: 'center' }}>
-            <p style={{ margin: '0 0 16px' }}>가입이 완료되었습니다.</p>
+          <div className={styles.modalCard}>
+            <p className={styles.modalMessage}>가입이 완료되었습니다.</p>
             <button type="button" className={styles.submit} onClick={handleSuccessModalConfirm}>
               확인
             </button>

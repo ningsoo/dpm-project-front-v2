@@ -25,9 +25,6 @@ import logoImg from '@/assets/site/logo.png';
 import whiteLogoImg from '@/assets/site/whitelogo.png';
 import styles from './Header.module.css';
 
-/** 로그인 시 아이콘 5개 + gap 기준 고정 폭 (레이아웃 밀림 방지) */
-const ACTIONS_WIDTH_PX = 232;
-
 const CATEGORIES = [
   { slug: 'showcase', label: 'Showcase' },
   { slug: 'playlists', label: 'Playlists' },
@@ -151,10 +148,7 @@ export default function Header() {
         })}
       </nav>
 
-      <div
-        className={styles.actions}
-        style={{ width: ACTIONS_WIDTH_PX, minWidth: ACTIONS_WIDTH_PX }}
-      >
+      <div className={styles.actions}>
         <div className={styles.actionsContent}>
           <button type="button" className={styles.iconBtn} onClick={handleDarkMode} aria-label="다크 모드">
             <Moon size={20} />

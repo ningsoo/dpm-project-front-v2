@@ -113,7 +113,7 @@ function Row({
       <div className={styles.tableCell}>
         <Link
           href={`/adm1n/announcements/${item.announceId}`}
-          style={{ color: 'inherit', textDecoration: 'none', width: '100%', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          className={styles.linkReset}
         >
           {item.title ?? '-'}
         </Link>
@@ -146,7 +146,7 @@ function Row({
             e.stopPropagation();
             setMenuOpen((p) => !p);
           }}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex' }}
+          className={styles.iconBtnBare}
         >
           <MoreVertical size={18} />
         </button>
@@ -279,7 +279,7 @@ export function AnnouncementsSection() {
           <Link
             href={`/adm1n/announcements/write?announceType=${encodeURIComponent(selectedType)}`}
             className={styles.filterBtn}
-            style={{ textDecoration: 'none' }}
+            className={styles.linkNoUnderline}
           >
             작성
           </Link>
@@ -298,7 +298,7 @@ export function AnnouncementsSection() {
                     onRequestPriorityChange={handleRequestPriorityChange}
                   />
                 ))}
-                <div ref={sentinelRef} style={{ gridColumn: '1 / -1', height: 1, minHeight: 1 }} aria-hidden />
+                <div ref={sentinelRef} className={styles.sentinel} aria-hidden />
               </>
             )}
           </Adm1nTable>

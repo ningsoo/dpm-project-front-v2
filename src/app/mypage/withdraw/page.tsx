@@ -78,19 +78,10 @@ export default function WithdrawPage() {
     <div className={styles.wrap}>
       <div className={styles.form}>
         <h1 className={styles.h1}>회원 탈퇴</h1>
-        <div
-          style={{
-            marginBottom: 20,
-            padding: 0,
-            fontSize: '0.9rem',
-            lineHeight: 1.6,
-            whiteSpace: 'pre-wrap',
-            textAlign: 'left',
-          }}
-        >
+        <div className={styles.termsBlock}>
           {TERMS}
         </div>
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, justifyContent: 'center' }}>
+        <label className={styles.checkboxLabel}>
           <input
             type="checkbox"
             checked={checked}
@@ -110,34 +101,16 @@ export default function WithdrawPage() {
 
       {showModal && (
         <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 100,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(0,0,0,0.5)',
-          }}
+          className={styles.modalOverlay}
           role="dialog"
           aria-modal="true"
         >
-          <div
-            style={{
-              padding: 24,
-              background: '#fff',
-              borderRadius: 12,
-              maxWidth: 480,
-              width: '90%',
-              textAlign: 'center',
-            }}
-          >
-            <p style={{ margin: '0 0 16px' }}>정말 탈퇴하시겠습니까?</p>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+          <div className={styles.modalCard}>
+            <p className={styles.modalMessage}>정말 탈퇴하시겠습니까?</p>
+            <div className={styles.modalButtons}>
               <button
                 type="button"
-                className={styles.submit}
-                style={{ background: '#999' }}
+                className={`${styles.submit} ${styles.modalBtnSecondary}`}
                 onClick={() => {
                   setShowModal(false);
                   router.push('/mypage');
