@@ -527,7 +527,11 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
       await onPopBalanceRefresh?.();
     } catch (err: unknown) {
       const msg = getErrorMessageFromResponse(err);
-      ToastUtils.error(msg || '취소 요청에 실패했습니다.');
+      if (msg && msg.includes('재화 사용 후 10분 이내인 경우만 환불이 가능합니다.')) {
+        ToastUtils.error('재화 사용 후 10분 이내인 경우만 환불이 가능합니다.');
+      } else {
+        ToastUtils.error(msg || '취소 요청에 실패했습니다.');
+      }
     } finally {
       setCancelSubmitting(false);
     }
@@ -722,6 +726,11 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
                 ) : (
                   filteredUsageList.map((row, idx) => {
                     const usageDatetime = row.requestedDatetime ?? row.createdDatetime;
+                    const rawTarget = String(row.related?.name ?? '-');
+                    const firstLine =
+                      rawTarget.length > 20 ? rawTarget.slice(0, 20) : rawTarget;
+                    const secondLine =
+                      rawTarget.length > 20 ? rawTarget.slice(20) : '';
                     return (
                       <div
                         key={idx}
@@ -729,7 +738,17 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
                       >
                         <div className={styles.tableCell}><PopUsageDateCell dt={usageDatetime} /></div>
                         <div className={styles.tableCell}>{formatAmountWithWon(row.changeAmount)}</div>
-                        <div className={styles.tableCell}>{row.related?.name ?? '-'}</div>
+                        <div className={styles.tableCell}>
+                          {secondLine ? (
+                            <>
+                              {firstLine}
+                              <br />
+                              {secondLine}
+                            </>
+                          ) : (
+                            firstLine
+                          )}
+                        </div>
                         <div className={styles.tableCell}>{mapPopTargetToLabel(row.popTarget)}</div>
                         <div className={styles.tableCell}>
                           <span className={getPopStatusBadgeClass(row.popStatus)}>
