@@ -13,7 +13,7 @@ style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
 font-src 'self' https://fonts.gstatic.com data:;
 img-src 'self' data: blob: https://soundock-dev-uploads.s3.amazonaws.com https://soundock-prod-uploads.s3.amazonaws.com https://i.ytimg.com https://img.youtube.com https://yt3.ggpht.com https://*.googleusercontent.com https://*.tosspayments.com https://static.toss.im;
 connect-src 'self' https://api.soundock.live https://www.googleapis.com https://www.google.com https://*.tosspayments.com wss://www.soundock.live;
-frame-src https://*.tosspayments.com https://accounts.google.com https://www.youtube.com https://www.youtube-nocookie.com;
+frame-src https://*.tosspayments.com https://toss.im https://ui.teledit.com https://accounts.google.com https://www.youtube.com https://www.youtube-nocookie.com;
 `;
 
 const devCsp = `
