@@ -218,7 +218,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
             <div className={ytStyles.skeletonRow}>
               {Array.from({ length: CARDS_PER_VIEW }).map((_, i) => (
                 <div key={i} className={`${styles.skeletonCard} ${ytStyles.skeletonCardFlex}`}>
-                  <div className={styles.skeletonCardThumb} />
+                  <div className={`${styles.skeletonCardThumb} ${ytStyles.skeletonThumbH180}`} />
                   <div className={styles.skeletonCardBody}>
                     <div className={`${styles.skeletonBar} ${ytStyles.skeletonBar80}`} />
                     <div className={`${styles.skeletonBar} ${ytStyles.skeletonBar50}`} />
