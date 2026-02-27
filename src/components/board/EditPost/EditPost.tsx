@@ -88,6 +88,8 @@ export default function EditPost({ category, boardId }: EditPostProps) {
   const originalYoutubeUrl = useRef('');
   const originalPlaylistId = useRef<number | null>(null);
   const originalImageCount = useRef(0);
+  // 이미지 순서 변경 감지를 위한 원본 imageId 배열
+  const originalImageOrder = useRef<number[]>([]);
   const originalAttachmentId = useRef<number | null>(null);
 
   const dragPhotoIndex = useRef<number | null>(null);
@@ -124,6 +126,16 @@ export default function EditPost({ category, boardId }: EditPostProps) {
       if (imageItems.length !== originalImageCount.current) return true;
       if (deletedImageIds.length > 0) return true;
       if (imageItems.some((it) => it.type === 'new')) return true;
+      // 기존 Spotlight 이미지 순서 변경 감지
+      const currentOrder = imageItems.map((it) =>
+        it.type === 'existing' ? it.imageId : 0
+      );
+      if (
+        currentOrder.length === originalImageOrder.current.length &&
+        currentOrder.some((id, idx) => id !== originalImageOrder.current[idx])
+      ) {
+        return true;
+      }
     }
     if (isCommunityOrReviews) {
       if (imageItems.length !== originalImageCount.current) return true;
@@ -131,6 +143,18 @@ export default function EditPost({ category, boardId }: EditPostProps) {
       if (imageItems.some((it) => it.type === 'new')) return true;
       if (communityNewAttachmentFile) return true;
       if (communityDeleteAttachmentIds.length > 0) return true;
+      // 커뮤니티/리뷰가 이미지 모드일 때 순서 변경도 수정으로 판단
+      if (communityLoadMode === 'image') {
+        const currentOrder = imageItems.map((it) =>
+          it.type === 'existing' ? it.imageId : 0
+        );
+        if (
+          currentOrder.length === originalImageOrder.current.length &&
+          currentOrder.some((id, idx) => id !== originalImageOrder.current[idx])
+        ) {
+          return true;
+        }
+      }
     }
     return false;
   })();
@@ -239,6 +263,9 @@ export default function EditPost({ category, boardId }: EditPostProps) {
           setImageItems(items);
           setDeletedImageIds([]);
           originalImageCount.current = items.length;
+          originalImageOrder.current = items.map((it) =>
+            it.type === 'existing' ? it.imageId : 0
+          );
         }
 
         if (cat === 'COMMUNITY' || cat === 'REVIEWS') {
@@ -260,6 +287,9 @@ export default function EditPost({ category, boardId }: EditPostProps) {
             setCommunityExistingAttachment(null);
             setCommunityDeleteAttachmentIds([]);
             originalImageCount.current = items.length;
+            originalImageOrder.current = items.map((it) =>
+              it.type === 'existing' ? it.imageId : 0
+            );
           } else if (attId != null && attName) {
             setCommunityExistingAttachment({
               attachmentId: Number(attId),
@@ -566,6 +596,7 @@ export default function EditPost({ category, boardId }: EditPostProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className={styles.input}
+            maxLength={40}
           />
           {errors.title && <span className={styles.error}>{errors.title}</span>}
         </label>

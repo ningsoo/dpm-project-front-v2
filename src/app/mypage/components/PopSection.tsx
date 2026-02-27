@@ -722,6 +722,11 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
                 ) : (
                   filteredUsageList.map((row, idx) => {
                     const usageDatetime = row.requestedDatetime ?? row.createdDatetime;
+                    const rawTarget = String(row.related?.name ?? '-');
+                    const firstLine =
+                      rawTarget.length > 20 ? rawTarget.slice(0, 20) : rawTarget;
+                    const secondLine =
+                      rawTarget.length > 20 ? rawTarget.slice(20) : '';
                     return (
                       <div
                         key={idx}
@@ -729,7 +734,17 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
                       >
                         <div className={styles.tableCell}><PopUsageDateCell dt={usageDatetime} /></div>
                         <div className={styles.tableCell}>{formatAmountWithWon(row.changeAmount)}</div>
-                        <div className={styles.tableCell}>{row.related?.name ?? '-'}</div>
+                        <div className={styles.tableCell}>
+                          {secondLine ? (
+                            <>
+                              {firstLine}
+                              <br />
+                              {secondLine}
+                            </>
+                          ) : (
+                            firstLine
+                          )}
+                        </div>
                         <div className={styles.tableCell}>{mapPopTargetToLabel(row.popTarget)}</div>
                         <div className={styles.tableCell}>
                           <span className={getPopStatusBadgeClass(row.popStatus)}>
