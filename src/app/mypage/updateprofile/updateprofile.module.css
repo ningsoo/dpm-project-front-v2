@@ -7,3 +7,9 @@
   content: none !important;
   display: none !important;
 }
+
+/* 회원가입과 동일한 입력/버튼 영역 너비 */
+.formWrap {
+  width: 100%;
+  max-width: 400px;
+}

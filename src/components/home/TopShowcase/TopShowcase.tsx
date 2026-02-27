@@ -15,10 +15,13 @@ import YouTubeHoverThumbnail from '@/components/board/YouTubeHoverThumbnail';
 import { BoardCard } from '@/components/board/BoardCard';
 import styles from './TopShowcase.module.css';
 
+const PLACEHOLDER_COUNT = 8;
+
 export default function TopShowcase() {
   const router = useRouter();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
   const [posts, setPosts] = useState<BoardListItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     boardApi
@@ -27,8 +30,25 @@ export default function TopShowcase() {
         const list = extractBoardListFromResponse(data);
         setPosts(list.slice(0, 8));
       })
-      .catch(() => setPosts([]));
+      .catch(() => setPosts([]))
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) {
+    return (
+      <section className={`${styles.section} ${darkMode ? 'dark' : ''}`}>
+        <h2 className={styles.title}>TOP Showcase</h2>
+        <div className={styles.grid}>
+          {Array.from({ length: PLACEHOLDER_COUNT }, (_, i) => (
+            <div key={i} className={styles.placeholderCell} aria-hidden>
+              <div className={styles.placeholderThumb} />
+              <div className={styles.placeholderBody} />
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
 
   if (posts.length === 0) return null;
 

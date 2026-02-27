@@ -2,13 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { Plus, X, Check, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
+import { fetchClient } from '@/api/fetchClient';
 import { ToastUtils } from '@/utils/toastUtils';
-import { tokenUtils } from '@/utils/tokenUtils';
-import { checkAuth } from '@/store/slices/authSlice';
 import { YouTubePlaylistModal } from '../YouTubePlaylistModal';
 import { PlaylistDetailModal } from '../PlaylistDetailModal';
 import styles from '../mypage.module.css';
@@ -44,7 +43,6 @@ const CARD_GAP = 24;
 
 export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }: MyPageYouTubeSectionProps) {
   const searchParams = useSearchParams();
-  const dispatch = useDispatch();
   const darkMode = useSelector((s: RootState) => s.ui.darkMode);
 
   const [showYouTubePlaylistModal, setShowYouTubePlaylistModal] = useState(false);
@@ -60,19 +58,12 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
   const slideNext = () => setSliderIndex((prev) => Math.min(prev + 1, maxSliderIndex));
   const slidePrev = () => setSliderIndex((prev) => Math.max(prev - 1, 0));
 
-  // OAuth 리다이렉트 처리 (토큰 저장 + URL 정리 + 결과 알림)
+  // OAuth 리다이렉트 처리 (URL 정리 + 결과 알림)
   useEffect(() => {
-    const token = searchParams.get('token');
     const success = searchParams.get('success');
     const error = searchParams.get('error');
 
-    if (!token && !success && !error) return;
-
-    if (token) {
-      tokenUtils.setAccessToken(token);
-      dispatch(checkAuth());
-      console.log('[MyPage] OAuth token saved');
-    }
+    if (!success && !error) return;
 
     window.history.replaceState({}, '', '/mypage');
 
@@ -83,7 +74,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
     } else if (success === 'false') {
       setOauthResultModal({ type: 'error', message: '유튜브 연동에 실패했습니다. 다시 시도해주세요.' });
     }
-  }, [searchParams, dispatch]);
+  }, [searchParams]);
 
   // 플레이리스트 데이터 로드 (유튜브 연동된 경우에만)
   useEffect(() => {
@@ -149,10 +140,14 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
             <button
               type="button"
               disabled={!user?.email}
-              onClick={() => {
+              onClick={async () => {
                 if (!user?.email) return;
-                const encodedEmail = encodeURIComponent(user.email);
-                window.location.href = `/oauth2/authorization/google?email=${encodedEmail}`;
+                try {
+                  await fetchClient.get('/api/oauth/prepare-link');
+                  window.location.href = '/oauth2/authorization/google';
+                } catch {
+                  ToastUtils.error('Google 연동 준비에 실패했습니다. 다시 시도해주세요.');
+                }
               }}
               className={ytStyles.placeholderBtn}
             >
@@ -218,7 +213,7 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
             <div className={ytStyles.skeletonRow}>
               {Array.from({ length: CARDS_PER_VIEW }).map((_, i) => (
                 <div key={i} className={`${styles.skeletonCard} ${ytStyles.skeletonCardFlex}`}>
-                  <div className={styles.skeletonCardThumb} />
+                  <div className={`${styles.skeletonCardThumb} ${ytStyles.skeletonThumbH180}`} />
                   <div className={styles.skeletonCardBody}>
                     <div className={`${styles.skeletonBar} ${ytStyles.skeletonBar80}`} />
                     <div className={`${styles.skeletonBar} ${ytStyles.skeletonBar50}`} />

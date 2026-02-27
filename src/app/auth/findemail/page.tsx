@@ -28,7 +28,7 @@ export default function FindEmailPage() {
 
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [foundEmail, setFoundEmail] = useState('');
+  const [foundEmails, setFoundEmails] = useState<string[]>([]);
   const [successMessage, setSuccessMessage] = useState('');
 
   const phoneComplete =
@@ -94,9 +94,15 @@ export default function FindEmailPage() {
     try {
       const { data } = await authApi.findEmail(trimmedName, phoneNumber);
       if (data?.success && data?.data?.email) {
-        setSuccessMessage(data.message ?? '');
-        setFoundEmail(data.data.email);
-        setShowModal(true);
+        const emailField = data.data.email;
+        const emails = Array.isArray(emailField) ? emailField : [emailField];
+        if (emails.length > 0) {
+          setSuccessMessage(data.message ?? '');
+          setFoundEmails(emails);
+          setShowModal(true);
+        } else {
+          ToastUtils.error(data?.message ?? '일치하는 회원 정보를 찾을 수 없습니다.');
+        }
       } else {
         ToastUtils.error(data?.message ?? '일치하는 회원 정보를 찾을 수 없습니다.');
       }
@@ -111,7 +117,7 @@ export default function FindEmailPage() {
 
   const handleModalConfirm = () => {
     setShowModal(false);
-    setFoundEmail('');
+    setFoundEmails([]);
     setSuccessMessage('');
     router.push('/auth/login');
   };
@@ -279,7 +285,7 @@ export default function FindEmailPage() {
         </div>
       </form>
 
-      {showModal && foundEmail && (
+      {showModal && foundEmails.length > 0 && (
         <div
           className={styles.modalOverlay}
           role="dialog"
@@ -294,7 +300,12 @@ export default function FindEmailPage() {
               {successMessage}
             </p>
             <p className={styles.findEmailModalP}>
-              <strong className={styles.findEmailStrong}>{foundEmail}</strong>
+              {foundEmails.map((email, index) => (
+                <span key={`${email}-${index}`}>
+                  <strong className={styles.findEmailStrong}>{email}</strong>
+                  {index < foundEmails.length - 1 && <br />}
+                </span>
+              ))}
             </p>
             <p className={styles.findEmailModalPLast}>
               확인 클릭시 로그인 페이지로 이동합니다.

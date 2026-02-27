@@ -30,6 +30,39 @@
   margin: 0 auto;
 }
 
+/* 로딩 중 그리드 높이 확보용 플레이스홀더 — 실제 카드와 동일한 비율/구조 */
+.placeholderCell {
+  display: block;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+:global(.dark) .placeholderCell {
+  background: #242422;
+}
+
+.placeholderThumb {
+  display: block;
+  width: 100%;
+  padding-top: 56.25%;
+  background: #eee;
+}
+
+:global(.dark) .placeholderThumb {
+  background: #2E2E2C;
+}
+
+.placeholderBody {
+  padding: 12px;
+  min-height: 48px;
+  background: #fff;
+}
+
+:global(.dark) .placeholderBody {
+  background: #242422;
+}
+
 .card {
   background: #fff;
   border-radius: 12px;

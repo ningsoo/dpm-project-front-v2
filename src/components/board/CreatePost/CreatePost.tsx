@@ -223,6 +223,15 @@ export default function CreatePost({ category, boardId }: CreatePostProps) {
       ToastUtils.error('제목과 내용을 입력해주세요.');
       return;
     }
+    // 2. 제목 길이: 1~40자
+    if (trimmedTitle.length > 40) {
+      setErrors((prev) => ({
+        ...prev,
+        title: '제목은 1~40자로 입력해주세요.',
+      }));
+      ToastUtils.error('제목은 1~40자로 입력해주세요.');
+      return;
+    }
     setErrors({});
     setLoading(true);
 
@@ -367,12 +376,14 @@ export default function CreatePost({ category, boardId }: CreatePostProps) {
       <form onSubmit={handleSubmit}>
         {/* 제목 */}
         <label className={styles.label}>
-          제목
+          제목 (1~40자)
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className={styles.input}
+            maxLength={40}
           />
+          {errors.title && <span className={styles.error}>{errors.title}</span>}
         </label>
 
         {/* 내용 */}
