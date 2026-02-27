@@ -70,9 +70,9 @@ export const authApi = {
   refresh: () =>
     fetchClient.post<ApiResponse<{ accessToken?: string }>>('/api/auth/refresh', {}),
 
-  /** 이름·연락처로 가입 이메일 조회. 성공 시 data.email 반환 */
+  /** 이름·연락처로 가입 이메일 조회. 성공 시 data.email(단일 또는 배열) 반환 */
   findEmail: (name: string, phoneNumber: string) =>
-    fetchClient.post<ApiResponse<{ email: string }>>('/api/auth/find-email', { name, phoneNumber }, { timeout: 30000 }),
+    fetchClient.post<ApiResponse<{ email: string | string[] }>>('/api/auth/find-email', { name, phoneNumber }, { timeout: 30000 }),
 
   /** 비밀번호 찾기 인증 메일 발송 (6자리 인증번호 발송). 1분 이내 재요청 시 400 */
   findPassword: (email: string) =>

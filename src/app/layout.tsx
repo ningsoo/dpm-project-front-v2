@@ -13,6 +13,11 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'SOUNDOCK',
   description: 'Share your creative works and music playlists',
+  icons: {
+    icon: '/site-assets/favicon.png',
+    shortcut: '/site-assets/favicon.png',
+    apple: '/site-assets/favicon.png',
+  },
 };
 
 const themeScript = `
