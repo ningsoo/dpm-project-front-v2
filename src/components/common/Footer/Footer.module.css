@@ -79,11 +79,11 @@
 }
 
 .label {
-  color: #777;
+  color: #555;
 }
 
 :global(html.dark) .label {
-  color: #8a877d;
+  color: #b5b3a7;
 }
 
 .value {
