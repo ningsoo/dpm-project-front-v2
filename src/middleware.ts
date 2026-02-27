@@ -11,6 +11,8 @@ function buildProductionCsp(
 ): string {
   const frameSrc = [
     "https://*.tosspayments.com",
+    "https://toss.im",
+    "https://ui.teledit.com",
     "https://accounts.google.com",
     "https://www.youtube.com",
     "https://www.youtube-nocookie.com",
