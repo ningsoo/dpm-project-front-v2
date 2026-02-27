@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Plus, X, Check, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { RootState } from '@/store';
 import { mypageApi } from '@/api/mypageApi';
+import { fetchClient } from '@/api/fetchClient';
 import { ToastUtils } from '@/utils/toastUtils';
 import { tokenUtils } from '@/utils/tokenUtils';
 import { checkAuth } from '@/store/slices/authSlice';
@@ -149,10 +150,14 @@ export function MyPageYouTubeSection({ user, isAuthenticated, onLoadingChange }:
             <button
               type="button"
               disabled={!user?.email}
-              onClick={() => {
+              onClick={async () => {
                 if (!user?.email) return;
-                const encodedEmail = encodeURIComponent(user.email);
-                window.location.href = `/oauth2/authorization/google?email=${encodedEmail}`;
+                try {
+                  await fetchClient.get('/api/oauth/prepare-link');
+                  window.location.href = '/oauth2/authorization/google';
+                } catch {
+                  ToastUtils.error('Google 연동 준비에 실패했습니다. 다시 시도해주세요.');
+                }
               }}
               className={ytStyles.placeholderBtn}
             >
