@@ -9,6 +9,5 @@
 
 export const SITE_LOGO_PATH = '/site-assets/logo.png';
 export const SITE_LOGO_DARK_PATH = '/site-assets/logo-dark.png';
-export const FAVICON_PATH = '/favicon.ico';
 
 export { PopIcon } from './PopIcon';
