@@ -527,7 +527,11 @@ function PopSection({ user, subTab, onChangeSubTab, onPopBalanceRefresh, onCharg
       await onPopBalanceRefresh?.();
     } catch (err: unknown) {
       const msg = getErrorMessageFromResponse(err);
-      ToastUtils.error(msg || '취소 요청에 실패했습니다.');
+      if (msg && msg.includes('재화 사용 후 10분 이내인 경우만 환불이 가능합니다.')) {
+        ToastUtils.error('재화 사용 후 10분 이내인 경우만 환불이 가능합니다.');
+      } else {
+        ToastUtils.error(msg || '취소 요청에 실패했습니다.');
+      }
     } finally {
       setCancelSubmitting(false);
     }
