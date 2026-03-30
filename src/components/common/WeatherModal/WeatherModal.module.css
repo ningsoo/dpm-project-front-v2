@@ -1,0 +1,287 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.65);
+  transition: background 0.28s ease;
+}
+
+.overlayClosed {
+  background: rgba(0, 0, 0, 0);
+}
+
+.overlayOpen {
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.card {
+  position: relative;
+  padding: 32px;
+  background: #fff;
+  border-radius: 16px;
+  width: 420px;
+  max-width: 90vw;
+  /* city 버튼 + 구분선 + 결과 영역이 모두 들어가도록 고정 min-height */
+  min-height: 370px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.18);
+  flex-shrink: 0;
+}
+
+.cardClosed {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: transform 0.2s ease-in, opacity 0.2s ease-in;
+}
+
+.cardOpen {
+  opacity: 1;
+  transform: scale(1);
+  transition: transform 0.25s cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 0.25s ease-out;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 6px;
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeBtn:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.title {
+  margin: 0 0 24px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* 안내 문구 */
+.guideText {
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+  color: #888;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* 도시 버튼 grid */
+.cityGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.cityBtn {
+  background: #f5f5f5;
+  color: #666;
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 10px 4px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cityBtn:hover {
+  background: #eee;
+  color: #333;
+}
+
+.cityBtnActive {
+  background: #111;
+  color: #fff;
+}
+
+.cityDivider {
+  margin-top: 18px;
+  border-top: 1px solid #eee;
+}
+
+/* 결과 영역: 상태가 바뀌어도 높이 고정 */
+.resultArea {
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.resultCentered {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 12px;
+  font-size: 0.9rem;
+  color: #aaa;
+  font-weight: 600;
+}
+
+.resultLoading {
+  color: #888;
+}
+
+.resultError {
+  color: #888;
+}
+
+.resultSuccess {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.resultTop {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.resultCity {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.resultLabel {
+  font-size: 0.85rem;
+  color: #999;
+  font-weight: 600;
+}
+
+.resultValue {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.resultBottom {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.messageText {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #333;
+  white-space: pre-wrap;
+}
+
+/* 온도/습도 등급 이중 원 아이콘 */
+.humidityIconOuter {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.humidityIconInner {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.humidityIconSymbol {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+/* 다크모드 */
+:global(.dark) .card {
+  background: #2e2e2c;
+}
+
+:global(.dark) .title {
+  color: #e8e6dc;
+}
+
+:global(.dark) .closeBtn:hover {
+  background: #3a3a38;
+  color: #b5b3a7;
+}
+
+:global(.dark) .guideText {
+  color: #8a877d;
+}
+
+:global(.dark) .cityBtn {
+  background: #3a3a38;
+  color: #a19e94;
+}
+
+:global(.dark) .cityBtn:hover {
+  background: #4a4a48;
+  color: #b5b3a7;
+}
+
+:global(.dark) .cityBtnActive {
+  background: #3a3934;
+  color: #e8e6dc;
+}
+
+:global(.dark) .cityDivider {
+  border-top-color: #3a3a38;
+}
+
+:global(.dark) .resultCentered {
+  color: #8a877d;
+}
+
+:global(.dark) .resultLoading {
+  color: #8a877d;
+}
+
+:global(.dark) .resultError {
+  color: #8a877d;
+}
+
+:global(.dark) .resultCity,
+:global(.dark) .resultValue {
+  color: #e8e6dc;
+}
+
+:global(.dark) .resultLabel {
+  color: #8a877d;
+}
+
+:global(.dark) .resultBottom {
+  border-top-color: #3a3a38;
+}
+
+:global(.dark) .messageText {
+  color: #b5b3a7;
+}
+
