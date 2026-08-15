@@ -118,6 +118,10 @@ SOUNDOCK is a platform where users can share their creative works (YouTube links
 - `POST /api/mypage/message/send/{userId}` - Send message
 - `DELETE /api/mypage/messages/{messageId}` - Delete message
 
+### Weather
+
+- `GET /api/weather/info?Region={REGION_ENUM}` - Get current humidity + instrument care guidance by selected region (login not required)
+
 ### Currency & Donations
 
 - `POST /api/mypage/credit/charge/request` - Request credit purchase
@@ -183,12 +187,14 @@ SOUNDOCK is a platform where users can share their creative works (YouTube links
 **Center**: Board category menu (Showcase, Playlists, Spotlight, Community, Reviews)
 
 **Right (Logged In)**:
+- Weather guide button (droplets icon) → Open "내 악기 관리 가이드" modal → Select one of 10 cities to fetch current humidity + show care message (login not required)
 - Dark mode button (crescent moon icon) → Toggle dark mode for entire page
 - Message box button (envelope icon) → Open message modal
 - My page icon (person icon) → Navigate to my page
 - Logout icon (exit door icon) → Show "Logged out" toast → Logout → Navigate to main
 
 **Right (Not Logged In)**:
+- Weather guide button (droplets icon) → Open "내 악기 관리 가이드" modal → Select one of 10 cities to fetch current humidity + show care message (login not required)
 - Dark mode button (crescent moon icon) → Toggle dark mode for entire page
 - Login button (enter door icon) → Navigate to login page
 

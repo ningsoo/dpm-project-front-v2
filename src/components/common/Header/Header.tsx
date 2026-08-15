@@ -5,10 +5,11 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from 'react-redux';
-import { Moon, User, LogIn, LogOut } from 'lucide-react';
+import { Droplets, LogIn, Moon, LogOut, User } from 'lucide-react';
 import { MailIcon } from '@/assets/site/MailIcon';
 import { NotificationIcon } from '@/assets/site/NotificationIcon';
 import MessageListModal from '@/components/common/MessageListModal/MessageListModal';
+import WeatherModal from '@/components/common/WeatherModal/WeatherModal';
 import NotificationDropdown from '@/components/common/NotificationDropdown/NotificationDropdown';
 import { messageApi } from '@/api/messageApi';
 import { notificationApi } from '@/api/notificationApi';
@@ -48,14 +49,23 @@ export default function Header() {
 
   const [showMessageListModal, setShowMessageListModal] = useState(false);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const [isWeatherModalOpen, setIsWeatherModalOpen] = useState(false);
   const messageBtnRef = useRef<HTMLButtonElement>(null);
   const notificationBtnRef = useRef<HTMLButtonElement>(null);
+  const dropletsBtnRef = useRef<HTMLButtonElement>(null);
   const currentBoardCategory = useSelector((s: RootState) => s.ui.currentBoardCategory);
 
   /* 로그인/로그아웃 시 data-auth 동기화 (CSS 표시 제어용) */
   useEffect(() => {
     if (typeof document === 'undefined') return;
     document.documentElement.setAttribute('data-auth', isAuthenticated ? 'true' : 'false');
+  }, [isAuthenticated]);
+
+  // 로그인 상태 전환 시 열린 UI가 남지 않도록 정리
+  useEffect(() => {
+    setShowNotificationDropdown(false);
+    setShowMessageListModal(false);
+    setIsWeatherModalOpen(false);
   }, [isAuthenticated]);
 
   /* 로그인 시에만 unread 메시지/알림 개수 조회 (중복 호출 방지: isAuthenticated true일 때 1회) */
@@ -150,25 +160,55 @@ export default function Header() {
 
       <div className={styles.actions}>
         <div className={styles.actionsContent}>
-          <button type="button" className={styles.iconBtn} onClick={handleDarkMode} aria-label="다크 모드">
+          {/* droplets: 항상 가장 왼쪽(아이콘 그룹의 첫 번째) */}
+          <div className={styles.msgWrapper}>
+            <button
+              ref={dropletsBtnRef}
+              type="button"
+              className={styles.iconBtn}
+              onClick={() => {
+                setShowMessageListModal(false);
+                setShowNotificationDropdown(false);
+                setIsWeatherModalOpen(true);
+              }}
+              aria-label="메뉴"
+            >
+              <Droplets size={20} />
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className={styles.iconBtn}
+            onClick={handleDarkMode}
+            aria-label="다크 모드"
+          >
             <Moon size={20} />
           </button>
+
           <div className={styles.actionsLoggedIn}>
             <button
               ref={messageBtnRef}
               type="button"
               className={`${styles.msgWrapper} ${styles.iconBtn}`}
-              onClick={() => setShowMessageListModal(true)}
+              onClick={() => {
+                setShowMessageListModal(true);
+                setIsWeatherModalOpen(false);
+              }}
               aria-label="메시지"
             >
               <MailIcon size={20} unreadCount={unreadCount} />
             </button>
+
             <div className={styles.msgWrapper}>
               <button
                 ref={notificationBtnRef}
                 type="button"
                 className={styles.iconBtn}
-                onClick={() => setShowNotificationDropdown((p) => !p)}
+                onClick={() => {
+                  setIsWeatherModalOpen(false);
+                  setShowNotificationDropdown((p) => !p);
+                }}
                 aria-label="알림"
               >
                 <NotificationIcon size={20} unreadCount={unreadNotificationCount} />
@@ -179,14 +219,26 @@ export default function Header() {
                 anchorRef={notificationBtnRef}
               />
             </div>
+
             <Link href="/mypage" className={styles.iconBtn} aria-label="마이페이지">
               <User size={20} />
             </Link>
-            <button type="button" className={styles.iconBtn} onClick={handleLogout} aria-label="로그아웃">
+            <button
+              type="button"
+              className={styles.iconBtn}
+              onClick={handleLogout}
+              aria-label="로그아웃"
+            >
               <LogOut size={20} />
             </button>
           </div>
-          <Link href="/auth/login" className={`${styles.actionsLoggedOut} ${styles.iconBtn}`} aria-label="로그인">
+
+          {/* login icon: 기본 아이콘 유지 */}
+          <Link
+            href="/auth/login"
+            className={`${styles.actionsLoggedOut} ${styles.iconBtn}`}
+            aria-label="로그인"
+          >
             <LogIn size={20} />
           </Link>
         </div>
@@ -200,6 +252,12 @@ export default function Header() {
           setShowMessageListModal(false);
           router.push(`/auth/login?redirect=${encodeURIComponent(pathname ?? '/')}`);
         }}
+      />
+
+      <WeatherModal
+        open={isWeatherModalOpen}
+        onClose={() => setIsWeatherModalOpen(false)}
+        anchorRef={dropletsBtnRef}
       />
     </header>
   );
